@@ -16,6 +16,13 @@
     <ClInclude Include="watcher.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="Importer.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="CoreWatcher.h" />
+    <ClInclude Include="FunctionTypes.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -25,6 +32,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="watcher.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Importer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="CoreWatcher.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,4 +1,5 @@
 #pragma once
+#include "CoreWatcher.h"
 
 namespace myoddweb
 {
@@ -14,6 +15,9 @@ namespace myoddweb
 
       protected:
         !Watcher();
+
+      private:
+        CoreWatcher* _coreWatcher;
       };
     }
   }
