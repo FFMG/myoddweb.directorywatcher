@@ -2,6 +2,7 @@
 using System.IO;
 using System.Reflection;
 using myoddweb.directorywatcher.utils;
+using myoddweb.directorywatcher.interfaces;
 
 namespace myoddweb.directorywatcher
 {
@@ -30,7 +31,7 @@ namespace myoddweb.directorywatcher
       {
         throw new Exception($"Unable to load the interop file. '{dllInteropPath}'.{Environment.NewLine}{Environment.NewLine}{ex.Message}");
       }
-      var watcher = TypeLoader.LoadTypeFromAssembly<Interop.Watcher>(asm);
+      var watcher = TypeLoader.LoadTypeFromAssembly<IWatcher1>(asm);
 
     }
   }

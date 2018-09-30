@@ -174,6 +174,11 @@
     </ClCompile>
     <ClCompile Include="watcher.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\myoddweb.directorywatcher.interfaces\myoddweb.directorywatcher.interfaces.csproj">
+      <Project>{3e915537-8c2e-4331-b4dc-be182e9b32f1}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

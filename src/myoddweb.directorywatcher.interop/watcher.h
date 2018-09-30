@@ -6,7 +6,7 @@ namespace myoddweb
   {
     namespace Interop
     {
-      public ref class Watcher
+      public ref class Watcher : public myoddweb::directorywatcher::interfaces::IWatcher1
       {
       public:
         Watcher();

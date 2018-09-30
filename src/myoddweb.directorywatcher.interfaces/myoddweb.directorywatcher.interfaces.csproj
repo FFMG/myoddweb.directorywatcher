@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{FC3A40B9-2EBF-4142-B130-011738408399}</ProjectGuid>
+    <ProjectGuid>{3E915537-8C2E-4331-B4DC-BE182E9B32F1}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>myoddweb.directorywatcher</RootNamespace>
-    <AssemblyName>myoddweb.directorywatcher</AssemblyName>
+    <RootNamespace>myoddweb.directorywatcher.interfaces</RootNamespace>
+    <AssemblyName>myoddweb.directorywatcher.interfaces</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -41,19 +41,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="utils\TypeLoader.cs" />
-    <Compile Include="Watcher.cs" />
+    <Compile Include="IWatcher1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\myoddweb.directorywatcher.interfaces\myoddweb.directorywatcher.interfaces.csproj">
-      <Project>{3e915537-8c2e-4331-b4dc-be182e9b32f1}</Project>
-      <Name>myoddweb.directorywatcher.interfaces</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\myoddweb.directorywatcher.interop\myoddweb.directorywatcher.interop.vcxproj">
-      <Project>{ea8db2f9-be88-4e1a-8eae-f7d147fca3b8}</Project>
-      <Name>myoddweb.directorywatcher.interop</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
