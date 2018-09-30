@@ -116,7 +116,6 @@ bool CoreWatcher::CreateUnmanagedFunction(HINSTANCE hInstance, FunctionTypes pro
   // add it to our list.
   _farProcs[procType] = procAddress;
   return true;
-  return true;
 }
 
 /**
