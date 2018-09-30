@@ -6,9 +6,27 @@ using myoddweb.directorywatcher.interfaces;
 
 namespace myoddweb.directorywatcher
 {
-  public class Watcher : IDisposable
+  public class Watcher : IWatcher1, IDisposable
   {
+    /// <summary>
+    /// The actual watcher.
+    /// </summary>
+    private readonly IWatcher1 _watcher;
+
     public Watcher()
+    {
+      _watcher = CreateWatcher();
+    }
+
+    public void Dispose()
+    {
+    }
+
+    /// <summary>
+    /// Create the watcher, throw if we are unable to do it.
+    /// </summary>
+    /// <returns></returns>
+    private static IWatcher1 CreateWatcher()
     {
       var directoryName = Directory.GetCurrentDirectory();
       var dllInteropPath = Path.Combine(directoryName, "Win32\\myoddweb.directorywatcher.interop.dll");
@@ -18,10 +36,10 @@ namespace myoddweb.directorywatcher
       }
 
       // look for the 
-      Assembly asm = null;
       try
       {
-        asm = Assembly.LoadFrom(dllInteropPath);
+        var asm = Assembly.LoadFrom(dllInteropPath);
+        return TypeLoader.LoadTypeFromAssembly<IWatcher1>(asm);
       }
       catch (ArgumentException ex)
       {
@@ -31,11 +49,12 @@ namespace myoddweb.directorywatcher
       {
         throw new Exception($"Unable to load the interop file. '{dllInteropPath}'.{Environment.NewLine}{Environment.NewLine}{ex.Message}");
       }
-      var watcher = TypeLoader.LoadTypeFromAssembly<IWatcher1>(asm);
     }
 
-    public void Dispose()
+    /// <inheritdoc />
+    public long Monitor(string path, bool recursive)
     {
+      return _watcher?.Monitor(path, recursive) ?? -1;
     }
   }
 }

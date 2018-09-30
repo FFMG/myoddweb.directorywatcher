@@ -161,6 +161,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="CoreWatcher.h" />
+    <ClInclude Include="Errors.h" />
+    <ClInclude Include="Functions.h" />
     <ClInclude Include="FunctionTypes.h" />
     <ClInclude Include="Importer.h" />
     <ClInclude Include="stdafx.h" />

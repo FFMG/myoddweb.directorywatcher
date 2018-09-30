@@ -19,8 +19,16 @@
     <ClInclude Include="Importer.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="CoreWatcher.h" />
     <ClInclude Include="FunctionTypes.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="CoreWatcher.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="Errors.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="Functions.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

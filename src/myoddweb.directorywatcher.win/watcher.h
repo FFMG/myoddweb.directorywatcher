@@ -6,6 +6,6 @@ namespace myoddweb
   namespace directorywatcher
   {
     // Start watching a folder
-    extern "C" { __declspec(dllexport) long start( std::wstring path, bool recursive ); }
+    extern "C" { __declspec(dllexport) __int64 monitor( wchar_t path, bool recursive ); }
   }
 }

@@ -5,6 +5,7 @@
     private static void Main(string[] args)
     {
       var watch = new Watcher();
+      watch.Monitor("c:\\", true );
     }
   }
 }

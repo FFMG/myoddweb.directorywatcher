@@ -2,7 +2,8 @@
 
 enum FunctionTypes
 {
-  procUnk = 0,
-  procFirst = 1,
-  procLast
+  FunctionUnknown = 0,
+  FunctionFirst = 1,
+  FunctionMonitor = 1,
+  FunctionLast
 };

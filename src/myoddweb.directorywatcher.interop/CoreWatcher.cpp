@@ -4,6 +4,8 @@
 #include <string>
 #include <msclr\marshal.h>
 #include <msclr\marshal_cppstd.h>
+#include "Errors.h"
+#include "Functions.h"
 
 using namespace msclr::interop;
 using namespace System;
@@ -17,6 +19,11 @@ CoreWatcher::CoreWatcher() :
   if( !CreateInstance() )
   {
     throw new std::exception("Unable to Create core instance.");
+  }
+
+  if( !CreateUnmanagedFunctions() )
+  {
+    throw new std::exception("Unable to Create core unmanaged functions.");
   }
 }
 
@@ -80,7 +87,7 @@ bool CoreWatcher::CreateUnmanagedFunctions()
   }
 
   // load all the functions.
-  for (int i = FunctionTypes::procFirst; i < FunctionTypes::procLast; ++i)
+  for (int i = FunctionTypes::FunctionFirst; i < FunctionTypes::FunctionLast; ++i)
   {
     // try and load that function
     if (!CreateUnmanagedFunction(_hDll, static_cast<FunctionTypes>(i)))
@@ -100,6 +107,10 @@ bool CoreWatcher::CreateUnmanagedFunction(HINSTANCE hInstance, FunctionTypes pro
   FARPROC procAddress = nullptr;
   switch( procType )
   {
+  case FunctionTypes::FunctionMonitor:
+    procAddress = GetProcAddress(hInstance, "monitor");
+    break;
+
   default:
     auto s = marshal_as<std::string>(
       String::Format("Could not locate the name of the given unmanaged function id. {0}", (int)procType)
@@ -134,4 +145,33 @@ const FARPROC CoreWatcher::GetUnmanagedFunction(FunctionTypes procType) const
     throw new std::exception("Could not locate proc.");
   }
   return it->second;
+}
+
+/*
+ * The path we wish to monitor for changes
+ * <param name="path">The path we want to monitor.</param>
+ * <returns>Unique Id used to release/stop monitoring</returns>
+ */ 
+__int64 CoreWatcher::Monitor(String^ path, bool recursive)
+{
+  try
+  {
+    /// does it exist?
+    if (!Directory::Exists(path))
+    {
+      return Errors::ErrorFolderNotFound;
+    }
+
+    // get the function
+    auto funci = (f_Monitor)GetUnmanagedFunction(FunctionTypes::FunctionMonitor);
+
+    // otherwise just monitor
+    std::wstring wPath = marshal_as<std::wstring>(path);
+    return funci(wPath.c_str(), recursive );
+  }
+  catch( ... )
+  {
+    return Errors::ErrorUnknown;
+  }
+  return 0;
 }
