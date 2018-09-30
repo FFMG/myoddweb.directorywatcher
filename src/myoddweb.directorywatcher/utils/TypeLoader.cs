@@ -37,6 +37,32 @@ namespace myoddweb.directorywatcher.utils
             throw;
           }
         }
+
+        var cis = t.GetConstructors( BindingFlags.Public );
+
+        var types = new Type[] { typeof(T) };
+        var ci = t.GetConstructor(
+          BindingFlags.Instance | BindingFlags.Public,
+          null, types, null);
+
+        if (ci != null )
+        {
+          try
+          {
+            Debug.WriteLine("Trying to create constructor of {0}...", t.FullName);
+            return assembly.CreateInstance(t.FullName) as T;
+          }
+          catch (TargetInvocationException e)
+          {
+            if (e.InnerException is DllNotFoundException)
+            {
+              var dllNotFoundException = (DllNotFoundException)e.InnerException;
+              Debug.WriteLine("A DllNotFoundException was thrown during the attempt to create a type instance. Are you missing some DLL dependencies?");
+              throw dllNotFoundException;
+            }
+            throw;
+          }
+        }
       }
       return null;
     }
