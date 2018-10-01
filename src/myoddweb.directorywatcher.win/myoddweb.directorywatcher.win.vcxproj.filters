@@ -3,9 +3,6 @@
   <ItemGroup>
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="watcher.cpp" />
-    <ClCompile Include="utils\MonitorsManager.cpp">
-      <Filter>utils</Filter>
-    </ClCompile>
     <ClCompile Include="utils\Lock.cpp">
       <Filter>utils</Filter>
     </ClCompile>
@@ -15,14 +12,17 @@
     <ClCompile Include="monitors\MonitorDeviceControl.cpp">
       <Filter>monitors</Filter>
     </ClCompile>
+    <ClCompile Include="monitors\MonitorFindFirstChange.cpp">
+      <Filter>monitors</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\MonitorsManager.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="watcher.h" />
-    <ClInclude Include="utils\MonitorsManager.h">
-      <Filter>utils</Filter>
-    </ClInclude>
     <ClInclude Include="utils\Lock.h">
       <Filter>utils</Filter>
     </ClInclude>
@@ -31,6 +31,12 @@
     </ClInclude>
     <ClInclude Include="monitors\MonitorDeviceControl.h">
       <Filter>monitors</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\MonitorFindFirstChange.h">
+      <Filter>monitors</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\MonitorsManager.h">
+      <Filter>utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

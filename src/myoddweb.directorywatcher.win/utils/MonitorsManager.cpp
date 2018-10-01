@@ -1,6 +1,7 @@
 #include "MonitorsManager.h"
 #include "Lock.h"
 #include "../monitors/MonitorDeviceControl.h"
+#include "../monitors/MonitorFindFirstChange.h"
 
 MonitorsManager* MonitorsManager::_instance = nullptr;
 std::recursive_mutex MonitorsManager::_lock;
@@ -95,8 +96,8 @@ Monitor* MonitorsManager::Create()
     }
 
     //const auto monitor = new Monitor( id );
-    const auto monitor = new MonitorDeviceControl(id);
-    monitor->Poll();
+    const auto monitor = new MonitorFindFirstChange(id);
+    monitor->Poll( L"z:\\", false );
     _monitors[id] = monitor;
     return monitor;
   }
