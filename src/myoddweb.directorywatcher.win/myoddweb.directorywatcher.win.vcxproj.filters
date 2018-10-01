@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="watcher.cpp" />
+    <ClCompile Include="utils\MonitorsManager.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\Lock.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="monitors\Monitor.cpp">
+      <Filter>monitors</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="watcher.h" />
+    <ClInclude Include="utils\MonitorsManager.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\Lock.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\Monitor.h">
+      <Filter>monitors</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="utils">
+      <UniqueIdentifier>{798423ec-87b2-4f2b-b95d-7f4fd1863a6c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="monitors">
+      <UniqueIdentifier>{3a7a7900-1bb3-42f1-a795-90260895d559}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

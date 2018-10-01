@@ -22,6 +22,13 @@ namespace myoddweb.directorywatcher.interfaces
     /// <param name="path">The path we want to monitor.</param>
     /// <param name="recursive"></param>
     /// <returns>Unique Id used to release/stop monitoring</returns>
-    long Monitor(string path, bool recursive);
+    long StartMonitor(string path, bool recursive);
+
+    /// <summary>
+    /// Stop monitoring a path
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    bool StopMonitor(long id);
   }
 }

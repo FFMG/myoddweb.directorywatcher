@@ -15,9 +15,16 @@
 #pragma once
 
 /**
- * Monitor a folder
- * const wchar* the path
- * bool recursive or not
+ * Start to Monitor a folder
+ * @param path the path we want to monitor
+ * @param recursive
  * return -ve is error, +ve is unique identifier.
  */
-typedef __int64(__stdcall *f_Monitor)(const wchar_t*, bool );
+typedef __int64(__stdcall *f_StartMonitor)(const wchar_t*, bool );
+
+/**
+ * Stop monitoring a path
+ * @param id the unique identifier
+ * return success or not.
+ */
+typedef bool(__stdcall *f_StopMonitor)(__int64);

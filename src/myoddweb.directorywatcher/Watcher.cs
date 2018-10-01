@@ -66,9 +66,15 @@ namespace myoddweb.directorywatcher
     }
 
     /// <inheritdoc />
-    public long Monitor(string path, bool recursive)
+    public long StartMonitor(string path, bool recursive)
     {
-      return _watcher?.Monitor(path, recursive) ?? -1;
+      return _watcher?.StartMonitor(path, recursive) ?? -1;
+    }
+
+    /// <inheritdoc />
+    public bool StopMonitor(long id )
+    {
+      return _watcher?.StopMonitor(id) ?? false;
     }
   }
 }

@@ -18,6 +18,7 @@ enum FunctionTypes
 {
   FunctionUnknown = 0,
   FunctionFirst = 1,
-  FunctionMonitor = 1,
+  FunctionStartMonitor = 1,
+  FunctionStopMonitor = 2,
   FunctionLast
 };

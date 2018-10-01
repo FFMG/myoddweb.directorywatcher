@@ -34,7 +34,14 @@ namespace myoddweb
         /// </summary>
         /// <param name="path">The path we want to monitor.</param>
         /// <returns>Unique Id used to release/stop monitoring</returns>
-        virtual __int64 Monitor(String^ path, bool recursive);
+        virtual __int64 StartMonitor(String^ path, bool recursive);
+
+        /// <summary>
+        /// Stop monitoring a path
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        virtual bool StopMonitor(__int64 id);
 
       protected:
         !Watcher();

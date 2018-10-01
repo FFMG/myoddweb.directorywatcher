@@ -24,12 +24,11 @@ public:
   ~CoreWatcher();
 
 public:
-  /// <summary>
-  /// The path we wish to monitor for changes
-  /// </summary>
-  /// <param name="path">The path we want to monitor.</param>
-  /// <returns>Unique Id used to release/stop monitoring</returns>
-  __int64 Monitor(String^ path, bool recursive);
+  // start the monitor,
+  __int64 StartMonitor(String^ path, bool recursive);
+
+  // stop the monitor
+  bool StopMonitor(__int64 id);
 
 protected:
   void Release();

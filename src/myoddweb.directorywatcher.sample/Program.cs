@@ -18,8 +18,14 @@ namespace myoddweb.directorywatcher.sample
   {
     private static void Main(string[] args)
     {
+      // start the monitor.
       var watch = new Watcher();
-      watch.Monitor("c:\\", true );
+      var id = watch.StartMonitor("c:\\", true );
+
+      // do something
+
+      // stop the monitor
+      watch.StopMonitor(id);
     }
   }
 }

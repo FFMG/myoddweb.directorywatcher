@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 15.0.28010.2036
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "myoddweb.directorywatcher.interop", "myoddweb.directorywatcher.interop\myoddweb.directorywatcher.interop.vcxproj", "{EA8DB2F9-BE88-4E1A-8EAE-F7D147FCA3B8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B9B8A503-13E4-4F17-B59D-92452C927198} = {B9B8A503-13E4-4F17-B59D-92452C927198}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "myoddweb.directorywatcher.win", "myoddweb.directorywatcher.win\myoddweb.directorywatcher.win.vcxproj", "{B9B8A503-13E4-4F17-B59D-92452C927198}"
 EndProject
