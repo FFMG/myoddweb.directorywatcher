@@ -12,6 +12,9 @@
     <ClCompile Include="monitors\Monitor.cpp">
       <Filter>monitors</Filter>
     </ClCompile>
+    <ClCompile Include="monitors\MonitorDeviceControl.cpp">
+      <Filter>monitors</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -24,6 +27,9 @@
       <Filter>utils</Filter>
     </ClInclude>
     <ClInclude Include="monitors\Monitor.h">
+      <Filter>monitors</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\MonitorDeviceControl.h">
       <Filter>monitors</Filter>
     </ClInclude>
   </ItemGroup>
