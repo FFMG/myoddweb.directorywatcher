@@ -1,22 +1,18 @@
 #include "MonitorReadDirectoryChangesEx.h"
 #include <string>
-#include <Windows.h>
+#include <process.h>
 
-#define BUFFER_SIZE (DWORD)16384
-#define DEFAULT_FLAGS  FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_CREATION
+#define BUFFER_SIZE (unsigned long)16384
 
 MonitorReadDirectoryChangesEx::MonitorReadDirectoryChangesEx(__int64 id) :
   Monitor(id),
-  _flags(DEFAULT_FLAGS ),
   _hDirectory( 0 ),
   _path( L"" ),
   _recursive( false ),
-  _th( nullptr )
+  _th( nullptr ),
+  _buffer( nullptr )
 {
   memset(&_overlapped, 0, sizeof(OVERLAPPED));
-
-  _buffer.resize(BUFFER_SIZE);
-  _backupBuffer.resize(BUFFER_SIZE);
 }
 
 MonitorReadDirectoryChangesEx::~MonitorReadDirectoryChangesEx()
@@ -30,20 +26,42 @@ void MonitorReadDirectoryChangesEx::CloseDirectory()
   {
     CloseHandle(_hDirectory);
   }
-
-  if (_th != nullptr)
-  {
-    // set the value in promise
-    _exitSignal.set_value();
-    _th->join();
-    delete _th;
-  }
-
-  _th = nullptr;
+  // the directory is closed.
   _hDirectory = nullptr;
+
+  // stop the thread
+  CompleteThread();
+
+  // stop the bufdfer
+  CompleteBuffer();
+
+  // reset other values.
   _path = L"";
   _recursive = false;
   memset(&_overlapped, 0, sizeof(OVERLAPPED));
+}
+
+void MonitorReadDirectoryChangesEx::CompleteBuffer()
+{
+  if (_buffer == nullptr)
+  {
+    return;
+  }
+  delete[] _buffer;
+  _buffer = nullptr;
+}
+
+void MonitorReadDirectoryChangesEx::CompleteThread()
+{
+  if (_th == nullptr)
+  {
+    return;
+  }
+
+  _exitSignal.set_value();
+
+  // set the value in promise
+  _th = nullptr;
 }
 
 bool MonitorReadDirectoryChangesEx::OpenDirectory()
@@ -53,17 +71,21 @@ bool MonitorReadDirectoryChangesEx::OpenDirectory()
     return _hDirectory != INVALID_HANDLE_VALUE;
   }
 
+  const auto shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
+  const auto fileAttr = FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED;
+
   _hDirectory = ::CreateFileW(
-    _path.c_str(),					      // pointer to the file name
-      FILE_LIST_DIRECTORY,        // access (read/write) mode
-      FILE_SHARE_READ					    // share mode
-      | FILE_SHARE_WRITE
-      | FILE_SHARE_DELETE,
-      NULL,                       // security descriptor
+      _path.c_str(),					    // the path we are watching
+      FILE_LIST_DIRECTORY,        // required for ReadDirectoryChangesW( ... )
+      shareMode,
+      nullptr,                    // security descriptor
       OPEN_EXISTING,              // how to create
-      FILE_FLAG_BACKUP_SEMANTICS	// file attributes
-      | FILE_FLAG_OVERLAPPED,
-      NULL);                      // file with attributes to copy
+      fileAttr,
+      nullptr                     // file with attributes to copy
+    );
+
+  // check if it all worked.
+  return IsOpen();
 }
 
 void MonitorReadDirectoryChangesEx::Stop()
@@ -79,8 +101,19 @@ bool MonitorReadDirectoryChangesEx::Poll( const std::wstring& path, bool recursi
   // close everything
   CloseDirectory();
 
-  // set the path
   _futureObj = _exitSignal.get_future();
+
+  _th = (HANDLE)_beginthreadex(nullptr,
+    0,
+    BeginThread,
+    this,
+    0,
+    nullptr
+  );
+
+  // set the variables we will be using here.
+  _buffer = new char[BUFFER_SIZE];
+  memset(_buffer, 0, sizeof(char)*BUFFER_SIZE);
   _overlapped.hEvent = this;
   _path = path;
   _recursive = recursive;
@@ -92,22 +125,28 @@ bool MonitorReadDirectoryChangesEx::Poll( const std::wstring& path, bool recursi
   }
 
   // we can now looking for changes.
-  _th = new std::thread(&MonitorReadDirectoryChangesEx::BeginThread, this);
+  QueueUserAPC(WaitForRead, _th, (ULONG_PTR)this );
+
+  return true;
 }
 
-void MonitorReadDirectoryChangesEx::BeginThread(MonitorReadDirectoryChangesEx* obj)
+unsigned int WINAPI MonitorReadDirectoryChangesEx::BeginThread(LPVOID arg)
 {
-  obj->WaitForRead();
-
-  while (obj->_futureObj.wait_for(std::chrono::milliseconds(1)) == std::future_status::timeout)
+  while (((MonitorReadDirectoryChangesEx*)arg)->_futureObj.wait_for(std::chrono::milliseconds(1)) == std::future_status::timeout)
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
+  return 0;
 }
 
 bool MonitorReadDirectoryChangesEx::IsOpen() const
 {
   return _hDirectory != nullptr && _hDirectory != INVALID_HANDLE_VALUE;
+}
+
+void CALLBACK MonitorReadDirectoryChangesEx::WaitForRead(unsigned long pointer)
+{
+  ((MonitorReadDirectoryChangesEx*)pointer)->WaitForRead();
 }
 
 void MonitorReadDirectoryChangesEx::WaitForRead()
@@ -116,22 +155,34 @@ void MonitorReadDirectoryChangesEx::WaitForRead()
   {
     return;
   }
-  DWORD dwBytes = 0;
+
+  // what we are looking for.
+  const auto flags = FILE_NOTIFY_CHANGE_FILE_NAME |
+                     FILE_NOTIFY_CHANGE_DIR_NAME |  
+                     FILE_NOTIFY_CHANGE_ATTRIBUTES |  
+                     FILE_NOTIFY_CHANGE_SIZE |  
+                     FILE_NOTIFY_CHANGE_LAST_WRITE |  
+                     FILE_NOTIFY_CHANGE_LAST_ACCESS |  
+                     FILE_NOTIFY_CHANGE_CREATION |  
+                     FILE_NOTIFY_CHANGE_SECURITY;
 
   // This call needs to be reissued after every APC.
-  BOOL success = ::ReadDirectoryChangesW(
+  auto result = ::ReadDirectoryChangesW(
     _hDirectory,
-    &_buffer[0],
-    _buffer.size(),   // length of buffer
+    _buffer,
+    BUFFER_SIZE,
     _recursive,
-    _flags,
-    &dwBytes,         // bytes returned
-    &_overlapped,     // overlapped buffer
-    &Callback);       // completion routine
+    flags,
+    nullptr,                  // bytes returned, (not used here as we are async)
+    &_overlapped,             // buffer with our information
+    &FileIoCompletionRoutine
+  );
 }
 
-//static
-void CALLBACK MonitorReadDirectoryChangesEx::Callback(
+/***
+ * The async callback function for ReadDirectoryChangesW
+ */
+void CALLBACK MonitorReadDirectoryChangesEx::FileIoCompletionRoutine(
   DWORD dwErrorCode,
   DWORD dwNumberOfBytesTransfered,
   LPOVERLAPPED lpOverlapped
@@ -149,7 +200,9 @@ void CALLBACK MonitorReadDirectoryChangesEx::Callback(
   // the structure is padded to 16 bytes.
   _ASSERTE(dwNumberOfBytesTransfered >= offsetof(FILE_NOTIFY_INFORMATION, FileName) + sizeof(WCHAR));
 
-  // do we have any data to process?
+  // If the buffer overflows, the entire contents of the buffer are discarded, 
+  // the lpBytesReturned parameter contains zero, and the ReadDirectoryChangesW function 
+  // fails with the error code ERROR_NOTIFY_ENUM_DIR.
   if (!dwNumberOfBytesTransfered)
   {
     // just restart
@@ -157,37 +210,55 @@ void CALLBACK MonitorReadDirectoryChangesEx::Callback(
     return;
   }
 
-  pThis->Clone(dwNumberOfBytesTransfered);
+  const auto pBufferBk = pThis->Clone(dwNumberOfBytesTransfered);
 
   // Get the new read issued as fast as possible. The documentation
   // says that the original OVERLAPPED structure will not be used
   // again once the completion routine is called.
   pThis->WaitForRead();
 
-  pThis->ProcessNotification();
+  // we clones the data and restarted the read
+  // so we can now process the data
+  pThis->ProcessNotificationFromBackupPointer(pBufferBk);
 }
 
-void MonitorReadDirectoryChangesEx::Clone(DWORD dwSize)
+void* MonitorReadDirectoryChangesEx::Clone(unsigned long ulSize)
 {
-  // We could just swap back and forth between the two
-  // buffers, but this code is easier to understand and debug.
-  memcpy(&_backupBuffer[0], &_buffer[0], dwSize);
+  // create the clone
+  const auto pBuffer = new char[ulSize];
+
+  // copy it.
+  memcpy(pBuffer, _buffer, ulSize);
+
+  return pBuffer;
 }
 
-void MonitorReadDirectoryChangesEx::ProcessNotification()
+void MonitorReadDirectoryChangesEx::ProcessNotificationFromBackupPointer(const void* pBuffer )
 {
-  auto pBase = _backupBuffer.data();
-
-  for (;;)
+  try
   {
-    FILE_NOTIFY_INFORMATION& fni = (FILE_NOTIFY_INFORMATION&)*pBase;
-
-    auto wstrFilename = std::wstring(fni.FileName, fni.FileNameLength / sizeof(wchar_t));
-
-    if (!fni.NextEntryOffset)
+    for (;;)
     {
-      break;
+      // get the file information
+      auto* pRecord = (FILE_NOTIFY_INFORMATION*)pBuffer;;
+
+      // get the filename
+      auto wstrFilename = std::wstring(pRecord->FileName, pRecord->FileNameLength / sizeof(wchar_t));
+
+      // more files?
+      if (0 == pRecord->NextEntryOffset)
+      {
+        break;
+      }
+      pRecord = (FILE_NOTIFY_INFORMATION *)(&((unsigned char*)pBuffer)[pRecord->NextEntryOffset]);
     }
-    pBase += fni.NextEntryOffset;
-  };
+  }
+  catch( ... )
+  {
+    // regadless what happens
+    // we have to free the memory.
+  }
+
+  // we are done with this buffer.
+  delete[] pBuffer;
 }

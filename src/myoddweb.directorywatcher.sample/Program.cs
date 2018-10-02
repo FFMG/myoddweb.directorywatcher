@@ -12,6 +12,9 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
+
+using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace myoddweb.directorywatcher.sample
@@ -20,15 +23,39 @@ namespace myoddweb.directorywatcher.sample
   {
     private static void Main(string[] args)
     {
-      // start the monitor.
-      var watch = new Watcher();
-      var id = watch.StartMonitor("c:\\", true );
+      try
+      {
+        Console.WriteLine("Press Ctrl+C to stop the monitors.");
 
-      // do something
-      Task.Delay( 30 * 1000 ).Wait();
+        var exitEvent = new ManualResetEvent(false);
+        Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs e)
+        {
+          e.Cancel = true;
+          Console.WriteLine("Stop detected.");
+          exitEvent.Set();
+        };
 
-      // stop the monitor
-      watch.StopMonitor(id);
+        // start the monitor.
+        var watch = new Watcher();
+        var id = watch.StartMonitor("c:\\", true);
+
+        // do something
+        // then wait for the user to press a key
+
+        exitEvent.WaitOne();
+
+        // stop the monitor
+        watch.StopMonitor(id);
+      }
+      catch (Exception ex)
+      {
+        Console.WriteLine(ex.Message);
+        while (ex.InnerException != null)
+        {
+          ex = ex.InnerException;
+          Console.WriteLine(ex.Message);
+        }
+      }
     }
   }
 }

@@ -98,12 +98,14 @@ Monitor* MonitorsManager::Create()
 
     //const auto monitor = new Monitor( id );
     const auto monitor = new MonitorReadDirectoryChangesEx(id);
-    monitor->Poll( L"h:\\", true );
+
+
+    monitor->Poll( L"z:\\", true );
+
     _monitors[id] = monitor;
     return monitor;
   }
 }
-
 
 /**
  * Stop and remove a monitor
