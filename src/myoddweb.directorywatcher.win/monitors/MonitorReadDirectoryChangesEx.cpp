@@ -135,6 +135,7 @@ unsigned int WINAPI MonitorReadDirectoryChangesEx::BeginThread(LPVOID arg)
   while (((MonitorReadDirectoryChangesEx*)arg)->_futureObj.wait_for(std::chrono::milliseconds(1)) == std::future_status::timeout)
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    SleepEx(100, true );
   }
   return 0;
 }
@@ -237,11 +238,10 @@ void MonitorReadDirectoryChangesEx::ProcessNotificationFromBackupPointer(const v
 {
   try
   {
+    // get the file information
+    auto* pRecord = (FILE_NOTIFY_INFORMATION*)pBuffer;;
     for (;;)
     {
-      // get the file information
-      auto* pRecord = (FILE_NOTIFY_INFORMATION*)pBuffer;;
-
       // get the filename
       auto wstrFilename = std::wstring(pRecord->FileName, pRecord->FileNameLength / sizeof(wchar_t));
 
@@ -250,7 +250,7 @@ void MonitorReadDirectoryChangesEx::ProcessNotificationFromBackupPointer(const v
       {
         break;
       }
-      pRecord = (FILE_NOTIFY_INFORMATION *)(&((unsigned char*)pBuffer)[pRecord->NextEntryOffset]);
+      pRecord = (FILE_NOTIFY_INFORMATION *)(&((unsigned char*)pRecord)[pRecord->NextEntryOffset]);
     }
   }
   catch( ... )
