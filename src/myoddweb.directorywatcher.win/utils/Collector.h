@@ -42,6 +42,6 @@ private:
   Events _events;
 
   long long GetTimeMs() const;
-  std::wstring PathCombine(const std::wstring& lhs, const std::wstring& rhs) const;
+  static std::wstring PathCombine(const std::wstring& lhs, const std::wstring& rhs);
 };
 

@@ -36,15 +36,23 @@ long long Collector::GetTimeMs() const
   return value.count();
 }
 
-std::wstring Collector::PathCombine(const std::wstring& lhs, const std::wstring& rhs) const
+/**
+ * \brief Combine 2 parts of a file into a single filename.
+ *        we do not validate the path or even if the values make no sense.
+ * \param lhs the left hand side
+ * \param rhs the right hand side.
+ * \return The 2 part connected togeter
+ */
+std::wstring Collector::PathCombine(const std::wstring& lhs, const std::wstring& rhs)
 {
-  // sanity check
+  // sanity check, if the lhs.length is 0, then we just return the rhs.
   const auto s = lhs.length();
   if( s == 0 )
   {
     return rhs;
   }
 
+  // the two type of separators.
   const auto sep1 = L'/';
   const auto sep2 = L'\\';
 
@@ -62,19 +70,23 @@ std::wstring Collector::PathCombine(const std::wstring& lhs, const std::wstring&
 
 bool Collector::Add(const __int64 id, const EventAction action, const std::wstring& path, const std::wstring& file)
 {
-  // Create the event
-  EventInformation e;
-  e.id = id;
-  e.action = action;
-  e.name = PathCombine( path, file );
-  e.timeMs = GetTimeMs();
-
-  wprintf(L"%s\n", e.name.c_str());
-
-  // lock
-  auto guard = Lock(_lock);
   try
   {
+    // We first create the event outside the lock
+    // that way, we only have the lock for the shortest
+    // posible amount of time.
+    EventInformation e;
+    e.id = id;
+    e.action = action;
+    e.name = PathCombine(path, file);
+    e.timeMs = GetTimeMs();
+
+    wprintf(L"%s\n", e.name.c_str());
+
+    // we can now get the lock so we can add data.
+    // the lock is released automatically.
+    auto guard = Lock(_lock);
+
     // add it.
     _events.push_back(e);
 
