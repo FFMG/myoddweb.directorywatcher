@@ -7,10 +7,10 @@
 class MonitorReadDirectoryChanges : public Monitor
 {
 public:
-  MonitorReadDirectoryChanges(__int64 id);
+  MonitorReadDirectoryChanges(__int64 id, const std::wstring& path, bool recursive);
   virtual ~MonitorReadDirectoryChanges();
 
-  bool Poll(const std::wstring& path, bool recursive);
+  bool Start();
   void Stop();
 
 protected:
@@ -27,19 +27,18 @@ private:
 
   bool OpenDirectory();
   void CloseDirectory();
-  void WaitForRead();
   bool IsOpen() const;
   void ProcessNotificationFromBackupPointer(const void* pBufferBk);
   void* Clone(unsigned long ulSize);
-  
+
+  void Read();
+  void Run();
 
 private:
   HANDLE _hDirectory;
-  std::wstring _path;
   void* _buffer;
 
   OVERLAPPED	_overlapped;
-  bool _recursive;
 
   // Create a std::promise object
   std::promise<void> _exitSignal;

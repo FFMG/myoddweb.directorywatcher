@@ -25,10 +25,10 @@ public:
 
 public:
   // start the monitor,
-  __int64 StartMonitor(String^ path, bool recursive);
+  __int64 Start(String^ path, bool recursive);
 
   // stop the monitor
-  bool StopMonitor(__int64 id);
+  bool Stop(__int64 id);
 
 protected:
   void Release();

@@ -122,11 +122,11 @@ bool CoreWatcher::CreateUnmanagedFunction(HINSTANCE hInstance, FunctionTypes pro
   switch( procType )
   {
   case FunctionTypes::FunctionStartMonitor:
-    procAddress = GetProcAddress(hInstance, "StartMonitor");
+    procAddress = GetProcAddress(hInstance, "Start");
     break;
 
   case FunctionTypes::FunctionStopMonitor:
-    procAddress = GetProcAddress(hInstance, "StopMonitor");
+    procAddress = GetProcAddress(hInstance, "Stop");
     break;
 
   default:
@@ -170,7 +170,7 @@ const FARPROC CoreWatcher::GetUnmanagedFunction(FunctionTypes procType) const
  * <param name="path">The path we want to monitor.</param>
  * <returns>Unique Id used to release/stop monitoring</returns>
  */ 
-__int64 CoreWatcher::StartMonitor(String^ path, bool recursive)
+__int64 CoreWatcher::Start(String^ path, bool recursive)
 {
   try
   {
@@ -199,7 +199,7 @@ __int64 CoreWatcher::StartMonitor(String^ path, bool recursive)
  * @param id the id of our monitor
  * @return success or not
  */
-bool CoreWatcher::StopMonitor(__int64 id)
+bool CoreWatcher::Stop(__int64 id)
 {
   // get the function
   auto funci = (f_StopMonitor)GetUnmanagedFunction(FunctionTypes::FunctionStopMonitor);

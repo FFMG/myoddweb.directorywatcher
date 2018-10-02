@@ -7,8 +7,10 @@ std::recursive_mutex MonitorsManager::_lock;
 
 MonitorsManager::MonitorsManager()
 {
-  /* initialize random seed: */
-  srand(time(nullptr));
+  // initialize random seed:
+  // The downcast (and potential data loss) doesn't matter 
+  // since we're only using it to seed the RNG
+  srand( static_cast<unsigned int>(time(nullptr)));
 }
 
 MonitorsManager::~MonitorsManager()
@@ -41,13 +43,13 @@ MonitorsManager* MonitorsManager::Instance()
 /**
  * Start a monitor
  */
-__int64 MonitorsManager::StartMonitor(wchar_t path, bool recursive)
+__int64 MonitorsManager::Start(const wchar_t* path, bool recursive)
 {
-  const auto monitor = Instance()->Create();
+  const auto monitor = Instance()->CreateAndStart( path, recursive );
   return monitor->Id();
 }
 
-bool MonitorsManager::StopMonitor(long long id)
+bool MonitorsManager::Stop(__int64 id)
 {
   auto guard = Lock(_lock);
 
@@ -81,7 +83,7 @@ __int64 MonitorsManager::GetId() const
  * Create a monitor instance and add it to the list.
  * Return the value.
  */
-Monitor* MonitorsManager::Create()
+Monitor* MonitorsManager::CreateAndStart( const std::wstring& path, bool recursive )
 {
   auto guard = Lock(_lock);
 
@@ -95,11 +97,11 @@ Monitor* MonitorsManager::Create()
     }
 
     //const auto monitor = new Monitor( id );
-    const auto monitor = new MonitorReadDirectoryChanges(id);
+    const auto monitor = new MonitorReadDirectoryChanges(id, path, recursive );
 
-    monitor->Poll( L"h:\\", true );
+    monitor->Start();
 
-    _monitors[id] = monitor;
+    _monitors[monitor->Id()] = monitor;
     return monitor;
   }
 }
@@ -131,7 +133,7 @@ bool MonitorsManager::Remove(__int64 id)
     // we are done
     return true;
   }
-  catch(const std::exception& e)
+  catch(...)
   {
     return false;
   }

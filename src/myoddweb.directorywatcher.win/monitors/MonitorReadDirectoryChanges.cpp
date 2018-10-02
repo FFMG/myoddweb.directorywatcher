@@ -4,11 +4,9 @@
 
 #define BUFFER_SIZE (unsigned long)16384
 
-MonitorReadDirectoryChanges::MonitorReadDirectoryChanges(__int64 id) :
-  Monitor(id),
+MonitorReadDirectoryChanges::MonitorReadDirectoryChanges(__int64 id, const std::wstring& path, bool recursive) :
+  Monitor(id, path, recursive ),
   _hDirectory( 0 ),
-  _path( L"" ),
-  _recursive( false ),
   _th( nullptr ),
   _buffer( nullptr )
 {
@@ -34,10 +32,6 @@ void MonitorReadDirectoryChanges::CloseDirectory()
 
   // stop the bufdfer
   CompleteBuffer();
-
-  // reset other values.
-  _path = L"";
-  _recursive = false;
   memset(&_overlapped, 0, sizeof(OVERLAPPED));
 }
 
@@ -80,7 +74,7 @@ bool MonitorReadDirectoryChanges::OpenDirectory()
   const auto fileAttr = FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED;
 
   _hDirectory = ::CreateFileW(
-      _path.c_str(),					    // the path we are watching
+      Path().c_str(),					    // the path we are watching
       FILE_LIST_DIRECTORY,        // required for ReadDirectoryChangesW( ... )
       shareMode,
       nullptr,                    // security descriptor
@@ -101,7 +95,7 @@ void MonitorReadDirectoryChanges::Stop()
 /**
  * @see https://docs.microsoft.com/en-gb/windows/desktop/api/winbase/nf-winbase-readdirectorychangesexw
  */
-bool MonitorReadDirectoryChanges::Poll( const std::wstring& path, bool recursive)
+bool MonitorReadDirectoryChanges::Start()
 {
   // close everything
   CloseDirectory();
@@ -110,9 +104,9 @@ bool MonitorReadDirectoryChanges::Poll( const std::wstring& path, bool recursive
   _buffer = new char[BUFFER_SIZE];
   memset(_buffer, 0, sizeof(char)*BUFFER_SIZE);
   _overlapped.hEvent = this;
-  _path = path;
-  _recursive = recursive;
 
+  // start the worker thread
+  // in turn it will start the reading.
   StartWorkerThread();
 
   return true;
@@ -130,20 +124,32 @@ void MonitorReadDirectoryChanges::StartWorkerThread()
   _th = new std::thread(&MonitorReadDirectoryChanges::BeginThread, this);
 }
 
-void MonitorReadDirectoryChanges::BeginThread(MonitorReadDirectoryChanges* obj )
+/**
+ * We are now in the thread itself.
+ */
+void MonitorReadDirectoryChanges::BeginThread(MonitorReadDirectoryChanges* obj)
+{
+  // Run the thread.
+  obj->Run();
+}
+
+/**
+ * Begin the actual work
+ */
+void MonitorReadDirectoryChanges::Run()
 {
   // try and open the directory
-  if (!obj->OpenDirectory())
+  if (!OpenDirectory())
   {
     return;
   }
-
-  obj->WaitForRead();
+  
+  // start reading.
+  Read();
 
   // now we keep on waiting.
-  while (obj->_futureObj.wait_for(std::chrono::milliseconds(1)) == std::future_status::timeout)
+  while (_futureObj.wait_for(std::chrono::milliseconds(1)) == std::future_status::timeout)
   {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     SleepEx(100, true );
   }
 }
@@ -153,7 +159,7 @@ bool MonitorReadDirectoryChanges::IsOpen() const
   return _hDirectory != nullptr && _hDirectory != INVALID_HANDLE_VALUE;
 }
 
-void MonitorReadDirectoryChanges::WaitForRead()
+void MonitorReadDirectoryChanges::Read()
 {
   if (!IsOpen())
   {
@@ -175,7 +181,7 @@ void MonitorReadDirectoryChanges::WaitForRead()
     _hDirectory,
     _buffer,
     BUFFER_SIZE,
-    _recursive,
+    Recursive(),
     flags,
     nullptr,                  // bytes returned, (not used here as we are async)
     &_overlapped,             // buffer with our information
@@ -192,11 +198,21 @@ void CALLBACK MonitorReadDirectoryChanges::FileIoCompletionRoutine(
   LPOVERLAPPED lpOverlapped
 )
 {
-  auto pThis = (MonitorReadDirectoryChanges*)lpOverlapped->hEvent;
+  // get the object we are working with
+  auto obj = (MonitorReadDirectoryChanges*)lpOverlapped->hEvent;
 
   if (dwErrorCode == ERROR_OPERATION_ABORTED)
   {
-    delete pThis;
+    return;
+  }
+
+  // If the buffer overflows, the entire contents of the buffer are discarded, 
+  // the lpBytesReturned parameter contains zero, and the ReadDirectoryChangesW function 
+  // fails with the error code ERROR_NOTIFY_ENUM_DIR.
+  if (0 == dwNumberOfBytesTransfered)
+  {
+    // noting to read, just restart
+    obj->Read();
     return;
   }
 
@@ -204,30 +220,28 @@ void CALLBACK MonitorReadDirectoryChanges::FileIoCompletionRoutine(
   // the structure is padded to 16 bytes.
   _ASSERTE(dwNumberOfBytesTransfered >= offsetof(FILE_NOTIFY_INFORMATION, FileName) + sizeof(WCHAR));
 
-  // If the buffer overflows, the entire contents of the buffer are discarded, 
-  // the lpBytesReturned parameter contains zero, and the ReadDirectoryChangesW function 
-  // fails with the error code ERROR_NOTIFY_ENUM_DIR.
-  if (!dwNumberOfBytesTransfered)
-  {
-    // just restart
-    pThis->WaitForRead();
-    return;
-  }
-
-  const auto pBufferBk = pThis->Clone(dwNumberOfBytesTransfered);
+  // clone the data so we can start reading right away.
+  const auto pBufferBk = obj->Clone(dwNumberOfBytesTransfered);
 
   // Get the new read issued as fast as possible. The documentation
   // says that the original OVERLAPPED structure will not be used
   // again once the completion routine is called.
-  pThis->WaitForRead();
+  obj->Read();
 
-  // we clones the data and restarted the read
+  // we cloned the data and restarted the read
   // so we can now process the data
-  pThis->ProcessNotificationFromBackupPointer(pBufferBk);
+  // @todo this should be moved to a thread.
+  obj->ProcessNotificationFromBackupPointer(pBufferBk);
 }
 
 void* MonitorReadDirectoryChanges::Clone(unsigned long ulSize)
 {
+  // we have an overfolow
+  if (ulSize > BUFFER_SIZE)
+  {
+    return nullptr;
+  }
+
   // create the clone
   const auto pBuffer = new char[ulSize];
 
@@ -241,6 +255,12 @@ void MonitorReadDirectoryChanges::ProcessNotificationFromBackupPointer(const voi
 {
   try
   {
+    // overflow
+    if (nullptr == pBuffer)
+    {
+      return;
+    }
+
     // get the file information
     auto* pRecord = (FILE_NOTIFY_INFORMATION*)pBuffer;;
     for (;;)

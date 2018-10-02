@@ -13,6 +13,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "myoddweb.directorywatcher", "myoddweb.directorywatcher\myoddweb.directorywatcher.csproj", "{FC3A40B9-2EBF-4142-B130-011738408399}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "myoddweb.directorywatcher.sample", "myoddweb.directorywatcher.sample\myoddweb.directorywatcher.sample.csproj", "{32A5EF58-410B-41C2-9BDE-E709F2105C2B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B9B8A503-13E4-4F17-B59D-92452C927198} = {B9B8A503-13E4-4F17-B59D-92452C927198}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "myoddweb.directorywatcher.interfaces", "myoddweb.directorywatcher.interfaces\myoddweb.directorywatcher.interfaces.csproj", "{3E915537-8C2E-4331-B4DC-BE182E9B32F1}"
 EndProject

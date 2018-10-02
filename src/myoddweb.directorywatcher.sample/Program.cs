@@ -15,17 +15,21 @@
 
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace myoddweb.directorywatcher.sample
 {
   internal class Program
   {
-    private static void Main(string[] args)
+    private static void Main()
     {
       try
       {
         Console.WriteLine("Press Ctrl+C to stop the monitors.");
+
+        // start the monitor.
+        var watch = new Watcher();
+        var id1 = watch.Start("c:\\", true);
+        //var id2 = watch.Start("h:\\", true);
 
         var exitEvent = new ManualResetEvent(false);
         Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs e)
@@ -33,19 +37,16 @@ namespace myoddweb.directorywatcher.sample
           e.Cancel = true;
           Console.WriteLine("Stop detected.");
           exitEvent.Set();
-        };
 
-        // start the monitor.
-        var watch = new Watcher();
-        var id = watch.StartMonitor("c:\\", true);
+          // stop the monitor
+          watch.Stop(id1);
+          //watch.Stop(id2);
+        };
 
         // do something
         // then wait for the user to press a key
 
         exitEvent.WaitOne();
-
-        // stop the monitor
-        watch.StopMonitor(id);
       }
       catch (Exception ex)
       {

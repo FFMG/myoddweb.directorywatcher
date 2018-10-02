@@ -10,11 +10,11 @@ protected:
   virtual ~MonitorsManager();
 
 public:
-  static __int64 StartMonitor(wchar_t path, bool recursive);
-  static bool StopMonitor(__int64 id );
+  static __int64 Start(const wchar_t* path, bool recursive);
+  static bool Stop(__int64 id );
 
 protected:
-  Monitor* Create();
+  Monitor* CreateAndStart(const std::wstring& path, bool recursive);
   bool Remove( __int64 id );
   __int64 GetId() const;
 protected:
