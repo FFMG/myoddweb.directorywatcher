@@ -4,11 +4,11 @@
 #include <Windows.h>
 #include <future>
 
-class MonitorReadDirectoryChangesEx : public Monitor
+class MonitorReadDirectoryChanges : public Monitor
 {
 public:
-  MonitorReadDirectoryChangesEx(__int64 id);
-  virtual ~MonitorReadDirectoryChangesEx();
+  MonitorReadDirectoryChanges(__int64 id);
+  virtual ~MonitorReadDirectoryChanges();
 
   bool Poll(const std::wstring& path, bool recursive);
   void Stop();
@@ -20,16 +20,14 @@ protected:
     LPOVERLAPPED lpOverlapped         // I/O information buffer
   );
 
-  static unsigned int WINAPI BeginThread(LPVOID arg);
+  static void BeginThread(MonitorReadDirectoryChanges* obj);
 
 private:
-  void CompleteThread();
   void CompleteBuffer();
 
   bool OpenDirectory();
   void CloseDirectory();
   void WaitForRead();
-  static void CALLBACK WaitForRead(unsigned long pointer );
   bool IsOpen() const;
   void ProcessNotificationFromBackupPointer(const void* pBufferBk);
   void* Clone(unsigned long ulSize);
@@ -46,6 +44,9 @@ private:
   // Create a std::promise object
   std::promise<void> _exitSignal;
   std::future<void> _futureObj;
-  HANDLE _th;
+  std::thread* _th;
+
+  void StopWorkerThread();
+  void StartWorkerThread();
 };
 

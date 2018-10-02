@@ -9,16 +9,10 @@
     <ClCompile Include="monitors\Monitor.cpp">
       <Filter>monitors</Filter>
     </ClCompile>
-    <ClCompile Include="monitors\MonitorDeviceControl.cpp">
-      <Filter>monitors</Filter>
-    </ClCompile>
-    <ClCompile Include="monitors\MonitorFindFirstChange.cpp">
-      <Filter>monitors</Filter>
-    </ClCompile>
     <ClCompile Include="utils\MonitorsManager.cpp">
       <Filter>utils</Filter>
     </ClCompile>
-    <ClCompile Include="monitors\MonitorReadDirectoryChangesEx.cpp">
+    <ClCompile Include="monitors\MonitorReadDirectoryChanges.cpp">
       <Filter>monitors</Filter>
     </ClCompile>
   </ItemGroup>
@@ -32,16 +26,10 @@
     <ClInclude Include="monitors\Monitor.h">
       <Filter>monitors</Filter>
     </ClInclude>
-    <ClInclude Include="monitors\MonitorDeviceControl.h">
-      <Filter>monitors</Filter>
-    </ClInclude>
-    <ClInclude Include="monitors\MonitorFindFirstChange.h">
-      <Filter>monitors</Filter>
-    </ClInclude>
     <ClInclude Include="utils\MonitorsManager.h">
       <Filter>utils</Filter>
     </ClInclude>
-    <ClInclude Include="monitors\MonitorReadDirectoryChangesEx.h">
+    <ClInclude Include="monitors\MonitorReadDirectoryChanges.h">
       <Filter>monitors</Filter>
     </ClInclude>
   </ItemGroup>

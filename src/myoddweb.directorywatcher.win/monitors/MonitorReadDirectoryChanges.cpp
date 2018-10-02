@@ -1,10 +1,10 @@
-#include "MonitorReadDirectoryChangesEx.h"
+#include "MonitorReadDirectoryChanges.h"
 #include <string>
 #include <process.h>
 
 #define BUFFER_SIZE (unsigned long)16384
 
-MonitorReadDirectoryChangesEx::MonitorReadDirectoryChangesEx(__int64 id) :
+MonitorReadDirectoryChanges::MonitorReadDirectoryChanges(__int64 id) :
   Monitor(id),
   _hDirectory( 0 ),
   _path( L"" ),
@@ -15,12 +15,12 @@ MonitorReadDirectoryChangesEx::MonitorReadDirectoryChangesEx(__int64 id) :
   memset(&_overlapped, 0, sizeof(OVERLAPPED));
 }
 
-MonitorReadDirectoryChangesEx::~MonitorReadDirectoryChangesEx()
+MonitorReadDirectoryChanges::~MonitorReadDirectoryChanges()
 {
   CloseDirectory();
 }
 
-void MonitorReadDirectoryChangesEx::CloseDirectory()
+void MonitorReadDirectoryChanges::CloseDirectory()
 {
   if (IsOpen() )
   {
@@ -30,7 +30,7 @@ void MonitorReadDirectoryChangesEx::CloseDirectory()
   _hDirectory = nullptr;
 
   // stop the thread
-  CompleteThread();
+  StopWorkerThread();
 
   // stop the bufdfer
   CompleteBuffer();
@@ -41,7 +41,7 @@ void MonitorReadDirectoryChangesEx::CloseDirectory()
   memset(&_overlapped, 0, sizeof(OVERLAPPED));
 }
 
-void MonitorReadDirectoryChangesEx::CompleteBuffer()
+void MonitorReadDirectoryChanges::CompleteBuffer()
 {
   if (_buffer == nullptr)
   {
@@ -51,20 +51,25 @@ void MonitorReadDirectoryChangesEx::CompleteBuffer()
   _buffer = nullptr;
 }
 
-void MonitorReadDirectoryChangesEx::CompleteThread()
+void MonitorReadDirectoryChanges::StopWorkerThread()
 {
   if (_th == nullptr)
   {
     return;
   }
 
+  // signal the stop
   _exitSignal.set_value();
 
-  // set the value in promise
+  // wait a little
+  _th->join();
+
+  // cleanup
+  delete _th;
   _th = nullptr;
 }
 
-bool MonitorReadDirectoryChangesEx::OpenDirectory()
+bool MonitorReadDirectoryChanges::OpenDirectory()
 {
   if (_hDirectory != nullptr)
   {
@@ -88,7 +93,7 @@ bool MonitorReadDirectoryChangesEx::OpenDirectory()
   return IsOpen();
 }
 
-void MonitorReadDirectoryChangesEx::Stop()
+void MonitorReadDirectoryChanges::Stop()
 {
   CloseDirectory();
 }
@@ -96,20 +101,10 @@ void MonitorReadDirectoryChangesEx::Stop()
 /**
  * @see https://docs.microsoft.com/en-gb/windows/desktop/api/winbase/nf-winbase-readdirectorychangesexw
  */
-bool MonitorReadDirectoryChangesEx::Poll( const std::wstring& path, bool recursive)
+bool MonitorReadDirectoryChanges::Poll( const std::wstring& path, bool recursive)
 {
   // close everything
   CloseDirectory();
-
-  _futureObj = _exitSignal.get_future();
-
-  _th = (HANDLE)_beginthreadex(nullptr,
-    0,
-    BeginThread,
-    this,
-    0,
-    nullptr
-  );
 
   // set the variables we will be using here.
   _buffer = new char[BUFFER_SIZE];
@@ -118,39 +113,47 @@ bool MonitorReadDirectoryChangesEx::Poll( const std::wstring& path, bool recursi
   _path = path;
   _recursive = recursive;
 
-  // try and open the directory
-  if (!OpenDirectory())
-  {
-    return false;
-  }
-
-  // we can now looking for changes.
-  QueueUserAPC(WaitForRead, _th, (ULONG_PTR)this );
+  StartWorkerThread();
 
   return true;
 }
 
-unsigned int WINAPI MonitorReadDirectoryChangesEx::BeginThread(LPVOID arg)
+void MonitorReadDirectoryChanges::StartWorkerThread()
 {
-  while (((MonitorReadDirectoryChangesEx*)arg)->_futureObj.wait_for(std::chrono::milliseconds(1)) == std::future_status::timeout)
+  // stop the old one... if any
+  StopWorkerThread();
+
+  // and start it again.
+  _futureObj = _exitSignal.get_future();
+
+  // we can now looking for changes.
+  _th = new std::thread(&MonitorReadDirectoryChanges::BeginThread, this);
+}
+
+void MonitorReadDirectoryChanges::BeginThread(MonitorReadDirectoryChanges* obj )
+{
+  // try and open the directory
+  if (!obj->OpenDirectory())
+  {
+    return;
+  }
+
+  obj->WaitForRead();
+
+  // now we keep on waiting.
+  while (obj->_futureObj.wait_for(std::chrono::milliseconds(1)) == std::future_status::timeout)
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     SleepEx(100, true );
   }
-  return 0;
 }
 
-bool MonitorReadDirectoryChangesEx::IsOpen() const
+bool MonitorReadDirectoryChanges::IsOpen() const
 {
   return _hDirectory != nullptr && _hDirectory != INVALID_HANDLE_VALUE;
 }
 
-void CALLBACK MonitorReadDirectoryChangesEx::WaitForRead(unsigned long pointer)
-{
-  ((MonitorReadDirectoryChangesEx*)pointer)->WaitForRead();
-}
-
-void MonitorReadDirectoryChangesEx::WaitForRead()
+void MonitorReadDirectoryChanges::WaitForRead()
 {
   if (!IsOpen())
   {
@@ -183,13 +186,13 @@ void MonitorReadDirectoryChangesEx::WaitForRead()
 /***
  * The async callback function for ReadDirectoryChangesW
  */
-void CALLBACK MonitorReadDirectoryChangesEx::FileIoCompletionRoutine(
+void CALLBACK MonitorReadDirectoryChanges::FileIoCompletionRoutine(
   DWORD dwErrorCode,
   DWORD dwNumberOfBytesTransfered,
   LPOVERLAPPED lpOverlapped
 )
 {
-  auto pThis = (MonitorReadDirectoryChangesEx*)lpOverlapped->hEvent;
+  auto pThis = (MonitorReadDirectoryChanges*)lpOverlapped->hEvent;
 
   if (dwErrorCode == ERROR_OPERATION_ABORTED)
   {
@@ -223,7 +226,7 @@ void CALLBACK MonitorReadDirectoryChangesEx::FileIoCompletionRoutine(
   pThis->ProcessNotificationFromBackupPointer(pBufferBk);
 }
 
-void* MonitorReadDirectoryChangesEx::Clone(unsigned long ulSize)
+void* MonitorReadDirectoryChanges::Clone(unsigned long ulSize)
 {
   // create the clone
   const auto pBuffer = new char[ulSize];
@@ -234,7 +237,7 @@ void* MonitorReadDirectoryChangesEx::Clone(unsigned long ulSize)
   return pBuffer;
 }
 
-void MonitorReadDirectoryChangesEx::ProcessNotificationFromBackupPointer(const void* pBuffer )
+void MonitorReadDirectoryChanges::ProcessNotificationFromBackupPointer(const void* pBuffer )
 {
   try
   {
@@ -243,7 +246,8 @@ void MonitorReadDirectoryChangesEx::ProcessNotificationFromBackupPointer(const v
     for (;;)
     {
       // get the filename
-      auto wstrFilename = std::wstring(pRecord->FileName, pRecord->FileNameLength / sizeof(wchar_t));
+      auto wFilename = std::wstring(pRecord->FileName, pRecord->FileNameLength / sizeof(wchar_t));
+      wprintf(L"%s\n", wFilename.c_str());
 
       // more files?
       if (0 == pRecord->NextEntryOffset)
