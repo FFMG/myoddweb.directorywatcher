@@ -1,4 +1,4 @@
-//This file is part of Myoddweb.Directorywatcher.
+﻿//This file is part of Myoddweb.Directorywatcher.
 //
 //    Myoddweb.Directorywatcher is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU General Public License as published by
@@ -14,33 +14,36 @@
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #pragma once
 #include <string>
-#include <vector>
-#include <mutex>
-#include "EventInformation.h"
 
-/**
- * \brief Class that contains and manages all the events.
- */
-class Collector
+enum EventAction
 {
-public:
-  Collector();
-  virtual ~Collector();
-
-  bool Add(__int64 id, EventAction action, const std::wstring& path, const std::wstring& file);
-
-private:
-  /**
-   * \brief the locks so we can add data.
-   */
-  std::recursive_mutex _lock;
-
-  /**
-   * \brief the events list
-   */
-  typedef std::vector<EventInformation> Events;
-  Events _events;
-
-  long long GetTimeMs() const;
+  Error,      // there was a general error.
+  Added     = 1000,
+  Removed,
+  Touched,    //  small changed, timestamp, attribute etc...
+  RenamedOld,
+  RenamedNew
 };
 
+struct EventInformation
+{
+  /**
+   * \brief this is the monitor id.
+   */
+  __int64 id;
+
+  /**
+   * \brief the time in Ms when this event was recorded.
+   */
+  __int64 timeMs;
+
+  /**
+   * \brief the action we are recording
+   */
+  EventAction action;
+
+  /**
+   * \brief the filename/folder that was updated. 
+   */
+  std::wstring name;
+};

@@ -42,17 +42,17 @@ private:
   bool OpenDirectory();
   void CloseDirectory();
   bool IsOpen() const;
-  void ProcessNotificationFromBackupPointer(const void* pBufferBk);
-  void* Clone(unsigned long ulSize);
+  void ProcessNotificationFromBackupPointer(const unsigned char* pBufferBk) const;
+  unsigned char* Clone(unsigned long ulSize) const;
 
   void Read();
   void Run();
 
 private:
   HANDLE _hDirectory;
-  void* _buffer;
+  unsigned char* _buffer;
 
-  OVERLAPPED	_overlapped;
+  OVERLAPPED	_overlapped{};
 
   // Create a std::promise object
   std::promise<void> _exitSignal;

@@ -18,11 +18,18 @@
 
 #define BUFFER_SIZE (unsigned long)16384
 
-MonitorReadDirectoryChanges::MonitorReadDirectoryChanges(__int64 id, const std::wstring& path, bool recursive) :
+/**
+ * \brief Create the Monitor that uses ReadDirectoryChanges
+ * \param id the unique id of this monitor
+ * \param path the path we will be monitoring
+ * \param recursive if we want to monitor recursively or not.
+ */
+MonitorReadDirectoryChanges::MonitorReadDirectoryChanges(__int64 id, const std::wstring& path, bool recursive) 
+    :
   Monitor(id, path, recursive ),
-  _hDirectory( 0 ),
-  _th( nullptr ),
-  _buffer( nullptr )
+  _hDirectory(nullptr),
+  _buffer( nullptr ),
+  _th( nullptr )
 {
   memset(&_overlapped, 0, sizeof(OVERLAPPED));
 }
@@ -115,8 +122,8 @@ bool MonitorReadDirectoryChanges::Start()
   CloseDirectory();
 
   // set the variables we will be using here.
-  _buffer = new char[BUFFER_SIZE];
-  memset(_buffer, 0, sizeof(char)*BUFFER_SIZE);
+  _buffer = new unsigned char[BUFFER_SIZE];
+  memset(_buffer, 0, sizeof(unsigned char)*BUFFER_SIZE);
   _overlapped.hEvent = this;
 
   // start the worker thread
@@ -213,7 +220,7 @@ void CALLBACK MonitorReadDirectoryChanges::FileIoCompletionRoutine(
 )
 {
   // get the object we are working with
-  auto obj = (MonitorReadDirectoryChanges*)lpOverlapped->hEvent;
+  auto obj = static_cast<MonitorReadDirectoryChanges*>(lpOverlapped->hEvent);
 
   if (dwErrorCode == ERROR_OPERATION_ABORTED)
   {
@@ -248,7 +255,7 @@ void CALLBACK MonitorReadDirectoryChanges::FileIoCompletionRoutine(
   obj->ProcessNotificationFromBackupPointer(pBufferBk);
 }
 
-void* MonitorReadDirectoryChanges::Clone(unsigned long ulSize)
+unsigned char* MonitorReadDirectoryChanges::Clone(const unsigned long ulSize) const
 {
   // we have an overfolow
   if (ulSize > BUFFER_SIZE)
@@ -257,7 +264,7 @@ void* MonitorReadDirectoryChanges::Clone(unsigned long ulSize)
   }
 
   // create the clone
-  const auto pBuffer = new char[ulSize];
+  const auto pBuffer = new unsigned char[ulSize];
 
   // copy it.
   memcpy(pBuffer, _buffer, ulSize);
@@ -265,7 +272,7 @@ void* MonitorReadDirectoryChanges::Clone(unsigned long ulSize)
   return pBuffer;
 }
 
-void MonitorReadDirectoryChanges::ProcessNotificationFromBackupPointer(const void* pBuffer )
+void MonitorReadDirectoryChanges::ProcessNotificationFromBackupPointer(const unsigned char* pBuffer ) const
 {
   try
   {
@@ -288,7 +295,7 @@ void MonitorReadDirectoryChanges::ProcessNotificationFromBackupPointer(const voi
       {
         break;
       }
-      pRecord = (FILE_NOTIFY_INFORMATION *)(&((unsigned char*)pRecord)[pRecord->NextEntryOffset]);
+      pRecord = reinterpret_cast<FILE_NOTIFY_INFORMATION *>(&reinterpret_cast<unsigned char*>(pRecord)[pRecord->NextEntryOffset]);
     }
   }
   catch( ... )
