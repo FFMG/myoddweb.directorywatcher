@@ -1,4 +1,4 @@
-﻿//This file is part of Myoddweb.Directorywatcher.
+//This file is part of Myoddweb.Directorywatcher.
 //
 //    Myoddweb.Directorywatcher is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU General Public License as published by
@@ -12,25 +12,12 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
-#pragma once
-#include <string>
+#include "Collector.h"
 
-class Monitor
+Collector::Collector()
 {
-public:
-  Monitor( __int64 id, const std::wstring& path, bool recursive );
-  virtual ~Monitor();
+}
 
-  __int64 Id() const;
-  const std::wstring& Path() const;
-  bool Recursive() const;
-
-public:
-  virtual bool Start() = 0;
-  virtual void Stop() = 0;
-
-private:
-  const __int64 _id;
-  const std::wstring _path;
-  const bool _recursive;
-};
+Collector::~Collector()
+{
+}
