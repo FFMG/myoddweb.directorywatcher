@@ -29,7 +29,7 @@ namespace myoddweb.directorywatcher.sample
         // start the monitor.
         var watch = new Watcher();
         var id1 = watch.Start("c:\\", true);
-        //var id2 = watch.Start("h:\\", true);
+        var id2 = watch.Start("h:\\", true);
 
         var exitEvent = new ManualResetEvent(false);
         Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs e)
@@ -40,7 +40,7 @@ namespace myoddweb.directorywatcher.sample
 
           // stop the monitor
           watch.Stop(id1);
-          //watch.Stop(id2);
+          watch.Stop(id2);
         };
 
         // do something

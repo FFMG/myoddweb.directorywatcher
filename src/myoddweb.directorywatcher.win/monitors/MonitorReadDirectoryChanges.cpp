@@ -267,7 +267,7 @@ void MonitorReadDirectoryChanges::ProcessNotificationFromBackupPointer(const voi
     {
       // get the filename
       auto wFilename = std::wstring(pRecord->FileName, pRecord->FileNameLength / sizeof(wchar_t));
-      wprintf(L"%s\n", wFilename.c_str());
+      wprintf(L"%s\\%s\n", Path().c_str(), wFilename.c_str());
 
       // more files?
       if (0 == pRecord->NextEntryOffset)
