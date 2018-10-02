@@ -27,5 +27,6 @@ private:
   void CheckRecord(USN_RECORD * record);
 
 public:
-  int Poll();
+  bool Poll(const std::wstring& path, bool recursive);
+  void Stop();
 };

@@ -18,6 +18,9 @@
     <ClCompile Include="utils\MonitorsManager.cpp">
       <Filter>utils</Filter>
     </ClCompile>
+    <ClCompile Include="monitors\MonitorReadDirectoryChangesEx.cpp">
+      <Filter>monitors</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -37,6 +40,9 @@
     </ClInclude>
     <ClInclude Include="utils\MonitorsManager.h">
       <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\MonitorReadDirectoryChangesEx.h">
+      <Filter>monitors</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

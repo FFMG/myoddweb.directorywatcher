@@ -12,6 +12,8 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
+using System.Threading.Tasks;
+
 namespace myoddweb.directorywatcher.sample
 {
   internal class Program
@@ -23,6 +25,7 @@ namespace myoddweb.directorywatcher.sample
       var id = watch.StartMonitor("c:\\", true );
 
       // do something
+      Task.Delay( 30 * 1000 ).Wait();
 
       // stop the monitor
       watch.StopMonitor(id);

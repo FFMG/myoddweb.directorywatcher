@@ -11,7 +11,11 @@ MonitorFindFirstChange::~MonitorFindFirstChange()
 {
 }
 
-void MonitorFindFirstChange::Poll(std::wstring path, bool recursive) const
+void MonitorFindFirstChange::Stop()
+{
+}
+
+bool MonitorFindFirstChange::Poll(const std::wstring& path, bool recursive)
 {
   auto changeHandle = FindFirstChangeNotificationW(path.c_str(), recursive ? TRUE : FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE);
   for (;;)
@@ -27,4 +31,5 @@ void MonitorFindFirstChange::Poll(std::wstring path, bool recursive) const
     }
   }
   FindCloseChangeNotification(changeHandle);
+  return true;
 }

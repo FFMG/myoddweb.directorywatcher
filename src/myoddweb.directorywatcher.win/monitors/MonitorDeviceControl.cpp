@@ -76,14 +76,23 @@ void MonitorDeviceControl::CheckRecord(USN_RECORD * record)
   filename = (WCHAR *)(((BYTE *)record) + record->FileNameOffset);
   filenameend = (WCHAR *)(((BYTE *)record) + record->FileNameOffset + record->FileNameLength);
 
-  if (filenameend - filename != 8) return;
+  if (filenameend - filename != 8)
+  {
+    return;
+  }
 
-  if (wcsncmp(filename, L"test.txt", 8) != 0) return;
-
+  if (wcsncmp(filename, L"test.txt", 8) != 0)
+  {
+    return;
+  }
   ShowRecord(record);
 }
 
-int MonitorDeviceControl::Poll()
+void MonitorDeviceControl::Stop()
+{
+}
+
+bool MonitorDeviceControl::Poll(const std::wstring& path, bool recursive)
 {
   _starttick = GetTickCount();
   printf("Allocating memory.\n");
@@ -93,7 +102,7 @@ int MonitorDeviceControl::Poll()
   if (_buffer == NULL)
   {
     printf("VirtualAlloc: %u\n", GetLastError());
-    return 0;
+    return false;
   }
 
   printf("Opening volume.\n");
@@ -103,7 +112,7 @@ int MonitorDeviceControl::Poll()
   if (_drive == INVALID_HANDLE_VALUE)
   {
     printf("CreateFile: %u\n", GetLastError());
-    return 0;
+    return false;
   }
 
   printf("Calling FSCTL_QUERY_USN_JOURNAL\n");
@@ -111,7 +120,7 @@ int MonitorDeviceControl::Poll()
   if (!DeviceIoControl(_drive, FSCTL_QUERY_USN_JOURNAL, NULL, 0, _buffer, BUFFER_SIZE, &_bytecount, NULL))
   {
     printf("FSCTL_QUERY_USN_JOURNAL: %u\n", GetLastError());
-    return 0;
+    return false;
   }
 
   _journal = (USN_JOURNAL_DATA *)_buffer;
@@ -143,7 +152,7 @@ int MonitorDeviceControl::Poll()
       printf("File count: %lu\n", _filecount);
       _endtick = GetTickCount();
       printf("Ticks: %u\n", _endtick - _starttick);
-      return 0;
+      return false;
     }
 
     //      printf("Bytes returned: %u\n", bytecount);
@@ -163,4 +172,5 @@ int MonitorDeviceControl::Poll()
 
     _mft_enum_data.StartFileReferenceNumber = _nextid;
   }
+  return true;
 }

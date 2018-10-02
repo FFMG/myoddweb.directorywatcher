@@ -8,6 +8,8 @@ public:
   MonitorFindFirstChange(__int64 id);
   virtual ~MonitorFindFirstChange();
 
-  void Poll(std::wstring path, bool recursive) const;
+public:
+  bool Poll(const std::wstring& path, bool recursive);
+  void Stop();
 };
 
