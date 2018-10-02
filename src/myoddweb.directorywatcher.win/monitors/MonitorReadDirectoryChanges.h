@@ -21,7 +21,7 @@
 class MonitorReadDirectoryChanges : public Monitor
 {
 public:
-  MonitorReadDirectoryChanges(__int64 id, const std::wstring& path, bool recursive);
+  MonitorReadDirectoryChanges(__int64 id, const std::wstring& path, bool recursive, Collector& collector);
   virtual ~MonitorReadDirectoryChanges();
 
   bool Start();

@@ -24,9 +24,9 @@
  * \param path the path we will be monitoring
  * \param recursive if we want to monitor recursively or not.
  */
-MonitorReadDirectoryChanges::MonitorReadDirectoryChanges(__int64 id, const std::wstring& path, bool recursive) 
+MonitorReadDirectoryChanges::MonitorReadDirectoryChanges(__int64 id, const std::wstring& path, bool recursive, Collector& collector)
     :
-  Monitor(id, path, recursive ),
+  Monitor(id, path, recursive, collector ),
   _hDirectory(nullptr),
   _buffer( nullptr ),
   _th( nullptr )
@@ -288,7 +288,28 @@ void MonitorReadDirectoryChanges::ProcessNotificationFromBackupPointer(const uns
     {
       // get the filename
       auto wFilename = std::wstring(pRecord->FileName, pRecord->FileNameLength / sizeof(wchar_t));
-      wprintf(L"%s\\%s\n", Path().c_str(), wFilename.c_str());
+      switch (pRecord->Action)
+      {
+      case FILE_ACTION_ADDED:
+        EventsCollector().Add(Id(), EventAction::Added, Path(), wFilename);
+        break;
+
+      case FILE_ACTION_REMOVED:
+        EventsCollector().Add(Id(), EventAction::Removed, Path(), wFilename);
+        break;
+
+      case FILE_ACTION_MODIFIED:
+        EventsCollector().Add(Id(), EventAction::Touched, Path(), wFilename);
+        break;
+
+      case FILE_ACTION_RENAMED_OLD_NAME:
+        EventsCollector().Add(Id(), EventAction::RenamedOld, Path(), wFilename);
+        break;
+
+      case FILE_ACTION_RENAMED_NEW_NAME:
+        EventsCollector().Add(Id(), EventAction::RenamedNew, Path(), wFilename);
+        break;
+      }
 
       // more files?
       if (0 == pRecord->NextEntryOffset)

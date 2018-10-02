@@ -37,16 +37,16 @@ namespace myoddweb.directorywatcher.sample
           e.Cancel = true;
           Console.WriteLine("Stop detected.");
           exitEvent.Set();
-
-          // stop the monitor
-          watch.Stop(id1);
-          watch.Stop(id2);
         };
 
         // do something
         // then wait for the user to press a key
 
         exitEvent.WaitOne();
+
+        // stop the monitor
+        watch.Stop(id1);
+        watch.Stop(id2);
       }
       catch (Exception ex)
       {

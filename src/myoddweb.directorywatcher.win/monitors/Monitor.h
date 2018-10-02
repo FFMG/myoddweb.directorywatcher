@@ -14,16 +14,18 @@
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #pragma once
 #include <string>
+#include "../utils/Collector.h";
 
 class Monitor
 {
 public:
-  Monitor( __int64 id, const std::wstring& path, bool recursive );
+  Monitor( __int64 id, const std::wstring& path, bool recursive, Collector& collector );
   virtual ~Monitor();
 
   __int64 Id() const;
   const std::wstring& Path() const;
   bool Recursive() const;
+  Collector& EventsCollector() const;
 
 public:
   virtual bool Start() = 0;
@@ -33,4 +35,5 @@ private:
   const __int64 _id;
   const std::wstring _path;
   const bool _recursive;
+  Collector& _collector;
 };

@@ -14,10 +14,11 @@
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #include "Monitor.h"
 
-Monitor::Monitor( const __int64 id, const std::wstring& path, const bool recursive) : 
+Monitor::Monitor(__int64 id, const std::wstring& path, bool recursive, Collector& collector) :
   _id( id ),
   _path( path ),
-  _recursive(recursive )
+  _recursive(recursive ),
+  _collector( collector )
 {
   
 }
@@ -25,6 +26,14 @@ Monitor::Monitor( const __int64 id, const std::wstring& path, const bool recursi
 Monitor::~Monitor()
 {
 
+}
+
+/**
+ * \return get the data collector
+ */
+Collector& Monitor::EventsCollector() const
+{
+  return _collector;
 }
 
 /**

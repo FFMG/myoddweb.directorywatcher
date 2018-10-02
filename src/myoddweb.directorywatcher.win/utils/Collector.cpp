@@ -36,14 +36,40 @@ long long Collector::GetTimeMs() const
   return value.count();
 }
 
+std::wstring Collector::PathCombine(const std::wstring& lhs, const std::wstring& rhs) const
+{
+  // sanity check
+  const auto s = lhs.length();
+  if( s == 0 )
+  {
+    return rhs;
+  }
+
+  const auto sep1 = L'/';
+  const auto sep2 = L'\\';
+
+  const auto l = lhs[s-1];
+  if (l != sep1 && l != sep2) 
+  {
+#ifdef WIN32
+    return lhs + sep2 + rhs;
+#else
+    return lhs + sep1 + rhs;
+#endif
+  }
+  return lhs + rhs;
+}
+
 bool Collector::Add(const __int64 id, const EventAction action, const std::wstring& path, const std::wstring& file)
 {
   // Create the event
   EventInformation e;
   e.id = id;
   e.action = action;
-  e.name = path + file;
+  e.name = PathCombine( path, file );
   e.timeMs = GetTimeMs();
+
+  wprintf(L"%s\n", e.name.c_str());
 
   // lock
   auto guard = Lock(_lock);
