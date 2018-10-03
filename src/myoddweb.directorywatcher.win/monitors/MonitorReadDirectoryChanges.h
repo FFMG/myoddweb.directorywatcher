@@ -14,52 +14,57 @@
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #pragma once
 #include "Monitor.h"
-#include <string>
 #include <Windows.h>
 #include <future>
 
-class MonitorReadDirectoryChanges : public Monitor
+namespace myoddweb
 {
-public:
-  MonitorReadDirectoryChanges(__int64 id, const std::wstring& path, bool recursive );
-  virtual ~MonitorReadDirectoryChanges();
+  namespace directorywatcher
+  {
 
-  bool Start() override;
-  void Stop() override;
+    class MonitorReadDirectoryChanges : public Monitor
+    {
+    public:
+      MonitorReadDirectoryChanges(__int64 id, const Request& request);
+      virtual ~MonitorReadDirectoryChanges();
 
-protected:
-  static void CALLBACK FileIoCompletionRoutine(
-    DWORD dwErrorCode,							  // completion code
-    DWORD dwNumberOfBytesTransfered,	// number of bytes transferred
-    LPOVERLAPPED lpOverlapped         // I/O information buffer
-  );
+      bool Start() override;
+      void Stop() override;
 
-  static void BeginThread(MonitorReadDirectoryChanges* obj);
+    protected:
+      static void CALLBACK FileIoCompletionRoutine(
+        DWORD dwErrorCode,							  // completion code
+        DWORD dwNumberOfBytesTransfered,	// number of bytes transferred
+        LPOVERLAPPED lpOverlapped         // I/O information buffer
+      );
 
-private:
-  void CompleteBuffer();
+      static void BeginThread(MonitorReadDirectoryChanges* obj);
 
-  bool OpenDirectory();
-  void CloseDirectory();
-  bool IsOpen() const;
-  void ProcessNotificationFromBackup(const unsigned char* pBufferBk) const;
-  unsigned char* Clone(unsigned long ulSize) const;
+    private:
+      void CompleteBuffer();
 
-  void Read();
-  void Run();
+      bool OpenDirectory();
+      void CloseDirectory();
+      bool IsOpen() const;
+      void ProcessNotificationFromBackup(const unsigned char* pBufferBk) const;
+      unsigned char* Clone(unsigned long ulSize) const;
 
-private:
-  HANDLE _hDirectory;
-  unsigned char* _buffer;
+      void Read();
+      void Run();
 
-  OVERLAPPED	_overlapped{};
+    private:
+      HANDLE _hDirectory;
+      unsigned char* _buffer;
 
-  // Create a std::promise object
-  std::promise<void> _exitSignal;
-  std::future<void> _futureObj;
-  std::thread* _th;
+      OVERLAPPED	_overlapped{};
 
-  void StopWorkerThread();
-  void StartWorkerThread();
-};
+      // Create a std::promise object
+      std::promise<void> _exitSignal;
+      std::future<void> _futureObj;
+      std::thread* _th;
 
+      void StopWorkerThread();
+      void StartWorkerThread();
+    };
+  }
+}

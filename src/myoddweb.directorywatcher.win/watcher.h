@@ -13,15 +13,24 @@
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #pragma once
+#include "utils/Request.h"
 
 namespace myoddweb
 {
   namespace directorywatcher
   {
-    // Start watching a folder
-    extern "C" { __declspec(dllexport) __int64 Start(const wchar_t* path, bool recursive ); }
+    /**
+     * \brief Start watching a folder
+     * \param request The request containing info about the item we are watching.
+     * \return The id of the created request or -ve otherwise
+     */
+    extern "C" { __declspec(dllexport) __int64 Add( Request request ); }
 
-    // stop watching
-    extern "C" { __declspec(dllexport) bool Stop(__int64 id ); }
+    /**
+     * \brief stop watching
+     * \param id the id we would like to remove.
+     * \return success or not
+     */
+    extern "C" { __declspec(dllexport) bool Remove(__int64 id ); }
   }
 }

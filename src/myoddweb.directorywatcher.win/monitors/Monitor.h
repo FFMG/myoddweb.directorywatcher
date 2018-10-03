@@ -15,30 +15,36 @@
 #pragma once
 #include <string>
 #include "../utils/Collector.h"
+#include "../utils/Request.h"
 
-class Monitor
+namespace myoddweb
 {
-public:
-  Monitor( __int64 id, const std::wstring& path, bool recursive );
-  virtual ~Monitor();
+  namespace directorywatcher
+  {
+    class Monitor
+    {
+    public:
+      Monitor(__int64 id, const Request& request);
+      virtual ~Monitor();
 
-  __int64 Id() const;
-  const std::wstring& Path() const;
-  bool Recursive() const;
-  Collector& EventsCollector() const;
+      __int64 Id() const;
+      const std::wstring& Path() const;
+      bool Recursive() const;
+      Collector& EventsCollector() const;
 
-public:
-  virtual bool Start() = 0;
-  virtual void Stop() = 0;
+    public:
+      virtual bool Start() = 0;
+      virtual void Stop() = 0;
 
-protected:
-  void AddEvent(EventAction action, const std::wstring& fileName) const;
-  void AddEventError(EventAction action) const;
+    protected:
+      void AddEvent(EventAction action, const std::wstring& fileName) const;
+      void AddEventError(EventAction action) const;
 
-private:
-  const __int64 _id;
-  const std::wstring _path;
-  const bool _recursive;
+    private:
+      const __int64 _id;
+      const Request _request;
 
-  Collector* _eventCollector;
-};
+      Collector* _eventCollector;
+    };
+  }
+}

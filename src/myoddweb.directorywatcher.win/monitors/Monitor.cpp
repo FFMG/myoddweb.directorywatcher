@@ -13,71 +13,75 @@
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #include "Monitor.h"
-
-Monitor::Monitor(__int64 id, const std::wstring& path, bool recursive) :
-  _id( id ),
-  _path( path ),
-  _recursive(recursive ),
-  _eventCollector( nullptr )
+namespace myoddweb
 {
-  _eventCollector = new Collector();
-}
+  namespace directorywatcher
+  {
+    Monitor::Monitor(__int64 id, const Request& request) :
+      _id(id),
+      _request(request),
+      _eventCollector(nullptr)
+    {
+      _eventCollector = new Collector();
+    }
 
-Monitor::~Monitor()
-{
-  delete _eventCollector;
-  _eventCollector = nullptr;
-}
+    Monitor::~Monitor()
+    {
+      delete _eventCollector;
+      _eventCollector = nullptr;
+    }
 
-/**
- * \return get the data collector
- */
-Collector& Monitor::EventsCollector() const
-{
-  return *_eventCollector;
-}
+    /**
+     * \return get the data collector
+     */
+    Collector& Monitor::EventsCollector() const
+    {
+      return *_eventCollector;
+    }
 
-/**
- * Get the id of the monitor
- * @return __int64 the id
- */
-__int64 Monitor::Id() const
-{
-  return _id;
-}
+    /**
+     * Get the id of the monitor
+     * @return __int64 the id
+     */
+    __int64 Monitor::Id() const
+    {
+      return _id;
+    }
 
-/**
- * Get the current path.
- * @return the path being checked.
- */
-const std::wstring& Monitor::Path() const
-{
-  return _path;
-}
+    /**
+     * Get the current path.
+     * @return the path being checked.
+     */
+    const std::wstring& Monitor::Path() const
+    {
+      return _request.Path;
+    }
 
-/**
- * If this is a recursive monitor or not.
- * @return if recursive or not.
- */
-bool Monitor::Recursive() const
-{
-  return _recursive;
-}
+    /**
+     * If this is a recursive monitor or not.
+     * @return if recursive or not.
+     */
+    bool Monitor::Recursive() const
+    {
+      return _request.Recursive;
+    }
 
-/**
- * \brief Add an event to our current log.
- * \param action 
- * \param fileName 
- */
-void Monitor::AddEvent( const EventAction action, const std::wstring& fileName) const
-{
-  _eventCollector->Add(action, Path(), fileName);
-}
+    /**
+     * \brief Add an event to our current log.
+     * \param action
+     * \param fileName
+     */
+    void Monitor::AddEvent(const EventAction action, const std::wstring& fileName) const
+    {
+      _eventCollector->Add(action, Path(), fileName);
+    }
 
-/**
- * \brief Add an error event to the list.
- */
-void Monitor::AddEventError( const EventAction action) const
-{
-  _eventCollector->Add(action, L"", L"");
+    /**
+     * \brief Add an error event to the list.
+     */
+    void Monitor::AddEventError(const EventAction action) const
+    {
+      _eventCollector->Add(action, L"", L"");
+    }
+  }
 }

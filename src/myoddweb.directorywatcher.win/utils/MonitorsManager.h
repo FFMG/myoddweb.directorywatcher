@@ -17,29 +17,35 @@
 #include <unordered_map>
 #include "../monitors/Monitor.h"
 
-class MonitorsManager
+namespace myoddweb
 {
-protected:
-  MonitorsManager();
-  virtual ~MonitorsManager();
+  namespace directorywatcher
+  {
+    class MonitorsManager
+    {
+    protected:
+      MonitorsManager();
+      virtual ~MonitorsManager();
 
-public:
-  static __int64 Start(const wchar_t* path, bool recursive);
-  static bool Stop(__int64 id );
+    public:
+      static __int64 Add(const Request& request);
+      static bool Remove(__int64 id);
 
-protected:
-  Monitor* CreateAndStart(const std::wstring& path, bool recursive);
-  bool Remove( __int64 id );
-  static __int64 GetId();
-protected:
-  // The file lock
-  static std::recursive_mutex _lock;
+    protected:
+      Monitor* CreateAndStart(const Request& request);
+      bool RemoveAndDelete(__int64 id);
+      static __int64 GetId();
+    protected:
+      // The file lock
+      static std::recursive_mutex _lock;
 
-  // the singleton
-  static MonitorsManager* _instance;
-  static MonitorsManager* Instance();
+      // the singleton
+      static MonitorsManager* _instance;
+      static MonitorsManager* Instance();
 
-protected:
-  typedef std::unordered_map<__int64, Monitor*> MonitorMap;
-  MonitorMap _monitors;
-};
+    protected:
+      typedef std::unordered_map<__int64, Monitor*> MonitorMap;
+      MonitorMap _monitors;
+    };
+  }
+}

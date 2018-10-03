@@ -99,8 +99,10 @@ namespace myoddweb.directorywatcher
           // our own Add( ... ) function as it checks
           // if we have started work or not.
           var id = WatcherManager.Get.Add(request);
-          if (id != -1)
+          if (id < 0)
           {
+            // negative results mean that it did not work.
+            // so we will leave it as pending.
             continue;
           }
 
