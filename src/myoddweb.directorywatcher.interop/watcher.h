@@ -38,6 +38,11 @@ namespace myoddweb
          * \inheritdoc
          */
         virtual bool Stop( long long id);
+
+        /**
+         * \inheritdoc
+         */
+        virtual long long Register(long long id, Func<String^, bool>^ cb);
       protected:
         !Watcher();
 

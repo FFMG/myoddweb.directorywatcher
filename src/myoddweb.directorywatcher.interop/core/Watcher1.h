@@ -39,6 +39,14 @@ public:
    */
   bool Stop( long long id );
 
+  /**
+   * \brief register a callback function
+   * \param id
+   * \param cb
+   * \return the id of the registration.
+   */
+  long long Register(long long id, Func<String^, bool>^ cb);
+
 protected:
   void Release();
   bool CreateInstance();

@@ -26,4 +26,16 @@ typedef long long(__stdcall *f_Start)( Request );
  * \brief remove a request 
  * \return success or not.
  */
-typedef bool(__stdcall *f_Stop)(__int64);
+typedef bool(__stdcall *f_Stop)(long long);
+
+/**
+ * \brief the callback function.
+ * \return success or not.
+ */
+typedef bool(__stdcall *f_callback)(std::wstring);
+
+/**
+ * \brief register a callback function.
+ * \return the id of the registered function.
+ */
+typedef long long(__stdcall *f_Register)(long long, f_callback );

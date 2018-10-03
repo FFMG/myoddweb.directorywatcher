@@ -41,6 +41,11 @@ namespace myoddweb.directorywatcher.sample
 
         // start the monitor.
         IWatcher2 watch1 = new Watcher();
+        watch1.Register(0, (s) =>
+        {
+          Console.WriteLine(s);
+          return true;
+        });
         watch1.Add(new Request("c:\\", true));
         watch1.Add(new Request("d:\\", true));
         watch1.Add(new Request("d:\\", true));

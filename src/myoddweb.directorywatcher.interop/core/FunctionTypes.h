@@ -20,5 +20,6 @@ enum class FunctionTypes
   FunctionFirst = 1,
   FunctionStart = FunctionFirst,
   FunctionStop,
+  FunctionRegister,
   FunctionLast
 };

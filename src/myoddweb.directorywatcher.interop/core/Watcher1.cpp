@@ -128,6 +128,10 @@ bool Watcher1::CreateUnmanagedFunction(HINSTANCE hInstance, FunctionTypes procTy
     procAddress = GetProcAddress(hInstance, "Stop");
     break;
 
+  case FunctionTypes::FunctionRegister:
+    procAddress = GetProcAddress(hInstance, "Register");
+    break;
+
   default:
     auto s = marshal_as<std::string>(
       String::Format("Could not locate the name of the given unmanaged function id. {0}", (int)procType)
@@ -209,7 +213,25 @@ bool Watcher1::Stop( __int64 id )
   }
   catch (...)
   {
-    return Errors::ErrorUnknown;
+    return false;
   }
-  return 0;
+  return false;
+}
+
+/**
+ * \brief register a callback function
+ * \param id
+ * \param cb
+ * \return the id of the registration.
+ */
+long long Watcher1::Register(long long id, Func<String^, bool>^ cb)
+{
+  // get the function
+  auto funci = (f_Register)GetUnmanagedFunction(FunctionTypes::FunctionRegister);
+
+  // 
+  auto pcb = new f_callback;
+
+  // otherwise just monitor
+  return funci(id, *pcb);
 }

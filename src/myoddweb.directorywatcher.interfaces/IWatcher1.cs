@@ -12,6 +12,9 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
+
+using System;
+
 namespace myoddweb.directorywatcher.interfaces
 {
   public interface IWatcher1
@@ -29,5 +32,13 @@ namespace myoddweb.directorywatcher.interfaces
     /// <param name="id"></param>
     /// <returns></returns>
     bool Stop(long id );
+
+    /// <summary>
+    /// Register a callback function.
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="cb"></param>
+    /// <returns></returns>
+    long Register(long id, Func<string, bool> cb);
   }
 }

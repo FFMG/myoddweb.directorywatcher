@@ -24,13 +24,21 @@ namespace myoddweb
      * \param request The request containing info about the item we are watching.
      * \return The id of the created request or -ve otherwise
      */
-    extern "C" { __declspec(dllexport) __int64 Start( Request request ); }
+    extern "C" { __declspec(dllexport) long long Start( Request request ); }
 
     /**
      * \brief stop watching
      * \param id the id we would like to remove.
      * \return success or not
      */
-    extern "C" { __declspec(dllexport) bool Stop(__int64 id ); }
+    extern "C" { __declspec(dllexport) bool Stop(long long id ); }
+
+    /**
+     * \brief Register a callback function.
+     * \param id the id we would like to remove.
+     * \param cb the callback function
+     * \return the id of the callback function
+     */
+    extern "C" { __declspec(dllexport) long long Register( long long id, bool (__stdcall *cb)( std::wstring )); }
   }
 }
