@@ -5,6 +5,9 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="core">
+      <UniqueIdentifier>{5f77d555-83c7-403d-80dd-d086edba56b2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="targetver.h">
@@ -16,20 +19,20 @@
     <ClInclude Include="watcher.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="Importer.h">
-      <Filter>src</Filter>
+    <ClInclude Include="core\Watcher1.h">
+      <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="FunctionTypes.h">
-      <Filter>src</Filter>
+    <ClInclude Include="core\Errors.h">
+      <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="CoreWatcher.h">
-      <Filter>src</Filter>
+    <ClInclude Include="core\Functions.h">
+      <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="Errors.h">
-      <Filter>src</Filter>
+    <ClInclude Include="core\FunctionTypes.h">
+      <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="Functions.h">
-      <Filter>src</Filter>
+    <ClInclude Include="core\Importer.h">
+      <Filter>core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -42,11 +45,11 @@
     <ClCompile Include="watcher.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="Importer.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="core\Watcher1.cpp">
+      <Filter>core</Filter>
     </ClCompile>
-    <ClCompile Include="CoreWatcher.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="core\Importer.cpp">
+      <Filter>core</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

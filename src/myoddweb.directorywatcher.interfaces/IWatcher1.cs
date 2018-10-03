@@ -17,18 +17,30 @@ namespace myoddweb.directorywatcher.interfaces
   public interface IWatcher1
   {
     /// <summary>
-    /// The path we wish to monitor for changes
+    /// Add a request to the list of requests.
+    /// If we have already started, we will start this request right away.
     /// </summary>
-    /// <param name="path">The path we want to monitor.</param>
-    /// <param name="recursive"></param>
-    /// <returns>Unique Id used to release/stop monitoring</returns>
-    long Start(string path, bool recursive);
+    /// <param name="request"></param>
+    /// <returns></returns>
+    long Add(IRequest request );
 
     /// <summary>
-    /// Stop monitoring a path
+    /// Stop and remove a currently running request.
     /// </summary>
     /// <param name="id"></param>
     /// <returns></returns>
-    bool Stop(long id);
+    bool Remove(long id );
+
+    /// <summary>
+    /// Start all the requests
+    /// </summary>
+    /// <returns></returns>
+    bool Start();
+
+    /// <summary>
+    /// Stop all the running requests.
+    /// </summary>
+    /// <returns></returns>
+    bool Stop();
   }
 }

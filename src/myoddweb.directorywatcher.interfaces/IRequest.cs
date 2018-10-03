@@ -1,4 +1,4 @@
-//This file is part of Myoddweb.Directorywatcher.
+﻿//This file is part of Myoddweb.Directorywatcher.
 //
 //    Myoddweb.Directorywatcher is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU General Public License as published by
@@ -12,21 +12,18 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
-#include "stdafx.h"
-#include "Importer.h"
-#include "CoreWatcher.h"
-
-// --------------------------------------------------------------------------------------------------
-extern "C" LPVOID WINAPI Importer(UINT32 id)
+namespace myoddweb.directorywatcher.interfaces
 {
-  switch (id)
+  public interface IRequest
   {
-  case IID_IWatcher1:
-    return new CoreWatcher();
-    break;
+    /// <summary>
+    /// The path we are watching
+    /// </summary>
+    string Path { get; }
 
-  default:
-    break;
+    /// <summary>
+    /// If it is recursive or not.
+    /// </summary>
+    bool Recursive { get; }
   }
-  return NULL;
 }

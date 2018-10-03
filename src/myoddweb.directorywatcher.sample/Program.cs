@@ -15,9 +15,22 @@
 
 using System;
 using System.Threading;
+using myoddweb.directorywatcher.interfaces;
 
 namespace myoddweb.directorywatcher.sample
 {
+  internal class Request : IRequest
+  {
+    public Request(string path, bool recursive)
+    {
+      Path = path;
+      Recursive = recursive;
+    }
+
+    public string Path { get; }
+    public bool Recursive { get; }
+  }
+
   internal class Program
   {
     private static void Main()
@@ -28,11 +41,15 @@ namespace myoddweb.directorywatcher.sample
 
         // start the monitor.
         var watch1 = new Watcher();
-        var id11 = watch1.Start("c:\\", true);
-        var id12 = watch1.Start("h:\\", true);
-
+        watch1.Add(new Request("c:\\", true));
+        watch1.Add(new Request("d:\\", true));
+        watch1.Add(new Request("d:\\", true));
+        
         var watch2 = new Watcher();
-        var id21 = watch2.Start("c:\\", true);
+        watch2.Add( new Request("c:\\", true) );
+
+        watch1.Start();
+        watch2.Start();
 
         var exitEvent = new ManualResetEvent(false);
         Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs e)
@@ -47,10 +64,9 @@ namespace myoddweb.directorywatcher.sample
 
         exitEvent.WaitOne();
 
-        // stop the monitor
-        watch1.Stop(id11);
-        watch1.Stop(id12);
-        watch2.Stop(id21);
+        // stop everything.
+        watch1.Stop();
+        watch2.Stop();
       }
       catch (Exception ex)
       {

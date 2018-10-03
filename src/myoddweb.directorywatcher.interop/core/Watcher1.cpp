@@ -12,14 +12,13 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
-#include "stdafx.h"
-#include "CoreWatcher.h"
-
 #include <string>
 #include <msclr\marshal.h>
 #include <msclr\marshal_cppstd.h>
+#include "Watcher1.h"
 #include "Errors.h"
 #include "Functions.h"
+#include "FunctionTypes.h"
 
 using namespace msclr::interop;
 using namespace System;
@@ -27,7 +26,7 @@ using namespace System::Diagnostics;
 
 using namespace System::IO;
 
-CoreWatcher::CoreWatcher() :
+Watcher1::Watcher1() :
   _hDll( nullptr )
 {
   if( !CreateInstance() )
@@ -41,12 +40,12 @@ CoreWatcher::CoreWatcher() :
   }
 }
 
-CoreWatcher::~CoreWatcher()
+Watcher1::~Watcher1()
 {
   Release();
 }
 
-void CoreWatcher::Release()
+void Watcher1::Release()
 {
   // clean up if need be.
   if (nullptr == _hDll)
@@ -60,7 +59,7 @@ void CoreWatcher::Release()
   _hDll = nullptr;
 }
 
-bool CoreWatcher::CreateInstance()
+bool Watcher1::CreateInstance()
 {
   //  do we have it already?
   if (nullptr != _hDll)
@@ -93,7 +92,7 @@ bool CoreWatcher::CreateInstance()
  * Load all the unmaneged functions and make sure that they are placed ub the unordered map
  * @return boolean if anything went wrong.
  */
-bool CoreWatcher::CreateUnmanagedFunctions()
+bool Watcher1::CreateUnmanagedFunctions()
 {
   if (nullptr == _hDll)
   {
@@ -116,7 +115,7 @@ bool CoreWatcher::CreateUnmanagedFunctions()
   return true;
 }
 
-bool CoreWatcher::CreateUnmanagedFunction(HINSTANCE hInstance, FunctionTypes procType)
+bool Watcher1::CreateUnmanagedFunction(HINSTANCE hInstance, FunctionTypes procType)
 {
   FARPROC procAddress = nullptr;
   switch( procType )
@@ -154,7 +153,7 @@ bool CoreWatcher::CreateUnmanagedFunction(HINSTANCE hInstance, FunctionTypes pro
  * @param ProcType procType the function id we are looking for.
  * @return const FARPROC the proc
  */
-const FARPROC CoreWatcher::GetUnmanagedFunction(FunctionTypes procType) const
+const FARPROC Watcher1::GetUnmanagedFunction(FunctionTypes procType) const
 {
   //  check if we have already loaded this function.
   auto it = _farProcs.find(procType);
@@ -170,7 +169,7 @@ const FARPROC CoreWatcher::GetUnmanagedFunction(FunctionTypes procType) const
  * <param name="path">The path we want to monitor.</param>
  * <returns>Unique Id used to release/stop monitoring</returns>
  */ 
-__int64 CoreWatcher::Start(String^ path, bool recursive)
+__int64 Watcher1::Start(String^ path, bool recursive)
 {
   try
   {
@@ -199,7 +198,7 @@ __int64 CoreWatcher::Start(String^ path, bool recursive)
  * @param id the id of our monitor
  * @return success or not
  */
-bool CoreWatcher::Stop(__int64 id)
+bool Watcher1::Stop(__int64 id)
 {
   // get the function
   auto funci = (f_StopMonitor)GetUnmanagedFunction(FunctionTypes::FunctionStopMonitor);

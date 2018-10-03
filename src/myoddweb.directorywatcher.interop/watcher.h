@@ -13,7 +13,7 @@
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #pragma once
-#include "CoreWatcher.h"
+#include "core/Watcher1.h"
 using namespace System;
 using namespace System::Collections::Generic;
 
@@ -29,25 +29,31 @@ namespace myoddweb
         Watcher();
         virtual ~Watcher();
 
-        /// <summary>
-        /// The path we wish to monitor for changes
-        /// </summary>
-        /// <param name="path">The path we want to monitor.</param>
-        /// <returns>Unique Id used to release/stop monitoring</returns>
-        virtual __int64 Start(String^ path, bool recursive);
+        /**
+         * \inheritdoc
+         */
+        virtual long long Add(myoddweb::directorywatcher::interfaces::IRequest^ request);
 
-        /// <summary>
-        /// Stop monitoring a path
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        virtual bool Stop(__int64 id);
+        /**
+         * \inheritdoc
+         */
+        virtual bool Remove( long long id);
+
+        /**
+         * \inheritdoc
+         */
+        virtual bool Start();
+
+        /**
+         * \inheritdoc
+         */
+        virtual bool Stop();
 
       protected:
         !Watcher();
 
       private:
-        CoreWatcher* _coreWatcher;
+        Watcher1* _coreWatcher;
       };
     }
   }
