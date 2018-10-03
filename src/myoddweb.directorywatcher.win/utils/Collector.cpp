@@ -15,7 +15,12 @@
 #include "Collector.h"
 #include "Lock.h"
 
-Collector::Collector()
+#define MAX_INTERNAL_VECTOR 128
+#define MAX_AGE_MS 5000
+
+Collector::Collector() : 
+  _internalCounter(0),
+  _maxAgeMs(MAX_AGE_MS)
 {
 }
 
@@ -68,6 +73,12 @@ std::wstring Collector::PathCombine(const std::wstring& lhs, const std::wstring&
   return lhs + rhs;
 }
 
+/**
+ * \brief Add an action to the collection.
+ * \param action the action added
+ * \param path the root path, (as given to us in the request.)
+ * \param file the file from the path.
+ */
 void Collector::Add( const EventAction action, const std::wstring& path, const std::wstring& file)
 {
   try
@@ -82,17 +93,60 @@ void Collector::Add( const EventAction action, const std::wstring& path, const s
 
     wprintf(L"%s\n", e.name.c_str());
 
-    // we can now get the lock so we can add data.
-    // the lock is released automatically.
-    auto guard = Lock(_lock);
-
-    // add it.
-    _events.push_back(e);
-
-    // all good.
+    // we can now add the event
+    AddEventInformation(e);
   }
   catch(...)
   {
     // something wrong happened
+  }
+}
+
+
+void Collector::AddEventInformation(const EventInformation& event)
+{
+  // we can now get the lock so we can add data.
+  // the lock is released automatically.
+  auto guard = Lock(_lock);
+
+  // add it.
+  _events.push_back(event);
+
+  // update the internal counter.
+  ++_internalCounter;
+
+  // do we need to clean up?
+  if( _internalCounter <= MAX_INTERNAL_VECTOR )
+  {
+    return;
+  }
+
+  // reset the counter so we can check again later.
+  _internalCounter = 0;
+
+  // get the current time.
+  const auto ms = GetTimeMs() - MAX_AGE_MS;
+  for(;;)
+  {
+    // get the first iterator.
+    const auto it = _events.begin();
+    if( it == _events.end() )
+    {
+      // we removed everything
+      // so there is nothing else for us to do.
+      return;
+    }
+
+    if( (*it).timeMs < ms )
+    {
+      _events.erase(it);
+      continue;
+    }
+
+    // all the events are added one after the other
+    // so we cannot have an older item
+    // that is after begin()
+    // so we can jump off now.
+    return;
   }
 }

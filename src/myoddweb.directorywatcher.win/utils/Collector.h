@@ -31,6 +31,24 @@ public:
 
 private:
   /**
+   * \brief This counter is used to cleanp the data once we reach a certain number.
+   * This value is not the number of items in the collection
+   * It is the number of items added since the last time we checked.
+   */
+  short _internalCounter;
+
+  /**
+   * \brief This is the oldest number of ms we want something to be.
+   */
+  const short _maxAgeMs;
+
+  /**
+   * \brief Add an event to the vector and remove older events.
+   * \param event 
+   */
+  void AddEventInformation( const EventInformation& event );
+
+  /**
    * \brief the locks so we can add data.
    */
   std::recursive_mutex _lock;
