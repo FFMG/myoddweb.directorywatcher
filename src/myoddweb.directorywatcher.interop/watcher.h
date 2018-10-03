@@ -38,17 +38,6 @@ namespace myoddweb
          * \inheritdoc
          */
         virtual bool Remove( long long id);
-
-        /**
-         * \inheritdoc
-         */
-        virtual bool Start();
-
-        /**
-         * \inheritdoc
-         */
-        virtual bool Stop();
-
       protected:
         !Watcher();
 

@@ -30,17 +30,5 @@ namespace myoddweb.directorywatcher.interfaces
     /// <param name="id"></param>
     /// <returns></returns>
     bool Remove(long id );
-
-    /// <summary>
-    /// Start all the requests
-    /// </summary>
-    /// <returns></returns>
-    bool Start();
-
-    /// <summary>
-    /// Stop all the running requests.
-    /// </summary>
-    /// <returns></returns>
-    bool Stop();
   }
 }

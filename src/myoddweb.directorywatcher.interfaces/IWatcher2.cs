@@ -1,4 +1,4 @@
-//This file is part of Myoddweb.Directorywatcher.
+﻿//This file is part of Myoddweb.Directorywatcher.
 //
 //    Myoddweb.Directorywatcher is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU General Public License as published by
@@ -12,18 +12,20 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
-#pragma once
-#include "Request.h"
+namespace myoddweb.directorywatcher.interfaces
+{
+  public interface IWatcher2 : IWatcher1
+  {
+    /// <summary>
+    /// Start all the requests
+    /// </summary>
+    /// <returns></returns>
+    bool Start();
 
-/**
- * \brief Add a request to the watcher
- * \param the request we want to add.
- * \return -ve is error, +ve is unique identifier.
- */
-typedef __int64(__stdcall *f_Add)( Request );
-
-/**
- * \brief remove a request 
- * \return success or not.
- */
-typedef bool(__stdcall *f_Remove)(__int64);
+    /// <summary>
+    /// Stop all the running requests.
+    /// </summary>
+    /// <returns></returns>
+    bool Stop();
+  }
+}

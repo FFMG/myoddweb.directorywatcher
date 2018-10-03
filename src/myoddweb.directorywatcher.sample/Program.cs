@@ -40,7 +40,7 @@ namespace myoddweb.directorywatcher.sample
         Console.WriteLine("Press Ctrl+C to stop the monitors.");
 
         // start the monitor.
-        var watch1 = new Watcher();
+        IWatcher2 watch1 = new Watcher();
         watch1.Add(new Request("c:\\", true));
         watch1.Add(new Request("d:\\", true));
         watch1.Add(new Request("d:\\", true));

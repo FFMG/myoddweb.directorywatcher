@@ -15,6 +15,7 @@
 #pragma once
 #include <Windows.h>
 #include <unordered_map>
+#include "Request.h"
 #include "FunctionTypes.h"
 using namespace System;
 
@@ -25,11 +26,18 @@ public:
   ~Watcher1();
 
 public:
-  // start the monitor,
-  __int64 Start(String^ path, bool recursive);
+  /*
+   * \brief start the monitor,
+   * \parm the request
+   * \return the id of the request added, (or -1).
+   */
+  __int64 Add( const Request& request );
 
-  // stop the monitor
-  bool Stop(__int64 id);
+  /*
+   * \brief remove a single request by id.
+   * \return success or not
+   */
+  bool Remove( __int64 id );
 
 protected:
   void Release();

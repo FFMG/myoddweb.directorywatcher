@@ -19,7 +19,7 @@ using myoddweb.directorywatcher.interfaces;
 
 namespace myoddweb.directorywatcher
 {
-  public class Watcher : IWatcher1
+  public class Watcher : IWatcher2
   {
     /// <summary>
     /// If we started work or not.

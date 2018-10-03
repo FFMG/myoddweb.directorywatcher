@@ -14,11 +14,11 @@
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #pragma once
 
-enum FunctionTypes
+enum class FunctionTypes
 {
   FunctionUnknown = 0,
   FunctionFirst = 1,
-  FunctionStartMonitor = 1,
-  FunctionStopMonitor = 2,
+  FunctionAdd = FunctionFirst,
+  FunctionRemove,
   FunctionLast
 };

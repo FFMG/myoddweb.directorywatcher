@@ -100,7 +100,7 @@ bool Watcher1::CreateUnmanagedFunctions()
   }
 
   // load all the functions.
-  for (int i = FunctionTypes::FunctionFirst; i < FunctionTypes::FunctionLast; ++i)
+  for (auto i = (int)FunctionTypes::FunctionFirst; i < (int)FunctionTypes::FunctionLast; ++i)
   {
     // try and load that function
     if (!CreateUnmanagedFunction(_hDll, static_cast<FunctionTypes>(i)))
@@ -120,12 +120,12 @@ bool Watcher1::CreateUnmanagedFunction(HINSTANCE hInstance, FunctionTypes procTy
   FARPROC procAddress = nullptr;
   switch( procType )
   {
-  case FunctionTypes::FunctionStartMonitor:
-    procAddress = GetProcAddress(hInstance, "Start");
+  case FunctionTypes::FunctionAdd:
+    procAddress = GetProcAddress(hInstance, "Add");
     break;
 
-  case FunctionTypes::FunctionStopMonitor:
-    procAddress = GetProcAddress(hInstance, "Stop");
+  case FunctionTypes::FunctionRemove:
+    procAddress = GetProcAddress(hInstance, "Remove");
     break;
 
   default:
@@ -164,27 +164,26 @@ const FARPROC Watcher1::GetUnmanagedFunction(FunctionTypes procType) const
   return it->second;
 }
 
-/*
- * The path we wish to monitor for changes
- * <param name="path">The path we want to monitor.</param>
- * <returns>Unique Id used to release/stop monitoring</returns>
+/**
+ * \brief Add a path to the list of paths
+ * \param The path we want to monitor.
+ * \returns
  */ 
-__int64 Watcher1::Start(String^ path, bool recursive)
+__int64 Watcher1::Add( const Request& request )
 {
   try
   {
     /// does it exist?
-    if (!Directory::Exists(path))
+    if (!Directory::Exists(gcnew String(request.Path.c_str() )))
     {
       return Errors::ErrorFolderNotFound;
     }
 
     // get the function
-    auto funci = (f_StartMonitor)GetUnmanagedFunction(FunctionTypes::FunctionStartMonitor);
+    auto funci = (f_Add)GetUnmanagedFunction(FunctionTypes::FunctionAdd);
 
     // otherwise just monitor
-    std::wstring wPath = marshal_as<std::wstring>(path);
-    return funci(wPath.c_str(), recursive );
+    return funci( request );
   }
   catch( ... )
   {
@@ -194,13 +193,23 @@ __int64 Watcher1::Start(String^ path, bool recursive)
 }
 
 /**
- * Stop monitoring a path
- * @param id the id of our monitor
- * @return success or not
+ * \brief Remove a path to the list of paths
+ * \param The id we want to remove.
+ * \returns
  */
-bool Watcher1::Stop(__int64 id)
+bool Watcher1::Remove( __int64 id )
 {
-  // get the function
-  auto funci = (f_StopMonitor)GetUnmanagedFunction(FunctionTypes::FunctionStopMonitor);
-  return funci(id);
+  try
+  {
+    // get the function
+    auto funci = (f_Remove)GetUnmanagedFunction(FunctionTypes::FunctionRemove);
+
+    // otherwise just monitor
+    return funci(id );
+  }
+  catch (...)
+  {
+    return Errors::ErrorUnknown;
+  }
+  return 0;
 }

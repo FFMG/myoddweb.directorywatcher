@@ -34,6 +34,9 @@
     <ClInclude Include="core\Importer.h">
       <Filter>core</Filter>
     </ClInclude>
+    <ClInclude Include="core\Request.h">
+      <Filter>core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
