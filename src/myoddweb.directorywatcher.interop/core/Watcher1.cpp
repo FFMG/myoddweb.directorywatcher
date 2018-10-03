@@ -120,12 +120,12 @@ bool Watcher1::CreateUnmanagedFunction(HINSTANCE hInstance, FunctionTypes procTy
   FARPROC procAddress = nullptr;
   switch( procType )
   {
-  case FunctionTypes::FunctionAdd:
-    procAddress = GetProcAddress(hInstance, "Add");
+  case FunctionTypes::FunctionStart:
+    procAddress = GetProcAddress(hInstance, "Start");
     break;
 
-  case FunctionTypes::FunctionRemove:
-    procAddress = GetProcAddress(hInstance, "Remove");
+  case FunctionTypes::FunctionStop:
+    procAddress = GetProcAddress(hInstance, "Stop");
     break;
 
   default:
@@ -169,7 +169,7 @@ const FARPROC Watcher1::GetUnmanagedFunction(FunctionTypes procType) const
  * \param The path we want to monitor.
  * \returns
  */ 
-__int64 Watcher1::Add( const Request& request )
+long long Watcher1::Start( const Request& request )
 {
   try
   {
@@ -180,7 +180,7 @@ __int64 Watcher1::Add( const Request& request )
     }
 
     // get the function
-    auto funci = (f_Add)GetUnmanagedFunction(FunctionTypes::FunctionAdd);
+    auto funci = (f_Start)GetUnmanagedFunction(FunctionTypes::FunctionStart);
 
     // otherwise just monitor
     return funci( request );
@@ -197,12 +197,12 @@ __int64 Watcher1::Add( const Request& request )
  * \param The id we want to remove.
  * \returns
  */
-bool Watcher1::Remove( __int64 id )
+bool Watcher1::Stop( __int64 id )
 {
   try
   {
     // get the function
-    auto funci = (f_Remove)GetUnmanagedFunction(FunctionTypes::FunctionRemove);
+    auto funci = (f_Stop)GetUnmanagedFunction(FunctionTypes::FunctionStop);
 
     // otherwise just monitor
     return funci(id );

@@ -20,10 +20,10 @@
  * \param the request we want to add.
  * \return -ve is error, +ve is unique identifier.
  */
-typedef __int64(__stdcall *f_Add)( Request );
+typedef long long(__stdcall *f_Start)( Request );
 
 /**
  * \brief remove a request 
  * \return success or not.
  */
-typedef bool(__stdcall *f_Remove)(__int64);
+typedef bool(__stdcall *f_Stop)(__int64);

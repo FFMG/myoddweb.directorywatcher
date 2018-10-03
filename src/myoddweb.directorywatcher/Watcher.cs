@@ -36,18 +36,12 @@ namespace myoddweb.directorywatcher
     /// </summary>
     private readonly IList<IRequest> _pendingRequests = new List<IRequest>();
 
-    /// <inheritdoc />
-    public long Add(IRequest request)
+    public long Start(IRequest request)
     {
-      if ( !_started )
-      {
-        // we habe not started 
-        _pendingRequests.Add( request );
-        return 0;
-      }
-
       // As we have already started the work.
-      var id = WatcherManager.Get.Add(request);
+      // so we want to start this one now
+      // and add it to our list of started ids.
+      var id = WatcherManager.Get.Start(request);
       if (id != -1)
       {
         _processedRequests[id] = request;
@@ -56,19 +50,37 @@ namespace myoddweb.directorywatcher
       // try and run whatever pending requests we might still have.
       Start();
 
-      // Return the id.
+      // return the id of the newly started request.
       return id;
     }
 
     /// <inheritdoc />
-    public bool Remove(long id)
+    public bool Add(IRequest request)
     {
-      if (_processedRequests.ContainsKey(id))
+      if (_started)
+      {
+        // we started already, so add this one now.
+        // if it is not negative, then it worked.
+        return Start(request) >= 0;
+      }
+
+      // we have not started 
+      // so just add it to the queue
+      _pendingRequests.Add( request );
+
+      // all good.
+      return true;
+    }
+
+    /// <inheritdoc />
+    public bool Stop(long id)
+    {
+      if (!_processedRequests.ContainsKey(id))
       {
         return false;
       }
 
-      if (!WatcherManager.Get.Remove(id))
+      if (!WatcherManager.Get.Stop(id))
       {
         return false;
       }
@@ -98,7 +110,7 @@ namespace myoddweb.directorywatcher
           // get the id, we do not want to call
           // our own Add( ... ) function as it checks
           // if we have started work or not.
-          var id = WatcherManager.Get.Add(request);
+          var id = WatcherManager.Get.Start(request);
           if (id < 0)
           {
             // negative results mean that it did not work.
@@ -152,7 +164,7 @@ namespace myoddweb.directorywatcher
         // because Remove() will actually change _processedRequests itself.
         foreach (var id in _processedRequests.Select(r => r.Key).ToArray())
         {
-          Remove(id);
+          Stop(id);
         }
         return true;
       }

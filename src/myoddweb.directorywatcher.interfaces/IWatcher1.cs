@@ -17,18 +17,17 @@ namespace myoddweb.directorywatcher.interfaces
   public interface IWatcher1
   {
     /// <summary>
-    /// Add a request to the list of requests.
-    /// If we have already started, we will start this request right away.
+    /// Start a request and return its id.
     /// </summary>
     /// <param name="request"></param>
     /// <returns></returns>
-    long Add(IRequest request );
+    long Start(IRequest request );
 
     /// <summary>
     /// Stop and remove a currently running request.
     /// </summary>
     /// <param name="id"></param>
     /// <returns></returns>
-    bool Remove(long id );
+    bool Stop(long id );
   }
 }

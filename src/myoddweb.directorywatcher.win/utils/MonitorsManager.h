@@ -28,12 +28,12 @@ namespace myoddweb
       virtual ~MonitorsManager();
 
     public:
-      static __int64 Add(const Request& request);
-      static bool Remove(__int64 id);
+      static __int64 Start(const Request& request);
+      static bool Stop(__int64 id);
 
     protected:
       Monitor* CreateAndStart(const Request& request);
-      bool RemoveAndDelete(__int64 id);
+      bool StopAndDelete(__int64 id);
       static __int64 GetId();
     protected:
       // The file lock

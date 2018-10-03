@@ -74,7 +74,7 @@ namespace myoddweb
      * \param request the request being added.
      * \return the id of the monitor we started
      */
-    __int64 MonitorsManager::Add(const Request& request)
+    __int64 MonitorsManager::Start(const Request& request)
     {
       const auto monitor = Instance()->CreateAndStart(request);
       return monitor->Id();
@@ -84,7 +84,7 @@ namespace myoddweb
      * \brief Try and remove a monitror by id
      * \return if we managed to remove it or not.
      */
-    bool MonitorsManager::Remove(const __int64 id)
+    bool MonitorsManager::Stop(const __int64 id)
     {
       auto guard = Lock(_lock);
 
@@ -97,7 +97,7 @@ namespace myoddweb
       try
       {
         // try and remove it.
-        const auto result = Instance()->RemoveAndDelete(id);
+        const auto result = Instance()->StopAndDelete(id);
 
         // delete our instance if we are the last one
         if (Instance()->_monitors.empty())
@@ -157,7 +157,7 @@ namespace myoddweb
           {
             // exception while trying to start
             // remove the one we just added.
-            Remove(monitor->Id());
+            StopAndDelete(monitor->Id());
 
             // and return null.
             return nullptr;
@@ -178,7 +178,7 @@ namespace myoddweb
      * \param id the item we want to delete
      * \return success or not.
      */
-    bool MonitorsManager::RemoveAndDelete(const __int64 id)
+    bool MonitorsManager::StopAndDelete(const __int64 id)
     {
       try
       {

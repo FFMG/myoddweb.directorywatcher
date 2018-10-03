@@ -18,7 +18,7 @@ enum class FunctionTypes
 {
   FunctionUnknown = 0,
   FunctionFirst = 1,
-  FunctionAdd = FunctionFirst,
-  FunctionRemove,
+  FunctionStart = FunctionFirst,
+  FunctionStop,
   FunctionLast
 };

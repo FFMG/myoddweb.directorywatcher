@@ -32,12 +32,12 @@ namespace myoddweb
         /**
          * \inheritdoc
          */
-        virtual long long Add(myoddweb::directorywatcher::interfaces::IRequest^ request);
+        virtual long long Start(myoddweb::directorywatcher::interfaces::IRequest^ request);
 
         /**
          * \inheritdoc
          */
-        virtual bool Remove( long long id);
+        virtual bool Stop( long long id);
       protected:
         !Watcher();
 

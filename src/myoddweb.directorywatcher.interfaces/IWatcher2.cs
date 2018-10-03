@@ -17,6 +17,14 @@ namespace myoddweb.directorywatcher.interfaces
   public interface IWatcher2 : IWatcher1
   {
     /// <summary>
+    /// Add a request, if monitoring has started already,
+    /// we will start monitoring right away
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns>Success or not.</returns>
+    bool Add(IRequest request);
+
+    /// <summary>
     /// Start all the requests
     /// </summary>
     /// <returns></returns>

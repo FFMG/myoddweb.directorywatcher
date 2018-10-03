@@ -31,13 +31,13 @@ public:
    * \parm the request
    * \return the id of the request added, (or -1).
    */
-  __int64 Add( const Request& request );
+  long long Start( const Request& request );
 
   /*
    * \brief remove a single request by id.
    * \return success or not
    */
-  bool Remove( __int64 id );
+  bool Stop( long long id );
 
 protected:
   void Release();
