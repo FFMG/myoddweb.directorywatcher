@@ -68,7 +68,7 @@ std::wstring Collector::PathCombine(const std::wstring& lhs, const std::wstring&
   return lhs + rhs;
 }
 
-bool Collector::Add(const __int64 id, const EventAction action, const std::wstring& path, const std::wstring& file)
+void Collector::Add( const EventAction action, const std::wstring& path, const std::wstring& file)
 {
   try
   {
@@ -76,7 +76,6 @@ bool Collector::Add(const __int64 id, const EventAction action, const std::wstri
     // that way, we only have the lock for the shortest
     // posible amount of time.
     EventInformation e;
-    e.id = id;
     e.action = action;
     e.name = PathCombine(path, file);
     e.timeMs = GetTimeMs();
@@ -91,11 +90,9 @@ bool Collector::Add(const __int64 id, const EventAction action, const std::wstri
     _events.push_back(e);
 
     // all good.
-    return true;
   }
   catch(...)
   {
     // something wrong happened
-    return false;
   }
 }

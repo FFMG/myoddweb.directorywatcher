@@ -25,17 +25,15 @@ enum EventAction
   RenamedNew
 };
 
+/**
+ * \brief Information about a file/folder event.
+ */
 struct EventInformation
 {
   /**
-   * \brief this is the monitor id.
-   */
-  __int64 id;
-
-  /**
    * \brief the time in Ms when this event was recorded.
    */
-  __int64 timeMs;
+  __int64 timeMs{};
 
   /**
    * \brief the action we are recording

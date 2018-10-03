@@ -21,11 +21,11 @@
 class MonitorReadDirectoryChanges : public Monitor
 {
 public:
-  MonitorReadDirectoryChanges(__int64 id, const std::wstring& path, bool recursive, Collector& collector);
+  MonitorReadDirectoryChanges(__int64 id, const std::wstring& path, bool recursive );
   virtual ~MonitorReadDirectoryChanges();
 
-  bool Start();
-  void Stop();
+  bool Start() override;
+  void Stop() override;
 
 protected:
   static void CALLBACK FileIoCompletionRoutine(
@@ -42,7 +42,7 @@ private:
   bool OpenDirectory();
   void CloseDirectory();
   bool IsOpen() const;
-  void ProcessNotificationFromBackupPointer(const unsigned char* pBufferBk) const;
+  void ProcessNotificationFromBackup(const unsigned char* pBufferBk) const;
   unsigned char* Clone(unsigned long ulSize) const;
 
   void Read();

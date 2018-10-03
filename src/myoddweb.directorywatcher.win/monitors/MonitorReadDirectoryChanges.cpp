@@ -24,9 +24,9 @@
  * \param path the path we will be monitoring
  * \param recursive if we want to monitor recursively or not.
  */
-MonitorReadDirectoryChanges::MonitorReadDirectoryChanges(__int64 id, const std::wstring& path, bool recursive, Collector& collector)
+MonitorReadDirectoryChanges::MonitorReadDirectoryChanges(__int64 id, const std::wstring& path, bool recursive)
     :
-  Monitor(id, path, recursive, collector ),
+  Monitor(id, path, recursive ),
   _hDirectory(nullptr),
   _buffer( nullptr ),
   _th( nullptr )
@@ -252,7 +252,7 @@ void CALLBACK MonitorReadDirectoryChanges::FileIoCompletionRoutine(
   // we cloned the data and restarted the read
   // so we can now process the data
   // @todo this should be moved to a thread.
-  obj->ProcessNotificationFromBackupPointer(pBufferBk);
+  obj->ProcessNotificationFromBackup(pBufferBk);
 }
 
 unsigned char* MonitorReadDirectoryChanges::Clone(const unsigned long ulSize) const
@@ -272,7 +272,7 @@ unsigned char* MonitorReadDirectoryChanges::Clone(const unsigned long ulSize) co
   return pBuffer;
 }
 
-void MonitorReadDirectoryChanges::ProcessNotificationFromBackupPointer(const unsigned char* pBuffer ) const
+void MonitorReadDirectoryChanges::ProcessNotificationFromBackup(const unsigned char* pBuffer ) const
 {
   try
   {
@@ -287,27 +287,27 @@ void MonitorReadDirectoryChanges::ProcessNotificationFromBackupPointer(const uns
     for (;;)
     {
       // get the filename
-      auto wFilename = std::wstring(pRecord->FileName, pRecord->FileNameLength / sizeof(wchar_t));
+      const auto wFilename = std::wstring(pRecord->FileName, pRecord->FileNameLength / sizeof(wchar_t));
       switch (pRecord->Action)
       {
       case FILE_ACTION_ADDED:
-        EventsCollector().Add(Id(), EventAction::Added, Path(), wFilename);
+        AddEvent( EventAction::Added, wFilename);
         break;
 
       case FILE_ACTION_REMOVED:
-        EventsCollector().Add(Id(), EventAction::Removed, Path(), wFilename);
+        AddEvent( EventAction::Removed, wFilename);
         break;
 
       case FILE_ACTION_MODIFIED:
-        EventsCollector().Add(Id(), EventAction::Touched, Path(), wFilename);
+        AddEvent(EventAction::Touched, wFilename);
         break;
 
       case FILE_ACTION_RENAMED_OLD_NAME:
-        EventsCollector().Add(Id(), EventAction::RenamedOld, Path(), wFilename);
+        AddEvent(EventAction::RenamedOld, wFilename);
         break;
 
       case FILE_ACTION_RENAMED_NEW_NAME:
-        EventsCollector().Add(Id(), EventAction::RenamedNew, Path(), wFilename);
+        AddEvent( EventAction::RenamedNew, wFilename);
         break;
       }
 

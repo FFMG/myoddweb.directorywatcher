@@ -16,7 +16,6 @@
 #include <mutex>
 #include <unordered_map>
 #include "../monitors/Monitor.h"
-#include "Collector.h"
 
 class MonitorsManager
 {
@@ -43,6 +42,4 @@ protected:
 protected:
   typedef std::unordered_map<__int64, Monitor*> MonitorMap;
   MonitorMap _monitors;
-
-  Collector* _eventCollector;
 };

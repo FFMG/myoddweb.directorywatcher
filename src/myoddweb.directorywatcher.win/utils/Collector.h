@@ -27,7 +27,7 @@ public:
   Collector();
   virtual ~Collector();
 
-  bool Add(__int64 id, EventAction action, const std::wstring& path, const std::wstring& file);
+  void Add( EventAction action, const std::wstring& path, const std::wstring& file);
 
 private:
   /**

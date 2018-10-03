@@ -19,21 +19,16 @@
 MonitorsManager* MonitorsManager::_instance = nullptr;
 std::recursive_mutex MonitorsManager::_lock;
 
-MonitorsManager::MonitorsManager() : 
-  _eventCollector(nullptr)
+MonitorsManager::MonitorsManager()
 {
   // initialize random seed:
   // The downcast (and potential data loss) doesn't matter 
   // since we're only using it to seed the RNG
   srand( static_cast<unsigned int>(time(nullptr)));
-
-  _eventCollector = new Collector();
 }
 
 MonitorsManager::~MonitorsManager()
 {
-  delete _eventCollector;
-  _eventCollector = nullptr;
 }
 
 MonitorsManager* MonitorsManager::Instance()
@@ -116,7 +111,7 @@ Monitor* MonitorsManager::CreateAndStart( const std::wstring& path, bool recursi
     }
 
     //const auto monitor = new Monitor( id );
-    const auto monitor = new MonitorReadDirectoryChanges(id, path, recursive, *_eventCollector);
+    const auto monitor = new MonitorReadDirectoryChanges(id, path, recursive);
 
     monitor->Start();
 
