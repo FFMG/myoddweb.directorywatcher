@@ -27,9 +27,12 @@ namespace myoddweb.directorywatcher.sample
         Console.WriteLine("Press Ctrl+C to stop the monitors.");
 
         // start the monitor.
-        var watch = new Watcher();
-        var id1 = watch.Start("c:\\", true);
-        var id2 = watch.Start("h:\\", true);
+        var watch1 = new Watcher();
+        var id11 = watch1.Start("c:\\", true);
+        var id12 = watch1.Start("h:\\", true);
+
+        var watch2 = new Watcher();
+        var id21 = watch2.Start("c:\\", true);
 
         var exitEvent = new ManualResetEvent(false);
         Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs e)
@@ -45,8 +48,9 @@ namespace myoddweb.directorywatcher.sample
         exitEvent.WaitOne();
 
         // stop the monitor
-        watch.Stop(id1);
-        watch.Stop(id2);
+        watch1.Stop(id11);
+        watch1.Stop(id12);
+        watch2.Stop(id21);
       }
       catch (Exception ex)
       {

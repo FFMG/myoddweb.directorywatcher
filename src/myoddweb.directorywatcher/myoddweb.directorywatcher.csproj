@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="utils\TypeLoader.cs" />
+    <Compile Include="utils\WatcherManager.cs" />
     <Compile Include="Watcher.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
