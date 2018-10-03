@@ -16,8 +16,11 @@
 #include <Windows.h>
 #include <unordered_map>
 #include "Request.h"
+#include "Event.h"
 #include "FunctionTypes.h"
+
 using namespace System;
+using namespace System::Collections::Generic;
 
 class Watcher1
 {
@@ -31,7 +34,7 @@ public:
    * \parm the request
    * \return the id of the request added, (or -1).
    */
-  long long Start( const Request& request );
+  long long Start(myoddweb::directorywatcher::interfaces::IRequest^ request );
 
   /*
    * \brief remove a single request by id.
@@ -40,12 +43,12 @@ public:
   bool Stop( long long id );
 
   /**
-   * \brief register a callback function
-   * \param id
+   * \brief Get the latest available events.
+   * \param id the id we are looking for.
    * \param cb
-   * \return the id of the registration.
+   * \return the number of items returned.
    */
-  long long Register(long long id, Func<String^, bool>^ cb);
+  long long GetEvents(long long id, IList<myoddweb::directorywatcher::interfaces::IEvent^> ^% events );
 
 protected:
   void Release();

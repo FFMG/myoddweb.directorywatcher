@@ -44,6 +44,9 @@
     <ClInclude Include="utils\Request.h">
       <Filter>utils</Filter>
     </ClInclude>
+    <ClInclude Include="utils\Event.h">
+      <Filter>utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="utils">

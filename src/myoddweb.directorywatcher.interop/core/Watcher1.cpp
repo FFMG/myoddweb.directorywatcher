@@ -128,8 +128,8 @@ bool Watcher1::CreateUnmanagedFunction(HINSTANCE hInstance, FunctionTypes procTy
     procAddress = GetProcAddress(hInstance, "Stop");
     break;
 
-  case FunctionTypes::FunctionRegister:
-    procAddress = GetProcAddress(hInstance, "Register");
+  case FunctionTypes::FunctionGetEvents:
+    procAddress = GetProcAddress(hInstance, "GetEvents");
     break;
 
   default:
@@ -173,12 +173,12 @@ const FARPROC Watcher1::GetUnmanagedFunction(FunctionTypes procType) const
  * \param The path we want to monitor.
  * \returns
  */ 
-long long Watcher1::Start( const Request& request )
+long long Watcher1::Start(myoddweb::directorywatcher::interfaces::IRequest^ request )
 {
   try
   {
     /// does it exist?
-    if (!Directory::Exists(gcnew String(request.Path.c_str() )))
+    if (!Directory::Exists( request->Path ))
     {
       return Errors::ErrorFolderNotFound;
     }
@@ -186,8 +186,13 @@ long long Watcher1::Start( const Request& request )
     // get the function
     auto funci = (f_Start)GetUnmanagedFunction(FunctionTypes::FunctionStart);
 
+    msclr::interop::marshal_context context;
+    UmRequest umRequest;
+    umRequest.Path = context.marshal_as<std::wstring>(request->Path);
+    umRequest.Recursive = request->Recursive;
+
     // otherwise just monitor
-    return funci( request );
+    return funci(umRequest);
   }
   catch( ... )
   {
@@ -219,19 +224,34 @@ bool Watcher1::Stop( __int64 id )
 }
 
 /**
- * \brief register a callback function
- * \param id
+ * \brief Get the latest available events.
+ * \param id the id we are looking for.
  * \param cb
- * \return the id of the registration.
+ * \return the number of items returned.
  */
-long long Watcher1::Register(long long id, Func<String^, bool>^ cb)
+long long Watcher1::GetEvents(long long id, IList<myoddweb::directorywatcher::interfaces::IEvent^> ^% events)
 {
   // get the function
-  auto funci = (f_Register)GetUnmanagedFunction(FunctionTypes::FunctionRegister);
+  auto funci = (f_GetEvents)GetUnmanagedFunction(FunctionTypes::FunctionGetEvents);
 
-  // 
-  auto pcb = new f_callback;
+  std::vector<UmEvent> umEvents;
+  auto result = funci( id, umEvents);
+  if( result <= 0 )
+  {
+    return result;
+  }
 
-  // otherwise just monitor
-  return funci(id, *pcb);
+  // we can recreate the list.
+  events = gcnew List<myoddweb::directorywatcher::interfaces::IEvent^>();
+  for ( auto it = umEvents.begin(); it != umEvents.end(); ++it)
+  {
+    auto event = gcnew Event();
+    event->Path = gcnew System::String( (*it).Path.c_str());
+    event->Extra = gcnew System::String((*it).Extra.c_str());
+    event->Action = (myoddweb::directorywatcher::interfaces::EventAction)(*it).Action;
+
+    events->Add(event);
+  }
+  return result;
 }
+

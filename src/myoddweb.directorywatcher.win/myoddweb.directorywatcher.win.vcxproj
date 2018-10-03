@@ -161,6 +161,7 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="utils\Collector.h" />
+    <ClInclude Include="utils\Event.h" />
     <ClInclude Include="utils\EventInformation.h" />
     <ClInclude Include="utils\Lock.h" />
     <ClInclude Include="utils\MonitorsManager.h" />

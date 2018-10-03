@@ -14,6 +14,8 @@
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #pragma once
 #include "utils/Request.h"
+#include <vector>
+#include "utils/Event.h"
 
 namespace myoddweb
 {
@@ -34,11 +36,11 @@ namespace myoddweb
     extern "C" { __declspec(dllexport) bool Stop(long long id ); }
 
     /**
-     * \brief Register a callback function.
-     * \param id the id we would like to remove.
-     * \param cb the callback function
-     * \return the id of the callback function
+     * \brief Get the latest events.
+     * \param id the id of the monitor we would like the events for.
+     * \param events the events we will be getting
+     * \return the number of items or -ve in case of an error
      */
-    extern "C" { __declspec(dllexport) long long Register( long long id, bool (__stdcall *cb)( std::wstring )); }
+    extern "C" { __declspec(dllexport) long long GetEvents( long long id, std::vector<Event>& events ); }
   }
 }

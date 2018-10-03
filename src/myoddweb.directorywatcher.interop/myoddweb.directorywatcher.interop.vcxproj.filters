@@ -37,6 +37,9 @@
     <ClInclude Include="core\Request.h">
       <Filter>core</Filter>
     </ClInclude>
+    <ClInclude Include="core\Event.h">
+      <Filter>core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

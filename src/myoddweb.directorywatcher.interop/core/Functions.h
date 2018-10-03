@@ -14,13 +14,14 @@
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #pragma once
 #include "Request.h"
+#include "Event.h"
 
 /**
  * \brief Add a request to the watcher
  * \param the request we want to add.
  * \return -ve is error, +ve is unique identifier.
  */
-typedef long long(__stdcall *f_Start)( Request );
+typedef long long(__stdcall *f_Start)( UmRequest );
 
 /**
  * \brief remove a request 
@@ -29,13 +30,7 @@ typedef long long(__stdcall *f_Start)( Request );
 typedef bool(__stdcall *f_Stop)(long long);
 
 /**
- * \brief the callback function.
- * \return success or not.
+ * \brief get the latest events for a given id.
+ * \return the number of items or -ve if there was an error.
  */
-typedef bool(__stdcall *f_callback)(std::wstring);
-
-/**
- * \brief register a callback function.
- * \return the id of the registered function.
- */
-typedef long long(__stdcall *f_Register)(long long, f_callback );
+typedef long long(__stdcall *f_GetEvents)(long long, std::vector<UmEvent>& );

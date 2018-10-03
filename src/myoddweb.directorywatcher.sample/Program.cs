@@ -12,10 +12,10 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
-
 using System;
 using System.Threading;
 using myoddweb.directorywatcher.interfaces;
+using Timer = System.Timers.Timer;
 
 namespace myoddweb.directorywatcher.sample
 {
@@ -41,17 +41,32 @@ namespace myoddweb.directorywatcher.sample
 
         // start the monitor.
         IWatcher2 watch1 = new Watcher();
-        watch1.Register(0, (s) =>
-        {
-          Console.WriteLine(s);
-          return true;
-        });
         watch1.Add(new Request("c:\\", true));
         watch1.Add(new Request("d:\\", true));
         watch1.Add(new Request("d:\\", true));
         
         var watch2 = new Watcher();
         watch2.Add( new Request("c:\\", true) );
+
+        const double ms = 100;
+        var timer = new Timer();
+        timer.Elapsed += (obj, evnt) =>
+        {
+          watch1.GetEvents( out var events1 );
+          foreach (var e in events1)
+          {
+            Console.WriteLine($"{e.Path}");
+          }
+          watch2.GetEvents(out var events2);
+          foreach (var e in events2)
+          {
+            Console.WriteLine( $"{e.Path}");
+          }
+          timer.Start();
+        };
+        timer.Interval = ms;
+        timer.AutoReset = false;
+        timer.Start();
 
         watch1.Start();
         watch2.Start();
@@ -70,6 +85,7 @@ namespace myoddweb.directorywatcher.sample
         exitEvent.WaitOne();
 
         // stop everything.
+        timer.Stop();
         watch1.Stop();
         watch2.Stop();
       }

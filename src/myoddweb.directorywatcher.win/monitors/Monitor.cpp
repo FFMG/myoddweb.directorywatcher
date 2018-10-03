@@ -83,5 +83,15 @@ namespace myoddweb
     {
       _eventCollector->Add(action, L"", L"");
     }
+
+    /**
+     * \brief fill the vector with all the values currently on record.
+     * \param events the events we will be filling
+     * \return the number of events we found.
+     */
+    long long Monitor::GetEvents(std::vector<myoddweb::directorywatcher::Event>& events) const
+    {
+      return _eventCollector->GetEvents(events);
+    }
   }
 }

@@ -82,6 +82,7 @@ namespace myoddweb
 
     /**
      * \brief Try and remove a monitror by id
+     * \param id the id of the monitor we want to stop
      * \return if we managed to remove it or not.
      */
     bool MonitorsManager::Stop(const __int64 id)
@@ -110,6 +111,42 @@ namespace myoddweb
       catch (...)
       {
         return false;
+      }
+    }
+
+    /**
+     * \brief Get the latest events.
+     * \param id the id of the monitor we would like the events for.
+     * \param events the events we will be getting
+     * \return the number of items or -ve in case of an error
+     */
+    long long MonitorsManager::GetEvents(const long long id, std::vector<Event>& events)
+    {
+      auto guard = Lock(_lock);
+
+      // if we do not have an instance... then we have nothing.
+      if (_instance == nullptr)
+      {
+        return -1;
+      }
+
+      try
+      {
+        // Look for that monitor.
+        const auto monitor = Instance()->_monitors.find(id);
+        if (monitor == Instance()->_monitors.end())
+        {
+          // does not exist.
+          return -1;
+        }
+
+        // the monitor seems to exist
+        // so we can now go and get the values from the collector.
+        return monitor->second->GetEvents(events);
+      }
+      catch (...)
+      {
+        return -1;
       }
     }
 

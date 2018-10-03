@@ -12,8 +12,6 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
-
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using myoddweb.directorywatcher.utils;
@@ -38,6 +36,7 @@ namespace myoddweb.directorywatcher
     /// </summary>
     private readonly IList<IRequest> _pendingRequests = new List<IRequest>();
 
+    /// <inheritdoc />
     public long Start(IRequest request)
     {
       // As we have already started the work.
@@ -93,9 +92,9 @@ namespace myoddweb.directorywatcher
     }
 
     /// <inheritdoc />
-    public long Register(long id, Func<string, bool> cb)
+    public long GetEvents(long id, out IList<IEvent> events )
     {
-      return WatcherManager.Get.Register(id, cb);
+      return WatcherManager.Get.GetEvents(id, out events );
     }
 
     /// <inheritdoc />
@@ -181,6 +180,21 @@ namespace myoddweb.directorywatcher
         // we have now stopped.
         _started = false;
       }
+    }
+
+    /// <inheritdoc />
+    public long GetEvents(out IList<IEvent> events)
+    {
+      var allEvents = new List<IEvent>();
+      foreach (var id in _processedRequests.Select(r => r.Key).ToArray())
+      {
+        if (GetEvents(id, out var currentEvents) > 0)
+        {
+          allEvents.AddRange( currentEvents );
+        }
+      }
+      events = allEvents;
+      return allEvents.Count;
     }
   }
 }

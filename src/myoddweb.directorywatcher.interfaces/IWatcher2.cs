@@ -12,6 +12,9 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
+
+using System.Collections.Generic;
+
 namespace myoddweb.directorywatcher.interfaces
 {
   public interface IWatcher2 : IWatcher1
@@ -35,5 +38,12 @@ namespace myoddweb.directorywatcher.interfaces
     /// </summary>
     /// <returns></returns>
     bool Stop();
+
+    /// <summary>
+    /// Get all the event for the started ids.
+    /// </summary>
+    /// <param name="events">The events we got.</param>
+    /// <returns>The number of events</returns>
+    long GetEvents( out IList<IEvent> events);
   }
 }

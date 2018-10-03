@@ -41,6 +41,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EventAction.cs" />
+    <Compile Include="IEvent.cs" />
     <Compile Include="IRequest.cs" />
     <Compile Include="IWatcher1.cs" />
     <Compile Include="IWatcher2.cs" />

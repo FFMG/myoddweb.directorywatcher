@@ -1,4 +1,4 @@
-//This file is part of Myoddweb.Directorywatcher.
+﻿//This file is part of Myoddweb.Directorywatcher.
 //
 //    Myoddweb.Directorywatcher is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU General Public License as published by
@@ -13,37 +13,46 @@
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #pragma once
-#include <string>
 
 /**
- * \brief implementation of IRequest
+ * \brief implementation of IEvent
  */
-public ref class Request : myoddweb::directorywatcher::interfaces::IRequest
+public ref class Event : myoddweb::directorywatcher::interfaces::IEvent
 {
 public:
   /**
-   * \brief the path of the folder we will be monitoring
+   * \brief the path of the folder that raised the event.
    */
   virtual property System::String^ Path;
 
   /**
-   * \brief if we are recursively monitoring or not.
+   * \brief Extra information, mostly null, (for example rename)
    */
-  virtual property bool Recursive;
+  virtual property System::String^ Extra;
+
+  /**
+   * \brief The action.
+   */
+  virtual property myoddweb::directorywatcher::interfaces::EventAction Action;
 };
 
 /**
- * \brief unmaned implementation of IRequest
+ * \brief unmaned implementation of IEvent
  */
-struct UmRequest
+struct UmEvent
 {
   /**
-   * \brief the path of the folder we will be monitoring
+   * \brief the path of the folder that raised the event.
    */
   std::wstring Path;
 
   /**
-   * \brief if we are recursively monitoring or not.
+   * \brief Extra information, mostly null, (for example rename)
    */
-  bool Recursive;
+  std::wstring Extra;
+
+  /**
+   * \brief The action.
+   */
+  int Action;
 };

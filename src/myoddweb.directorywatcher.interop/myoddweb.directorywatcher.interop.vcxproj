@@ -161,6 +161,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="core\Errors.h" />
+    <ClInclude Include="core\Event.h" />
     <ClInclude Include="core\Functions.h" />
     <ClInclude Include="core\FunctionTypes.h" />
     <ClInclude Include="core\Importer.h" />

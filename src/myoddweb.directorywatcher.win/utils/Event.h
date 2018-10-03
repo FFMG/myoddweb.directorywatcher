@@ -1,4 +1,4 @@
-//This file is part of Myoddweb.Directorywatcher.
+﻿//This file is part of Myoddweb.Directorywatcher.
 //
 //    Myoddweb.Directorywatcher is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU General Public License as published by
@@ -13,13 +13,31 @@
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #pragma once
+#include <string>
 
-enum class FunctionTypes
+namespace myoddweb
 {
-  FunctionUnknown = 0,
-  FunctionFirst = 1,
-  FunctionStart = FunctionFirst,
-  FunctionStop,
-  FunctionGetEvents,
-  FunctionLast
-};
+  namespace directorywatcher
+  {
+    /**
+     * \brief unmanaged implementation of IEvent
+     */
+    struct Event
+    {
+      /**
+       * \brief The path that was changed.
+       */
+      std::wstring Path;
+
+      /**
+       * \brief Extra information, (used for rename and so on).
+       */
+      std::wstring Extra;
+
+      /**
+       * \brief the action.
+       */
+      int Action;
+    };
+  }
+}

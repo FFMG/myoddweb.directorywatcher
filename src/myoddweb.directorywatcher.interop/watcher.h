@@ -42,7 +42,7 @@ namespace myoddweb
         /**
          * \inheritdoc
          */
-        virtual long long Register(long long id, Func<String^, bool>^ cb);
+        virtual long long GetEvents(long long id, IList<myoddweb::directorywatcher::interfaces::IEvent^> ^% events );
       protected:
         !Watcher();
 

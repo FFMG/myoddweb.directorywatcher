@@ -12,8 +12,7 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
-
-using System;
+using System.Collections.Generic;
 
 namespace myoddweb.directorywatcher.interfaces
 {
@@ -34,11 +33,11 @@ namespace myoddweb.directorywatcher.interfaces
     bool Stop(long id );
 
     /// <summary>
-    /// Register a callback function.
+    /// Get the event for the given id.
     /// </summary>
-    /// <param name="id"></param>
-    /// <param name="cb"></param>
-    /// <returns></returns>
-    long Register(long id, Func<string, bool> cb);
+    /// <param name="id">The id we are looking for.</param>
+    /// <param name="events">The events we got.</param>
+    /// <returns>The number of events</returns>
+    long GetEvents(long id, out IList<IEvent> events );
   }
 }

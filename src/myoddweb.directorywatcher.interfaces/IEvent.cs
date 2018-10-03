@@ -1,4 +1,4 @@
-//This file is part of Myoddweb.Directorywatcher.
+﻿//This file is part of Myoddweb.Directorywatcher.
 //
 //    Myoddweb.Directorywatcher is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU General Public License as published by
@@ -12,14 +12,23 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
-#pragma once
-
-enum class FunctionTypes
+namespace myoddweb.directorywatcher.interfaces
 {
-  FunctionUnknown = 0,
-  FunctionFirst = 1,
-  FunctionStart = FunctionFirst,
-  FunctionStop,
-  FunctionGetEvents,
-  FunctionLast
-};
+  public interface IEvent
+  {
+    /// <summary>
+    /// The full path
+    /// </summary>
+    string Path { get; }
+
+    /// <summary>
+    /// Extra information, mostly null, (for example rename)
+    /// </summary>
+    string Extra { get; }
+
+    /// <summary>
+    /// The action defining this event.
+    /// </summary>
+    EventAction Action { get; }
+  }
+}

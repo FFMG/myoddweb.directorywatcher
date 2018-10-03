@@ -32,6 +32,13 @@ namespace myoddweb
       bool Recursive() const;
       Collector& EventsCollector() const;
 
+      /**
+       * \brief fill the vector with all the values currently on record.
+       * \param events the events we will be filling
+       * \return the number of events we found.
+       */
+      long long GetEvents(std::vector<myoddweb::directorywatcher::Event>& events) const;
+
     public:
       virtual bool Start() = 0;
       virtual void Stop() = 0;
