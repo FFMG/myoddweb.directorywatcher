@@ -15,10 +15,36 @@
 #pragma once
 #include <string>
 
-enum EventAction
+enum class EventAction
 {
   Error,      // there was a general error.
-  Added     = 1000,
+
+  /**
+   * \brief general memory error, (out of and so on).
+   */
+  ErrorMemory,
+
+  /**
+   * \brief there was an overflow.
+   */
+  ErrorOverflow,
+
+  /**
+   * \brief the monitoring was stopped somehow.
+   */
+  ErrorAborted,
+
+  /**
+   * \brief Unable to even start the monitoring
+   * Is the path valid? Is the filename valid?
+   */
+  ErrorCannotStart,
+
+  /**
+   * We have an unknown file error.
+   */
+  Unknown   = 1000,
+  Added,
   Removed,
   Touched,    //  small changed, timestamp, attribute etc...
   RenamedOld,

@@ -33,6 +33,7 @@ public:
 
 protected:
   void AddEvent(EventAction action, const std::wstring& fileName) const;
+  void AddEventError(EventAction action) const;
 
 private:
   const __int64 _id;

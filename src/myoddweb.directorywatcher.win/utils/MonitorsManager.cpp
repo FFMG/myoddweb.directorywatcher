@@ -27,10 +27,14 @@ MonitorsManager::MonitorsManager()
   srand( static_cast<unsigned int>(time(nullptr)));
 }
 
-MonitorsManager::~MonitorsManager()
-{
-}
+MonitorsManager::~MonitorsManager() = default;
 
+/**
+ * \brief try and get the current instance of monitor manager.
+ * If one does not exist, try and create a new instance 
+ * if this fails we have much bigger problems.
+ * \return the one and only monitor manager.
+ */
 MonitorsManager* MonitorsManager::Instance()
 {
   if( nullptr != _instance )
@@ -47,23 +51,35 @@ MonitorsManager* MonitorsManager::Instance()
     return _instance;
   }
 
-  // create a new instance
-  _instance = new MonitorsManager();
+  try
+  {
+    // create a new instance
+    _instance = new MonitorsManager();
 
-  // return the instance.
-  return _instance;
+    // return the instance.
+    return _instance;
+  }
+  catch(...)
+  {
+    return nullptr;
+  }
 }
 
 /**
- * Start a monitor
+ * \brief Start a monitor
+ * \return the id of the monitor we started
  */
-__int64 MonitorsManager::Start(const wchar_t* path, bool recursive)
+__int64 MonitorsManager::Start(const wchar_t* path, const bool recursive)
 {
   const auto monitor = Instance()->CreateAndStart( path, recursive );
   return monitor->Id();
 }
 
-bool MonitorsManager::Stop(__int64 id)
+/**
+ * \brief Try and remove a monitror by id
+ * \return if we managed to remove it or not.
+ */
+bool MonitorsManager::Stop( const __int64 id)
 {
   auto guard = Lock(_lock);
 
@@ -73,50 +89,80 @@ bool MonitorsManager::Stop(__int64 id)
     return false;
   }
 
-  // try and remove it.
-  auto result = Instance()->Remove(id);
-
-  // delete our instance if we are the last one
-  if( Instance()->_monitors.empty() )
+  try
   {
-    delete _instance;
-    _instance = nullptr;
+    // try and remove it.
+    const auto result = Instance()->Remove(id);
+
+    // delete our instance if we are the last one
+    if (Instance()->_monitors.empty())
+    {
+      delete _instance;
+      _instance = nullptr;
+    }
+    return result;
   }
-  return result;
+  catch( ... )
+  {
+    return false;
+  }
 }
 
 /**
- * Try and get an usued id
+ * \brief Try and get an usued id
+ * \return a random id number
  */
-__int64 MonitorsManager::GetId() const
+__int64 MonitorsManager::GetId()
 {
   return (static_cast<__int64>(rand()) << (sizeof(int) * 8)) | rand();
 }
 
 /***
- * Create a monitor instance and add it to the list.
- * Return the value.
+ * \brief Create a monitor instance and add it to the list.
+ * \return the value.
  */
-Monitor* MonitorsManager::CreateAndStart( const std::wstring& path, bool recursive )
+Monitor* MonitorsManager::CreateAndStart( const std::wstring& path, const bool recursive )
 {
   auto guard = Lock(_lock);
-
-  for (;;)
+  try
   {
-    auto id = GetId();
-    if (_monitors.find(id) != _monitors.end())
+    for (;;)
     {
-      // get another id.
-      continue;
+      // try and look for an used id.
+      auto id = GetId();
+      if (_monitors.find(id) != _monitors.end())
+      {
+        // get another id.
+        continue;
+      }
+
+      // create the new monitor
+      const auto monitor = new MonitorReadDirectoryChanges(id, path, recursive);
+
+      // first add it to the list
+      _monitors[monitor->Id()] = monitor;
+
+      try
+      {
+        // and start monitoring for changes.
+        monitor->Start();
+      }
+      catch( ... )
+      {
+        // exception while trying to start
+        // remove the one we just added.
+        Remove(monitor->Id());
+
+        // and return null.
+        return nullptr;
+      }
+      return monitor;
     }
-
-    //const auto monitor = new Monitor( id );
-    const auto monitor = new MonitorReadDirectoryChanges(id, path, recursive);
-
-    monitor->Start();
-
-    _monitors[monitor->Id()] = monitor;
-    return monitor;
+  }
+  catch(...)
+  {
+    // something broke while trying to create this monitor.
+    return nullptr;
   }
 }
 

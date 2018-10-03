@@ -198,7 +198,7 @@ void MonitorReadDirectoryChanges::Read()
                      FILE_NOTIFY_CHANGE_SECURITY;
 
   // This call needs to be reissued after every APC.
-  auto result = ::ReadDirectoryChangesW(
+  if( !::ReadDirectoryChangesW(
     _hDirectory,
     _buffer,
     BUFFER_SIZE,
@@ -207,16 +207,19 @@ void MonitorReadDirectoryChanges::Read()
     nullptr,                  // bytes returned, (not used here as we are async)
     &_overlapped,             // buffer with our information
     &FileIoCompletionRoutine
-  );
+  ))
+  {
+    AddEventError(EventAction::ErrorCannotStart);
+  }
 }
 
 /***
- * The async callback function for ReadDirectoryChangesW
+ * \brief The async callback function for ReadDirectoryChangesW
  */
 void CALLBACK MonitorReadDirectoryChanges::FileIoCompletionRoutine(
-  DWORD dwErrorCode,
-  DWORD dwNumberOfBytesTransfered,
-  LPOVERLAPPED lpOverlapped
+  const DWORD dwErrorCode,
+  const DWORD dwNumberOfBytesTransfered,
+  const LPOVERLAPPED lpOverlapped
 )
 {
   // get the object we are working with
@@ -224,6 +227,7 @@ void CALLBACK MonitorReadDirectoryChanges::FileIoCompletionRoutine(
 
   if (dwErrorCode == ERROR_OPERATION_ABORTED)
   {
+    obj->AddEventError(EventAction::ErrorAborted);
     return;
   }
 
@@ -232,6 +236,8 @@ void CALLBACK MonitorReadDirectoryChanges::FileIoCompletionRoutine(
   // fails with the error code ERROR_NOTIFY_ENUM_DIR.
   if (0 == dwNumberOfBytesTransfered)
   {
+    obj->AddEventError(EventAction::ErrorOverflow);
+
     // noting to read, just restart
     obj->Read();
     return;
@@ -263,13 +269,21 @@ unsigned char* MonitorReadDirectoryChanges::Clone(const unsigned long ulSize) co
     return nullptr;
   }
 
-  // create the clone
-  const auto pBuffer = new unsigned char[ulSize];
+  try
+  {
+    // create the clone
+    const auto pBuffer = new unsigned char[ulSize];
 
-  // copy it.
-  memcpy(pBuffer, _buffer, ulSize);
+    // copy it.
+    memcpy(pBuffer, _buffer, ulSize);
 
-  return pBuffer;
+    return pBuffer;
+  }
+  catch( ... )
+  {
+    AddEventError(EventAction::ErrorMemory);
+    return nullptr;
+  }
 }
 
 void MonitorReadDirectoryChanges::ProcessNotificationFromBackup(const unsigned char* pBuffer ) const
@@ -279,11 +293,12 @@ void MonitorReadDirectoryChanges::ProcessNotificationFromBackup(const unsigned c
     // overflow
     if (nullptr == pBuffer)
     {
+      AddEventError(EventAction::ErrorOverflow);
       return;
     }
 
     // get the file information
-    auto* pRecord = (FILE_NOTIFY_INFORMATION*)pBuffer;;
+    auto pRecord = (FILE_NOTIFY_INFORMATION*)pBuffer;;
     for (;;)
     {
       // get the filename
@@ -308,6 +323,10 @@ void MonitorReadDirectoryChanges::ProcessNotificationFromBackup(const unsigned c
 
       case FILE_ACTION_RENAMED_NEW_NAME:
         AddEvent( EventAction::RenamedNew, wFilename);
+        break;
+
+      default:
+        AddEvent(EventAction::Unknown, wFilename );
         break;
       }
 

@@ -73,3 +73,11 @@ void Monitor::AddEvent( const EventAction action, const std::wstring& fileName) 
 {
   _eventCollector->Add(action, Path(), fileName);
 }
+
+/**
+ * \brief Add an error event to the list.
+ */
+void Monitor::AddEventError( const EventAction action) const
+{
+  _eventCollector->Add(action, L"", L"");
+}

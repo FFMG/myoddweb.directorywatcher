@@ -30,7 +30,7 @@ public:
 protected:
   Monitor* CreateAndStart(const std::wstring& path, bool recursive);
   bool Remove( __int64 id );
-  __int64 GetId() const;
+  static __int64 GetId();
 protected:
   // The file lock
   static std::recursive_mutex _lock;
