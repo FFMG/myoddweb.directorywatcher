@@ -12,13 +12,44 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
-
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace myoddweb.directorywatcher.interfaces
 {
+  public delegate Task WatcherEvent<in T>(T e, CancellationToken token);
+
   public interface IWatcher2 : IWatcher1
   {
+    #region Events
+    /// <summary>
+    /// Event when a FileSystem event was 'touched'.
+    /// Changed attribute, size changed etc...
+    /// </summary>
+    event WatcherEvent<IFileSystemEvent> OnTouchedAsync;
+
+    /// <summary>
+    /// Event when a FileSystem event was added.
+    /// </summary>
+    event WatcherEvent<IFileSystemEvent> OnAddedAsync;
+
+    /// <summary>
+    /// Event when a FileSystem event was Removed.
+    /// </summary>
+    event WatcherEvent<IFileSystemEvent> OnRemovedAsync;
+
+    /// <summary>
+    /// Event when a FileSystem event was Renamed.
+    /// </summary>
+    event WatcherEvent<IRenamedFileSystemEvent> OnRenamedAsync;
+
+    /// <summary>
+    /// There was an error.
+    /// </summary>
+    event WatcherEvent<IEventError> OnErrorAsync;
+    #endregion
+
     /// <summary>
     /// Add a request, if monitoring has started already,
     /// we will start monitoring right away

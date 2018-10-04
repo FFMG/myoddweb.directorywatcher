@@ -12,8 +12,11 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using myoddweb.directorywatcher.utils;
 using myoddweb.directorywatcher.interfaces;
 
@@ -21,6 +24,17 @@ namespace myoddweb.directorywatcher
 {
   public class Watcher : IWatcher2
   {
+    #region Member variables
+    /// <summary>
+    /// To stop the running task
+    /// </summary>
+    private CancellationTokenSource _source;
+
+    /// <summary>
+    /// The currently running task, (if we have one).
+    /// </summary>
+    private Task _task;
+
     /// <summary>
     /// If we started work or not.
     /// </summary>
@@ -35,7 +49,26 @@ namespace myoddweb.directorywatcher
     /// The list of requests.
     /// </summary>
     private readonly IList<IRequest> _pendingRequests = new List<IRequest>();
+    #endregion
 
+    #region Events
+    /// <inheritdoc />
+    public event WatcherEvent<IFileSystemEvent> OnTouchedAsync;
+
+    /// <inheritdoc />
+    public event WatcherEvent<IFileSystemEvent> OnAddedAsync;
+
+    /// <inheritdoc />
+    public event WatcherEvent<IFileSystemEvent> OnRemovedAsync;
+
+    /// <inheritdoc />
+    public event WatcherEvent<IRenamedFileSystemEvent> OnRenamedAsync;
+
+    /// <inheritdoc />
+    public event WatcherEvent<IEventError> OnErrorAsync;
+    #endregion
+
+    #region IWatcher1/IWatcher2
     /// <inheritdoc />
     public long Start(IRequest request)
     {
@@ -151,7 +184,7 @@ namespace myoddweb.directorywatcher
       {
         // regadless what happned we have now started
         // in case the user calls start before adding anything at all.
-        _started = true;
+        StartInternalEvents();
       }
     }
 
@@ -178,7 +211,7 @@ namespace myoddweb.directorywatcher
       finally
       {
         // we have now stopped.
-        _started = false;
+        StopInternalEvents();
       }
     }
 
@@ -196,5 +229,132 @@ namespace myoddweb.directorywatcher
       events = allEvents;
       return allEvents.Count;
     }
+    #endregion
+
+    #region Private functions
+    private void StopInternalEvents()
+    {
+      // are we running?
+      _source?.Cancel();
+      _task?.Wait();
+
+      // flag that this has stoped.
+      _started = false;
+      _task = null;
+    }
+
+    private void StartInternalEvents()
+    {
+      // stowhatever might still be running.
+      StopInternalEvents();
+
+      // flag that this has started.
+      _started = true;
+
+      // cancel the task
+      _source = new CancellationTokenSource();
+
+      // start the next task
+      _task = ManageEvents( _source.Token );
+    }
+
+    private async Task<bool> ManageEvents( CancellationToken token )
+    {
+      //  how big we want to allow the list of tasks to be.
+      const int maxNumTasks = 1028;
+
+      // the list of tasks.
+      var tasks = new List<Task>();
+      try
+      {
+        while (!_source.IsCancellationRequested)
+        {
+          try
+          {
+            // get all the events
+            if (GetEvents(out var events) <= 0)
+            {
+              continue;
+            }
+
+            foreach (var e in events)
+            {
+              switch (e.Action)
+              {
+                case EventAction.Error:
+                case EventAction.ErrorMemory:
+                case EventAction.ErrorOverflow:
+                case EventAction.ErrorAborted:
+                case EventAction.ErrorCannotStart:
+                case EventAction.ErrorAccess:
+                case EventAction.Unknown:
+                  if (OnErrorAsync != null)
+                  {
+                    tasks.Add(Task.Run(() => OnErrorAsync(new EventError( e.Action, e.DateTimeUtc ), token), token));
+                  }
+                  break;
+
+                case EventAction.Added:
+                  if (OnAddedAsync != null)
+                  {
+                    tasks.Add(Task.Run(() => OnAddedAsync(new FileSystemEvent(e), token), token));
+                  }
+
+                  break;
+
+                case EventAction.Removed:
+                  if (OnRemovedAsync != null)
+                  {
+                    tasks.Add(Task.Run(() => OnRemovedAsync(new FileSystemEvent(e), token), token));
+                  }
+
+                  break;
+
+                case EventAction.Touched:
+                  if (OnTouchedAsync != null)
+                  {
+                    tasks.Add( Task.Run( () => OnTouchedAsync(new FileSystemEvent(e), token), token ));
+                  }
+
+                  break;
+
+                case EventAction.Renamed:
+                  break;
+
+                default:
+                  break;
+              }
+
+              if (tasks.Count > maxNumTasks)
+              {
+                tasks.RemoveAll(t => t.IsCompleted);
+              }
+            }
+          }
+          finally
+          {
+            // wait ... a little.
+            await Task.Delay(100, token).ConfigureAwait(false);
+          }
+        }
+      }
+      catch (OperationCanceledException e)
+      {
+        if (e.CancellationToken != _source.Token)
+        {
+          //  not my token
+          throw;
+        }
+      }
+      finally
+      {
+        // wait for all the tasks to complete.
+        tasks.RemoveAll(t => t.IsCompleted);
+        Task.WaitAll(tasks.ToArray());
+      }
+      return true;
+    }
+
+    #endregion
   }
 }

@@ -44,32 +44,46 @@ namespace myoddweb.directorywatcher.sample
         watch1.Add(new Request("c:\\", true));
         watch1.Add(new Request("d:\\", true));
         watch1.Add(new Request("z:\\", true));
-        
-        var watch2 = new Watcher();
-        watch2.Add( new Request("c:\\", true) );
 
-        const double ms = 100;
-        var timer = new Timer();
-        timer.Elapsed += (obj, evnt) =>
-        {
-          watch1.GetEvents( out var events1 );
-          foreach (var e in events1)
-          {
-            Console.WriteLine($"[{e.DateTimeUtc.Hour}:{e.DateTimeUtc.Minute}:{e.DateTimeUtc.Second}]:{e.Path}");
-          }
-          watch2.GetEvents(out var events2);
-          foreach (var e in events2)
-          {
-            Console.WriteLine($"[{e.DateTimeUtc.Hour}:{e.DateTimeUtc.Minute}:{e.DateTimeUtc.Second}]:{e.Path}");
-          }
-          timer.Start();
-        };
-        timer.Interval = ms;
-        timer.AutoReset = false;
-        timer.Start();
-
+        // start watching
         watch1.Start();
-        watch2.Start();
+
+        var foreground = Console.ForegroundColor;
+        watch1.OnErrorAsync += async (f, t) =>
+        {
+          Console.ForegroundColor = ConsoleColor.Red;
+          Console.WriteLine(
+            $"[{f.DateTimeUtc.Hour}:{f.DateTimeUtc.Minute}:{f.DateTimeUtc.Second}]:{f.Message}");
+          Console.ForegroundColor = foreground;
+        };
+        watch1.OnAddedAsync += async (f, t) =>
+        {
+          Console.ForegroundColor = ConsoleColor.Green;
+          Console.WriteLine(
+            $"[{f.DateTimeUtc.Hour}:{f.DateTimeUtc.Minute}:{f.DateTimeUtc.Second}]:{f.FileSystemInfo}");
+          Console.ForegroundColor = foreground;
+        };
+        watch1.OnRemovedAsync += async (f, t) =>
+        {
+          Console.ForegroundColor = ConsoleColor.Yellow;
+          Console.WriteLine(
+            $"[{f.DateTimeUtc.Hour}:{f.DateTimeUtc.Minute}:{f.DateTimeUtc.Second}]:{f.FileSystemInfo}");
+          Console.ForegroundColor = foreground;
+        };
+        watch1.OnRenamedAsync += async (f, t) =>
+        {
+          Console.ForegroundColor = ConsoleColor.Blue;
+          Console.WriteLine(
+            $"[{f.DateTimeUtc.Hour}:{f.DateTimeUtc.Minute}:{f.DateTimeUtc.Second}]:{f.FileSystemInfo}");
+          Console.ForegroundColor = foreground;
+        };
+        watch1.OnTouchedAsync += async (f, t) =>
+        {
+          Console.ForegroundColor = ConsoleColor.Gray;
+          Console.WriteLine(
+            $"[{f.DateTimeUtc.Hour}:{f.DateTimeUtc.Minute}:{f.DateTimeUtc.Second}]:{f.FileSystemInfo}");
+          Console.ForegroundColor = foreground;
+        };
 
         var exitEvent = new ManualResetEvent(false);
         Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs e)
@@ -85,9 +99,7 @@ namespace myoddweb.directorywatcher.sample
         exitEvent.WaitOne();
 
         // stop everything.
-        timer.Stop();
         watch1.Stop();
-        watch2.Stop();
       }
       catch (Exception ex)
       {

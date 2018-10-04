@@ -43,6 +43,9 @@
   <ItemGroup>
     <Compile Include="EventAction.cs" />
     <Compile Include="IEvent.cs" />
+    <Compile Include="IEventError.cs" />
+    <Compile Include="IFileSystemEvent.cs" />
+    <Compile Include="IRenamedFileSystemEvent.cs" />
     <Compile Include="IRequest.cs" />
     <Compile Include="IWatcher1.cs" />
     <Compile Include="IWatcher2.cs" />

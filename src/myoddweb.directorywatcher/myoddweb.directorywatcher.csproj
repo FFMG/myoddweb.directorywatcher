@@ -41,6 +41,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="utils\EventError.cs" />
+    <Compile Include="utils\FileSystemEvent.cs" />
     <Compile Include="utils\TypeLoader.cs" />
     <Compile Include="utils\WatcherManager.cs" />
     <Compile Include="Watcher.cs" />
