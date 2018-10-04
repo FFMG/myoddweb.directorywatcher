@@ -20,41 +20,46 @@ enum class ManagedEventAction
   /// <summary>
   /// General error
   /// </summary>
-  Error,
+  Error = 0,
 
   /// <summary>
   /// General memory error, (out of and so on).
   /// </summary>
-  ErrorMemory,
+  ErrorMemory = 1,
 
   /// <summary>
   /// there was an overflow.
   /// </summary>
-  ErrorOverflow,
+  ErrorOverflow = 2,
 
   /// <summary>
   /// the monitoring was stopped somehow.
   /// </summary>
-  ErrorAborted,
+  ErrorAborted = 3,
 
   /// <summary>
   /// Unable to even start the monitoring
   /// Is the path valid? Is the filename valid?
   /// </summary>
-  ErrorCannotStart,
+  ErrorCannotStart = 4,
+
+  /// <summary>
+  /// Cannot access the file/folder
+  /// </summary>
+  ErrorAccess = 5,
 
   /// <summary>
   /// We have an unknown file error.
   /// </summary>
   Unknown = 1000,
-  Added,
-  Removed,
+  Added = 1001,
+  Removed = 1002,
 
   /// <summary>
   /// Small changed, timestamp, attribute etc...
   /// </summary>
-  Touched,
-  Renamed
+  Touched = 1003,
+  Renamed = 1004
 };
 
 enum class EventAction
@@ -62,42 +67,47 @@ enum class EventAction
   /**
    * \brief There was a general error
    */
-  Error,
+  Error = 0,
 
   /**
    * \brief general memory error, (out of and so on).
    */
-  ErrorMemory,
+  ErrorMemory = 1,
 
   /**
    * \brief there was an overflow.
    */
-  ErrorOverflow,
+  ErrorOverflow = 2,
 
   /**
    * \brief the monitoring was stopped somehow.
    */
-  ErrorAborted,
+  ErrorAborted = 3,
 
   /**
    * \brief Unable to even start the monitoring
    * Is the path valid? Is the filename valid?
    */
-  ErrorCannotStart,
+  ErrorCannotStart = 4,
+
+  /**
+   * \Brief cannot access the file/folder
+   */
+  ErrorAccess = 5,
 
   /**
    * We have an unknown file error.
    */
-  Unknown   = 1000,
-  Added,
-  Removed,
+  Unknown = 1000,
+  Added = 1001,
+  Removed = 1002,
 
   /**
    * \brief small changed, timestamp, attribute etc...
    */
-  Touched,
-  RenamedOld,
-  RenamedNew
+  Touched = 1003,
+  RenamedOld = 1004,
+  RenamedNew = 1005
 };
 
 /**

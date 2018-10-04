@@ -56,6 +56,8 @@ namespace myoddweb
 
       // stop the bufdfer
       CompleteBuffer();
+
+      // reset the overleapped.
       memset(&_overlapped, 0, sizeof(OVERLAPPED));
     }
 
@@ -111,20 +113,24 @@ namespace myoddweb
       return IsOpen();
     }
 
+    /**
+     * \brief Stop monitoring
+     */
     void MonitorReadDirectoryChanges::Stop()
     {
       CloseDirectory();
     }
 
     /**
-     * @see https://docs.microsoft.com/en-gb/windows/desktop/api/winbase/nf-winbase-readdirectorychangesexw
+     * \brief https://docs.microsoft.com/en-gb/windows/desktop/api/winbase/nf-winbase-readdirectorychangesexw
+     * \return success or not.
      */
     bool MonitorReadDirectoryChanges::Start()
     {
       // close everything
       CloseDirectory();
 
-      // set the variables we will be using here.
+      // create the buffer.
       _buffer = new unsigned char[BUFFER_SIZE];
       memset(_buffer, 0, sizeof(unsigned char)*BUFFER_SIZE);
       _overlapped.hEvent = this;
@@ -149,7 +155,8 @@ namespace myoddweb
     }
 
     /**
-     * We are now in the thread itself.
+     * \brief the worker thread that runs the code itself.
+     * \param obj pointer to this instance of the class.
      */
     void MonitorReadDirectoryChanges::BeginThread(MonitorReadDirectoryChanges* obj)
     {
@@ -158,13 +165,15 @@ namespace myoddweb
     }
 
     /**
-     * Begin the actual work
+     * \brief Begin the actual work
      */
     void MonitorReadDirectoryChanges::Run()
     {
       // try and open the directory
+      // if it is open already then nothing should happen here.
       if (!OpenDirectory())
       {
+        AddEventError(EventAction::ErrorAccess);
         return;
       }
 
@@ -222,7 +231,7 @@ namespace myoddweb
     void CALLBACK MonitorReadDirectoryChanges::FileIoCompletionRoutine(
       const DWORD dwErrorCode,
       const DWORD dwNumberOfBytesTransfered,
-      const LPOVERLAPPED lpOverlapped
+      _OVERLAPPED* lpOverlapped
     )
     {
       // get the object we are working with
@@ -264,9 +273,14 @@ namespace myoddweb
       obj->ProcessNotificationFromBackup(pBufferBk);
     }
 
+    /**
+     * \brief Clone the buffer into a temp buffer, we will pass ownership of the new buffer to the caller.
+     * \param ulSize the number of bytes we want to copy over.
+     * \return unsigned char* the newly created buffer.
+     */
     unsigned char* MonitorReadDirectoryChanges::Clone(const unsigned long ulSize) const
     {
-      // we have an overfolow
+      // if the size if more than we can offer we need to prevent an overflow.
       if (ulSize > BUFFER_SIZE)
       {
         return nullptr;
@@ -280,6 +294,7 @@ namespace myoddweb
         // copy it.
         memcpy(pBuffer, _buffer, ulSize);
 
+        // return it.
         return pBuffer;
       }
       catch (...)
@@ -289,6 +304,11 @@ namespace myoddweb
       }
     }
 
+    /**
+     * \brief this function is called _after_ we received a folder change request
+     *        we own this buffer and we mus delete it at the end.
+     * \param pBuffer
+     */
     void MonitorReadDirectoryChanges::ProcessNotificationFromBackup(const unsigned char* pBuffer) const
     {
       try
@@ -345,6 +365,7 @@ namespace myoddweb
       {
         // regadless what happens
         // we have to free the memory.
+        AddEventError(EventAction::ErrorMemory);
       }
 
       // we are done with this buffer.

@@ -5,40 +5,45 @@
     /// <summary>
     /// General error
     /// </summary>
-    Error,
+    Error = 0,
 
     /// <summary>
     /// General memory error, (out of and so on).
     /// </summary>
-    ErrorMemory,
+    ErrorMemory = 1,
 
     /// <summary>
     /// there was an overflow.
     /// </summary>
-    ErrorOverflow,
+    ErrorOverflow = 2,
 
     /// <summary>
     /// the monitoring was stopped somehow.
     /// </summary>
-    ErrorAborted,
+    ErrorAborted = 3,
 
     /// <summary>
     /// Unable to even start the monitoring
     /// Is the path valid? Is the filename valid?
     /// </summary>
-    ErrorCannotStart,
+    ErrorCannotStart = 4,
+
+    /// <summary>
+    /// Cannot access the file/folder
+    /// </summary>
+    ErrorAccess = 5,
 
     /// <summary>
     /// We have an unknown file error.
     /// </summary>
     Unknown = 1000,
-    Added,
-    Removed,
+    Added = 1001,
+    Removed = 1002,
 
     /// <summary>
     /// Small changed, timestamp, attribute etc...
     /// </summary>
-    Touched,
-    Renamed
+    Touched = 1003,
+    Renamed = 1004
   }
 }

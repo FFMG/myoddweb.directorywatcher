@@ -136,6 +136,7 @@ namespace myoddweb
         case EventAction::ErrorOverflow:
         case EventAction::ErrorAborted:
         case EventAction::ErrorCannotStart:
+        case EventAction::ErrorAccess:
         case EventAction::Unknown:
         case EventAction::Added:
         case EventAction::Removed:

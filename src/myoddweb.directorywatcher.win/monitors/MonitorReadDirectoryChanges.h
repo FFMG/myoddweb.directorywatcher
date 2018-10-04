@@ -21,7 +21,6 @@ namespace myoddweb
 {
   namespace directorywatcher
   {
-
     class MonitorReadDirectoryChanges : public Monitor
     {
     public:
@@ -46,7 +45,7 @@ namespace myoddweb
       bool OpenDirectory();
       void CloseDirectory();
       bool IsOpen() const;
-      void ProcessNotificationFromBackup(const unsigned char* pBufferBk) const;
+      void ProcessNotificationFromBackup(const unsigned char* pBuffer) const;
       unsigned char* Clone(unsigned long ulSize) const;
 
       void Read();
