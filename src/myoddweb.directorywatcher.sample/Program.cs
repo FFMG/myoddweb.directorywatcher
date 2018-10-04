@@ -43,7 +43,7 @@ namespace myoddweb.directorywatcher.sample
         IWatcher2 watch1 = new Watcher();
         watch1.Add(new Request("c:\\", true));
         watch1.Add(new Request("d:\\", true));
-        watch1.Add(new Request("d:\\", true));
+        watch1.Add(new Request("z:\\", true));
         
         var watch2 = new Watcher();
         watch2.Add( new Request("c:\\", true) );

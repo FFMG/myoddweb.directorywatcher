@@ -19,14 +19,20 @@ namespace myoddweb
 {
   namespace directorywatcher
   {
+    /**
+     * \brief how often we want to check for 'over-full' containers.
+     */
+    #define MAX_INTERNAL_COUNTER 128
+    #define MAX_AGE_MS 5000
 
-#define MAX_INTERNAL_VECTOR 128
-#define MAX_AGE_MS 5000
+    Collector::Collector() :Collector(MAX_INTERNAL_COUNTER, MAX_AGE_MS)
+    {
+    }
 
-
-    Collector::Collector() :
+    Collector::Collector(short maxInternalCounter, short maxAgeMs) :
       _internalCounter(0),
-      _maxAgeMs(MAX_AGE_MS)
+      _maxInternalCounter(maxInternalCounter),
+      _maxAgeMs(maxAgeMs)
     {
     }
 
@@ -177,7 +183,7 @@ namespace myoddweb
       ++_internalCounter;
 
       // do we need to clean up?
-      if (_internalCounter <= MAX_INTERNAL_VECTOR)
+      if (_internalCounter <= _maxInternalCounter)
       {
         return;
       }
@@ -186,7 +192,7 @@ namespace myoddweb
       _internalCounter = 0;
 
       // get the current time.
-      const auto ms = GetMillisecondsNowUtc() - MAX_AGE_MS;
+      const auto ms = GetMillisecondsNowUtc() - _maxAgeMs;
       for (;;)
       {
         // get the first iterator.

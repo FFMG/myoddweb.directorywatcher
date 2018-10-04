@@ -32,6 +32,10 @@ namespace myoddweb
       Collector();
       virtual ~Collector();
 
+    private:
+      Collector( short maxInternalCounter, short maxAgeMs );
+
+    public:
       void Add(EventAction action, const std::wstring& path, const std::wstring& file);
 
       /**
@@ -49,7 +53,13 @@ namespace myoddweb
       short _internalCounter;
 
       /**
+       * \brief the max internal counter before we check for 'old'
+       */
+      const short _maxInternalCounter;
+
+      /**
        * \brief This is the oldest number of ms we want something to be.
+       * It is *only* removed if _maxInternalCounter is reached.
        */
       const short _maxAgeMs;
 
