@@ -38,22 +38,23 @@ The current version of [File Watcher](https://docs.microsoft.com/en-us/dotnet/ap
 
 Add all the directories we want to 'observe' 
 
-    ```cs
+```csharp
     var watch = new Watcher();
     watch.Add(new Request("c:\\", true));
     watch.Add(new Request("d:\\foo\\bar\\", true));
     watch.Add(new Request("y:\\", true));
-	```
+```
 
 Then start 
 
-    ```cs
-	// start watching
+```csharp
+    // start watching
     watch.Start();
+```
 
 Get notifications in case a file is created.
 
-    ```cs
+```csharp
     watch.OnAddedAsync += async (f, t) =>
     {
       Console.ForegroundColor = ConsoleColor.Green;
@@ -61,12 +62,12 @@ Get notifications in case a file is created.
         $"[{f.DateTimeUtc.Hour}:{f.DateTimeUtc.Minute}:{f.DateTimeUtc.Second}]:{f.FileSystemInfo}");
       Console.ForegroundColor = foreground;
     };
-    ```
+```
 
 we get given the file that was added as well as a cancellation token
 
 And when we are done stop it ...
 
-    ```cs
+```csharp
     watch.Stop();
-    ```
+```
