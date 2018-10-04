@@ -25,6 +25,11 @@ namespace myoddweb
     {
     public:
       MonitorReadDirectoryChanges(__int64 id, const Request& request);
+
+    protected:
+      MonitorReadDirectoryChanges(__int64 id, const Request& request, unsigned long bufferLength);
+
+    public:
       virtual ~MonitorReadDirectoryChanges();
 
       bool Start() override;
@@ -34,16 +39,19 @@ namespace myoddweb
       static void CALLBACK FileIoCompletionRoutine(
         DWORD dwErrorCode,							  // completion code
         DWORD dwNumberOfBytesTransfered,	// number of bytes transferred
-        LPOVERLAPPED lpOverlapped         // I/O information buffer
+        _OVERLAPPED* lpOverlapped         // I/O information buffer
       );
 
-      static void BeginThread(MonitorReadDirectoryChanges* obj);
+      static void RunThread(MonitorReadDirectoryChanges* obj);
 
     private:
-      void CompleteBuffer();
+      #pragma region
+      void ResetBuffer();
+      void Reset();
+      void StopAndResetThread();
+      #pragma endregion Reset/Stop functions
 
       bool OpenDirectory();
-      void CloseDirectory();
       bool IsOpen() const;
       void ProcessNotificationFromBackup(const unsigned char* pBuffer) const;
       unsigned char* Clone(unsigned long ulSize) const;
@@ -54,15 +62,22 @@ namespace myoddweb
     private:
       HANDLE _hDirectory;
       unsigned char* _buffer;
+      const unsigned long _bufferLength;
 
+      /**
+       * \brief the overlapped
+       */
       OVERLAPPED	_overlapped{};
 
-      // Create a std::promise object
+      #pragma region
+      /**
+       * \brief signal to stop the thread.
+       */
       std::promise<void> _exitSignal;
       std::future<void> _futureObj;
       std::thread* _th;
+      #pragma endregion Thread variables
 
-      void StopWorkerThread();
       void StartWorkerThread();
     };
   }

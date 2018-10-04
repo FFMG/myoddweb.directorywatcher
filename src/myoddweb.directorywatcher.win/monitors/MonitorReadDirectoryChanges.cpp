@@ -16,22 +16,38 @@
 #include <string>
 #include <process.h>
 
-#define BUFFER_SIZE (unsigned long)16384
-
 namespace myoddweb
 {
   namespace directorywatcher
   {
     /**
+     * \brief The size of the buffer that is pointed to by the lpBuffer parameter, in bytes.
+     * ReadDirectoryChangesW fails with ERROR_INVALID_PARAMETER when the buffer length is greater than 64KB
+     * \see https://docs.microsoft.com/en-us/windows/desktop/api/winbase/nf-winbase-readdirectorychangesw
+     */
+    #define MAX_BUFFER_SIZE (unsigned long)65536
+
+    /**
      * \brief Create the Monitor that uses ReadDirectoryChanges
      * \param id the unique id of this monitor
      * \param request details of the request.
      */
-    MonitorReadDirectoryChanges::MonitorReadDirectoryChanges(__int64 id, const Request& request)
-      :
+    MonitorReadDirectoryChanges::MonitorReadDirectoryChanges(__int64 id, const Request& request) :
+      MonitorReadDirectoryChanges(id, request, MAX_BUFFER_SIZE )
+    {
+    }
+
+    /**
+     * \brief Create the Monitor that uses ReadDirectoryChanges
+     * \param id the unique id of this monitor
+     * \param request details of the request.
+     * \param bufferLength the size of the buffer
+     */
+    MonitorReadDirectoryChanges::MonitorReadDirectoryChanges(__int64 id, const Request& request, const unsigned long bufferLength) :
       Monitor(id, request),
       _hDirectory(nullptr),
       _buffer(nullptr),
+      _bufferLength( bufferLength),
       _th(nullptr)
     {
       memset(&_overlapped, 0, sizeof(OVERLAPPED));
@@ -39,10 +55,13 @@ namespace myoddweb
 
     MonitorReadDirectoryChanges::~MonitorReadDirectoryChanges()
     {
-      CloseDirectory();
+      Reset();
     }
 
-    void MonitorReadDirectoryChanges::CloseDirectory()
+    /**
+     * \brief Close all the handles, delete pointers and reset all the values.
+     */
+    void MonitorReadDirectoryChanges::Reset()
     {
       if (IsOpen())
       {
@@ -52,16 +71,19 @@ namespace myoddweb
       _hDirectory = nullptr;
 
       // stop the thread
-      StopWorkerThread();
+      StopAndResetThread();
 
       // stop the bufdfer
-      CompleteBuffer();
+      ResetBuffer();
 
       // reset the overleapped.
       memset(&_overlapped, 0, sizeof(OVERLAPPED));
     }
 
-    void MonitorReadDirectoryChanges::CompleteBuffer()
+    /**
+     * \brief delete the buffer, (if used), and reset the value.
+     */
+    void MonitorReadDirectoryChanges::ResetBuffer()
     {
       if (_buffer == nullptr)
       {
@@ -71,7 +93,10 @@ namespace myoddweb
       _buffer = nullptr;
     }
 
-    void MonitorReadDirectoryChanges::StopWorkerThread()
+    /**
+     * \brief Stop the worker thread, wait for it to complete and then delete it.
+     */
+    void MonitorReadDirectoryChanges::StopAndResetThread()
     {
       if (_th == nullptr)
       {
@@ -82,20 +107,30 @@ namespace myoddweb
       _exitSignal.set_value();
 
       // wait a little
-      _th->join();
-
+      if (_th->joinable())
+      {
+        _th->join();
+      }
+      
       // cleanup
       delete _th;
       _th = nullptr;
     }
 
+    /**
+     * \brief Open the directory we want to watch
+     * \return if there was a problem opening the file.
+     */
     bool MonitorReadDirectoryChanges::OpenDirectory()
     {
+      // check if this was done alread
+      // we cannot use IsOpen() as INVALID_HANDLE_VALUE would cause a return false.
       if (_hDirectory != nullptr)
       {
         return _hDirectory != INVALID_HANDLE_VALUE;
       }
 
+      // how we want to open this directory.
       const auto shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
       const auto fileAttr = FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED;
 
@@ -110,7 +145,15 @@ namespace myoddweb
       );
 
       // check if it all worked.
-      return IsOpen();
+      if( IsOpen() )
+      {
+        return true;
+      }
+
+      // we could not access this
+      AddEventError(EventAction::ErrorAccess);
+
+      return false;
     }
 
     /**
@@ -118,7 +161,7 @@ namespace myoddweb
      */
     void MonitorReadDirectoryChanges::Stop()
     {
-      CloseDirectory();
+      Reset();
     }
 
     /**
@@ -128,11 +171,11 @@ namespace myoddweb
     bool MonitorReadDirectoryChanges::Start()
     {
       // close everything
-      CloseDirectory();
+      Reset();
 
       // create the buffer.
-      _buffer = new unsigned char[BUFFER_SIZE];
-      memset(_buffer, 0, sizeof(unsigned char)*BUFFER_SIZE);
+      _buffer = new unsigned char[_bufferLength];
+      memset(_buffer, 0, sizeof(unsigned char)*_bufferLength);
       _overlapped.hEvent = this;
 
       // start the worker thread
@@ -142,23 +185,27 @@ namespace myoddweb
       return true;
     }
 
+    /**
+     * \brief Start the worker thread so we can monitor for events.
+     */
     void MonitorReadDirectoryChanges::StartWorkerThread()
     {
       // stop the old one... if any
-      StopWorkerThread();
+      StopAndResetThread();
 
-      // and start it again.
+      // we can now reset our future
+      // so we can cancel/stop the thread/
       _futureObj = _exitSignal.get_future();
 
       // we can now looking for changes.
-      _th = new std::thread(&MonitorReadDirectoryChanges::BeginThread, this);
+      _th = new std::thread(&MonitorReadDirectoryChanges::RunThread, this);
     }
 
     /**
      * \brief the worker thread that runs the code itself.
      * \param obj pointer to this instance of the class.
      */
-    void MonitorReadDirectoryChanges::BeginThread(MonitorReadDirectoryChanges* obj)
+    void MonitorReadDirectoryChanges::RunThread(MonitorReadDirectoryChanges* obj)
     {
       // Run the thread.
       obj->Run();
@@ -187,11 +234,18 @@ namespace myoddweb
       }
     }
 
+    /**
+     * \brief Check if the file is open properly
+     * \return if the file has been open already.
+     */
     bool MonitorReadDirectoryChanges::IsOpen() const
     {
       return _hDirectory != nullptr && _hDirectory != INVALID_HANDLE_VALUE;
     }
 
+    /**
+     * \brief Start the read process
+     */
     void MonitorReadDirectoryChanges::Read()
     {
       if (!IsOpen())
@@ -213,7 +267,7 @@ namespace myoddweb
       if (!::ReadDirectoryChangesW(
         _hDirectory,
         _buffer,
-        BUFFER_SIZE,
+        _bufferLength,
         Recursive(),
         flags,
         nullptr,                  // bytes returned, (not used here as we are async)
@@ -281,7 +335,7 @@ namespace myoddweb
     unsigned char* MonitorReadDirectoryChanges::Clone(const unsigned long ulSize) const
     {
       // if the size if more than we can offer we need to prevent an overflow.
-      if (ulSize > BUFFER_SIZE)
+      if (ulSize > _bufferLength)
       {
         return nullptr;
       }
