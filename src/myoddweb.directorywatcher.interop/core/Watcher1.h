@@ -62,10 +62,5 @@ private:
   ProcsFarProc _farProcs;
 
   HINSTANCE _hDll;
-
-  /**
-   * \brief the date on the 01/01/1970 so we can create DateTime from milliseconds.
-   */
-  const System::DateTime _dateTime1970;
 };
 

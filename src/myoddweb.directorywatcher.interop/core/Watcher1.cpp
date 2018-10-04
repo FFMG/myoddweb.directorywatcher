@@ -27,8 +27,7 @@ using namespace System::Diagnostics;
 using namespace System::IO;
 
 Watcher1::Watcher1() :
-  _hDll( nullptr ),
-  _dateTime1970(System::DateTime(1970, 1, 1))
+  _hDll( nullptr )
 {
   if( !CreateInstance() )
   {
@@ -242,6 +241,11 @@ long long Watcher1::GetEvents(long long id, IList<myoddweb::directorywatcher::in
     return result;
   }
 
+  /**
+   * \brief the date on the 01/01/1970 so we can create DateTime from milliseconds.
+   */
+  const System::DateTime dateTime1970 = System::DateTime(1970, 1, 1);
+
   // we can recreate the list.
   events = gcnew List<myoddweb::directorywatcher::interfaces::IEvent^>();
   for ( auto it = umEvents.begin(); it != umEvents.end(); ++it)
@@ -251,7 +255,7 @@ long long Watcher1::GetEvents(long long id, IList<myoddweb::directorywatcher::in
     event->Path = gcnew System::String( e.Path.c_str());
     event->Extra = gcnew System::String( e.Extra.c_str());
     event->Action = (myoddweb::directorywatcher::interfaces::EventAction)e.Action;
-    event->DateTimeUtc = _dateTime1970 + System::TimeSpan::FromMilliseconds( static_cast<double>(e.TimeMillisecondsUtc));
+    event->DateTimeUtc = dateTime1970 + System::TimeSpan::FromMilliseconds( static_cast<double>(e.TimeMillisecondsUtc));
 
     events->Add(event);
   }
