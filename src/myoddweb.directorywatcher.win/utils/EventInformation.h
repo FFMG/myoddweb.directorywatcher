@@ -118,7 +118,7 @@ struct EventInformation
   /**
    * \brief the time in Ms when this event was recorded.
    */
-  __int64 timeMs{};
+  long long timeMillisecondsUtc{};
 
   /**
    * \brief the action we are recording

@@ -12,6 +12,9 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
+
+using System;
+
 namespace myoddweb.directorywatcher.interfaces
 {
   public interface IEvent
@@ -30,5 +33,10 @@ namespace myoddweb.directorywatcher.interfaces
     /// The action defining this event.
     /// </summary>
     EventAction Action { get; }
+
+    /// <summary>
+    /// When the event happened.
+    /// </summary>
+    DateTime DateTimeUtc { get; }
   }
 }

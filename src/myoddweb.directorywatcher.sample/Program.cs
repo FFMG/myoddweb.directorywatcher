@@ -55,12 +55,12 @@ namespace myoddweb.directorywatcher.sample
           watch1.GetEvents( out var events1 );
           foreach (var e in events1)
           {
-            Console.WriteLine($"{e.Path}");
+            Console.WriteLine($"[{e.DateTimeUtc.Hour}:{e.DateTimeUtc.Minute}:{e.DateTimeUtc.Second}]:{e.Path}");
           }
           watch2.GetEvents(out var events2);
           foreach (var e in events2)
           {
-            Console.WriteLine( $"{e.Path}");
+            Console.WriteLine($"[{e.DateTimeUtc.Hour}:{e.DateTimeUtc.Minute}:{e.DateTimeUtc.Second}]:{e.Path}");
           }
           timer.Start();
         };

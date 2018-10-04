@@ -45,7 +45,7 @@ public:
   /**
    * \brief Get the latest available events.
    * \param id the id we are looking for.
-   * \param cb
+   * \param events out parameter witht he list of events.
    * \return the number of items returned.
    */
   long long GetEvents(long long id, IList<myoddweb::directorywatcher::interfaces::IEvent^> ^% events );
@@ -62,5 +62,10 @@ private:
   ProcsFarProc _farProcs;
 
   HINSTANCE _hDll;
+
+  /**
+   * \brief the date on the 01/01/1970 so we can create DateTime from milliseconds.
+   */
+  const System::DateTime _dateTime1970;
 };
 

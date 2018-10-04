@@ -13,6 +13,7 @@
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #pragma once
+#include <string>
 
 /**
  * \brief implementation of IEvent
@@ -34,6 +35,11 @@ public:
    * \brief The action.
    */
   virtual property myoddweb::directorywatcher::interfaces::EventAction Action;
+
+  /**
+   * \brief When the event happened.
+   */
+  virtual property System::DateTime DateTimeUtc;
 };
 
 /**
@@ -55,4 +61,9 @@ struct UmEvent
    * \brief The action.
    */
   int Action;
+
+  /**
+   * \brief when the event happened in ms
+   */
+  long long TimeMillisecondsUtc;
 };

@@ -38,6 +38,11 @@ namespace myoddweb
        * \brief the action.
        */
       int Action;
+
+      /**
+       * \brief when the event happened in ms
+       */
+      long long TimeMillisecondsUtc;
     };
   }
 }

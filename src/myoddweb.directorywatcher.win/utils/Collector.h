@@ -70,7 +70,7 @@ namespace myoddweb
       typedef std::vector<EventInformation> Events;
       Events _events;
 
-      long long GetTimeMs() const;
+      long long GetMillisecondsNowUtc() const;
       static std::wstring PathCombine(const std::wstring& lhs, const std::wstring& rhs);
     };
   }

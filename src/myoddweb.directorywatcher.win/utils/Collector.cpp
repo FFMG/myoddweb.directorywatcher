@@ -38,8 +38,11 @@ namespace myoddweb
      * \brief Get the time now in milliseconds since 1970
      * \return the current ms time
      */
-    long long Collector::GetTimeMs() const
+    long long Collector::GetMillisecondsNowUtc() const
     {
+      // https://en.cppreference.com/w/cpp/chrono/system_clock
+      // The epoch of system_clock is unspecified, but most implementations use Unix Time 
+      // (i.e., time since 00:00:00 Coordinated Universal Time (UTC), Thursday, 1 January 1970, not counting leap seconds).
       const auto now = std::chrono::system_clock::now();
       const auto nowMs = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
 
@@ -95,7 +98,7 @@ namespace myoddweb
         EventInformation e;
         e.action = action;
         e.name = PathCombine(path, file);
-        e.timeMs = GetTimeMs();
+        e.timeMillisecondsUtc = GetMillisecondsNowUtc();
 
         // we can now add the event
         AddEventInformation(e);
@@ -128,6 +131,7 @@ namespace myoddweb
       for( auto it = clone.begin(); it != clone.end(); ++it )
       {
         Event e = {};
+        e.TimeMillisecondsUtc = (*it).timeMillisecondsUtc;
         e.Path = (*it).name;
         switch ((*it).action)
         {
@@ -182,7 +186,7 @@ namespace myoddweb
       _internalCounter = 0;
 
       // get the current time.
-      const auto ms = GetTimeMs() - MAX_AGE_MS;
+      const auto ms = GetMillisecondsNowUtc() - MAX_AGE_MS;
       for (;;)
       {
         // get the first iterator.
@@ -194,7 +198,7 @@ namespace myoddweb
           return;
         }
 
-        if ((*it).timeMs < ms)
+        if ((*it).timeMillisecondsUtc < ms)
         {
           _events.erase(it);
           continue;
