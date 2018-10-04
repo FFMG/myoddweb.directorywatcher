@@ -43,6 +43,7 @@
   <ItemGroup>
     <Compile Include="utils\EventError.cs" />
     <Compile Include="utils\FileSystemEvent.cs" />
+    <Compile Include="utils\RenamedFileSystemEvent.cs" />
     <Compile Include="utils\TypeLoader.cs" />
     <Compile Include="utils\WatcherManager.cs" />
     <Compile Include="Watcher.cs" />

@@ -299,7 +299,6 @@ namespace myoddweb.directorywatcher
                   {
                     tasks.Add(Task.Run(() => OnAddedAsync(new FileSystemEvent(e), token), token));
                   }
-
                   break;
 
                 case EventAction.Removed:
@@ -307,7 +306,6 @@ namespace myoddweb.directorywatcher
                   {
                     tasks.Add(Task.Run(() => OnRemovedAsync(new FileSystemEvent(e), token), token));
                   }
-
                   break;
 
                 case EventAction.Touched:
@@ -319,6 +317,10 @@ namespace myoddweb.directorywatcher
                   break;
 
                 case EventAction.Renamed:
+                  if (OnRenamedAsync != null)
+                  {
+                    tasks.Add(Task.Run(() => OnRenamedAsync(new RenamedFileSystemEvent(e), token), token));
+                  }
                   break;
 
                 default:

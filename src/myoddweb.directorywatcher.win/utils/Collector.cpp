@@ -29,22 +29,20 @@ namespace myoddweb
     {
     }
 
-    Collector::Collector(short maxInternalCounter, short maxAgeMs) :
+    Collector::Collector(const short maxInternalCounter, const short maxAgeMs) :
       _internalCounter(0),
       _maxInternalCounter(maxInternalCounter),
       _maxAgeMs(maxAgeMs)
     {
     }
 
-    Collector::~Collector()
-    {
-    }
+    Collector::~Collector() = default;
 
     /**
      * \brief Get the time now in milliseconds since 1970
      * \return the current ms time
      */
-    long long Collector::GetMillisecondsNowUtc() const
+    long long Collector::GetMillisecondsNowUtc()
     {
       // https://en.cppreference.com/w/cpp/chrono/system_clock
       // The epoch of system_clock is unspecified, but most implementations use Unix Time 
@@ -106,13 +104,36 @@ namespace myoddweb
         e.name = PathCombine(path, file);
         e.timeMillisecondsUtc = GetMillisecondsNowUtc();
 
-        // we can now add the event
+        // we can now add the event to our vector.
         AddEventInformation(e);
+
+        // try and cleanup the internal counter.
+        CleanupInternalCounter();
       }
       catch (...)
       {
         // something wrong happened
       }
+    }
+
+    /**
+     * \brief copy the current content of the events into a local variable.
+     * Then erase the current content so we can continue receiving data.
+     */
+    void Collector::CloneEventsAndEraseCurrent(Events& clone )
+    {
+      // lock
+      auto guard = Lock(_lock);
+
+      // copy
+      clone = _events;
+
+      // we can now remove all the data we are about to process.
+      _events.erase(_events.begin(), _events.end());
+
+      // we can reset the internal counter.
+      // we erased all the data, there is nothing else to do.
+      _internalCounter = 0;
     }
 
     /**
@@ -122,47 +143,193 @@ namespace myoddweb
      */
     long long Collector::GetEvents(std::vector<Event>& events)
     {
-      //  quickly make a copy of the current list
+      // quickly make a copy of the current list
+      // and erase the current contents.
+      // the lock is released as soon as posible making sure that other threads
+      // can keep adding to the list.
       Events clone;
-      {
-        // copy
-        auto guard = Lock(_lock);
-        clone = _events;
-
-        // we can now remove all the data we are about to process.
-        _events.erase(_events.begin(), _events.end());
-      }
+      CloneEventsAndEraseCurrent(clone);
 
       // the lock has been released, we are now working with the clone
-      for( auto it = clone.begin(); it != clone.end(); ++it )
-      {
-        Event e = {};
-        e.TimeMillisecondsUtc = (*it).timeMillisecondsUtc;
-        e.Path = (*it).name;
-        switch ((*it).action)
-        {
-        case EventAction::Error:
-        case EventAction::ErrorMemory:
-        case EventAction::ErrorOverflow:
-        case EventAction::ErrorAborted:
-        case EventAction::ErrorCannotStart:
-        case EventAction::ErrorAccess:
-        case EventAction::Unknown:
-        case EventAction::Added:
-        case EventAction::Removed:
-        case EventAction::Touched:
-          e.Action = static_cast<int>((*it).action);
-          break;
 
-        case EventAction::RenamedOld:
-        case EventAction::RenamedNew:
-          e.Action = static_cast<int>(ManagedEventAction::Renamed);
+      // go around the data from the newest to the oldest.
+      // and we will add them in reverse as well.
+      // this is useful to make sure that we remove 'older' dulicates.
+      for( auto it = clone.rbegin(); it != clone.rend(); ++it )
+      {
+        const auto& eventInformation = (*it);
+
+        // look if this is a rename event
+        // and if we can add it to a previous rename item.
+        if (AddRename(events, eventInformation ))
+        {
+          continue;
+        }
+
+        Event e = {};
+        e.TimeMillisecondsUtc = eventInformation.timeMillisecondsUtc;
+        e.Path = eventInformation.name;
+        e.Action = ConvertEventActionToUnManagedAction(eventInformation.action);
+        if (IsOlderDuplicate(events, e))
+        {
+          // it is an older duplicate
+          // so we do not want to add it,
+          continue;
+        }
+
+        // it is not a duplicate, so we can add it.
+        // because we are getting the data in reverse we will add the data
+        // in the front, it is older than the previous one.
+        events.insert( events.begin(), e);
+      }
+      return events.size();
+    }
+
+    /**
+     * \brief check if the given event is a rename, (or or new)
+     * \param source the collection of events we will be looking in
+     * \param rename the event we might add to as new or old name.
+     * \return true if we added the event.
+     */
+    bool Collector::AddRename( std::vector<Event>& source, const EventInformation& rename )
+    {
+      // if we are not processing a rename event, then we might as well go on.
+      if( rename.action != EventAction::RenamedOld && rename.action != EventAction::RenamedNew )
+      {
+        return false;
+      }
+
+      Event e = {};
+      e.TimeMillisecondsUtc = rename.timeMillisecondsUtc;
+      e.Action = static_cast<int>(ManagedEventAction::Renamed);
+
+      for( auto it = source.rbegin(); it != source.rend(); ++it )
+      {
+        auto& ce = (*it);
+        if ( ce.Action != static_cast<int>(ManagedEventAction::Renamed))
+        {
+          continue;
+        }
+
+        // if they are both complete... then keep looking
+        if ( !ce.Extra.empty() && !ce.Path.empty() )
+        {
+          continue;
+        }
+
+        // do we already have an extra or a path?
+        // depending on our type?
+        // in that case we cannot go any further.
+        if (rename.action == EventAction::RenamedOld)
+        {
+          // the rename action is old rename
+          // so the extra has to be empty
+          // otherwise we don't know who this belongs to.
+          if( ce.Extra.empty() )
+          {
+            ce.Extra = rename.name;
+            return true;
+          }
+
+          //  get out so this is added.
           break;
         }
 
-        events.push_back(e);
+        // the rename action is new rename
+        // so the Path has to be empty
+        // otherwise we don't know who this belongs to.
+        if (ce.Path.empty())
+        {
+          ce.Path = rename.name;
+          return true;
+        }
+        //  get out so this is added.
+        break;
       }
-      return events.size();
+
+      // if we are here we know we have a rename event, but not a match
+      // so we need to create our own item.
+      if (rename.action == EventAction::RenamedOld )
+      {
+        // the action is 'old' rename
+        // so the given value has to be the extra
+        e.Path = L"";
+        e.Extra = rename.name;
+      }
+      else
+      {
+        // the action is 'new' rename
+        // so the Path is the given name.
+        e.Path = rename.name;
+        e.Extra = L"";
+      }
+
+      // add it at the front.
+      source.insert(source.begin(), e);
+
+      // it is a new item
+      return true;
+    }
+
+
+    /**
+     * \brief check if the given information already exists in the source
+     * \param source the collection of events we will be looking in
+     * \param duplicate the event information we want to add.
+     * \return if the event information is already in the 'source'
+     */
+    bool Collector::IsOlderDuplicate(const std::vector<Event>& source, const Event& duplicate)
+    {
+      for( auto it = source.begin(); it != source.end(); ++it )
+      {
+        const auto e = (*it);
+
+        // if the actions are not the same, then it is not an older duplicate.
+        if( e.Action != duplicate.Action)
+        {
+          continue;
+        }
+
+        if (e.Path == duplicate.Path)
+        {
+          // they are the same!
+          return true;
+        }
+      }
+
+      // if we made it here, then it is not an older duplicate
+      return false;
+    }
+
+    /**
+     * \brief convert an EventAction to an un-managed IAction
+     * so it can be returned to the calling interface.
+     * Our EventAction are fairly similar to the Managed IAction, but not all values are the same
+     * For example, RenamedOld and RenamedNew are just 'ManagedAction::Renamed'
+     */
+    int Collector::ConvertEventActionToUnManagedAction(const EventAction& action)
+    {
+      switch (action)
+      {
+      case EventAction::Error:
+      case EventAction::ErrorMemory:
+      case EventAction::ErrorOverflow:
+      case EventAction::ErrorAborted:
+      case EventAction::ErrorCannotStart:
+      case EventAction::ErrorAccess:
+      case EventAction::Unknown:
+      case EventAction::Added:
+      case EventAction::Removed:
+      case EventAction::Touched:
+        return static_cast<int>(action);
+
+      case EventAction::RenamedOld:
+      case EventAction::RenamedNew:
+        return static_cast<int>(ManagedEventAction::Renamed);
+
+      default:
+        return static_cast<int>(ManagedEventAction::Unknown);
+      }
     }
 
     /**
@@ -181,8 +348,25 @@ namespace myoddweb
 
       // update the internal counter.
       ++_internalCounter;
+    }
 
-      // do we need to clean up?
+    /**
+     * \brief cleanup the vector if our internal counter has being reached.
+     */
+    void Collector::CleanupInternalCounter()
+    {
+      // do we need to clean up? First check outside the lock.
+      // we don't really need to check the lock here
+      // even if that is true a nano second after we check this the next event will clean it
+      // remember that this is only a guide as for when to clean up the vector
+      if (_internalCounter <= _maxInternalCounter)
+      {
+        return;
+      }
+
+      // lock and check again if we need to do the work.
+      // and if not, get out straight away.
+      auto guard = Lock(_lock);
       if (_internalCounter <= _maxInternalCounter)
       {
         return;

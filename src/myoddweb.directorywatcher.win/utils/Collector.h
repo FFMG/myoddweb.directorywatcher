@@ -58,6 +58,11 @@ namespace myoddweb
       const short _maxInternalCounter;
 
       /**
+       * \brief cleanup the vector if our internal counter has being reached.
+       */
+      void CleanupInternalCounter();
+
+      /**
        * \brief This is the oldest number of ms we want something to be.
        * It is *only* removed if _maxInternalCounter is reached.
        */
@@ -80,8 +85,42 @@ namespace myoddweb
       typedef std::vector<EventInformation> Events;
       Events _events;
 
-      long long GetMillisecondsNowUtc() const;
+      /**
+       * \brief Get the time now in milliseconds since 1970
+       * \return the current ms time
+       */
+      static long long GetMillisecondsNowUtc();
       static std::wstring PathCombine(const std::wstring& lhs, const std::wstring& rhs);
+
+      /**
+       * \brief convert an EventAction to an un-managed IAction
+       * so it can be returned to the calling interface.
+       * Our EventAction are fairly similar to the Managed IAction, but not all values are the same
+       * For example, RenamedOld and RenamedNew are just 'ManagedAction::Renamed'
+       */
+      static int ConvertEventActionToUnManagedAction(const EventAction& action);
+
+      /**
+       * \brief check if the given information already exists in the source
+       * \param source the collection of events we will be looking in
+       * \param duplicate the event information we want to add.
+       * \return if the event information is already in the 'source'
+       */
+      static bool IsOlderDuplicate(const std::vector<Event>& source, const Event& duplicate);
+
+      /**
+       * \brief check if the given event is a rename, (or or new)
+       * \param source the collection of events we will be looking in
+       * \param rename the event we might add to as new or old name.
+       * \return true if we added the event.
+       */
+      static bool AddRename( std::vector<Event>& source, const EventInformation& rename );
+
+      /**
+       * \brief copy the current content of the events into a local variable.
+       * Then erase the current content so we can continue receiving data.
+       */
+      void CloneEventsAndEraseCurrent(Events& clone);
     };
   }
 }

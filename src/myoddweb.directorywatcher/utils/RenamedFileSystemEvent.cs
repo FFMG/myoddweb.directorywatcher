@@ -12,29 +12,20 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
-using System;
 using System.IO;
 using myoddweb.directorywatcher.interfaces;
 
 namespace myoddweb.directorywatcher.utils
 {
   /// <inheritdoc />
-  internal class FileSystemEvent : IFileSystemEvent
+  internal class RenamedFileSystemEvent : FileSystemEvent, IRenamedFileSystemEvent
   {
     /// <inheritdoc />
-    public FileSystemInfo FileSystemInfo { get; }
+    public FileSystemInfo PreviousFileSystemInfo { get; }
 
-    /// <inheritdoc />
-    public EventAction Action { get; }
-
-    /// <inheritdoc />
-    public DateTime DateTimeUtc { get; }
-
-    public FileSystemEvent( IEvent e )
+    public RenamedFileSystemEvent(IEvent e) : base(e)
     {
-      Action = e.Action;
-      FileSystemInfo = new FileInfo( e.Path );
-      DateTimeUtc = e.DateTimeUtc;
+      PreviousFileSystemInfo = new FileInfo(e.Extra);
     }
   }
 }
