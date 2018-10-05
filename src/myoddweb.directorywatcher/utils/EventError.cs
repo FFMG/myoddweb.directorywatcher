@@ -42,7 +42,7 @@ namespace myoddweb.directorywatcher.utils
     /// </summary>
     /// <param name="action"></param>
     /// <returns></returns>
-    private static string CreateMessage(EventAction action)
+    internal static string CreateMessage(EventAction action)
     {
       switch (action)
       {

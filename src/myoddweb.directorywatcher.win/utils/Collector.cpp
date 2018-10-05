@@ -207,6 +207,8 @@ namespace myoddweb
       e.TimeMillisecondsUtc = rename.timeMillisecondsUtc;
       e.Action = static_cast<int>(ManagedEventAction::Renamed);
 
+      // go around all the values we already have and try update the current 
+      // renames that might need a new/old name
       for( auto it = source.rbegin(); it != source.rend(); ++it )
       {
         auto& ce = (*it);
@@ -215,19 +217,19 @@ namespace myoddweb
           continue;
         }
 
-        // if they are both complete... then keep looking
+        // for this rename we already have a new and old name
+        // so we can keep looking for the next item.
         if ( !ce.Extra.empty() && !ce.Path.empty() )
         {
           continue;
         }
 
         // do we already have an extra or a path?
-        // depending on our type?
-        // in that case we cannot go any further.
+        // depending on our rename type?
         if (rename.action == EventAction::RenamedOld)
         {
-          // the rename action is old rename
-          // so the extra has to be empty
+          // the rename action is 'old' rename
+          // so the extra has to be empty because this is where we store the old.
           // otherwise we don't know who this belongs to.
           if( ce.Extra.empty() )
           {
@@ -235,7 +237,9 @@ namespace myoddweb
             return true;
           }
 
-          //  get out so this is added.
+          // this rename already has an old name
+          // so we don't really know who to add it to.
+          // this will likely create an orphan rename.
           break;
         }
 
@@ -247,7 +251,10 @@ namespace myoddweb
           ce.Path = rename.name;
           return true;
         }
-        //  get out so this is added.
+
+        // this rename already has a new name
+        // so we don't really know who to add it to.
+        // this will likely create an orphan rename.
         break;
       }
 
