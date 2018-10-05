@@ -117,6 +117,13 @@ namespace myoddweb
       static bool AddRename( std::vector<Event>& source, const EventInformation& rename );
 
       /**
+       * \brief go around all the renamed events and look the the ones that are 'invalid'
+       * The ones that do not have a new/old name.
+       * \param source the collection of events we will be looking in
+       */
+      static void ValidateRenames(std::vector<Event>& source );
+
+      /**
        * \brief copy the current content of the events into a local variable.
        * Then erase the current content so we can continue receiving data.
        */

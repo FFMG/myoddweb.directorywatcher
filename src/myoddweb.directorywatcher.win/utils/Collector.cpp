@@ -182,6 +182,10 @@ namespace myoddweb
         // in the front, it is older than the previous one.
         events.insert( events.begin(), e);
       }
+
+      // last step is to cleanup all the renames.
+      ValidateRenames(events);
+
       return events.size();
     }
 
@@ -199,7 +203,7 @@ namespace myoddweb
         return false;
       }
 
-      Event e = {};
+      Event e;
       e.TimeMillisecondsUtc = rename.timeMillisecondsUtc;
       e.Action = static_cast<int>(ManagedEventAction::Renamed);
 
@@ -271,6 +275,45 @@ namespace myoddweb
       return true;
     }
 
+    /**
+     * \brief go around all the renamed events and look the the ones that are 'invalid'
+     * The ones that do not have a new/old name.
+     * \param source the collection of events we will be looking in
+     */
+    void Collector::ValidateRenames(std::vector<Event>& source)
+    {
+      for (auto it = source.rbegin(); it != source.rend(); ++it)
+      {
+        auto& e = (*it);
+        if (e.Action != static_cast<int>(ManagedEventAction::Renamed))
+        {
+          continue;
+        }
+
+        // no new old path
+        if (e.Extra.empty() && !e.Path.empty())
+        {
+          // so we have a new name, but no old name
+          e.Action = static_cast<int>(ManagedEventAction::Added);
+        }
+
+        // no new path
+        if (e.Path.empty() && !e.Extra.empty() )
+        {
+          // so we have an old name, but no new name
+          e.Path.swap( e.Extra );
+          e.Action = static_cast<int>(ManagedEventAction::Removed );
+        }
+
+        // both empty
+        if (e.Path.empty() && !e.Extra.empty())
+        {
+          // not sure this is posible
+          // so we will turn the event action into an error.
+          e.Action = static_cast<int>(ManagedEventAction::Error);
+        }
+      }
+    }
 
     /**
      * \brief check if the given information already exists in the source

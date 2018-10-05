@@ -40,44 +40,45 @@ namespace myoddweb.directorywatcher.sample
         Console.WriteLine("Press Ctrl+C to stop the monitors.");
 
         // start the monitor.
-        IWatcher2 watch1 = new Watcher();
-        watch1.Add(new Request("c:\\", true));
-        watch1.Add(new Request("d:\\", true));
-        watch1.Add(new Request("z:\\", true));
+        IWatcher2 watch = new Watcher();
+        watch.Add(new Request("c:\\", true));
+        watch.Add(new Request("d:\\", true));
+        watch.Add(new Request("h:\\", true));
+        watch.Add(new Request("z:\\", true));
 
         // start watching
-        watch1.Start();
+        watch.Start();
 
         var foreground = Console.ForegroundColor;
-        watch1.OnErrorAsync += async (f, t) =>
+        watch.OnErrorAsync += async (f, t) =>
         {
           Console.ForegroundColor = ConsoleColor.Red;
           Console.WriteLine(
             $"[{f.DateTimeUtc.Hour}:{f.DateTimeUtc.Minute}:{f.DateTimeUtc.Second}]:{f.Message}");
           Console.ForegroundColor = foreground;
         };
-        watch1.OnAddedAsync += async (f, t) =>
+        watch.OnAddedAsync += async (f, t) =>
         {
           Console.ForegroundColor = ConsoleColor.Green;
           Console.WriteLine(
             $"[{f.DateTimeUtc.Hour}:{f.DateTimeUtc.Minute}:{f.DateTimeUtc.Second}]:{f.FileSystemInfo}");
           Console.ForegroundColor = foreground;
         };
-        watch1.OnRemovedAsync += async (f, t) =>
+        watch.OnRemovedAsync += async (f, t) =>
         {
           Console.ForegroundColor = ConsoleColor.Yellow;
           Console.WriteLine(
             $"[{f.DateTimeUtc.Hour}:{f.DateTimeUtc.Minute}:{f.DateTimeUtc.Second}]:{f.FileSystemInfo}");
           Console.ForegroundColor = foreground;
         };
-        watch1.OnRenamedAsync += async (f, t) =>
+        watch.OnRenamedAsync += async (f, t) =>
         {
           Console.ForegroundColor = ConsoleColor.Blue;
           Console.WriteLine(
             $"[{f.DateTimeUtc.Hour}:{f.DateTimeUtc.Minute}:{f.DateTimeUtc.Second}]:{f.FileSystemInfo}");
           Console.ForegroundColor = foreground;
         };
-        watch1.OnTouchedAsync += async (f, t) =>
+        watch.OnTouchedAsync += async (f, t) =>
         {
           Console.ForegroundColor = ConsoleColor.Gray;
           Console.WriteLine(
@@ -99,7 +100,7 @@ namespace myoddweb.directorywatcher.sample
         exitEvent.WaitOne();
 
         // stop everything.
-        watch1.Stop();
+        watch.Stop();
       }
       catch (Exception ex)
       {
