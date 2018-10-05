@@ -9,11 +9,50 @@ using myoddweb::directorywatcher::Event;
 TEST(Collector, EmptyCollectorReturnsNothing) {
 
   // create new one.
-  auto x = new Collector();
+  Collector c;
 
   // empty
   std::vector<Event> events;
-  EXPECT_EQ( 0, x->GetEvents(events) );
+  EXPECT_EQ( 0, c.GetEvents(events) );
   EXPECT_EQ( 0, events.size() );
-  EXPECT_EQ(0, events.size());
+  EXPECT_EQ( 0, events.size());
+}
+
+TEST(Collector, PathIsValidWithTwoBackSlash) {
+
+  // create new one.
+  Collector c;
+  c.Add(EventAction::Added, L"c:\\", L"\\foo\\bar.txt");
+
+  // get it.
+  std::vector<Event> events;
+  EXPECT_EQ(1, c.GetEvents(events));
+
+  EXPECT_EQ( L"c:\\foo\\bar.txt", events[0].Path);
+}
+
+TEST(Collector, PathIsValidWithOneBackSlashOnPath) {
+
+  // create new one.
+  Collector c;
+  c.Add(EventAction::Added, L"c:\\", L"foo\\bar.txt");
+
+  // get it.
+  std::vector<Event> events;
+  EXPECT_EQ(1, c.GetEvents(events));
+
+  EXPECT_EQ(L"c:\\foo\\bar.txt", events[0].Path);
+}
+
+TEST(Collector, PathIsValidWithOneBackSlashOnFileName) {
+
+  // create new one.
+  Collector c;
+  c.Add(EventAction::Added, L"c:", L"\\foo\\bar.txt");
+
+  // get it.
+  std::vector<Event> events;
+  EXPECT_EQ(1, c.GetEvents(events));
+
+  EXPECT_EQ(L"c:\\foo\\bar.txt", events[0].Path);
 }

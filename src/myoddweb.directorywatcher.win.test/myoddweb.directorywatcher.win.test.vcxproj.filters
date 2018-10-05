@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="test.cpp" />
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Collector.cpp">
+      <Filter>win\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Lock.cpp">
+      <Filter>win\utils</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Collector.h">
+      <Filter>win\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Event.h">
+      <Filter>win\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Lock.h">
+      <Filter>win\utils</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="win">
+      <UniqueIdentifier>{d65dc9bf-8756-40dc-b329-69d8fe96a46c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="win\utils">
+      <UniqueIdentifier>{a5c75545-6246-46eb-b482-0d0bbb707d05}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
