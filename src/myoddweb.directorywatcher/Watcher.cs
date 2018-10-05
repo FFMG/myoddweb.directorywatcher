@@ -290,7 +290,7 @@ namespace myoddweb.directorywatcher
                 case EventAction.Unknown:
                   if (OnErrorAsync != null)
                   {
-                    tasks.Add(Task.Run(() => OnErrorAsync(new EventError( e.Action, e.DateTimeUtc ), token), token));
+                    tasks.Add(Task.Run(() => OnErrorAsync(new EventError(e.Action, e.DateTimeUtc), token), token));
                   }
                   break;
 
@@ -299,6 +299,7 @@ namespace myoddweb.directorywatcher
                   {
                     tasks.Add(Task.Run(() => OnAddedAsync(new FileSystemEvent(e), token), token));
                   }
+
                   break;
 
                 case EventAction.Removed:
@@ -306,12 +307,13 @@ namespace myoddweb.directorywatcher
                   {
                     tasks.Add(Task.Run(() => OnRemovedAsync(new FileSystemEvent(e), token), token));
                   }
+
                   break;
 
                 case EventAction.Touched:
                   if (OnTouchedAsync != null)
                   {
-                    tasks.Add( Task.Run( () => OnTouchedAsync(new FileSystemEvent(e), token), token ));
+                    tasks.Add(Task.Run(() => OnTouchedAsync(new FileSystemEvent(e), token), token));
                   }
 
                   break;
@@ -321,6 +323,7 @@ namespace myoddweb.directorywatcher
                   {
                     tasks.Add(Task.Run(() => OnRenamedAsync(new RenamedFileSystemEvent(e), token), token));
                   }
+
                   break;
 
                 default:
@@ -331,6 +334,13 @@ namespace myoddweb.directorywatcher
               {
                 tasks.RemoveAll(t => t.IsCompleted);
               }
+            }
+          }
+          catch (Exception)
+          {
+            if (OnErrorAsync != null)
+            {
+              tasks.Add(Task.Run(() => OnErrorAsync(new EventError(EventAction.Unknown, DateTime.UtcNow), token), token));
             }
           }
           finally

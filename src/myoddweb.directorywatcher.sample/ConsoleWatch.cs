@@ -29,7 +29,7 @@ namespace myoddweb.directorywatcher.sample
     /// <summary>
     /// We need a static lock so it is shared by all.
     /// </summary>
-    private static readonly object _lock = new object();
+    private static readonly object Lock = new object();
 
     public ConsoleWatch(IWatcher2 watch)
     {
@@ -71,11 +71,22 @@ namespace myoddweb.directorywatcher.sample
     {
       await Task.Run(() =>
       {
-        lock (_lock)
+        lock (Lock)
         {
-          Console.ForegroundColor = color;
-          Console.WriteLine($"[{dt:HH:mm:ss.ffff}][T]:{message}");
-          Console.ForegroundColor = _consoleColor;
+          try
+          {
+            Console.ForegroundColor = color;
+            Console.WriteLine($"[{dt:HH:mm:ss.ffff}][T]:{message}");
+          }
+          catch (Exception e)
+          {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine( e.Message );
+          }
+          finally
+          {
+            Console.ForegroundColor = _consoleColor;
+          }
         }
       }, token);
     }

@@ -22,17 +22,18 @@ namespace myoddweb
     /**
      * \brief how often we want to check for 'over-full' containers.
      */
-    #define MAX_INTERNAL_COUNTER 128
     #define MAX_AGE_MS 5000
 
-    Collector::Collector() :Collector(MAX_INTERNAL_COUNTER, MAX_AGE_MS)
+    Collector::Collector() :Collector( MAX_AGE_MS)
     {
     }
 
-    Collector::Collector(const short maxInternalCounter, const short maxAgeMs) :
-      _internalCounter(0),
-      _maxInternalCounter(maxInternalCounter),
-      _maxAgeMs(maxAgeMs)
+    /**
+     * \brief 
+     * \param maxAgeMs the maximum amount of time we will be keeping an event for.
+     */
+    Collector::Collector( const short maxAgeMs) :
+      _maxCleanupAgeMillisecons( maxAgeMs )
     {
     }
 
@@ -133,8 +134,8 @@ namespace myoddweb
         // we can now add the event to our vector.
         AddEventInformation(e);
 
-        // try and cleanup the internal counter.
-        CleanupInternalCounter();
+        // try and cleanup the events if need be.
+        CleanupEvents();
       }
       catch (...)
       {
@@ -158,8 +159,8 @@ namespace myoddweb
       _events.erase(_events.begin(), _events.end());
 
       // we can reset the internal counter.
-      // we erased all the data, there is nothing else to do.
-      _internalCounter = 0;
+      // and we erased all the data, there is nothing else to do.
+      _nextCleanupTimeCheck = 0;
     }
 
     /**
@@ -321,19 +322,28 @@ namespace myoddweb
       _events.push_back(event);
 
       // update the internal counter.
-      ++_internalCounter;
+      if(_nextCleanupTimeCheck == 0 )
+      {
+        // when we want to check for the next cleanup
+        // if the time is zero then we will use the event time + the max time.
+        _nextCleanupTimeCheck = event.timeMillisecondsUtc + _maxCleanupAgeMillisecons;
+      }
     }
 
     /**
-     * \brief cleanup the vector if our internal counter has being reached.
+     * \brief Check if we need to cleanup the list of events.
+     * This is to prevent the list from getting far too large.
      */
-    void Collector::CleanupInternalCounter()
+    void Collector::CleanupEvents()
     {
+      // get the current time
+      const auto now = GetMillisecondsNowUtc();
+
       // do we need to clean up? First check outside the lock.
       // we don't really need to check the lock here
       // even if that is true a nano second after we check this the next event will clean it
       // remember that this is only a guide as for when to clean up the vector
-      if (_internalCounter <= _maxInternalCounter)
+      if (_nextCleanupTimeCheck != 0 && _nextCleanupTimeCheck > now)
       {
         return;
       }
@@ -341,38 +351,47 @@ namespace myoddweb
       // lock and check again if we need to do the work.
       // and if not, get out straight away.
       auto guard = Lock(_lock);
-      if (_internalCounter <= _maxInternalCounter)
+      if (_nextCleanupTimeCheck != 0 && _nextCleanupTimeCheck > now)
       {
         return;
       }
 
       // reset the counter so we can check again later.
-      _internalCounter = 0;
+      _nextCleanupTimeCheck = 0;
 
       // get the current time.
-      const auto ms = GetMillisecondsNowUtc() - _maxAgeMs;
-      for (;;)
+      const auto old = now - _maxCleanupAgeMillisecons;
+      auto begin = _events.end();
+      auto end = _events.end();
+      for( auto it = _events.begin();; ++it )
       {
         // get the first iterator.
-        const auto it = _events.begin();
         if (it == _events.end())
         {
-          // we removed everything
-          // so there is nothing else for us to do.
-          return;
+          // we reached the end of the list
+          end = it;
+          break;
         }
 
-        if ((*it).timeMillisecondsUtc < ms)
+        // is this item newer than our oler time.
+        if ((*it).timeMillisecondsUtc > old)
         {
-          _events.erase(it);
-          continue;
+          // because everything is ordered from 
+          // older to newer, there is no point in going any further.
+          break;
         }
 
-        // all the events are added one after the other
-        // so we cannot have an older item
-        // that is after begin()
-        // so we can jump off now.
-        return;
+        // have we already set the begining?
+        if ( begin == _events.end() )
+        {
+          begin = it;
+        }
+      }
+
+      // do we hae anything to delete?
+      if (begin != _events.end())
+      {
+        _events.erase(begin, end);
       }
     }
   }

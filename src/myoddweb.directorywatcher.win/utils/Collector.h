@@ -33,7 +33,7 @@ namespace myoddweb
       virtual ~Collector();
 
     private:
-      Collector( short maxInternalCounter, short maxAgeMs );
+      Collector( short maxAgeMs );
 
     public:
       void Add(EventAction action, const std::wstring& path, const std::wstring& filename );
@@ -44,34 +44,27 @@ namespace myoddweb
        * \param events the events we will be filling
        * \return the number of events we found.
        */
-      long long GetEvents( std::vector<myoddweb::directorywatcher::Event>& events);
+      long long GetEvents( std::vector<Event>& events);
 
     private:
       void Add(EventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName );
 
     private:
       /**
-       * \brief This counter is used to cleanp the data once we reach a certain number.
-       * This value is not the number of items in the collection
-       * It is the number of items added since the last time we checked.
+       * \brief This is the oldest number of ms we want something to be.
+       * It is *only* removed if _maxInternalCounter is reached.
        */
-      short _internalCounter;
+      const short _maxCleanupAgeMillisecons;
 
       /**
-       * \brief the max internal counter before we check for 'old'
+       * The next time we want to check for cleanup
        */
-      const short _maxInternalCounter;
+      long long _nextCleanupTimeCheck = 0;
 
       /**
        * \brief cleanup the vector if our internal counter has being reached.
        */
-      void CleanupInternalCounter();
-
-      /**
-       * \brief This is the oldest number of ms we want something to be.
-       * It is *only* removed if _maxInternalCounter is reached.
-       */
-      const short _maxAgeMs;
+      void CleanupEvents();
 
       /**
        * \brief Add an event to the vector and remove older events.
