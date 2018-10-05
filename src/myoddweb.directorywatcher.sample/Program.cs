@@ -48,43 +48,7 @@ namespace myoddweb.directorywatcher.sample
 
         // start watching
         watch.Start();
-
-        var foreground = Console.ForegroundColor;
-        watch.OnErrorAsync += async (f, t) =>
-        {
-          Console.ForegroundColor = ConsoleColor.Red;
-          Console.WriteLine(
-            $"[{f.DateTimeUtc.Hour}:{f.DateTimeUtc.Minute}:{f.DateTimeUtc.Second}]:{f.Message}");
-          Console.ForegroundColor = foreground;
-        };
-        watch.OnAddedAsync += async (f, t) =>
-        {
-          Console.ForegroundColor = ConsoleColor.Green;
-          Console.WriteLine(
-            $"[{f.DateTimeUtc.Hour}:{f.DateTimeUtc.Minute}:{f.DateTimeUtc.Second}]:{f.FileSystemInfo}");
-          Console.ForegroundColor = foreground;
-        };
-        watch.OnRemovedAsync += async (f, t) =>
-        {
-          Console.ForegroundColor = ConsoleColor.Yellow;
-          Console.WriteLine(
-            $"[{f.DateTimeUtc.Hour}:{f.DateTimeUtc.Minute}:{f.DateTimeUtc.Second}]:{f.FileSystemInfo}");
-          Console.ForegroundColor = foreground;
-        };
-        watch.OnRenamedAsync += async (f, t) =>
-        {
-          Console.ForegroundColor = ConsoleColor.Blue;
-          Console.WriteLine(
-            $"[{f.DateTimeUtc.Hour}:{f.DateTimeUtc.Minute}:{f.DateTimeUtc.Second}]:{f.FileSystemInfo}");
-          Console.ForegroundColor = foreground;
-        };
-        watch.OnTouchedAsync += async (f, t) =>
-        {
-          Console.ForegroundColor = ConsoleColor.Gray;
-          Console.WriteLine(
-            $"[{f.DateTimeUtc.Hour}:{f.DateTimeUtc.Minute}:{f.DateTimeUtc.Second}]:{f.FileSystemInfo}");
-          Console.ForegroundColor = foreground;
-        };
+        var cw = new ConsoleWatch(watch);
 
         var exitEvent = new ManualResetEvent(false);
         Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs e)
