@@ -106,8 +106,7 @@ enum class EventAction
    * \brief small changed, timestamp, attribute etc...
    */
   Touched = 1003,
-  RenamedOld = 1004,
-  RenamedNew = 1005
+  Renamed = 1004
 };
 
 /**
@@ -129,4 +128,9 @@ struct EventInformation
    * \brief the filename/folder that was updated. 
    */
   std::wstring name;
+
+  /**
+   * \brief the old name in the case of a rename.
+   */
+  std::wstring oldname;
 };

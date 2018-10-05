@@ -90,9 +90,34 @@ namespace myoddweb
      * \brief Add an action to the collection.
      * \param action the action added
      * \param path the root path, (as given to us in the request.)
-     * \param file the file from the path.
+     * \param filename the file from the path.
      */
-    void Collector::Add(const EventAction action, const std::wstring& path, const std::wstring& file)
+    void Collector::Add(const EventAction action, const std::wstring& path, const std::wstring& filename)
+    {
+      // just add the action without an old filename.
+      Add(action, path, filename, L"");
+    }
+
+    /**
+     * \brief Add an action to the collection.
+     * \param path the root path, (as given to us in the request.)
+     * \param newFilename the new file from the path.
+     * \param oldFilename the old name of the file.
+     */
+    void Collector::AddRename(const std::wstring& path, const std::wstring& newFilename, const std::wstring& oldFilename)
+    {
+      // just add the action without an old filename.
+      Add(EventAction::Renamed, path, newFilename, oldFilename );
+    }
+
+    /**
+     * \brief Add an action to the collection.
+     * \param action the action added
+     * \param path the root path, (as given to us in the request.)
+     * \param filename the file from the path.
+     * \param oldFileName in the case of a rename event, that value is used.
+     */
+    void Collector::Add(EventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName)
     {
       try
       {
@@ -101,7 +126,8 @@ namespace myoddweb
         // posible amount of time.
         EventInformation e;
         e.action = action;
-        e.name = PathCombine(path, file);
+        e.name = PathCombine(path, filename);
+        e.oldname = oldFileName.empty() ? L"" : PathCombine(path, oldFileName);
         e.timeMillisecondsUtc = GetMillisecondsNowUtc();
 
         // we can now add the event to our vector.
@@ -159,16 +185,10 @@ namespace myoddweb
       {
         const auto& eventInformation = (*it);
 
-        // look if this is a rename event
-        // and if we can add it to a previous rename item.
-        if (AddRename(events, eventInformation ))
-        {
-          continue;
-        }
-
         Event e = {};
         e.TimeMillisecondsUtc = eventInformation.timeMillisecondsUtc;
         e.Path = eventInformation.name;
+        e.Extra = eventInformation.oldname;
         e.Action = ConvertEventActionToUnManagedAction(eventInformation.action);
         if (IsOlderDuplicate(events, e))
         {
@@ -187,99 +207,6 @@ namespace myoddweb
       ValidateRenames(events);
 
       return events.size();
-    }
-
-    /**
-     * \brief check if the given event is a rename, (or or new)
-     * \param source the collection of events we will be looking in
-     * \param rename the event we might add to as new or old name.
-     * \return true if we added the event.
-     */
-    bool Collector::AddRename( std::vector<Event>& source, const EventInformation& rename )
-    {
-      // if we are not processing a rename event, then we might as well go on.
-      if( rename.action != EventAction::RenamedOld && rename.action != EventAction::RenamedNew )
-      {
-        return false;
-      }
-
-      Event e;
-      e.TimeMillisecondsUtc = rename.timeMillisecondsUtc;
-      e.Action = static_cast<int>(ManagedEventAction::Renamed);
-
-      // go around all the values we already have and try update the current 
-      // renames that might need a new/old name
-      for( auto it = source.rbegin(); it != source.rend(); ++it )
-      {
-        auto& ce = (*it);
-        if ( ce.Action != static_cast<int>(ManagedEventAction::Renamed))
-        {
-          continue;
-        }
-
-        // for this rename we already have a new and old name
-        // so we can keep looking for the next item.
-        if ( !ce.Extra.empty() && !ce.Path.empty() )
-        {
-          continue;
-        }
-
-        // do we already have an extra or a path?
-        // depending on our rename type?
-        if (rename.action == EventAction::RenamedOld)
-        {
-          // the rename action is 'old' rename
-          // so the extra has to be empty because this is where we store the old.
-          // otherwise we don't know who this belongs to.
-          if( ce.Extra.empty() )
-          {
-            ce.Extra = rename.name;
-            return true;
-          }
-
-          // this rename already has an old name
-          // so we don't really know who to add it to.
-          // this will likely create an orphan rename.
-          break;
-        }
-
-        // the rename action is new rename
-        // so the Path has to be empty
-        // otherwise we don't know who this belongs to.
-        if (ce.Path.empty())
-        {
-          ce.Path = rename.name;
-          return true;
-        }
-
-        // this rename already has a new name
-        // so we don't really know who to add it to.
-        // this will likely create an orphan rename.
-        break;
-      }
-
-      // if we are here we know we have a rename event, but not a match
-      // so we need to create our own item.
-      if (rename.action == EventAction::RenamedOld )
-      {
-        // the action is 'old' rename
-        // so the given value has to be the extra
-        e.Path = L"";
-        e.Extra = rename.name;
-      }
-      else
-      {
-        // the action is 'new' rename
-        // so the Path is the given name.
-        e.Path = rename.name;
-        e.Extra = L"";
-      }
-
-      // add it at the front.
-      source.insert(source.begin(), e);
-
-      // it is a new item
-      return true;
     }
 
     /**
@@ -371,11 +298,8 @@ namespace myoddweb
       case EventAction::Added:
       case EventAction::Removed:
       case EventAction::Touched:
+      case EventAction::Renamed:
         return static_cast<int>(action);
-
-      case EventAction::RenamedOld:
-      case EventAction::RenamedNew:
-        return static_cast<int>(ManagedEventAction::Renamed);
 
       default:
         return static_cast<int>(ManagedEventAction::Unknown);

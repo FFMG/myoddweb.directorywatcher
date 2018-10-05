@@ -69,11 +69,21 @@ namespace myoddweb
     /**
      * \brief Add an event to our current log.
      * \param action
-     * \param fileName
+     * \param fileName  
      */
-    void Monitor::AddEvent(const EventAction action, const std::wstring& fileName) const
+    void Monitor::AddEvent(const EventAction action, const std::wstring& fileName ) const
     {
       _eventCollector->Add(action, Path(), fileName);
+    }
+
+    /**
+     * \brief Add an event to our current log.
+     * \param newFileName
+     * \param oldFilename
+     */
+    void Monitor::AddRenameEvent(const std::wstring& newFileName, const std::wstring& oldFilename) const
+    {
+      _eventCollector->AddRename(Path(), newFileName, oldFilename );
     }
 
     /**

@@ -15,7 +15,6 @@
 using System;
 using System.Threading;
 using myoddweb.directorywatcher.interfaces;
-using Timer = System.Timers.Timer;
 
 namespace myoddweb.directorywatcher.sample
 {
@@ -44,12 +43,15 @@ namespace myoddweb.directorywatcher.sample
         watch.Add(new Request("c:\\", true));
         watch.Add(new Request("d:\\", true));
         watch.Add(new Request("h:\\", true));
-        watch.Add(new Request("z:\\", true));
+        watch.Add(new Request("Z:\\", true));
+        //watch.Add(new Request("Z:\\x", true));
+
+        // prepare the console watcher.
+        var cw = new ConsoleWatch(watch);
 
         // start watching
         watch.Start();
-        var cw = new ConsoleWatch(watch);
-
+        
         var exitEvent = new ManualResetEvent(false);
         Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs e)
         {

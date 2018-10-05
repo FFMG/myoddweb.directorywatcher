@@ -36,7 +36,8 @@ namespace myoddweb
       Collector( short maxInternalCounter, short maxAgeMs );
 
     public:
-      void Add(EventAction action, const std::wstring& path, const std::wstring& file);
+      void Add(EventAction action, const std::wstring& path, const std::wstring& filename );
+      void AddRename(const std::wstring& path, const std::wstring&newFilename, const std::wstring&oldFilename);
 
       /**
        * \brief fill the vector with all the values currently on record.
@@ -44,6 +45,10 @@ namespace myoddweb
        * \return the number of events we found.
        */
       long long GetEvents( std::vector<myoddweb::directorywatcher::Event>& events);
+
+    private:
+      void Add(EventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName );
+
     private:
       /**
        * \brief This counter is used to cleanp the data once we reach a certain number.
@@ -107,14 +112,6 @@ namespace myoddweb
        * \return if the event information is already in the 'source'
        */
       static bool IsOlderDuplicate(const std::vector<Event>& source, const Event& duplicate);
-
-      /**
-       * \brief check if the given event is a rename, (or or new)
-       * \param source the collection of events we will be looking in
-       * \param rename the event we might add to as new or old name.
-       * \return true if we added the event.
-       */
-      static bool AddRename( std::vector<Event>& source, const EventInformation& rename );
 
       /**
        * \brief go around all the renamed events and look the the ones that are 'invalid'

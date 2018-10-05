@@ -374,6 +374,10 @@ namespace myoddweb
           return;
         }
 
+        // rename filenames.
+        std::wstring newFilename;
+        std::wstring oldFilename;
+
         // get the file information
         auto pRecord = (FILE_NOTIFY_INFORMATION*)pBuffer;;
         for (;;)
@@ -395,11 +399,25 @@ namespace myoddweb
             break;
 
           case FILE_ACTION_RENAMED_OLD_NAME:
-            AddEvent(EventAction::RenamedOld, wFilename);
+            oldFilename = wFilename;
+            if( !newFilename.empty() )
+            {
+              // if we already have a new filename then we can add the rename event
+              // and then clear both filenames so we do not add again
+              AddRenameEvent(newFilename, oldFilename);
+              newFilename = oldFilename = L"";
+            }
             break;
 
           case FILE_ACTION_RENAMED_NEW_NAME:
-            AddEvent(EventAction::RenamedNew, wFilename);
+            newFilename = wFilename;
+            if (!oldFilename.empty())
+            {
+              // if we already have an old filename then we can add the rename event
+              // and then clear both filenames so we do not add again
+              AddRenameEvent(newFilename, oldFilename);
+              newFilename = oldFilename = L"";
+            }
             break;
 
           default:
@@ -413,6 +431,16 @@ namespace myoddweb
             break;
           }
           pRecord = reinterpret_cast<FILE_NOTIFY_INFORMATION *>(&reinterpret_cast<unsigned char*>(pRecord)[pRecord->NextEntryOffset]);
+        }
+
+        // check for orphan renames...
+        if (!oldFilename.empty())
+        {
+          AddEvent(EventAction::Removed, oldFilename);
+        }
+        if (!newFilename.empty())
+        {
+          AddEvent(EventAction::Added, newFilename);
         }
       }
       catch (...)
