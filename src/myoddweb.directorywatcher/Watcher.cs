@@ -290,14 +290,17 @@ namespace myoddweb.directorywatcher
                 case EventAction.Unknown:
                   if (OnErrorAsync != null)
                   {
-                    tasks.Add(Task.Run(() => OnErrorAsync(new EventError(e.Action, e.DateTimeUtc), token), token));
+                    tasks.Add(Task.Run(() =>
+                      OnErrorAsync?.Invoke(new EventError(e.Action, e.DateTimeUtc), token)
+                    , token));
                   }
                   break;
 
                 case EventAction.Added:
                   if (OnAddedAsync != null)
                   {
-                    tasks.Add(Task.Run(() => OnAddedAsync(new FileSystemEvent(e), token), token));
+                    tasks.Add(Task.Run(() => 
+                      OnAddedAsync?.Invoke(new FileSystemEvent(e), token), token));
                   }
 
                   break;
@@ -305,7 +308,8 @@ namespace myoddweb.directorywatcher
                 case EventAction.Removed:
                   if (OnRemovedAsync != null)
                   {
-                    tasks.Add(Task.Run(() => OnRemovedAsync(new FileSystemEvent(e), token), token));
+                    tasks.Add(Task.Run(() => 
+                      OnRemovedAsync?.Invoke(new FileSystemEvent(e), token), token));
                   }
 
                   break;
@@ -313,7 +317,8 @@ namespace myoddweb.directorywatcher
                 case EventAction.Touched:
                   if (OnTouchedAsync != null)
                   {
-                    tasks.Add(Task.Run(() => OnTouchedAsync(new FileSystemEvent(e), token), token));
+                    tasks.Add(Task.Run(() => 
+                      OnTouchedAsync?.Invoke(new FileSystemEvent(e), token), token));
                   }
 
                   break;
@@ -321,12 +326,10 @@ namespace myoddweb.directorywatcher
                 case EventAction.Renamed:
                   if (OnRenamedAsync != null)
                   {
-                    tasks.Add(Task.Run(() => OnRenamedAsync(new RenamedFileSystemEvent(e), token), token));
+                    tasks.Add(Task.Run(() => 
+                      OnRenamedAsync?.Invoke(new RenamedFileSystemEvent(e), token), token));
                   }
 
-                  break;
-
-                default:
                   break;
               }
 
