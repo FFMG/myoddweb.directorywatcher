@@ -17,7 +17,7 @@ using myoddweb.directorywatcher.interfaces;
 
 namespace myoddweb.directorywatcher.utils
 {
-  /// <inheritdoc />
+  /// <inheritdoc cref="IRenamedFileSystemEvent" />
   internal class RenamedFileSystemEvent : FileSystemEvent, IRenamedFileSystemEvent
   {
     /// <inheritdoc />
