@@ -17,7 +17,10 @@
     <!-- Managed files //-->
     <file src="..\bin\release\myoddweb.directorywatcher.dll" target="lib\net452\" />
     <file src="..\bin\release\myoddweb.directorywatcher.interfaces.dll" target="lib\net452\" />
-    <file src="..\bin\release\myoddweb.directorywatcher.interop.dll" target="lib\net452\" />
+
+    <!-- Managed/Interop //-->
+    <file src="..\bin\release\x64\myoddweb.directorywatcher.interop.dll" target="" />
+    <file src="..\bin\release\Win32\myoddweb.directorywatcher.interop.dll" target="" />
     
     <!-- Native files //-->
     <file src="..\bin\release\x64\myoddweb.directorywatcher.win.dll" target="" />
