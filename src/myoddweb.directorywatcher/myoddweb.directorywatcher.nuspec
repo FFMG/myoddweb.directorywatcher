@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>MyOddWeb.DirectoryWatcher</id>
+    <version>0.0.1.0</version>
+    <title>MyOddWeb.DirectoryWatcher (x86/x64)</title>
+    <licenseUrl>https://github.com/FFMG/myoddweb.directorywatcher/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/FFMG/myoddweb.directorywatcher</projectUrl>
+    <description>A fast and reliable, (non blocking!), .NET File/Directory watcher, complete rewrite of FlieSystemWatcher to ensure speed/acuracy/reliability/suppress duplicate events</description>
+    <authors>Florent Guelfucci, myoddweb.com</authors>
+    <tags>DirectoryWatcher FlieSystemWatcher IO FileSystem System.IO.FileSystemWatcher 4.5.2 Opensource</tags>
+    <copyright>@copyright 2017-2018 Florent Guelfucci</copyright>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <language>en-UK</language>
+  </metadata>
+  <files>
+    <!-- Managed files //-->
+    <file src="..\bin\release\myoddweb.directorywatcher.dll" target="lib\net452\" />
+    <file src="..\bin\release\myoddweb.directorywatcher.interfaces.dll" target="lib\net452\" />
+    <file src="..\bin\release\myoddweb.directorywatcher.interop.dll" target="lib\net452\" />
+    
+    <!-- Native files //-->
+    <file src="..\bin\release\x64\myoddweb.directorywatcher.win.dll" target="" />
+    <file src="..\bin\release\Win32\myoddweb.directorywatcher.win.dll" target="" />
+    
+  </files>
+</package>
