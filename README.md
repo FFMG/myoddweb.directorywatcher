@@ -13,14 +13,26 @@ A fast and reliable File/Directory watcher for c#/c++ to replace the current .NE
 - No buffer limitations, (well there is, but we play nicely).
 - Try and remove duplicates, (where possible).
 
+## What it doesn't do
+
+- Bring me coffee.
+
+## Installing
+### Nuget
+#### Package manager
+`Install-Package MyOddWeb.DirectoryWatcher`
+
+#### CLI
+##### .NET
+`dotnet add package MyOddWeb.DirectoryWatcher`
+
+#### Packet
+`packet add MyOddWeb.DirectoryWatcher`
+
 ### Use case
 
 My needs were to, reliably, monitor entire volumes for created/deleted/renamed files.
 I do really care for pattern matching.
-
-## What it doesn't do
-
-- Bring me coffee.
 
 ## The issue(s) with FileSystemWatcher
 
