@@ -33,5 +33,10 @@ namespace myoddweb.directorywatcher.interfaces
     /// The UTC date time.
     /// </summary>
     DateTime DateTimeUtc { get; }
+
+    /// <summary>
+    /// Boolean if the update is a file or a directory.
+    /// </summary>
+    bool IsFile { get; }
   }
 }

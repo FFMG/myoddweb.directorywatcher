@@ -30,6 +30,9 @@ namespace myoddweb.directorywatcher.utils
     /// <inheritdoc />
     public DateTime DateTimeUtc { get; }
 
+    /// <inheritdoc />
+    public bool IsFile => FileSystemInfo is FileInfo;
+
     public FileSystemEvent( IEvent e )
     {
       Action = e.Action;

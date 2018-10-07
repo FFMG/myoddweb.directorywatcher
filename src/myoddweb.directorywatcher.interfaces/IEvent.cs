@@ -20,6 +20,11 @@ namespace myoddweb.directorywatcher.interfaces
   public interface IEvent
   {
     /// <summary>
+    /// Boolean if the update is a file or a directory.
+    /// </summary>
+    bool IsFile { get; }
+
+    /// <summary>
     /// The full path
     /// </summary>
     string Path { get; }

@@ -40,6 +40,11 @@ public:
    * \brief When the event happened.
    */
   virtual property System::DateTime DateTimeUtc;
+
+  /**
+   * \brief Boolean if the update is a file or a directory.
+  */
+  virtual property bool IsFile;
 };
 
 /**
@@ -66,4 +71,9 @@ struct UmEvent
    * \brief when the event happened in ms
    */
   long long TimeMillisecondsUtc;
+
+  /**
+ * \brief Boolean if the update is a file or a directory.
+   */
+  bool IsFile;
 };

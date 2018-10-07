@@ -43,6 +43,11 @@ namespace myoddweb
        * \brief when the event happened in ms
        */
       long long TimeMillisecondsUtc;
+
+      /**
+     * \brief Boolean if the update is a file or a directory.
+       */
+      bool IsFile;
     };
   }
 }

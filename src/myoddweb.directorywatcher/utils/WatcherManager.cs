@@ -171,8 +171,11 @@ namespace myoddweb.directorywatcher.utils
       {
         try
         {
+#if DEBUG
+          var asm = TypeLoader.LoadFromFile(GetInteropFromFileSystem());
+#else
           var asm = TypeLoader.LoadFromFile(GetInteropResourceFileSystem());
-          // var asm = TypeLoader.LoadFromFile(GetInteropFromFileSystem());
+#endif
           return TypeLoader.LoadTypeFromAssembly<IWatcher1>(asm);
         }
         catch (Exception e)

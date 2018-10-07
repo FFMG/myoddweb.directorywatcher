@@ -12,7 +12,10 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
+#include <Windows.h>
 #include "Monitor.h"
+#include <fileapi.h>
+
 namespace myoddweb
 {
   namespace directorywatcher
@@ -69,9 +72,9 @@ namespace myoddweb
     /**
      * \brief Add an event to our current log.
      * \param action
-     * \param fileName  
+     * \param fileName
      */
-    void Monitor::AddEvent(const EventAction action, const std::wstring& fileName ) const
+    void Monitor::AddEvent(const EventAction action, const std::wstring& fileName) const
     {
       _eventCollector->Add(action, Path(), fileName);
     }
@@ -91,7 +94,7 @@ namespace myoddweb
      */
     void Monitor::AddEventError(const EventAction action) const
     {
-      _eventCollector->Add(action, L"", L"");
+      _eventCollector->Add(action, L"", L"" );
     }
 
     /**

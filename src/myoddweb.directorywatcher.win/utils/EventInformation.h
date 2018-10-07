@@ -133,4 +133,9 @@ struct EventInformation
    * \brief the old name in the case of a rename.
    */
   std::wstring oldname;
+
+  /**
+ * \brief Boolean if the update is a file or a directory.
+   */
+  bool isFile;
 };

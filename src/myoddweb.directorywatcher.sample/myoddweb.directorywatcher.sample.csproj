@@ -35,12 +35,6 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="myoddweb.directorywatcher, Version=0.0.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MyOddWeb.DirectoryWatcher.0.0.2-alpha\lib\net452\myoddweb.directorywatcher.dll</HintPath>
-    </Reference>
-    <Reference Include="myoddweb.directorywatcher.interfaces, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MyOddWeb.DirectoryWatcher.0.0.2-alpha\lib\net452\myoddweb.directorywatcher.interfaces.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="Microsoft.CSharp" />
@@ -54,6 +48,16 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\myoddweb.directorywatcher.interfaces\myoddweb.directorywatcher.interfaces.csproj">
+      <Project>{3e915537-8c2e-4331-b4dc-be182e9b32f1}</Project>
+      <Name>myoddweb.directorywatcher.interfaces</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\myoddweb.directorywatcher\myoddweb.directorywatcher.csproj">
+      <Project>{fc3a40b9-2ebf-4142-b130-011738408399}</Project>
+      <Name>myoddweb.directorywatcher</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

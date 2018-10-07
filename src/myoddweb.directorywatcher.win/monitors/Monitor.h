@@ -37,13 +37,12 @@ namespace myoddweb
        * \param events the events we will be filling
        * \return the number of events we found.
        */
-      long long GetEvents(std::vector<myoddweb::directorywatcher::Event>& events) const;
+      virtual long long GetEvents(std::vector<myoddweb::directorywatcher::Event>& events) const;
 
-    public:
       virtual bool Start() = 0;
       virtual void Stop() = 0;
 
-    protected:
+    public:
       void AddEvent(EventAction action, const std::wstring& fileName ) const;
       void AddRenameEvent(const std::wstring& newFileName, const std::wstring& oldFilename) const;
       void AddEventError(EventAction action) const;

@@ -13,34 +13,27 @@
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #pragma once
-#include <Windows.h>
 #include "Monitor.h"
-#include <future>
 #include "MonitorReadDirectoryChangesCommon.h"
 
 namespace myoddweb
 {
   namespace directorywatcher
   {
-    class MonitorReadDirectoryChanges : public Monitor
+    class MonitorReadDirectoryChangesFiles : public MonitorReadDirectoryChangesCommon
     {
     public:
-      MonitorReadDirectoryChanges(__int64 id, const Request& request );
-
-    protected:
-      MonitorReadDirectoryChanges(__int64 id, const Request& request, unsigned long bufferLength);
+      MonitorReadDirectoryChangesFiles(Monitor& parent, unsigned long bufferLength);
 
     public:
-      virtual ~MonitorReadDirectoryChanges();
+      virtual ~MonitorReadDirectoryChangesFiles() = default;
 
-      bool Start() override;
-      void Stop() override;
-
-    private:
-      MonitorReadDirectoryChangesCommon* _directories;
-      MonitorReadDirectoryChangesCommon* _files;
-
-      const unsigned long _bufferLength;
+    protected:
+      /**
+       * Get the notification filter.
+       * \return the notification filter
+       */
+      long long GetNotifyFilter() const override;
     };
   }
 }

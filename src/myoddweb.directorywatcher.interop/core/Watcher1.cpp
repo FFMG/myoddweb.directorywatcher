@@ -310,7 +310,7 @@ long long Watcher1::GetEvents(long long id, IList<myoddweb::directorywatcher::in
     event->Extra = gcnew System::String( e.Extra.c_str());
     event->Action = (myoddweb::directorywatcher::interfaces::EventAction)e.Action;
     event->DateTimeUtc = dateTime1970 + System::TimeSpan::FromMilliseconds( static_cast<double>(e.TimeMillisecondsUtc));
-
+    event->IsFile = e.IsFile;
     events->Add(event);
   }
   return result;

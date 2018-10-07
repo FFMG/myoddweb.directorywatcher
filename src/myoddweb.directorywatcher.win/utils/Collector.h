@@ -36,7 +36,7 @@ namespace myoddweb
       Collector( short maxAgeMs );
 
     public:
-      void Add(EventAction action, const std::wstring& path, const std::wstring& filename );
+      void Add(EventAction action, const std::wstring& path, const std::wstring& filename);
       void AddRename(const std::wstring& path, const std::wstring&newFilename, const std::wstring&oldFilename);
 
       /**
@@ -49,7 +49,6 @@ namespace myoddweb
     private:
       void Add(EventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName );
 
-    private:
       /**
        * \brief This is the oldest number of ms we want something to be.
        * It is *only* removed if _maxInternalCounter is reached.
@@ -89,6 +88,13 @@ namespace myoddweb
        */
       static long long GetMillisecondsNowUtc();
       static std::wstring PathCombine(const std::wstring& lhs, const std::wstring& rhs);
+
+      /**
+       * \brief check if a given string is a file or a directory.
+       * \param path the file we are checking.
+       * \return if the string given is a file or not.
+       */
+      static bool IsFile(const std::wstring& path);
 
       /**
        * \brief convert an EventAction to an un-managed IAction

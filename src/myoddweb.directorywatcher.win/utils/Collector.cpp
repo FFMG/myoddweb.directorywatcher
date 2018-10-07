@@ -12,6 +12,7 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
+#include <Windows.h>
 #include "Collector.h"
 #include "Lock.h"
 
@@ -88,15 +89,32 @@ namespace myoddweb
     }
 
     /**
+     * \brief check if a given string is a file or a directory.
+     * \param path the file we are checking.
+     * \return if the string given is a file or not.
+     */
+    bool Collector::IsFile(const std::wstring& path)
+    {
+      try
+      {
+        return ((GetFileAttributesW(path.c_str()) & FILE_ATTRIBUTE_DIRECTORY) == 0);
+      }
+      catch (...)
+      {
+        return false;
+      }
+    }
+
+    /**
      * \brief Add an action to the collection.
      * \param action the action added
      * \param path the root path, (as given to us in the request.)
      * \param filename the file from the path.
      */
-    void Collector::Add(const EventAction action, const std::wstring& path, const std::wstring& filename)
+    void Collector::Add(const EventAction action, const std::wstring& path, const std::wstring& filename )
     {
       // just add the action without an old filename.
-      Add(action, path, filename, L"");
+      Add(action, path, filename, L"" );
     }
 
     /**
@@ -118,18 +136,22 @@ namespace myoddweb
      * \param filename the file from the path.
      * \param oldFileName in the case of a rename event, that value is used.
      */
-    void Collector::Add(EventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName)
+    void Collector::Add( const EventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName)
     {
       try
       {
+        // get the combined path.
+        const auto combinedPath = filename.empty() ? L"" : PathCombine(path, filename);
+
         // We first create the event outside the lock
         // that way, we only have the lock for the shortest
         // posible amount of time.
         EventInformation e;
         e.action = action;
-        e.name = PathCombine(path, filename);
+        e.name = combinedPath;
         e.oldname = oldFileName.empty() ? L"" : PathCombine(path, oldFileName);
         e.timeMillisecondsUtc = GetMillisecondsNowUtc();
+        e.isFile = combinedPath.empty() ? false : IsFile(combinedPath);
 
         // we can now add the event to our vector.
         AddEventInformation(e);
@@ -191,6 +213,7 @@ namespace myoddweb
         e.Path = eventInformation.name;
         e.Extra = eventInformation.oldname;
         e.Action = ConvertEventActionToUnManagedAction(eventInformation.action);
+        e.IsFile = eventInformation.isFile;
         if (IsOlderDuplicate(events, e))
         {
           // it is an older duplicate
@@ -260,7 +283,13 @@ namespace myoddweb
     {
       for( auto it = source.begin(); it != source.end(); ++it )
       {
-        const auto e = (*it);
+        const auto& e = (*it);
+
+        // they must both be of the same type.
+        if (e.IsFile != duplicate.IsFile)
+        {
+          continue;
+        }
 
         // if the actions are not the same, then it is not an older duplicate.
         if( e.Action != duplicate.Action)

@@ -18,6 +18,15 @@
     <ClCompile Include="utils\Collector.cpp">
       <Filter>utils</Filter>
     </ClCompile>
+    <ClCompile Include="monitors\MonitorReadDirectoryChangesDirectories.cpp">
+      <Filter>monitors</Filter>
+    </ClCompile>
+    <ClCompile Include="monitors\MonitorReadDirectoryChangesFiles.cpp">
+      <Filter>monitors</Filter>
+    </ClCompile>
+    <ClCompile Include="monitors\MonitorReadDirectoryChangesCommon.cpp">
+      <Filter>monitors</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -46,6 +55,15 @@
     </ClInclude>
     <ClInclude Include="utils\Event.h">
       <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\MonitorReadDirectoryChangesDirectories.h">
+      <Filter>monitors</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\MonitorReadDirectoryChangesFiles.h">
+      <Filter>monitors</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\MonitorReadDirectoryChangesCommon.h">
+      <Filter>monitors</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
