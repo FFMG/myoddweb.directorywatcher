@@ -22,7 +22,7 @@ TEST(Collector, PathIsValidWithTwoBackSlash) {
 
   // create new one.
   Collector c;
-  c.Add(EventAction::Added, L"c:\\", L"\\foo\\bar.txt" );
+  c.Add(EventAction::Added, L"c:\\", L"\\foo\\bar.txt", true );
 
   // get it.
   std::vector<Event> events;
@@ -35,7 +35,7 @@ TEST(Collector, PathIsValidWithOneBackSlashOnPath) {
 
   // create new one.
   Collector c;
-  c.Add(EventAction::Added, L"c:\\", L"foo\\bar.txt" );
+  c.Add(EventAction::Added, L"c:\\", L"foo\\bar.txt", true );
 
   // get it.
   std::vector<Event> events;
@@ -48,7 +48,7 @@ TEST(Collector, PathIsValidWithOneBackSlashOnFileName) {
 
   // create new one.
   Collector c;
-  c.Add(EventAction::Added, L"c:", L"\\foo\\bar.txt" );
+  c.Add(EventAction::Added, L"c:", L"\\foo\\bar.txt", true );
 
   // get it.
   std::vector<Event> events;

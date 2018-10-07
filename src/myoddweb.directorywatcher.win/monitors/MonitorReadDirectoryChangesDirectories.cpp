@@ -37,44 +37,23 @@ namespace myoddweb
       // https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-findfirstchangenotificationa
       // https://docs.microsoft.com/en-gb/windows/desktop/api/WinBase/nf-winbase-readdirectorychangesw
       return
-        // Any file name change in the watched directory or subtree causes a change 
-        // notification wait operation to return.
-        // Changes include renaming, creating, or deleting a file name.
-//      FILE_NOTIFY_CHANGE_FILE_NAME |
-
         // Any directory-name change in the watched directory or subtree causes a change 
         // notification wait operation to return. 
         // Changes include creating or deleting a directory
         FILE_NOTIFY_CHANGE_DIR_NAME
-
-        // Any attribute change in the watched directory or subtree causes
-        // a change notification wait operation to return.
-//        FILE_NOTIFY_CHANGE_ATTRIBUTES |
-
-        // Any file-size change in the watched directory or subtree causes a change 
-        // notification wait operation to return. 
-        // The operating system detects a change in file size only when the file is written to the disk. 
-        // For operating systems that use extensive caching, detection occurs only when the cache is sufficiently flushed.
-//        FILE_NOTIFY_CHANGE_SIZE |
-
-        // Any change to the last write-time of files in the watched directory or subtree causes a change 
-        // notification wait operation to return. The operating system detects a change
-        // to the last write-time only when the file is written to the disk. 
-        // For operating systems that use extensive caching, detection occurs only when the cache is sufficiently flushed.
-//        FILE_NOTIFY_CHANGE_LAST_WRITE |
-
-        // Any change to the last access time of files in the watched directory or subtree causes a 
-        // change notification wait operation to return.
-//      FILE_NOTIFY_CHANGE_LAST_ACCESS |
-
-        // Any change to the creation time of files in the watched directory or subtree 
-        // causes a change notification wait operation to return.
-//      FILE_NOTIFY_CHANGE_CREATION |
-
-        // Any security-descriptor change in the watched directory or subtree causes 
-        // a change notification wait operation to return.
-//        FILE_NOTIFY_CHANGE_SECURITY
         ;
+    }
+
+    /**
+     * \brief check if a given string is a file or a directory.
+     * \param path the file we are checking.
+     * \return if the string given is a file or not.
+     */
+    bool MonitorReadDirectoryChangesDirectories::IsFile(const std::wstring& path) const
+    {
+      // we are the directory monitor
+      // so it can never be a file.
+      return false;
     }
   }
 }

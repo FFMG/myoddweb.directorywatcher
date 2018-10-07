@@ -14,7 +14,6 @@
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #include <Windows.h>
 #include "Monitor.h"
-#include <fileapi.h>
 
 namespace myoddweb
 {
@@ -73,20 +72,22 @@ namespace myoddweb
      * \brief Add an event to our current log.
      * \param action
      * \param fileName
+     * \param isFile
      */
-    void Monitor::AddEvent(const EventAction action, const std::wstring& fileName) const
+    void Monitor::AddEvent(const EventAction action, const std::wstring& fileName, bool isFile) const
     {
-      _eventCollector->Add(action, Path(), fileName);
+      _eventCollector->Add(action, Path(), fileName, isFile);
     }
 
     /**
      * \brief Add an event to our current log.
      * \param newFileName
      * \param oldFilename
+     * \param isFile
      */
-    void Monitor::AddRenameEvent(const std::wstring& newFileName, const std::wstring& oldFilename) const
+    void Monitor::AddRenameEvent(const std::wstring& newFileName, const std::wstring& oldFilename, bool isFile) const
     {
-      _eventCollector->AddRename(Path(), newFileName, oldFilename );
+      _eventCollector->AddRename(Path(), newFileName, oldFilename, isFile );
     }
 
     /**
@@ -94,7 +95,7 @@ namespace myoddweb
      */
     void Monitor::AddEventError(const EventAction action) const
     {
-      _eventCollector->Add(action, L"", L"" );
+      _eventCollector->Add(action, L"", L"", false );
     }
 
     /**

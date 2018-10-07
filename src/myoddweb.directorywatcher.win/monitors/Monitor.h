@@ -42,9 +42,8 @@ namespace myoddweb
       virtual bool Start() = 0;
       virtual void Stop() = 0;
 
-    public:
-      void AddEvent(EventAction action, const std::wstring& fileName ) const;
-      void AddRenameEvent(const std::wstring& newFileName, const std::wstring& oldFilename) const;
+      void AddEvent(EventAction action, const std::wstring& fileName, bool isFile ) const;
+      void AddRenameEvent(const std::wstring& newFileName, const std::wstring& oldFilename, bool isFile) const;
       void AddEventError(EventAction action) const;
 
     private:

@@ -42,11 +42,6 @@ namespace myoddweb
         // Changes include renaming, creating, or deleting a file name.
         FILE_NOTIFY_CHANGE_FILE_NAME |
 
-        // Any directory-name change in the watched directory or subtree causes a change 
-        // notification wait operation to return. 
-        // Changes include creating or deleting a directory
-        FILE_NOTIFY_CHANGE_DIR_NAME |
-
         // Any attribute change in the watched directory or subtree causes
         // a change notification wait operation to return.
         FILE_NOTIFY_CHANGE_ATTRIBUTES |

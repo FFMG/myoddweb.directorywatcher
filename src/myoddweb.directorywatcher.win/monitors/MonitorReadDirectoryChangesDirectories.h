@@ -34,6 +34,8 @@ namespace myoddweb
        * \return the notification filter
        */
       long long GetNotifyFilter() const override;
+
+      bool IsFile(const std::wstring& path) const override;
     };
   }
 }

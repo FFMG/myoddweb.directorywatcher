@@ -83,6 +83,13 @@ namespace myoddweb
 #pragma endregion Thread variables
 
       void StartWorkerThread();
+
+      /**
+       * \brief check if a given string is a file or a directory.
+       * \param path the file we are checking.
+       * \return if the string given is a file or not.
+       */
+      virtual bool IsFile(const std::wstring& path) const;
     };
   }
 }

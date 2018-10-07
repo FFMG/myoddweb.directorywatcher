@@ -36,7 +36,14 @@ namespace myoddweb.directorywatcher.utils
     public FileSystemEvent( IEvent e )
     {
       Action = e.Action;
-      FileSystemInfo = new FileInfo( e.Path );
+      if (e.IsFile)
+      {
+        FileSystemInfo = new FileInfo(e.Path);
+      }
+      else
+      {
+        FileSystemInfo = new DirectoryInfo(e.Path);
+      }
       DateTimeUtc = e.DateTimeUtc;
     }
   }

@@ -27,10 +27,10 @@ namespace myoddweb.directorywatcher.sample
 
         // start the monitor.
         var watch = new Watcher();
-        watch.Add(new Request("c:\\", true));
-        watch.Add(new Request("d:\\", true));
-        watch.Add(new Request("h:\\", true));
-        watch.Add(new Request("Z:\\", true));
+//        watch.Add(new Request("c:\\", true));
+//        watch.Add(new Request("d:\\", true));
+        watch.Add(new Request("H:\\temp", true));
+//        watch.Add(new Request("Z:\\", true));
         //watch.Add(new Request("Z:\\x", true));
 
         // prepare the console watcher.

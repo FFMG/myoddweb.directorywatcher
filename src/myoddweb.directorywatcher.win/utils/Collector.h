@@ -33,11 +33,11 @@ namespace myoddweb
       virtual ~Collector();
 
     private:
-      Collector( short maxAgeMs );
+      explicit Collector( short maxAgeMs );
 
     public:
-      void Add(EventAction action, const std::wstring& path, const std::wstring& filename);
-      void AddRename(const std::wstring& path, const std::wstring&newFilename, const std::wstring&oldFilename);
+      void Add(EventAction action, const std::wstring& path, const std::wstring& filename, bool isFile);
+      void AddRename(const std::wstring& path, const std::wstring&newFilename, const std::wstring&oldFilename, bool isFile);
 
       /**
        * \brief fill the vector with all the values currently on record.
@@ -46,8 +46,10 @@ namespace myoddweb
        */
       long long GetEvents( std::vector<Event>& events);
 
+      static std::wstring PathCombine(const std::wstring& lhs, const std::wstring& rhs);
+
     private:
-      void Add(EventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName );
+      void Add(EventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName, bool isFile);
 
       /**
        * \brief This is the oldest number of ms we want something to be.
@@ -87,14 +89,6 @@ namespace myoddweb
        * \return the current ms time
        */
       static long long GetMillisecondsNowUtc();
-      static std::wstring PathCombine(const std::wstring& lhs, const std::wstring& rhs);
-
-      /**
-       * \brief check if a given string is a file or a directory.
-       * \param path the file we are checking.
-       * \return if the string given is a file or not.
-       */
-      static bool IsFile(const std::wstring& path);
 
       /**
        * \brief convert an EventAction to an un-managed IAction

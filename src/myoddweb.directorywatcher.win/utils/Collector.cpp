@@ -89,32 +89,16 @@ namespace myoddweb
     }
 
     /**
-     * \brief check if a given string is a file or a directory.
-     * \param path the file we are checking.
-     * \return if the string given is a file or not.
-     */
-    bool Collector::IsFile(const std::wstring& path)
-    {
-      try
-      {
-        return ((GetFileAttributesW(path.c_str()) & FILE_ATTRIBUTE_DIRECTORY) == 0);
-      }
-      catch (...)
-      {
-        return false;
-      }
-    }
-
-    /**
      * \brief Add an action to the collection.
      * \param action the action added
      * \param path the root path, (as given to us in the request.)
      * \param filename the file from the path.
+     * \param isFile if this is a file or a folder.
      */
-    void Collector::Add(const EventAction action, const std::wstring& path, const std::wstring& filename )
+    void Collector::Add(const EventAction action, const std::wstring& path, const std::wstring& filename, bool isFile)
     {
       // just add the action without an old filename.
-      Add(action, path, filename, L"" );
+      Add(action, path, filename, L"", isFile );
     }
 
     /**
@@ -122,11 +106,12 @@ namespace myoddweb
      * \param path the root path, (as given to us in the request.)
      * \param newFilename the new file from the path.
      * \param oldFilename the old name of the file.
+     * \param isFile if this is a file or a folder.
      */
-    void Collector::AddRename(const std::wstring& path, const std::wstring& newFilename, const std::wstring& oldFilename)
+    void Collector::AddRename(const std::wstring& path, const std::wstring& newFilename, const std::wstring& oldFilename, bool isFile)
     {
       // just add the action without an old filename.
-      Add(EventAction::Renamed, path, newFilename, oldFilename );
+      Add(EventAction::Renamed, path, newFilename, oldFilename, isFile );
     }
 
     /**
@@ -135,8 +120,9 @@ namespace myoddweb
      * \param path the root path, (as given to us in the request.)
      * \param filename the file from the path.
      * \param oldFileName in the case of a rename event, that value is used.
+     * \param isFile if this is a file or a folder.
      */
-    void Collector::Add( const EventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName)
+    void Collector::Add( const EventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName, const bool isFile)
     {
       try
       {
@@ -151,7 +137,7 @@ namespace myoddweb
         e.name = combinedPath;
         e.oldname = oldFileName.empty() ? L"" : PathCombine(path, oldFileName);
         e.timeMillisecondsUtc = GetMillisecondsNowUtc();
-        e.isFile = combinedPath.empty() ? false : IsFile(combinedPath);
+        e.isFile = isFile;
 
         // we can now add the event to our vector.
         AddEventInformation(e);

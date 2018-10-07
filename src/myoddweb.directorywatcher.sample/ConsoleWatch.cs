@@ -44,17 +44,17 @@ namespace myoddweb.directorywatcher.sample
 
     private async Task OnRenamedAsync(IRenamedFileSystemEvent rfse, CancellationToken token)
     {
-      await AddMessage(ConsoleColor.Cyan, rfse.DateTimeUtc, $"[R]:{rfse.PreviousFileSystemInfo.FullName} > {rfse.FileSystemInfo.FullName}", token).ConfigureAwait(false);
+      await AddMessage(ConsoleColor.Cyan, rfse.DateTimeUtc, $"[{(rfse.IsFile ? "F" : "D")}][R]:{rfse.PreviousFileSystemInfo.FullName} > {rfse.FileSystemInfo.FullName}", token).ConfigureAwait(false);
     }
 
-    private async Task OnRemovedAsync(IFileSystemEvent rfse, CancellationToken token)
+    private async Task OnRemovedAsync(IFileSystemEvent fse, CancellationToken token)
     {
-      await AddMessage(ConsoleColor.Yellow, rfse.DateTimeUtc, $"[-]:{rfse.FileSystemInfo.FullName}", token).ConfigureAwait(false);
+      await AddMessage(ConsoleColor.Yellow, fse.DateTimeUtc, $"[{(fse.IsFile ? "F" : "D")}][-]:{fse.FileSystemInfo.FullName}", token).ConfigureAwait(false);
     }
 
     private async Task OnAddedAsync(IFileSystemEvent fse, CancellationToken token)
     {
-      await AddMessage(ConsoleColor.Green, fse.DateTimeUtc, $"[+]:{fse.FileSystemInfo.FullName}", token).ConfigureAwait(false);
+      await AddMessage(ConsoleColor.Green, fse.DateTimeUtc, $"[{(fse.IsFile ? "F" : "D")}][+]:{fse.FileSystemInfo.FullName}", token).ConfigureAwait(false);
     }
 
     private async Task OnErrorAsync(IEventError ee, CancellationToken token )
@@ -62,9 +62,9 @@ namespace myoddweb.directorywatcher.sample
       await AddMessage(ConsoleColor.Red, ee.DateTimeUtc, $"[!]:{ee.Message}", token).ConfigureAwait(false);
     }
 
-    private async Task OnTouchedAsync(IFileSystemEvent rfse, CancellationToken token)
+    private async Task OnTouchedAsync(IFileSystemEvent fse, CancellationToken token)
     {
-      await AddMessage( ConsoleColor.Gray, rfse.DateTimeUtc, $"[T]:{rfse.FileSystemInfo.FullName}", token ).ConfigureAwait( false );
+      await AddMessage( ConsoleColor.Gray, fse.DateTimeUtc, $"[{(fse.IsFile?"F":"D")}][T]:{fse.FileSystemInfo.FullName}", token ).ConfigureAwait( false );
     }
 
     private async Task AddMessage(ConsoleColor color, DateTime dt, string message, CancellationToken token)
