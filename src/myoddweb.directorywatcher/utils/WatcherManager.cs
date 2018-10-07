@@ -84,7 +84,7 @@ namespace myoddweb.directorywatcher.utils
       var resource = "win32.directorywatcher.interop";
       if (Environment.Is64BitProcess)
       {
-        resource = "x64..directorywatcher.interop";
+        resource = "x64.directorywatcher.interop";
         winresource = "x64.directorywatcher.win";
       }
 
