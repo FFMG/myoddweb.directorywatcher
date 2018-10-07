@@ -61,11 +61,11 @@
       <LogicalName>win32.directorywatcher.interop</LogicalName>
     </EmbeddedResource>
     
-    <EmbeddedResource Include="$(OutputPath)Win32\myoddweb.directorywatcher.win.dll">
+    <EmbeddedResource Include="$(OutputPath)x64\myoddweb.directorywatcher.win.dll">
       <LogicalName>x64.directorywatcher.win</LogicalName>
     </EmbeddedResource>
     
-    <EmbeddedResource Include="$(OutputPath)Win32\myoddweb.directorywatcher.interop.dll">
+    <EmbeddedResource Include="$(OutputPath)x64\myoddweb.directorywatcher.interop.dll">
       <LogicalName>x64.directorywatcher.interop</LogicalName>
     </EmbeddedResource>
     
