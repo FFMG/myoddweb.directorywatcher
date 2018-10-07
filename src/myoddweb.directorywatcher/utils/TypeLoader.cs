@@ -26,6 +26,11 @@ namespace myoddweb.directorywatcher.utils
       return LoadTypeFromAssembly<T>(assembly);
     }
 
+    public static Assembly LoadFromFile(string assemblyFile )
+    {
+      return Assembly.LoadFrom(assemblyFile);
+    }
+
     public static T LoadTypeFromAssembly<T>(Assembly assembly) where T : class
     {
       var exportedTypes = assembly.GetExportedTypes();

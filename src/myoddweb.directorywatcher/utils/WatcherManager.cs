@@ -15,20 +15,27 @@
 using System;
 using System.IO;
 using System.Reflection;
+using System.Security.Cryptography;
 using myoddweb.directorywatcher.interfaces;
 
 namespace myoddweb.directorywatcher.utils
 {
   internal class WatcherManager
   {
+    /// <summary>
+    /// The actual instance of the watcher.
+    /// </summary>
     private readonly IWatcher1 _watcher;
 
-    private static WatcherManager _manager = null;
+    /// <summary>
+    /// The one and only instance of the manager.
+    /// </summary>
+    private static WatcherManager _manager;
 
     /// <summary>
     /// The object we will use for the lock.
     /// </summary>
-    private static readonly object _lock = new object();
+    private static readonly object Lock = new object();
 
     /// <summary>
     /// Get our one and only watcher interface.
@@ -48,8 +55,9 @@ namespace myoddweb.directorywatcher.utils
           return _manager;
         }
 
-        // check using the lock
-        lock (_lock)
+        // check again using the lock
+        // otherwise just create it.
+        lock (Lock)
         {
           // either return what we have or simply create a new one.
           return _manager ?? (_manager = new WatcherManager());
@@ -63,14 +71,85 @@ namespace myoddweb.directorywatcher.utils
     private WatcherManager()
     {
       // create the one watcher.
-      _watcher = CreateWatcher();
+      _watcher = CreateWatcherFromFileSystem();
     }
 
     /// <summary>
-    /// Create the watcher, throw if we are unable to do it.
+    /// 'Borrowed' from https://www.codeproject.com/Articles/528178/Load-DLL-From-Embedded-Resource
     /// </summary>
     /// <returns></returns>
-    private static IWatcher1 CreateWatcher()
+    public static string GetInteropResourceFileSystem()
+    {
+      var winresource = "win32.directorywatcher.win";
+      var resource = "win32.directorywatcher.interop";
+      if (Environment.Is64BitProcess)
+      {
+        resource = "x64..directorywatcher.interop";
+        winresource = "x64.directorywatcher.win";
+      }
+
+      var asmwin = GetInteropResourceFileSystem(winresource, "myoddweb.directorywatcher.win.dll");
+
+      const string actualDllFilename = "myoddweb.directorywatcher.interop.dll";
+      return GetInteropResourceFileSystem(resource, actualDllFilename);
+    }
+
+    /// <summary>
+    /// 'Borrowed' from https://www.codeproject.com/Articles/528178/Load-DLL-From-Embedded-Resource
+    /// </summary>
+    /// <returns></returns>
+    public static string GetInteropResourceFileSystem( string resource, string dll )
+    {
+      byte[] ba;
+      var fileOk = false;
+      string tempFile;
+      var tempPath = Path.Combine(new[] { Path.GetTempPath(), "directorywatcher", Environment.Is64BitProcess ? "x64" : "x86" });
+
+      var curAsm = Assembly.GetExecutingAssembly();
+      using (var stm = curAsm.GetManifestResourceStream(resource))
+      {
+        // Either the file is not existed or it is not mark as embedded resource
+        if (stm == null)
+          throw new Exception(resource + " is not found in Embedded Resources.");
+
+        // Get byte[] from the file from embedded resource
+        ba = new byte[(int)stm.Length];
+        stm.Read(ba, 0, (int)stm.Length);
+      }
+
+      using (var sha1 = new SHA1CryptoServiceProvider())
+      {
+        var fileHash = BitConverter.ToString(sha1.ComputeHash(ba)).Replace("-", string.Empty);
+
+        tempFile = Path.Combine(new[] { tempPath, dll });
+        if (File.Exists(tempFile))
+        {
+          var bb = File.ReadAllBytes(tempFile);
+          var fileHash2 = BitConverter.ToString(sha1.ComputeHash(bb)).Replace("-", string.Empty);
+
+          if (fileHash == fileHash2)
+          {
+            fileOk = true;
+          }
+        }
+      }
+
+      if (!fileOk)
+      {
+        if (!Directory.Exists(tempPath))
+        {
+          Directory.CreateDirectory(tempPath);
+        }
+        File.WriteAllBytes(tempFile, ba);
+      }
+      return tempFile;
+    }
+
+    /// <summary>
+    /// Get the interop path on file.
+    /// </summary>
+    /// <returns></returns>
+    private static string GetInteropFromFileSystem()
     {
       var directoryName = Directory.GetCurrentDirectory();
       var dllInteropPath = Path.Combine(directoryName, "Win32\\myoddweb.directorywatcher.interop.dll");
@@ -79,19 +158,36 @@ namespace myoddweb.directorywatcher.utils
         dllInteropPath = Path.Combine(directoryName, "x64\\myoddweb.directorywatcher.interop.dll");
       }
 
-      // look for the 
+      return dllInteropPath;
+    }
+
+    /// <summary>
+    /// Create the watcher from the file system, throw if we are unable to do it.
+    /// </summary>
+    /// <returns></returns>
+    private static IWatcher1 CreateWatcherFromFileSystem()
+    {
       try
       {
-        var asm = Assembly.LoadFrom(dllInteropPath);
-        return TypeLoader.LoadTypeFromAssembly<IWatcher1>(asm);
+        try
+        {
+          var asm = TypeLoader.LoadFromFile(GetInteropResourceFileSystem());
+          // var asm = TypeLoader.LoadFromFile(GetInteropFromFileSystem());
+          return TypeLoader.LoadTypeFromAssembly<IWatcher1>(asm);
+        }
+        catch (Exception e)
+        {
+          Console.WriteLine(e);
+          throw;
+        }
       }
       catch (ArgumentException ex)
       {
-        throw new Exception($"The interop file name/path does not appear to be valid. '{dllInteropPath}'.{Environment.NewLine}{Environment.NewLine}{ex.Message}");
+        throw new Exception($"The interop file name/path does not appear to be valid. '{GetInteropFromFileSystem()}'.{Environment.NewLine}{Environment.NewLine}{ex.Message}");
       }
       catch (FileNotFoundException ex)
       {
-        throw new Exception($"Unable to load the interop file. '{dllInteropPath}'.{Environment.NewLine}{Environment.NewLine}{ex.Message}");
+        throw new Exception($"Unable to load the interop file. '{ex.FileName}'.{Environment.NewLine}{Environment.NewLine}{ex.Message}");
       }
     }
   }

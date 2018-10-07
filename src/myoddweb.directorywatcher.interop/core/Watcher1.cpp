@@ -23,7 +23,7 @@
 using namespace msclr::interop;
 using namespace System;
 using namespace System::Diagnostics;
-
+using namespace System::Reflection;
 using namespace System::IO;
 
 Watcher1::Watcher1() :
@@ -59,6 +59,61 @@ void Watcher1::Release()
   _hDll = nullptr;
 }
 
+/**
+ * \brief try and load from subfolders of the exe.
+ * Non-Embeded dlls will use the one in the platform specific sub-folders.
+ * \param core the name of the dll we want to load.
+ */
+bool Watcher1::CreateInstanceFromPlatformFolder(String^ core)
+{
+  // load the library from subdirectories
+  auto directoryName = Directory::GetCurrentDirectory();
+  auto corePath = Path::Combine(directoryName, "Win32\\");
+  if (Environment::Is64BitProcess)
+  {
+    corePath = Path::Combine(directoryName, "x64\\");
+  }
+
+  // get the directory and try and load it,
+  String^ dll = Path::Combine(Path::GetDirectoryName(corePath), core);
+
+  msclr::interop::marshal_context context;
+  const auto stdDll = context.marshal_as<std::wstring>(dll);
+  _hDll = LoadLibraryW(stdDll.c_str());
+  return (nullptr != _hDll);
+}
+
+/**
+ * \brief try and load from the same folder as where this dll is located.
+ * Embeded dlls are moved to a temp folder
+ * So we have to make sure it is loaded from that same folder.
+ * \param core the name of the dll we want to load.
+ */
+bool Watcher1::CreateInstanceFromLocalFolder(String^ core)
+{
+  // get our 'executing' assembly, (in other words, this dll)
+  System::Reflection::Assembly^ callerAssembly = Assembly::GetExecutingAssembly();
+  if( callerAssembly == nullptr )
+  {
+    return false;
+  }
+
+  // get the path
+  String^ strCallerPath = callerAssembly->Location;
+  if (strCallerPath == nullptr)
+  {
+    return false;
+  }
+
+  // get the directory and try and load it,
+  String^ dll = Path::Combine( Path::GetDirectoryName(strCallerPath), core );
+
+  msclr::interop::marshal_context context;
+  const auto stdDll = context.marshal_as<std::wstring>(dll);
+  _hDll = LoadLibraryW(stdDll.c_str());
+  return (nullptr != _hDll);
+}
+
 bool Watcher1::CreateInstance()
 {
   //  do we have it already?
@@ -69,23 +124,22 @@ bool Watcher1::CreateInstance()
     _hDll = nullptr;
   }
 
-  // load the library
-  auto directoryName = Directory::GetCurrentDirectory();
-  auto corePath = Path::Combine(directoryName, "Win32\\myoddweb.directorywatcher.win.dll");
-  if (Environment::Is64BitProcess)
+  // the core name
+  String^ core = "myoddweb.directorywatcher.win.dll";
+
+  // try and load from the same folder as us
+  if( CreateInstanceFromLocalFolder( core ) )
   {
-    corePath = Path::Combine(directoryName, "x64\\myoddweb.directorywatcher.win.dll");
+    return true;
   }
 
-  msclr::interop::marshal_context context;
-  auto std_corePath = context.marshal_as<std::string>(corePath);
-  _hDll = LoadLibraryA(std_corePath.c_str());
-  if (nullptr == _hDll)
+  // try and load from the subfolders.
+  if (CreateInstanceFromPlatformFolder(core))
   {
-    //  could not load the dll.
-    return false;
+    return true;
   }
-  return true;
+
+  return false;
 }
 
 /**

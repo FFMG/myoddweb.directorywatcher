@@ -76,11 +76,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\myoddweb.directorywatcher.win\myoddweb.directorywatcher.win.vcxproj">
-      <Project>{b9b8a503-13e4-4f17-b59d-92452c927198}</Project>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemDefinitionGroup />

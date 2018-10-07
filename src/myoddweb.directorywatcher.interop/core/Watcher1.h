@@ -53,6 +53,8 @@ public:
 protected:
   void Release();
   bool CreateInstance();
+  bool CreateInstanceFromLocalFolder( String^ core );
+  bool CreateInstanceFromPlatformFolder(String^ core);
   bool CreateUnmanagedFunctions();
   bool CreateUnmanagedFunction(HINSTANCE hInstance, FunctionTypes procType);
   const FARPROC GetUnmanagedFunction(FunctionTypes procType) const;
