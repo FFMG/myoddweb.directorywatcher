@@ -14,22 +14,9 @@
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 using System;
 using System.Threading;
-using myoddweb.directorywatcher.interfaces;
 
 namespace myoddweb.directorywatcher.sample
 {
-  internal class Request : IRequest
-  {
-    public Request(string path, bool recursive)
-    {
-      Path = path;
-      Recursive = recursive;
-    }
-
-    public string Path { get; }
-    public bool Recursive { get; }
-  }
-
   internal class Program
   {
     private static void Main()
@@ -39,7 +26,7 @@ namespace myoddweb.directorywatcher.sample
         Console.WriteLine("Press Ctrl+C to stop the monitors.");
 
         // start the monitor.
-        IWatcher2 watch = new Watcher();
+        var watch = new Watcher();
         watch.Add(new Request("c:\\", true));
         watch.Add(new Request("d:\\", true));
         watch.Add(new Request("h:\\", true));

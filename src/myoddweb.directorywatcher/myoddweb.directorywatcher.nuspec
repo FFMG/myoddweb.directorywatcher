@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>MyOddWeb.DirectoryWatcher</id>
-    <version>0.0.1.1</version>
+    <version>0.0.2.0-alpha</version>
     <title>MyOddWeb.DirectoryWatcher (x86/x64)</title>
     <licenseUrl>https://github.com/FFMG/myoddweb.directorywatcher/blob/master/LICENSE</licenseUrl>
     <projectUrl>https://github.com/FFMG/myoddweb.directorywatcher</projectUrl>
