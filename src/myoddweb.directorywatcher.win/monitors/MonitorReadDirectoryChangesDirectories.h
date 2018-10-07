@@ -33,9 +33,15 @@ namespace myoddweb
        * Get the notification filter.
        * \return the notification filter
        */
-      long long GetNotifyFilter() const override;
+      unsigned long GetNotifyFilter() const override;
 
-      bool IsFile(const std::wstring& path) const override;
+      /**
+       * \brief check if a given string is a file or a directory.
+       * \param action the action we are looking at
+       * \param path the file we are checking.
+       * \return if the string given is a file or not.
+       */
+      bool IsFile( EventAction action, const std::wstring& path) const override;
     };
   }
 }

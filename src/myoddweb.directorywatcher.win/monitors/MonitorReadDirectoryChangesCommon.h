@@ -37,7 +37,7 @@ namespace myoddweb
        * Get the notification filter.
        * \return the notification filter
        */
-      virtual long long GetNotifyFilter() const = 0;
+      virtual unsigned long GetNotifyFilter() const = 0;
 
       static void CALLBACK FileIoCompletionRoutine(
         unsigned long dwErrorCode,							  // completion code
@@ -84,12 +84,14 @@ namespace myoddweb
 
       void StartWorkerThread();
 
+    protected:
       /**
        * \brief check if a given string is a file or a directory.
+       * \param action the action we are looking at 
        * \param path the file we are checking.
        * \return if the string given is a file or not.
        */
-      virtual bool IsFile(const std::wstring& path) const;
+      virtual bool IsFile(EventAction action, const std::wstring& path ) const;
     };
   }
 }

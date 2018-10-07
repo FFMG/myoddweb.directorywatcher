@@ -31,7 +31,7 @@ namespace myoddweb
      * Get the notification filter.
      * \return the notification filter
      */
-    long long MonitorReadDirectoryChangesDirectories::GetNotifyFilter() const
+    unsigned long MonitorReadDirectoryChangesDirectories::GetNotifyFilter() const
     {
       // what we are looking for.
       // https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-findfirstchangenotificationa
@@ -46,10 +46,11 @@ namespace myoddweb
 
     /**
      * \brief check if a given string is a file or a directory.
+     * \param action the action we are looking at
      * \param path the file we are checking.
      * \return if the string given is a file or not.
      */
-    bool MonitorReadDirectoryChangesDirectories::IsFile(const std::wstring& path) const
+    bool MonitorReadDirectoryChangesDirectories::IsFile(const EventAction action, const std::wstring& path) const
     {
       // we are the directory monitor
       // so it can never be a file.
