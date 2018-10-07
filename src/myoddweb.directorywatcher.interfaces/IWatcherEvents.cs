@@ -12,41 +12,34 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace myoddweb.directorywatcher.interfaces
 {
-  public delegate Task WatcherEvent<in T>(T e, CancellationToken token);
-
-  public interface IWatcher2 : IWatcher1, IWatcherEvents
+  public interface IWatcherEvents
   {
     /// <summary>
-    /// Add a request, if monitoring has started already,
-    /// we will start monitoring right away
+    /// Event when a FileSystem event was 'touched'.
+    /// Changed attribute, size changed etc...
     /// </summary>
-    /// <param name="request"></param>
-    /// <returns>Success or not.</returns>
-    bool Add(IRequest request);
+    event WatcherEvent<IFileSystemEvent> OnTouchedAsync;
 
     /// <summary>
-    /// Start all the requests
+    /// Event when a FileSystem event was added.
     /// </summary>
-    /// <returns></returns>
-    bool Start();
+    event WatcherEvent<IFileSystemEvent> OnAddedAsync;
 
     /// <summary>
-    /// Stop all the running requests.
+    /// Event when a FileSystem event was Removed.
     /// </summary>
-    /// <returns></returns>
-    bool Stop();
+    event WatcherEvent<IFileSystemEvent> OnRemovedAsync;
 
     /// <summary>
-    /// Get all the event for the started ids.
+    /// Event when a FileSystem event was Renamed.
     /// </summary>
-    /// <param name="events">The events we got.</param>
-    /// <returns>The number of events</returns>
-    long GetEvents( out IList<IEvent> events);
+    event WatcherEvent<IRenamedFileSystemEvent> OnRenamedAsync;
+
+    /// <summary>
+    /// There was an error.
+    /// </summary>
+    event WatcherEvent<IEventError> OnErrorAsync;
   }
 }
