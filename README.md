@@ -27,7 +27,7 @@ A fast and reliable File/Directory watcher for c#/c++ to replace the current .NE
 `dotnet add package MyOddWeb.DirectoryWatcher`
 
 #### Packet
-`packet add MyOddWeb.DirectoryWatcher`
+`paket add MyOddWeb.DirectoryWatcher`
 
 ### Use case
 
