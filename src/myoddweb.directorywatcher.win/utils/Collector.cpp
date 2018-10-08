@@ -15,6 +15,7 @@
 #include <Windows.h>
 #include "Collector.h"
 #include "Lock.h"
+#include "Io.h"
 
 namespace myoddweb
 {
@@ -57,38 +58,6 @@ namespace myoddweb
     }
 
     /**
-     * \brief Combine 2 parts of a file into a single filename.
-     *        we do not validate the path or even if the values make no sense.
-     * \param lhs the left hand side
-     * \param rhs the right hand side.
-     * \return The 2 part connected togeter
-     */
-    std::wstring Collector::PathCombine(const std::wstring& lhs, const std::wstring& rhs)
-    {
-      // sanity check, if the lhs.length is 0, then we just return the rhs.
-      const auto s = lhs.length();
-      if (s == 0)
-      {
-        return rhs;
-      }
-
-      // the two type of separators.
-      const auto sep1 = L'/';
-      const auto sep2 = L'\\';
-
-      const auto l = lhs[s - 1];
-      if (l != sep1 && l != sep2)
-      {
-#ifdef WIN32
-        return lhs + sep2 + rhs;
-#else
-        return lhs + sep1 + rhs;
-#endif
-      }
-      return lhs + rhs;
-    }
-
-    /**
      * \brief Add an action to the collection.
      * \param action the action added
      * \param path the root path, (as given to us in the request.)
@@ -127,7 +96,7 @@ namespace myoddweb
       try
       {
         // get the combined path.
-        const auto combinedPath = filename.empty() ? L"" : PathCombine(path, filename);
+        const auto combinedPath = filename.empty() ? L"" : Io::Combine(path, filename);
 
         // We first create the event outside the lock
         // that way, we only have the lock for the shortest
@@ -135,7 +104,7 @@ namespace myoddweb
         EventInformation e;
         e.action = action;
         e.name = combinedPath;
-        e.oldname = oldFileName.empty() ? L"" : PathCombine(path, oldFileName);
+        e.oldname = oldFileName.empty() ? L"" : Io::Combine(path, oldFileName);
         e.timeMillisecondsUtc = GetMillisecondsNowUtc();
         e.isFile = isFile;
 

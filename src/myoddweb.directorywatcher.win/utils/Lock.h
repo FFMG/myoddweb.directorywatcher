@@ -16,13 +16,19 @@
 
 #include <mutex>
 
-class Lock
+namespace myoddweb
 {
-public:
-  Lock(std::recursive_mutex& lock);
-  virtual ~Lock();
+  namespace directorywatcher
+  {
+    class Lock
+    {
+    public:
+      Lock(std::recursive_mutex& lock);
+      virtual ~Lock();
 
-private:
-  std::recursive_mutex& _lock;
-};
-
+    private:
+      std::recursive_mutex& _lock;
+    };
+  }
+}
+  

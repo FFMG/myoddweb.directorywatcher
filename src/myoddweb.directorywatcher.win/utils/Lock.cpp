@@ -14,14 +14,20 @@
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #include "Lock.h"
 
-// grab the lock
-Lock::Lock(std::recursive_mutex& lock) : _lock( lock )
+namespace myoddweb
 {
-  _lock.lock();
-}
+  namespace directorywatcher
+  {
+    // grab the lock
+    Lock::Lock(std::recursive_mutex& lock) : _lock(lock)
+    {
+      _lock.lock();
+    }
 
-// release the lock
-Lock::~Lock()
-{
-  _lock.unlock();
+    // release the lock
+    Lock::~Lock()
+    {
+      _lock.unlock();
+    }
+  }
 }

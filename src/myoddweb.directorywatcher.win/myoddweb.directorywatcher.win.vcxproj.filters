@@ -27,6 +27,9 @@
     <ClCompile Include="monitors\MonitorReadDirectoryChangesCommon.cpp">
       <Filter>monitors</Filter>
     </ClCompile>
+    <ClCompile Include="utils\Io.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -64,6 +67,9 @@
     </ClInclude>
     <ClInclude Include="monitors\MonitorReadDirectoryChangesCommon.h">
       <Filter>monitors</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\Io.h">
+      <Filter>utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

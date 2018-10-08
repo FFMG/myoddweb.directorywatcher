@@ -13,8 +13,9 @@
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #include <process.h>
-#include "MonitorReadDirectoryChangesCommon.h"
 #include <windows.h>
+#include "MonitorReadDirectoryChangesCommon.h"
+#include "..\utils\Io.h"
 
 namespace myoddweb
 {
@@ -441,7 +442,7 @@ namespace myoddweb
     {
       try
       {
-        const auto fullPath = Collector::PathCombine(_parent.Path(), path);
+        const auto fullPath = Io::Combine(_parent.Path(), path);
         return ((GetFileAttributesW(fullPath.c_str()) & FILE_ATTRIBUTE_DIRECTORY) == 0);
       }
       catch (...)

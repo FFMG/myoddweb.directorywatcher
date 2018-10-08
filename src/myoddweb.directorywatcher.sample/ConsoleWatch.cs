@@ -76,7 +76,7 @@ namespace myoddweb.directorywatcher.sample
           try
           {
             Console.ForegroundColor = color;
-            Console.WriteLine($"[{dt:HH:mm:ss.ffff}][T]:{message}");
+            Console.WriteLine($"[{dt:HH:mm:ss.ffff}]:{message}");
           }
           catch (Exception e)
           {

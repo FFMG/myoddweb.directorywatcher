@@ -46,8 +46,6 @@ namespace myoddweb
        */
       long long GetEvents( std::vector<Event>& events);
 
-      static std::wstring PathCombine(const std::wstring& lhs, const std::wstring& rhs);
-
     private:
       void Add(EventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName, bool isFile);
 

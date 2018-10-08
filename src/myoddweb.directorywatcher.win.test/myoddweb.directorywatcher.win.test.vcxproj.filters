@@ -9,6 +9,9 @@
     <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Lock.cpp">
       <Filter>win\utils</Filter>
     </ClCompile>
+    <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Io.cpp">
+      <Filter>win\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -19,6 +22,9 @@
       <Filter>win\utils</Filter>
     </ClInclude>
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Lock.h">
+      <Filter>win\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Io.h">
       <Filter>win\utils</Filter>
     </ClInclude>
   </ItemGroup>
