@@ -36,26 +36,77 @@ namespace myoddweb
     std::wstring Io::Combine(const std::wstring& lhs, const std::wstring& rhs)
     {
       // sanity check, if the lhs.length is 0, then we just return the rhs.
-      const auto s = lhs.length();
-      if (s == 0)
+      const auto sl = lhs.length();
+      const auto sr = rhs.length();
+      if (sl == 0 && sr == 0)
       {
-        return rhs;
+        return L"";
       }
 
       // the two type of separators.
       const auto sep1 = L'/';
       const auto sep2 = L'\\';
 
-      const auto l = lhs[s - 1];
-      if (l != sep1 && l != sep2)
-      {
+      // and the one we will be using
 #ifdef WIN32
-        return lhs + sep2 + rhs;
+      const auto sep = L'\\';
 #else
-        return lhs + sep1 + rhs;
+      const auto sep = L'/';
 #endif
+
+      // we know that they are not both empty
+      // if the right hand side is empty then the lhs cannot be
+      if( sr == 0 )
+      {
+        const auto l = lhs[sl - 1];
+        // no separator
+        if (l != sep1 && l != sep2)
+        {
+          return lhs + sep;
+        }
+        // just go back one step
+        return Combine(lhs.substr(0, sl - 1), rhs );
       }
-      return lhs + rhs;
+
+      // we know that they are not both empty
+      // if the left hand side is empty then the rhs cannot be
+      if (sl == 0)
+      {
+        const auto r = rhs[0];
+        // no separator
+        if (r != sep1 && r != sep2)
+        {
+          return sep + rhs;
+        }
+        // just move forward one step
+        return Combine(lhs, rhs.substr(1, sr - 1));
+      }
+
+      // if we are here, they both not zero
+      const auto l = lhs[sl - 1];
+      const auto r = rhs[0];
+
+      // simple case where we have neither '/' not '\' on either sides.
+      // neither of them has a back slash
+      if (l != sep1 && l != sep2 && r != sep1 && r != sep2)
+      {
+        return lhs + sep + rhs;
+      }
+
+      // lhs does not have a back slash but the rhs does
+      if (l != sep1 && l != sep2 && (r == sep1 || r == sep2))
+      {
+        return Combine( lhs, rhs.substr( 1, sr-1));
+      }
+
+      // rhs does not have a back slash but the lhs does
+      if ((l == sep1 || l == sep2) && r != sep1 && r != sep2)
+      {
+        return Combine(lhs.substr(0, sl-1), rhs);
+      }
+
+      // if we are here, they both seem to have a backslash
+      return Combine(lhs.substr(0, sl - 1), rhs.substr(1, sr - 1));
     }
   }
 }
