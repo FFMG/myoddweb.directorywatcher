@@ -443,7 +443,7 @@ namespace myoddweb
       try
       {
         const auto fullPath = Io::Combine(_parent.Path(), path);
-        return ((GetFileAttributesW(fullPath.c_str()) & FILE_ATTRIBUTE_DIRECTORY) == 0);
+        return Io::IsFile(fullPath);
       }
       catch (...)
       {

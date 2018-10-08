@@ -12,6 +12,7 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
+#include <windows.h>
 #include "Io.h"
 
 namespace myoddweb
@@ -27,11 +28,30 @@ namespace myoddweb
     }
 
     /**
-     * \brief Combine 2 parts of a file into a single filename.
-     *        we do not validate the path or even if the values make no sense.
-     * \param lhs the left hand side
-     * \param rhs the right hand side.
-     * \return The 2 part connected togeter
+     * \brief check if a given string is a file or a directory.
+     * \param path the file we are checking.
+     * \return if the string given is a file or not.
+     */
+    bool Io::IsFile( const std::wstring& path)
+    {
+      try
+      {
+        const auto attr = GetFileAttributesW(path.c_str());
+        return ( attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_DIRECTORY) == 0);
+      }
+      catch (...)
+      {
+        return false;
+      }
+    }
+
+    /**
+     * \brief combine 2 paths together making sure that the path is valid.
+     * If both values are empty we return empty string
+     * We assume that the lhs is a path and never a file, so we will add '\', (or '/' on *nix machines)
+     * \param lhs the left hand side of the path
+     * \param rhs the right hand side of the path
+     * \return the combined path
      */
     std::wstring Io::Combine(const std::wstring& lhs, const std::wstring& rhs)
     {
