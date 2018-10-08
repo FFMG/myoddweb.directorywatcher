@@ -81,14 +81,27 @@ namespace myoddweb
     {
       try
       {
-        if( action == EventAction::Removed )
+        switch (action)
         {
+        case EventAction::Added:
+          // Because we are not using FILE_NOTIFY_CHANGE_DIR_NAME any added/removed
+          // Notifications _must_ be for a file.
+          return true;
+
+        case EventAction::Renamed:
+          // Because we are not using FILE_NOTIFY_CHANGE_DIR_NAME any added/removed
+          // Notifications _must_ be for a file.
+          return true;
+
+        case EventAction::Removed:
           // the file was removed, we cannot double check
           // if it is really a file or not.
           // but we are in the 'file' sections, so we will assume it is.
           return true;
+
+        default:
+          return MonitorReadDirectoryChangesCommon::IsFile(action, path);
         }
-        return MonitorReadDirectoryChangesCommon::IsFile(action, path);
       }
       catch (...)
       {

@@ -36,8 +36,26 @@ namespace myoddweb
     {
       try
       {
-        const auto attr = GetFileAttributesW(path.c_str());
-        return ( attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_DIRECTORY) == 0);
+        const auto cpath = path.c_str();
+        const auto attr = GetFileAttributesW(cpath);
+        if (attr != INVALID_FILE_ATTRIBUTES)
+        {
+          return (attr & FILE_ATTRIBUTE_DIRECTORY) == 0;
+        }
+
+        const auto dw = GetLastError();
+        if (ERROR_ACCESS_DENIED == dw)
+        {
+          WIN32_FIND_DATAW wfd = {};
+          const auto handle = FindFirstFileW(cpath, &wfd);
+          if (handle != INVALID_HANDLE_VALUE)
+          {
+            const auto attrfff = wfd.dwFileAttributes;
+            FindClose(handle);
+            return (attrfff & FILE_ATTRIBUTE_DIRECTORY) == 0;
+          }
+        }
+        return true;
       }
       catch (...)
       {
