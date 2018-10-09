@@ -46,5 +46,11 @@ namespace myoddweb.directorywatcher.utils
       }
       DateTimeUtc = e.DateTimeUtc;
     }
+
+    /// <inheritdoc />
+    public bool Is(EventAction action)
+    {
+      return Action == action;
+    }
   }
 }

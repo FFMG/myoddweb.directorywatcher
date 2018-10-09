@@ -38,5 +38,13 @@ namespace myoddweb.directorywatcher.interfaces
     /// Boolean if the update is a file or a directory.
     /// </summary>
     bool IsFile { get; }
+
+    /// <summary>
+    /// Return if the event is a certain action
+    /// (same as Action == action)
+    /// </summary>
+    /// <param name="action"></param>
+    /// <returns></returns>
+    bool Is(EventAction action );
   }
 }
