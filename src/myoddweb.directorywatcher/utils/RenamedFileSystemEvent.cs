@@ -23,6 +23,12 @@ namespace myoddweb.directorywatcher.utils
     /// <inheritdoc />
     public FileSystemInfo PreviousFileSystemInfo { get; }
 
+    /// <inheritdoc />
+    public string PreviousFullName => PreviousFileSystemInfo?.FullName ?? "???";
+
+    /// <inheritdoc />
+    public string PreviousName => PreviousFileSystemInfo?.Name ?? "???";
+
     public RenamedFileSystemEvent(IEvent e) : base(e)
     {
       PreviousFileSystemInfo = new FileInfo(e.Extra);

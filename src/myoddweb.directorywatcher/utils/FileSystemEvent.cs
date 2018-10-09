@@ -33,6 +33,12 @@ namespace myoddweb.directorywatcher.utils
     /// <inheritdoc />
     public bool IsFile => FileSystemInfo is FileInfo;
 
+    /// <inheritdoc />
+    public string FullName => FileSystemInfo?.FullName ?? "???";
+
+    /// <inheritdoc />
+    public string Name => FileSystemInfo?.Name ?? "???";
+
     public FileSystemEvent( IEvent e )
     {
       Action = e.Action;

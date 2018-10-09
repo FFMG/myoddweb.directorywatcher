@@ -25,6 +25,22 @@ namespace myoddweb.directorywatcher.interfaces
     FileSystemInfo FileSystemInfo { get; }
 
     /// <summary>
+    ///  Gets the full path of the directory or file.
+    /// </summary>
+    /// <returns>A string containing the full path.</returns>
+    string FullName { get; }
+
+    /// <summary>
+    ///     For files, gets the name of the file. For directories, gets the name of the last
+    ///     directory in the hierarchy if a hierarchy exists. Otherwise, the Name property
+    ///     gets the name of the directory.
+    /// </summary>
+    /// <returns>A string that is the name of the parent directory, the name of the last directory
+    ///     in the hierarchy, or the name of a file, including the file name extension.
+    /// </returns>
+    string Name { get; }
+
+    /// <summary>
     /// The Action
     /// </summary>
     EventAction Action { get; }
