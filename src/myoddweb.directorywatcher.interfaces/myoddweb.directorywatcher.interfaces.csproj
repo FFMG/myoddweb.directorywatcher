@@ -39,6 +39,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EventAction.cs" />
+    <Compile Include="EventError.cs" />
     <Compile Include="IEvent.cs" />
     <Compile Include="IEventError.cs" />
     <Compile Include="IFileSystemEvent.cs" />

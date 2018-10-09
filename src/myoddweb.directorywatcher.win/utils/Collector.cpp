@@ -63,11 +63,12 @@ namespace myoddweb
      * \param path the root path, (as given to us in the request.)
      * \param filename the file from the path.
      * \param isFile if this is a file or a folder.
+     * \param error if there was an error related
      */
-    void Collector::Add(const EventAction action, const std::wstring& path, const std::wstring& filename, bool isFile)
+    void Collector::Add(const ManagedEventAction action, const std::wstring& path, const std::wstring& filename, bool isFile, ManagedEventError error)
     {
       // just add the action without an old filename.
-      Add(action, path, filename, L"", isFile );
+      Add(action, path, filename, L"", isFile, error );
     }
 
     /**
@@ -76,11 +77,12 @@ namespace myoddweb
      * \param newFilename the new file from the path.
      * \param oldFilename the old name of the file.
      * \param isFile if this is a file or a folder.
+     * \param error if there is an error related to the rename
      */
-    void Collector::AddRename(const std::wstring& path, const std::wstring& newFilename, const std::wstring& oldFilename, bool isFile)
+    void Collector::AddRename(const std::wstring& path, const std::wstring& newFilename, const std::wstring& oldFilename, bool isFile, ManagedEventError error)
     {
       // just add the action without an old filename.
-      Add(EventAction::Renamed, path, newFilename, oldFilename, isFile );
+      Add(ManagedEventAction::Renamed, path, newFilename, oldFilename, isFile, error );
     }
 
     /**
@@ -90,8 +92,9 @@ namespace myoddweb
      * \param filename the file from the path.
      * \param oldFileName in the case of a rename event, that value is used.
      * \param isFile if this is a file or a folder.
+     * \param error if there was an error related to the action
      */
-    void Collector::Add( const EventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName, const bool isFile)
+    void Collector::Add( const ManagedEventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName, const bool isFile, ManagedEventError error)
     {
       try
       {
@@ -102,11 +105,11 @@ namespace myoddweb
         // that way, we only have the lock for the shortest
         // posible amount of time.
         EventInformation e;
-        e.action = action;
-        e.name = combinedPath;
-        e.oldname = oldFileName.empty() ? L"" : Io::Combine(path, oldFileName);
-        e.timeMillisecondsUtc = GetMillisecondsNowUtc();
-        e.isFile = isFile;
+        e.Action = action;
+        e.Name = combinedPath;
+        e.OldName = oldFileName.empty() ? L"" : Io::Combine(path, oldFileName);
+        e.TimeMillisecondsUtc = GetMillisecondsNowUtc();
+        e.IsFile = isFile;
 
         // we can now add the event to our vector.
         AddEventInformation(e);
@@ -164,11 +167,11 @@ namespace myoddweb
         const auto& eventInformation = (*it);
 
         Event e = {};
-        e.TimeMillisecondsUtc = eventInformation.timeMillisecondsUtc;
-        e.Path = eventInformation.name;
-        e.Extra = eventInformation.oldname;
-        e.Action = ConvertEventActionToUnManagedAction(eventInformation.action);
-        e.IsFile = eventInformation.isFile;
+        e.TimeMillisecondsUtc = eventInformation.TimeMillisecondsUtc;
+        e.Name = eventInformation.Name;
+        e.OldName = eventInformation.OldName;
+        e.Action = ConvertEventActionToUnManagedAction(eventInformation.Action);
+        e.IsFile = eventInformation.IsFile;
         if (IsOlderDuplicate(events, e))
         {
           // it is an older duplicate
@@ -204,26 +207,27 @@ namespace myoddweb
         }
 
         // no new old path
-        if (e.Extra.empty() && !e.Path.empty())
+        if (e.OldName.empty() && !e.Name.empty())
         {
           // so we have a new name, but no old name
           e.Action = static_cast<int>(ManagedEventAction::Added);
         }
 
         // no new path
-        if (e.Path.empty() && !e.Extra.empty() )
+        if (e.Name.empty() && !e.OldName.empty() )
         {
           // so we have an old name, but no new name
-          e.Path.swap( e.Extra );
+          e.Name.swap( e.OldName );
           e.Action = static_cast<int>(ManagedEventAction::Removed );
         }
 
         // both empty
-        if (e.Path.empty() && !e.Extra.empty())
+        if (e.Name.empty() && !e.OldName.empty())
         {
           // not sure this is posible
           // so we will turn the event action into an error.
-          e.Action = static_cast<int>(ManagedEventAction::Error);
+          e.Action = static_cast<int>(ManagedEventAction::Unknown);
+          e.Error = static_cast<int>(ManagedEventError::NoFileData);
         }
       }
     }
@@ -252,7 +256,7 @@ namespace myoddweb
           continue;
         }
 
-        if (e.Path == duplicate.Path)
+        if (e.Name == duplicate.Name)
         {
           // they are the same!
           return true;
@@ -269,26 +273,9 @@ namespace myoddweb
      * Our EventAction are fairly similar to the Managed IAction, but not all values are the same
      * For example, RenamedOld and RenamedNew are just 'ManagedAction::Renamed'
      */
-    int Collector::ConvertEventActionToUnManagedAction(const EventAction& action)
+    int Collector::ConvertEventActionToUnManagedAction(const ManagedEventAction& action)
     {
-      switch (action)
-      {
-      case EventAction::Error:
-      case EventAction::ErrorMemory:
-      case EventAction::ErrorOverflow:
-      case EventAction::ErrorAborted:
-      case EventAction::ErrorCannotStart:
-      case EventAction::ErrorAccess:
-      case EventAction::Unknown:
-      case EventAction::Added:
-      case EventAction::Removed:
-      case EventAction::Touched:
-      case EventAction::Renamed:
-        return static_cast<int>(action);
-
-      default:
-        return static_cast<int>(ManagedEventAction::Unknown);
-      }
+      return static_cast<int>(action);
     }
 
     /**
@@ -310,7 +297,7 @@ namespace myoddweb
       {
         // when we want to check for the next cleanup
         // if the time is zero then we will use the event time + the max time.
-        _nextCleanupTimeCheck = event.timeMillisecondsUtc + _maxCleanupAgeMillisecons;
+        _nextCleanupTimeCheck = event.TimeMillisecondsUtc + _maxCleanupAgeMillisecons;
       }
     }
 
@@ -358,7 +345,7 @@ namespace myoddweb
         }
 
         // is this item newer than our oler time.
-        if ((*it).timeMillisecondsUtc > old)
+        if ((*it).TimeMillisecondsUtc > old)
         {
           // because everything is ordered from 
           // older to newer, there is no point in going any further.

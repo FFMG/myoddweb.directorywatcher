@@ -14,6 +14,8 @@
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #pragma once
 #include <string>
+#include "../utils/EventAction.h"
+#include "../utils/EventError.h"
 #include "../utils/Collector.h"
 #include "../utils/Request.h"
 
@@ -42,9 +44,9 @@ namespace myoddweb
       virtual bool Start() = 0;
       virtual void Stop() = 0;
 
-      void AddEvent(EventAction action, const std::wstring& fileName, bool isFile ) const;
+      void AddEvent(ManagedEventAction action, const std::wstring& fileName, bool isFile ) const;
       void AddRenameEvent(const std::wstring& newFileName, const std::wstring& oldFilename, bool isFile) const;
-      void AddEventError(EventAction action) const;
+      void AddEventError(ManagedEventError action) const;
 
     private:
       const __int64 _id;

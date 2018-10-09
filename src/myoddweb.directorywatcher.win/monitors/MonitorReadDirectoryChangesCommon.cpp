@@ -15,7 +15,8 @@
 #include <process.h>
 #include <windows.h>
 #include "MonitorReadDirectoryChangesCommon.h"
-#include "..\utils\Io.h"
+#include "../utils/Io.h"
+#include "../utils/EventError.h"
 
 namespace myoddweb
 {
@@ -163,7 +164,7 @@ namespace myoddweb
       }
 
       // we could not access this
-      _parent.AddEventError(EventAction::ErrorAccess);
+      _parent.AddEventError(ManagedEventError::Access);
 
       return false;
     }
@@ -203,7 +204,7 @@ namespace myoddweb
       // if it is open already then nothing should happen here.
       if (!OpenDirectory())
       {
-        _parent.AddEventError(EventAction::ErrorAccess);
+        _parent.AddEventError(ManagedEventError::Access);
         return;
       }
 
@@ -253,7 +254,7 @@ namespace myoddweb
         &FileIoCompletionRoutine
       ))
       {
-        _parent.AddEventError(EventAction::ErrorCannotStart);
+        _parent.AddEventError(ManagedEventError::CannotStart);
       }
     }
 
@@ -271,7 +272,7 @@ namespace myoddweb
 
       if (dwErrorCode == ERROR_OPERATION_ABORTED)
       {
-        obj->_parent.AddEventError(EventAction::ErrorAborted);
+        obj->_parent.AddEventError(ManagedEventError::Aborted);
         return;
       }
 
@@ -280,7 +281,7 @@ namespace myoddweb
       // fails with the error code ERROR_NOTIFY_ENUM_DIR.
       if (0 == dwNumberOfBytesTransfered)
       {
-        obj->_parent.AddEventError(EventAction::ErrorOverflow);
+        obj->_parent.AddEventError(ManagedEventError::Overflow);
 
         // noting to read, just restart
         obj->Read();
@@ -331,7 +332,7 @@ namespace myoddweb
       }
       catch (...)
       {
-        _parent.AddEventError(EventAction::ErrorMemory);
+        _parent.AddEventError(ManagedEventError::Memory);
         return nullptr;
       }
     }
@@ -348,7 +349,7 @@ namespace myoddweb
         // overflow
         if (nullptr == pBuffer)
         {
-          _parent.AddEventError(EventAction::ErrorOverflow);
+          _parent.AddEventError(ManagedEventError::Overflow);
           return;
         }
 
@@ -365,15 +366,15 @@ namespace myoddweb
           switch (pRecord->Action)
           {
           case FILE_ACTION_ADDED:
-            _parent.AddEvent(EventAction::Added, wFilename, IsFile(EventAction::Added,wFilename));
+            _parent.AddEvent(ManagedEventAction::Added, wFilename, IsFile(ManagedEventAction::Added,wFilename));
             break;
 
           case FILE_ACTION_REMOVED:
-            _parent.AddEvent(EventAction::Removed, wFilename, IsFile(EventAction::Removed, wFilename));
+            _parent.AddEvent(ManagedEventAction::Removed, wFilename, IsFile(ManagedEventAction::Removed, wFilename));
             break;
 
           case FILE_ACTION_MODIFIED:
-            _parent.AddEvent(EventAction::Touched, wFilename, IsFile(EventAction::Touched, wFilename));
+            _parent.AddEvent(ManagedEventAction::Touched, wFilename, IsFile(ManagedEventAction::Touched, wFilename));
             break;
 
           case FILE_ACTION_RENAMED_OLD_NAME:
@@ -382,7 +383,7 @@ namespace myoddweb
             {
               // if we already have a new filename then we can add the rename event
               // and then clear both filenames so we do not add again
-              _parent.AddRenameEvent(newFilename, oldFilename, IsFile(EventAction::Renamed, newFilename));
+              _parent.AddRenameEvent(newFilename, oldFilename, IsFile(ManagedEventAction::Renamed, newFilename));
               newFilename = oldFilename = L"";
             }
             break;
@@ -393,13 +394,13 @@ namespace myoddweb
             {
               // if we already have an old filename then we can add the rename event
               // and then clear both filenames so we do not add again
-              _parent.AddRenameEvent(newFilename, oldFilename, IsFile(EventAction::Renamed, newFilename));
+              _parent.AddRenameEvent(newFilename, oldFilename, IsFile(ManagedEventAction::Renamed, newFilename));
               newFilename = oldFilename = L"";
             }
             break;
 
           default:
-            _parent.AddEvent(EventAction::Unknown, wFilename, IsFile(EventAction::Unknown, wFilename));
+            _parent.AddEvent(ManagedEventAction::Unknown, wFilename, IsFile(ManagedEventAction::Unknown, wFilename));
             break;
           }
 
@@ -414,18 +415,18 @@ namespace myoddweb
         // check for orphan renames...
         if (!oldFilename.empty())
         {
-          _parent.AddEvent(EventAction::Removed, oldFilename, IsFile(EventAction::Removed, oldFilename));
+          _parent.AddEvent(ManagedEventAction::Removed, oldFilename, IsFile(ManagedEventAction::Removed, oldFilename));
         }
         if (!newFilename.empty())
         {
-          _parent.AddEvent(EventAction::Added, newFilename, IsFile(EventAction::Added, newFilename));
+          _parent.AddEvent(ManagedEventAction::Added, newFilename, IsFile(ManagedEventAction::Added, newFilename));
         }
       }
       catch (...)
       {
         // regadless what happens
         // we have to free the memory.
-        _parent.AddEventError(EventAction::ErrorMemory);
+        _parent.AddEventError(ManagedEventError::Memory);
       }
 
       // we are done with this buffer.
@@ -438,7 +439,7 @@ namespace myoddweb
      * \param path the file we are checking.
      * \return if the string given is a file or not.
      */
-    bool MonitorReadDirectoryChangesCommon::IsFile(const EventAction action, const std::wstring& path) const
+    bool MonitorReadDirectoryChangesCommon::IsFile(const ManagedEventAction action, const std::wstring& path) const
     {
       try
       {

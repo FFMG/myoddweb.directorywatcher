@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 #include <mutex>
+#include "EventAction.h"
 #include "EventInformation.h"
 #include "Event.h"
 
@@ -36,8 +37,8 @@ namespace myoddweb
       explicit Collector( short maxAgeMs );
 
     public:
-      void Add(EventAction action, const std::wstring& path, const std::wstring& filename, bool isFile);
-      void AddRename(const std::wstring& path, const std::wstring&newFilename, const std::wstring&oldFilename, bool isFile);
+      void Add(ManagedEventAction action, const std::wstring& path, const std::wstring& filename, bool isFile, ManagedEventError error);
+      void AddRename(const std::wstring& path, const std::wstring&newFilename, const std::wstring&oldFilename, bool isFile, ManagedEventError error);
 
       /**
        * \brief fill the vector with all the values currently on record.
@@ -47,7 +48,7 @@ namespace myoddweb
       long long GetEvents( std::vector<Event>& events);
 
     private:
-      void Add(EventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName, bool isFile);
+      void Add(ManagedEventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName, bool isFile, ManagedEventError error);
 
       /**
        * \brief This is the oldest number of ms we want something to be.
@@ -94,7 +95,7 @@ namespace myoddweb
        * Our EventAction are fairly similar to the Managed IAction, but not all values are the same
        * For example, RenamedOld and RenamedNew are just 'ManagedAction::Renamed'
        */
-      static int ConvertEventActionToUnManagedAction(const EventAction& action);
+      static int ConvertEventActionToUnManagedAction(const ManagedEventAction& action);
 
       /**
        * \brief check if the given information already exists in the source

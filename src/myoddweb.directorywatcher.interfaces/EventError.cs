@@ -12,47 +12,44 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
-#pragma once
-#include <string>
-
-namespace myoddweb
+namespace myoddweb.directorywatcher.interfaces
 {
-  namespace directorywatcher
+  public enum EventError
   {
-    /**
-     * \brief unmanaged implementation of IEvent
-     */
-    struct Event
-    {
-      /**
-       * \brief The path that was changed.
-       */
-      std::wstring Name;
+    /// <summary>
+    /// General error
+    /// </summary>
+    None = 0,
 
-      /**
-       * \brief Extra information, (used for rename and so on).
-       */
-      std::wstring OldName;
+    /// <summary>
+    /// General error
+    /// </summary>
+    Error = 1,
 
-      /**
-       * \brief the action.
-       */
-      int Action;
+    /// <summary>
+    /// General memory error, (out of and so on).
+    /// </summary>
+    ErrorMemory = 2,
 
-      /**
-       * \brief the error.
-       */
-      int Error;
+    /// <summary>
+    /// there was an overflow.
+    /// </summary>
+    ErrorOverflow = 3,
 
-      /**
-       * \brief when the event happened in ms
-       */
-      long long TimeMillisecondsUtc;
+    /// <summary>
+    /// the monitoring was stopped somehow.
+    /// </summary>
+    ErrorAborted = 4,
 
-      /**
-     * \brief Boolean if the update is a file or a directory.
-       */
-      bool IsFile;
-    };
+    /// <summary>
+    /// Unable to even start the monitoring
+    /// Is the path valid? Is the filename valid?
+    /// </summary>
+    ErrorCannotStart = 5,
+
+    /// <summary>
+    /// Cannot access the file/folder
+    /// </summary>
+    ErrorAccess = 6
   }
 }

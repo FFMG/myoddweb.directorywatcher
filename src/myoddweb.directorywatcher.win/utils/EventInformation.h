@@ -14,100 +14,8 @@
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #pragma once
 #include <string>
-
-enum class ManagedEventAction
-{
-  /// <summary>
-  /// General error
-  /// </summary>
-  Error = 0,
-
-  /// <summary>
-  /// General memory error, (out of and so on).
-  /// </summary>
-  ErrorMemory = 1,
-
-  /// <summary>
-  /// there was an overflow.
-  /// </summary>
-  ErrorOverflow = 2,
-
-  /// <summary>
-  /// the monitoring was stopped somehow.
-  /// </summary>
-  ErrorAborted = 3,
-
-  /// <summary>
-  /// Unable to even start the monitoring
-  /// Is the path valid? Is the filename valid?
-  /// </summary>
-  ErrorCannotStart = 4,
-
-  /// <summary>
-  /// Cannot access the file/folder
-  /// </summary>
-  ErrorAccess = 5,
-
-  /// <summary>
-  /// We have an unknown file error.
-  /// </summary>
-  Unknown = 1000,
-  Added = 1001,
-  Removed = 1002,
-
-  /// <summary>
-  /// Small changed, timestamp, attribute etc...
-  /// </summary>
-  Touched = 1003,
-  Renamed = 1004
-};
-
-enum class EventAction
-{
-  /**
-   * \brief There was a general error
-   */
-  Error = 0,
-
-  /**
-   * \brief general memory error, (out of and so on).
-   */
-  ErrorMemory = 1,
-
-  /**
-   * \brief there was an overflow.
-   */
-  ErrorOverflow = 2,
-
-  /**
-   * \brief the monitoring was stopped somehow.
-   */
-  ErrorAborted = 3,
-
-  /**
-   * \brief Unable to even start the monitoring
-   * Is the path valid? Is the filename valid?
-   */
-  ErrorCannotStart = 4,
-
-  /**
-   * \Brief cannot access the file/folder
-   */
-  ErrorAccess = 5,
-
-  /**
-   * We have an unknown file error.
-   */
-  Unknown = 1000,
-  Added = 1001,
-  Removed = 1002,
-
-  /**
-   * \brief small changed, timestamp, attribute etc...
-   */
-  Touched = 1003,
-  Renamed = 1004
-};
+#include "EventAction.h"
+#include "EventError.h"
 
 /**
  * \brief Information about a file/folder event.
@@ -117,25 +25,30 @@ struct EventInformation
   /**
    * \brief the time in Ms when this event was recorded.
    */
-  long long timeMillisecondsUtc{};
+  long long TimeMillisecondsUtc{};
 
   /**
    * \brief the action we are recording
    */
-  EventAction action;
+  ManagedEventAction Action;
+
+  /**
+   * \brief the action we are recording
+   */
+  ManagedEventError Error;
 
   /**
    * \brief the filename/folder that was updated. 
    */
-  std::wstring name;
+  std::wstring Name;
 
   /**
    * \brief the old name in the case of a rename.
    */
-  std::wstring oldname;
+  std::wstring OldName;
 
   /**
  * \brief Boolean if the update is a file or a directory.
    */
-  bool isFile;
+  bool IsFile;
 };

@@ -50,6 +50,11 @@ namespace myoddweb.directorywatcher.interfaces
     EventAction Action { get; }
 
     /// <summary>
+    /// If there was an error or not.
+    /// </summary>
+    EventError Error { get; }
+
+    /// <summary>
     /// The UTC date time of the event.
     /// </summary>
     DateTime DateTimeUtc { get; }

@@ -74,9 +74,9 @@ namespace myoddweb
      * \param fileName
      * \param isFile
      */
-    void Monitor::AddEvent(const EventAction action, const std::wstring& fileName, bool isFile) const
+    void Monitor::AddEvent(const ManagedEventAction action, const std::wstring& fileName, bool isFile) const
     {
-      _eventCollector->Add(action, Path(), fileName, isFile);
+      _eventCollector->Add(action, Path(), fileName, isFile, ManagedEventError::None);
     }
 
     /**
@@ -87,15 +87,16 @@ namespace myoddweb
      */
     void Monitor::AddRenameEvent(const std::wstring& newFileName, const std::wstring& oldFilename, bool isFile) const
     {
-      _eventCollector->AddRename(Path(), newFileName, oldFilename, isFile );
+      _eventCollector->AddRename(Path(), newFileName, oldFilename, isFile, ManagedEventError::None );
     }
 
     /**
      * \brief Add an error event to the list.
+     * \param error the error we want to add.
      */
-    void Monitor::AddEventError(const EventAction action) const
+    void Monitor::AddEventError(const ManagedEventError error) const
     {
-      _eventCollector->Add(action, L"", L"", false );
+      _eventCollector->Add(ManagedEventAction::Unknown, L"", L"", false, error );
     }
 
     /**

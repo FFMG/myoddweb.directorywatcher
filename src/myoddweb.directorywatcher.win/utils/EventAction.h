@@ -13,46 +13,32 @@
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #pragma once
-#include <string>
 
-namespace myoddweb
+enum class ManagedEventAction
 {
-  namespace directorywatcher
-  {
-    /**
-     * \brief unmanaged implementation of IEvent
-     */
-    struct Event
-    {
-      /**
-       * \brief The path that was changed.
-       */
-      std::wstring Name;
+  /// <summary>
+  /// We have an unknown file event.
+  /// </summary>
+  Unknown = 1000,
 
-      /**
-       * \brief Extra information, (used for rename and so on).
-       */
-      std::wstring OldName;
+  /// <summary>
+  /// A file folder was added.
+  /// </summary>
+  Added = 1001,
 
-      /**
-       * \brief the action.
-       */
-      int Action;
+  /// <summary>
+  /// A file folder was removed
+  /// </summary>
+  Removed = 1002,
 
-      /**
-       * \brief the error.
-       */
-      int Error;
+  /// <summary>
+  /// Small changed, timestamp, attribute etc...
+  /// </summary>
+  Touched = 1003,
 
-      /**
-       * \brief when the event happened in ms
-       */
-      long long TimeMillisecondsUtc;
+  /// <summary>
+  /// A file folder was renamed.
+  /// </summary>
+  Renamed = 1004
+};
 
-      /**
-     * \brief Boolean if the update is a file or a directory.
-       */
-      bool IsFile;
-    };
-  }
-}

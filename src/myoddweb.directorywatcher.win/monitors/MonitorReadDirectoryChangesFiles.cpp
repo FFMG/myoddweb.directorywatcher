@@ -77,23 +77,23 @@ namespace myoddweb
      * \param path the file we are checking.
      * \return if the string given is a file or not.
      */
-    bool MonitorReadDirectoryChangesFiles::IsFile(const EventAction action, const std::wstring& path) const
+    bool MonitorReadDirectoryChangesFiles::IsFile(const ManagedEventAction action, const std::wstring& path) const
     {
       try
       {
         switch (action)
         {
-        case EventAction::Added:
+        case ManagedEventAction::Added:
           // Because we are not using FILE_NOTIFY_CHANGE_DIR_NAME any added/removed
           // Notifications _must_ be for a file.
           return true;
 
-        case EventAction::Renamed:
+        case ManagedEventAction::Renamed:
           // Because we are not using FILE_NOTIFY_CHANGE_DIR_NAME any added/removed
           // Notifications _must_ be for a file.
           return true;
 
-        case EventAction::Removed:
+        case ManagedEventAction::Removed:
           // the file was removed, we cannot double check
           // if it is really a file or not.
           // but we are in the 'file' sections, so we will assume it is.

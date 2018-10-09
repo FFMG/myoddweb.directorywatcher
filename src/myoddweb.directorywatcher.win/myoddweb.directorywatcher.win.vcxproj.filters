@@ -71,6 +71,12 @@
     <ClInclude Include="utils\Io.h">
       <Filter>utils</Filter>
     </ClInclude>
+    <ClInclude Include="utils\EventError.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\EventAction.h">
+      <Filter>utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="utils">
