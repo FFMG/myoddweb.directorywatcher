@@ -25,16 +25,16 @@ namespace myoddweb.directorywatcher.utils
     public DateTime DateTimeUtc { get; }
 
     /// <inheritdoc />
-    public EventAction Code { get; }
+    public interfaces.EventError Code { get; }
 
     /// <inheritdoc />
     public string Message { get; }
 
-    public EventError(EventAction action, DateTime utc )
+    public EventError(interfaces.EventError error, DateTime utc )
     {
       DateTimeUtc = utc;
-      Code = action;
-      Message = CreateMessage(action);
+      Code = error;
+      Message = CreateMessage(error);
     }
 
     /// <summary>
@@ -42,30 +42,33 @@ namespace myoddweb.directorywatcher.utils
     /// </summary>
     /// <param name="action"></param>
     /// <returns></returns>
-    internal static string CreateMessage(EventAction action)
+    internal static string CreateMessage(interfaces.EventError action)
     {
       switch (action)
       {
-        case EventAction.Error:
+        case interfaces.EventError.General:
           return "General error";
 
-        case EventAction.ErrorMemory:
+        case interfaces.EventError.Memory:
           return "Guarded risk of memory corruption";
 
-        case EventAction.ErrorOverflow:
+        case interfaces.EventError.Overflow:
           return "Guarded risk of memory overflow";
 
-        case EventAction.ErrorAborted:
+        case interfaces.EventError.Aborted:
           return "Monitoring was aborted";
 
-        case EventAction.ErrorCannotStart:
+        case interfaces.EventError.CannotStart:
           return "Unable to start monitoring";
 
-        case EventAction.ErrorAccess:
+        case interfaces.EventError.Access:
           return "Unable to access the given file/folder";
 
-        case EventAction.Unknown:
-          return "An unknown error occured";
+        case interfaces.EventError.NoFileData:
+          return "The raised event did not have any valid file name";
+
+        case interfaces.EventError.None:
+          return "No Error";
 
         default:
           return $"An unknown error code was returned: {(int)action}";

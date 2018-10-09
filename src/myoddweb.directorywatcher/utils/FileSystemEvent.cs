@@ -28,6 +28,9 @@ namespace myoddweb.directorywatcher.utils
     public EventAction Action { get; }
 
     /// <inheritdoc />
+    public interfaces.EventError Error { get; }
+
+    /// <inheritdoc />
     public DateTime DateTimeUtc { get; }
 
     /// <inheritdoc />
@@ -42,13 +45,14 @@ namespace myoddweb.directorywatcher.utils
     public FileSystemEvent( IEvent e )
     {
       Action = e.Action;
+      Error = e.Error;
       if (e.IsFile)
       {
-        FileSystemInfo = new FileInfo(e.Path);
+        FileSystemInfo = new FileInfo(e.Name);
       }
       else
       {
-        FileSystemInfo = new DirectoryInfo(e.Path);
+        FileSystemInfo = new DirectoryInfo(e.Name);
       }
       DateTimeUtc = e.DateTimeUtc;
     }

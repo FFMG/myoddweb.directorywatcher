@@ -26,17 +26,23 @@ namespace myoddweb.directorywatcher.interfaces
     /// <summary>
     /// The full path
     /// </summary>
-    string Path { get; }
+    string Name { get; }
 
     /// <summary>
-    /// Extra information, mostly null, (for example rename)
+    /// In the case of a rename, this is the old name
     /// </summary>
-    string Extra { get; }
+    string OldName { get; }
 
     /// <summary>
     /// The action defining this event.
     /// </summary>
     EventAction Action { get; }
+
+    /// <summary>
+    /// If there was an error with this event
+    /// EventError.None otherwise
+    /// </summary>
+    EventError Error { get; }
 
     /// <summary>
     /// When the event happened.

@@ -106,6 +106,7 @@ namespace myoddweb
         // posible amount of time.
         EventInformation e;
         e.Action = action;
+        e.Error = error;
         e.Name = combinedPath;
         e.OldName = oldFileName.empty() ? L"" : Io::Combine(path, oldFileName);
         e.TimeMillisecondsUtc = GetMillisecondsNowUtc();
@@ -170,7 +171,8 @@ namespace myoddweb
         e.TimeMillisecondsUtc = eventInformation.TimeMillisecondsUtc;
         e.Name = eventInformation.Name;
         e.OldName = eventInformation.OldName;
-        e.Action = ConvertEventActionToUnManagedAction(eventInformation.Action);
+        e.Action = ConvertEventAction(eventInformation.Action);
+        e.Error = ConvertEventError(eventInformation.Error);
         e.IsFile = eventInformation.IsFile;
         if (IsOlderDuplicate(events, e))
         {
@@ -270,12 +272,19 @@ namespace myoddweb
     /**
      * \brief convert an EventAction to an un-managed IAction
      * so it can be returned to the calling interface.
-     * Our EventAction are fairly similar to the Managed IAction, but not all values are the same
-     * For example, RenamedOld and RenamedNew are just 'ManagedAction::Renamed'
      */
-    int Collector::ConvertEventActionToUnManagedAction(const ManagedEventAction& action)
+    int Collector::ConvertEventAction(const ManagedEventAction& action)
     {
       return static_cast<int>(action);
+    }
+
+    /**
+     * \brief convert an EventError to an un-managed IError
+     * so it can be returned to the calling interface.
+     */
+    int Collector::ConvertEventError(const ManagedEventError& error)
+    {
+      return static_cast<int>(error);
     }
 
     /**

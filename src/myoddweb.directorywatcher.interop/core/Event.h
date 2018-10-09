@@ -24,17 +24,22 @@ public:
   /**
    * \brief the path of the folder that raised the event.
    */
-  virtual property System::String^ Path;
+  virtual property System::String^ Name;
 
   /**
    * \brief Extra information, mostly null, (for example rename)
    */
-  virtual property System::String^ Extra;
+  virtual property System::String^ OldName;
 
   /**
-   * \brief The action.
+   * \brief The event action.
    */
   virtual property myoddweb::directorywatcher::interfaces::EventAction Action;
+
+  /**
+   * \brief The event error.
+   */
+  virtual property myoddweb::directorywatcher::interfaces::EventError Error;
 
   /**
    * \brief When the event happened.
@@ -55,17 +60,22 @@ struct UmEvent
   /**
    * \brief the path of the folder that raised the event.
    */
-  std::wstring Path;
+  std::wstring Name;
 
   /**
-   * \brief Extra information, mostly null, (for example rename)
+   * \brief In the case of rename, this is the old name.
    */
-  std::wstring Extra;
+  std::wstring OldName;
 
   /**
    * \brief The action.
    */
   int Action;
+
+  /**
+   * \brief The error.
+   */
+  int Error;
 
   /**
    * \brief when the event happened in ms

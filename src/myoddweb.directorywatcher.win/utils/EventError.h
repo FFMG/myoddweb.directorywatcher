@@ -23,7 +23,7 @@ enum class ManagedEventError
   /**
    * \brief General error
    */
-  Error = 1,
+  General = 1,
 
   /**
    * \brief General memory error, (out of and so on).
@@ -38,21 +38,21 @@ enum class ManagedEventError
   /**
    * \brief the monitoring was stopped somehow.
    */
-  Aborted = 3,
+  Aborted = 4,
 
   /**
    * \brief Unable to even start the monitoring
    *        Is the path valid? Is the filename valid?
    */
-  CannotStart = 4,
+  CannotStart = 5,
 
   /**
    * \brief Cannot access the file/folder
    */
-  Access = 5,
+  Access = 6,
 
   /**
    * \brief We did not have any file data
    */
-  NoFileData = 6
+  NoFileData = 7
 };

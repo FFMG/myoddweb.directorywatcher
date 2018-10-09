@@ -24,32 +24,37 @@ namespace myoddweb.directorywatcher.interfaces
     /// <summary>
     /// General error
     /// </summary>
-    Error = 1,
+    General = 1,
 
     /// <summary>
     /// General memory error, (out of and so on).
     /// </summary>
-    ErrorMemory = 2,
+    Memory = 2,
 
     /// <summary>
     /// there was an overflow.
     /// </summary>
-    ErrorOverflow = 3,
+    Overflow = 3,
 
     /// <summary>
     /// the monitoring was stopped somehow.
     /// </summary>
-    ErrorAborted = 4,
+    Aborted = 4,
 
     /// <summary>
     /// Unable to even start the monitoring
     /// Is the path valid? Is the filename valid?
     /// </summary>
-    ErrorCannotStart = 5,
+    CannotStart = 5,
 
     /// <summary>
     /// Cannot access the file/folder
     /// </summary>
-    ErrorAccess = 6
+    Access = 6,
+
+    /// <summary>
+    /// The event did not have any file data.
+    /// </summary>
+    NoFileData = 7
   }
 }

@@ -21,7 +21,7 @@ namespace myoddweb.directorywatcher.interfaces
     /// <summary>
     /// The error code.
     /// </summary>
-    EventAction Code { get; }
+    EventError Code { get; }
 
     /// <summary>
     /// The error message

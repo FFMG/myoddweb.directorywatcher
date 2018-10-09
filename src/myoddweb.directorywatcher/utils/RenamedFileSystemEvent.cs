@@ -31,7 +31,7 @@ namespace myoddweb.directorywatcher.utils
 
     public RenamedFileSystemEvent(IEvent e) : base(e)
     {
-      PreviousFileSystemInfo = new FileInfo(e.Extra);
+      PreviousFileSystemInfo = new FileInfo(e.OldName);
     }
   }
 }

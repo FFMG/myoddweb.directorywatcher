@@ -19,6 +19,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using myoddweb.directorywatcher.utils;
 using myoddweb.directorywatcher.interfaces;
+using EventError = myoddweb.directorywatcher.interfaces.EventError;
 
 namespace myoddweb.directorywatcher
 {
@@ -279,23 +280,18 @@ namespace myoddweb.directorywatcher
 
             foreach (var e in events)
             {
+              if (e.Error != EventError.None)
+              {
+                if (OnErrorAsync != null)
+                {
+                  tasks.Add(Task.Run(() =>
+                      OnErrorAsync?.Invoke(new utils.EventError(e.Error, e.DateTimeUtc), token)
+                    , token));
+                }
+              }
+
               switch (e.Action)
               {
-                case EventAction.Error:
-                case EventAction.ErrorMemory:
-                case EventAction.ErrorOverflow:
-                case EventAction.ErrorAborted:
-                case EventAction.ErrorCannotStart:
-                case EventAction.ErrorAccess:
-                case EventAction.Unknown:
-                  if (OnErrorAsync != null)
-                  {
-                    tasks.Add(Task.Run(() =>
-                      OnErrorAsync?.Invoke(new EventError(e.Action, e.DateTimeUtc), token)
-                    , token));
-                  }
-                  break;
-
                 case EventAction.Added:
                   if (OnAddedAsync != null)
                   {
@@ -343,7 +339,7 @@ namespace myoddweb.directorywatcher
           {
             if (OnErrorAsync != null)
             {
-              tasks.Add(Task.Run(() => OnErrorAsync(new EventError(EventAction.Unknown, DateTime.UtcNow), token), token));
+              tasks.Add(Task.Run(() => OnErrorAsync(new utils.EventError(EventError.General, DateTime.UtcNow), token), token));
             }
           }
           finally

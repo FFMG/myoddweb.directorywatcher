@@ -92,10 +92,14 @@ namespace myoddweb
       /**
        * \brief convert an EventAction to an un-managed IAction
        * so it can be returned to the calling interface.
-       * Our EventAction are fairly similar to the Managed IAction, but not all values are the same
-       * For example, RenamedOld and RenamedNew are just 'ManagedAction::Renamed'
        */
-      static int ConvertEventActionToUnManagedAction(const ManagedEventAction& action);
+      static int ConvertEventAction(const ManagedEventAction& action);
+
+      /**
+       * \brief convert an EventError to an un-managed IError
+       * so it can be returned to the calling interface.
+       */
+      static int ConvertEventError(const ManagedEventError& error);
 
       /**
        * \brief check if the given information already exists in the source
