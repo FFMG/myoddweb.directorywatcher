@@ -6,7 +6,7 @@
     <title>MyOddWeb.DirectoryWatcher (x86/x64)</title>
     <licenseUrl>https://github.com/FFMG/myoddweb.directorywatcher/blob/master/LICENSE</licenseUrl>
     <projectUrl>https://github.com/FFMG/myoddweb.directorywatcher</projectUrl>
-    <description>A fast and reliable, (non blocking!), .NET File/Directory watcher, complete rewrite of FlieSystemWatcher to ensure speed/acuracy/reliability/suppress duplicate events</description>
+    <description>A fast and reliable, (non blocking!), .NET File/Directory watcher, complete rewrite of FileSystemWatcher to ensure speed/acuracy/reliability/suppress duplicate events</description>
     <authors>Florent Guelfucci, myoddweb.com</authors>
     <tags>DirectoryWatcher,FileSystemWatcher,IO,FileSystem,System.IO.FileSystemWatcher,4.5.2,Opensource</tags>
     <copyright>@copyright 2017-2018 Florent Guelfucci</copyright>
