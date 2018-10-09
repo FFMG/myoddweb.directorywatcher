@@ -8,7 +8,7 @@
     <projectUrl>https://github.com/FFMG/myoddweb.directorywatcher</projectUrl>
     <description>A fast and reliable, (non blocking!), .NET File/Directory watcher, complete rewrite of FlieSystemWatcher to ensure speed/acuracy/reliability/suppress duplicate events</description>
     <authors>Florent Guelfucci, myoddweb.com</authors>
-    <tags>DirectoryWatcher,FlieSystemWatcher,IO,FileSystem,System.IO.FileSystemWatcher,4.5.2,Opensource</tags>
+    <tags>DirectoryWatcher,FileSystemWatcher,IO,FileSystem,System.IO.FileSystemWatcher,4.5.2,Opensource</tags>
     <copyright>@copyright 2017-2018 Florent Guelfucci</copyright>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <language>en-UK</language>
