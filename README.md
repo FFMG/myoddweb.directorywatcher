@@ -46,7 +46,7 @@ The current version of [File Watcher](https://docs.microsoft.com/en-us/dotnet/ap
 
 # Example
 
-# Simple Watch
+## Simple Watch
 
 Add all the directories we want to 'observe' 
 
@@ -82,4 +82,58 @@ And when we are done stop it ...
 
 ```csharp
     watch.Stop();
+```
+
+## Watched Events
+
+When a file event is raised we send a `IFileSystemEvent` event.
+
+```csharp
+    /// <summary>
+    /// The file system event.
+    /// </summary>
+    FileSystemInfo FileSystemInfo { get; }
+
+    /// <summary>
+    ///  Gets the full path of the directory or file.
+    /// </summary>
+    /// <returns>A string containing the full path.</returns>
+    string FullName { get; }
+
+    /// <summary>
+    ///     For files, gets the name of the file. For directories, gets the name of the last
+    ///     directory in the hierarchy if a hierarchy exists. Otherwise, the Name property
+    ///     gets the name of the directory.
+    /// </summary>
+    /// <returns>A string that is the name of the parent directory, the name of the last directory
+    ///     in the hierarchy, or the name of a file, including the file name extension.
+    /// </returns>
+    string Name { get; }
+
+    /// <summary>
+    /// The Action
+    ///  Added
+    ///  Removed
+    ///  Touched
+    ///  Renamed
+    /// </summary>
+    EventAction Action { get; }
+
+    /// <summary>
+    /// The UTC date time of the event.
+    /// </summary>
+    DateTime DateTimeUtc { get; }
+
+    /// <summary>
+    /// Boolean if the update is a file or a directory.
+    /// </summary>
+    bool IsFile { get; }
+
+    /// <summary>
+    /// Return if the event is a certain action
+    /// (same as Action == action)
+    /// </summary>
+    /// <param name="action"></param>
+    /// <returns></returns>
+    bool Is(EventAction action );
 ```

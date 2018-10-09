@@ -42,11 +42,15 @@ namespace myoddweb.directorywatcher.interfaces
 
     /// <summary>
     /// The Action
+    ///  Added
+    ///  Removed
+    ///  Touched
+    ///  Renamed
     /// </summary>
     EventAction Action { get; }
 
     /// <summary>
-    /// The UTC date time.
+    /// The UTC date time of the event.
     /// </summary>
     DateTime DateTimeUtc { get; }
 
