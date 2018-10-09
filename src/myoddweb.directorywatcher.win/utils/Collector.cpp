@@ -157,8 +157,12 @@ namespace myoddweb
       // can keep adding to the list.
       Events clone;
       CloneEventsAndEraseCurrent(clone);
-
       // the lock has been released, we are now working with the clone
+
+      // we can now reserve some space in our return vector.
+      // we know that it will be a maximum of that size.
+      // but we will not be adding more to id.
+      events.reserve(clone.size());
 
       // go around the data from the newest to the oldest.
       // and we will add them in reverse as well.

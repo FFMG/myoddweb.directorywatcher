@@ -120,6 +120,11 @@ When a file event is raised we send a `IFileSystemEvent` event.
     EventAction Action { get; }
 
     /// <summary>
+    /// An error code related to the event, (if any)
+    /// </summary>
+    EventAction Error { get; }
+
+    /// <summary>
     /// The UTC date time of the event.
     /// </summary>
     DateTime DateTimeUtc { get; }

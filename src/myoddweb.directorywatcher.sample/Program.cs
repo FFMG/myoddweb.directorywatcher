@@ -32,6 +32,7 @@ namespace myoddweb.directorywatcher.sample
         //watch.Add(new Request("H:\\temp", true));
         watch.Add(new Request("Z:\\", true));
         //watch.Add(new Request("Z:\\x", true));
+        watch.Add(new Request("h:\\", true));
 
         // prepare the console watcher.
         var cw = new ConsoleWatch(watch);

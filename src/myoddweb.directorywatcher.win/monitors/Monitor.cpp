@@ -104,7 +104,7 @@ namespace myoddweb
      * \param events the events we will be filling
      * \return the number of events we found.
      */
-    long long Monitor::GetEvents(std::vector<myoddweb::directorywatcher::Event>& events) const
+    long long Monitor::GetEvents(std::vector<Event>& events) const
     {
       return _eventCollector->GetEvents(events);
     }
