@@ -65,7 +65,7 @@ namespace myoddweb
      * \param isFile if this is a file or a folder.
      * \param error if there was an error related
      */
-    void Collector::Add(const ManagedEventAction action, const std::wstring& path, const std::wstring& filename, bool isFile, EventError error)
+    void Collector::Add(const EventAction action, const std::wstring& path, const std::wstring& filename, bool isFile, EventError error)
     {
       // just add the action without an old filename.
       Add(action, path, filename, L"", isFile, error );
@@ -82,7 +82,7 @@ namespace myoddweb
     void Collector::AddRename(const std::wstring& path, const std::wstring& newFilename, const std::wstring& oldFilename, bool isFile, EventError error)
     {
       // just add the action without an old filename.
-      Add(ManagedEventAction::Renamed, path, newFilename, oldFilename, isFile, error );
+      Add(EventAction::Renamed, path, newFilename, oldFilename, isFile, error );
     }
 
     /**
@@ -94,7 +94,7 @@ namespace myoddweb
      * \param isFile if this is a file or a folder.
      * \param error if there was an error related to the action
      */
-    void Collector::Add( const ManagedEventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName, const bool isFile, EventError error)
+    void Collector::Add( const EventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName, const bool isFile, EventError error)
     {
       try
       {
@@ -207,7 +207,7 @@ namespace myoddweb
       for (auto it = source.rbegin(); it != source.rend(); ++it)
       {
         auto& e = (*it);
-        if (e.Action != static_cast<int>(ManagedEventAction::Renamed))
+        if (e.Action != static_cast<int>(EventAction::Renamed))
         {
           continue;
         }
@@ -216,7 +216,7 @@ namespace myoddweb
         if (e.OldName.empty() && !e.Name.empty())
         {
           // so we have a new name, but no old name
-          e.Action = static_cast<int>(ManagedEventAction::Added);
+          e.Action = static_cast<int>(EventAction::Added);
         }
 
         // no new path
@@ -224,7 +224,7 @@ namespace myoddweb
         {
           // so we have an old name, but no new name
           e.Name.swap( e.OldName );
-          e.Action = static_cast<int>(ManagedEventAction::Removed );
+          e.Action = static_cast<int>(EventAction::Removed );
         }
 
         // both empty
@@ -232,7 +232,7 @@ namespace myoddweb
         {
           // not sure this is posible
           // so we will turn the event action into an error.
-          e.Action = static_cast<int>(ManagedEventAction::Unknown);
+          e.Action = static_cast<int>(EventAction::Unknown);
           e.Error = static_cast<int>(EventError::NoFileData);
         }
       }
@@ -277,7 +277,7 @@ namespace myoddweb
      * \brief convert an EventAction to an un-managed IAction
      * so it can be returned to the calling interface.
      */
-    int Collector::ConvertEventAction(const ManagedEventAction& action)
+    int Collector::ConvertEventAction(const EventAction& action)
     {
       return static_cast<int>(action);
     }

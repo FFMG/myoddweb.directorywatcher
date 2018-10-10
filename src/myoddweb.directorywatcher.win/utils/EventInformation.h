@@ -34,7 +34,7 @@ namespace myoddweb
       /**
        * \brief the action we are recording
        */
-      ManagedEventAction Action;
+      EventAction Action;
 
       /**
        * \brief the action we are recording

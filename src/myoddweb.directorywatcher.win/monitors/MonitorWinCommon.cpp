@@ -312,15 +312,15 @@ namespace myoddweb
           switch (pRecord->Action)
           {
           case FILE_ACTION_ADDED:
-            _parent.AddEvent(ManagedEventAction::Added, wFilename, IsFile(ManagedEventAction::Added,wFilename));
+            _parent.AddEvent(EventAction::Added, wFilename, IsFile(EventAction::Added,wFilename));
             break;
 
           case FILE_ACTION_REMOVED:
-            _parent.AddEvent(ManagedEventAction::Removed, wFilename, IsFile(ManagedEventAction::Removed, wFilename));
+            _parent.AddEvent(EventAction::Removed, wFilename, IsFile(EventAction::Removed, wFilename));
             break;
 
           case FILE_ACTION_MODIFIED:
-            _parent.AddEvent(ManagedEventAction::Touched, wFilename, IsFile(ManagedEventAction::Touched, wFilename));
+            _parent.AddEvent(EventAction::Touched, wFilename, IsFile(EventAction::Touched, wFilename));
             break;
 
           case FILE_ACTION_RENAMED_OLD_NAME:
@@ -329,7 +329,7 @@ namespace myoddweb
             {
               // if we already have a new filename then we can add the rename event
               // and then clear both filenames so we do not add again
-              _parent.AddRenameEvent(newFilename, oldFilename, IsFile(ManagedEventAction::Renamed, newFilename));
+              _parent.AddRenameEvent(newFilename, oldFilename, IsFile(EventAction::Renamed, newFilename));
               newFilename = oldFilename = L"";
             }
             break;
@@ -340,13 +340,13 @@ namespace myoddweb
             {
               // if we already have an old filename then we can add the rename event
               // and then clear both filenames so we do not add again
-              _parent.AddRenameEvent(newFilename, oldFilename, IsFile(ManagedEventAction::Renamed, newFilename));
+              _parent.AddRenameEvent(newFilename, oldFilename, IsFile(EventAction::Renamed, newFilename));
               newFilename = oldFilename = L"";
             }
             break;
 
           default:
-            _parent.AddEvent(ManagedEventAction::Unknown, wFilename, IsFile(ManagedEventAction::Unknown, wFilename));
+            _parent.AddEvent(EventAction::Unknown, wFilename, IsFile(EventAction::Unknown, wFilename));
             break;
           }
 
@@ -361,11 +361,11 @@ namespace myoddweb
         // check for orphan renames...
         if (!oldFilename.empty())
         {
-          _parent.AddEvent(ManagedEventAction::Removed, oldFilename, IsFile(ManagedEventAction::Removed, oldFilename));
+          _parent.AddEvent(EventAction::Removed, oldFilename, IsFile(EventAction::Removed, oldFilename));
         }
         if (!newFilename.empty())
         {
-          _parent.AddEvent(ManagedEventAction::Added, newFilename, IsFile(ManagedEventAction::Added, newFilename));
+          _parent.AddEvent(EventAction::Added, newFilename, IsFile(EventAction::Added, newFilename));
         }
       }
       catch (...)
@@ -385,7 +385,7 @@ namespace myoddweb
      * \param path the file we are checking.
      * \return if the string given is a file or not.
      */
-    bool MonitorWinCommon::IsFile(const ManagedEventAction action, const std::wstring& path) const
+    bool MonitorWinCommon::IsFile(const EventAction action, const std::wstring& path) const
     {
       try
       {

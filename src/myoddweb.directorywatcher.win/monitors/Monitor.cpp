@@ -74,7 +74,7 @@ namespace myoddweb
      * \param fileName
      * \param isFile
      */
-    void Monitor::AddEvent(const ManagedEventAction action, const std::wstring& fileName, bool isFile) const
+    void Monitor::AddEvent(const EventAction action, const std::wstring& fileName, bool isFile) const
     {
       _eventCollector->Add(action, Path(), fileName, isFile, EventError::None);
     }
@@ -96,7 +96,7 @@ namespace myoddweb
      */
     void Monitor::AddEventError(const EventError error) const
     {
-      _eventCollector->Add(ManagedEventAction::Unknown, L"", L"", false, error );
+      _eventCollector->Add(EventAction::Unknown, L"", L"", false, error );
     }
 
     /**

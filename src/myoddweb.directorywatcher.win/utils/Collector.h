@@ -37,7 +37,7 @@ namespace myoddweb
       explicit Collector( short maxAgeMs );
 
     public:
-      void Add(ManagedEventAction action, const std::wstring& path, const std::wstring& filename, bool isFile, EventError error);
+      void Add(EventAction action, const std::wstring& path, const std::wstring& filename, bool isFile, EventError error);
       void AddRename(const std::wstring& path, const std::wstring&newFilename, const std::wstring&oldFilename, bool isFile, EventError error);
 
       /**
@@ -48,7 +48,7 @@ namespace myoddweb
       long long GetEvents( std::vector<Event>& events);
 
     private:
-      void Add(ManagedEventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName, bool isFile, EventError error);
+      void Add(EventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName, bool isFile, EventError error);
 
       /**
        * \brief This is the oldest number of ms we want something to be.
@@ -93,7 +93,7 @@ namespace myoddweb
        * \brief convert an EventAction to an un-managed IAction
        * so it can be returned to the calling interface.
        */
-      static int ConvertEventAction(const ManagedEventAction& action);
+      static int ConvertEventAction(const EventAction& action);
 
       /**
        * \brief convert an EventError to an un-managed IError

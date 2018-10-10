@@ -14,31 +14,36 @@
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #pragma once
 
-enum class ManagedEventAction
+namespace myoddweb
 {
-  /// <summary>
-  /// We have an unknown file event.
-  /// </summary>
-  Unknown = 1000,
+  namespace directorywatcher
+  {
+    enum class EventAction
+    {
+      /// <summary>
+      /// We have an unknown file event.
+      /// </summary>
+      Unknown = 1000,
 
-  /// <summary>
-  /// A file folder was added.
-  /// </summary>
-  Added = 1001,
+      /// <summary>
+      /// A file folder was added.
+      /// </summary>
+      Added = 1001,
 
-  /// <summary>
-  /// A file folder was removed
-  /// </summary>
-  Removed = 1002,
+      /// <summary>
+      /// A file folder was removed
+      /// </summary>
+      Removed = 1002,
 
-  /// <summary>
-  /// Small changed, timestamp, attribute etc...
-  /// </summary>
-  Touched = 1003,
+      /// <summary>
+      /// Small changed, timestamp, attribute etc...
+      /// </summary>
+      Touched = 1003,
 
-  /// <summary>
-  /// A file folder was renamed.
-  /// </summary>
-  Renamed = 1004
-};
-
+      /// <summary>
+      /// A file folder was renamed.
+      /// </summary>
+      Renamed = 1004
+    };
+  }
+}

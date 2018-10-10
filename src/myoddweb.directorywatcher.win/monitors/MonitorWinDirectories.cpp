@@ -50,7 +50,7 @@ namespace myoddweb
      * \param path the file we are checking.
      * \return if the string given is a file or not.
      */
-    bool MonitorWinDirectories::IsFile(const ManagedEventAction action, const std::wstring& path) const
+    bool MonitorWinDirectories::IsFile(const EventAction action, const std::wstring& path) const
     {
       // we are the directory monitor
       // so it can never be a file.

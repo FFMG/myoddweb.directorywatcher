@@ -42,7 +42,7 @@ namespace myoddweb
        * \param path the file we are checking.
        * \return if the string given is a file or not.
        */
-      bool IsFile(ManagedEventAction action, const std::wstring& path) const override;
+      bool IsFile(EventAction action, const std::wstring& path) const override;
     };
   }
 }
