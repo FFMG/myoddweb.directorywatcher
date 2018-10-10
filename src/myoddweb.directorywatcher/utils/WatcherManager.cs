@@ -20,7 +20,7 @@ using myoddweb.directorywatcher.interfaces;
 
 namespace myoddweb.directorywatcher.utils
 {
-  internal class WatcherManager
+  internal class WatcherManager : IDisposable
   {
     /// <summary>
     /// The actual instance of the watcher.
@@ -36,6 +36,72 @@ namespace myoddweb.directorywatcher.utils
     /// The object we will use for the lock.
     /// </summary>
     private static readonly object Lock = new object();
+
+    /// <summary>
+    /// The folder where our embeded files are located.
+    /// </summary>
+    private string _embededFolder;
+
+    /// <summary>
+    /// Get the current embeded folder.
+    /// </summary>
+    private string EmbededFolder
+    {
+      get
+      {
+        if (_embededFolder != null)
+        {
+          return _embededFolder;
+        }
+
+        lock (Lock)
+        {
+          if (null != _embededFolder)
+          {
+            return _embededFolder;
+          }
+
+          // remove the old directories.
+          RemoveOldDirectories();
+
+          // create the new folder.
+          var guid = Guid.NewGuid().ToString();
+          var embededFolder = Path.Combine(new[] { Path.GetTempPath(), $"wr.{guid}" });
+          if (!Directory.Exists(embededFolder))
+          {
+            Directory.CreateDirectory(embededFolder);
+          }
+          _embededFolder = embededFolder;
+
+          // last chance, either return what we have or simply set the value.
+          return _embededFolder;
+        }
+      }
+    }
+
+    /// <summary>
+    /// Clean up old directories.
+    /// </summary>
+    private static void RemoveOldDirectories()
+    {
+      var directories = Directory.GetDirectories(Path.GetTempPath(), $"wr.*");
+      foreach (var directory in directories)
+      {
+        try
+        {
+          Directory.Delete(directory, true);
+        }
+        catch
+        {
+          // we cannot do much about this here.
+        }
+      }
+    }
+
+    /// <summary>
+    /// Check if we have disposed of the instance or not.
+    /// </summary>
+    private bool _disposed;
 
     /// <summary>
     /// Get our one and only watcher interface.
@@ -74,11 +140,44 @@ namespace myoddweb.directorywatcher.utils
       _watcher = CreateWatcherFromFileSystem();
     }
 
+    public void Dispose()
+    {
+      // done already?
+      if (_disposed )
+      {
+        return;
+      }
+
+      _disposed = true;
+      if (_embededFolder != null)
+      {
+        lock (Lock)
+        {
+          if (_embededFolder != null)
+          {
+            try
+            {
+              Directory.Delete( _embededFolder, true );
+            }
+            catch
+            {
+              // we cannot delete it
+              // probably still loaded/running
+            }
+            _embededFolder = null;
+          }
+        }
+      }
+
+      // we are done with the instance as well
+      _manager = null;
+    }
+
     /// <summary>
     /// 'Borrowed' from https://www.codeproject.com/Articles/528178/Load-DLL-From-Embedded-Resource
     /// </summary>
     /// <returns></returns>
-    public static string GetInteropResourceFileSystem()
+    private string GetInteropResourceFileSystem()
     {
       var winresource = "win32.directorywatcher.win";
       var resource = "win32.directorywatcher.interop";
@@ -98,13 +197,12 @@ namespace myoddweb.directorywatcher.utils
     /// 'Borrowed' from https://www.codeproject.com/Articles/528178/Load-DLL-From-Embedded-Resource
     /// </summary>
     /// <returns></returns>
-    public static string GetInteropResourceFileSystem( string resource, string dll )
+    private string GetInteropResourceFileSystem( string resource, string dll )
     {
       byte[] ba;
       var fileOk = false;
       string tempFile;
-      var tempPath = Path.Combine(new[] { Path.GetTempPath(), "directorywatcher", Environment.Is64BitProcess ? "x64" : "x86" });
-
+      
       var curAsm = Assembly.GetExecutingAssembly();
       using (var stm = curAsm.GetManifestResourceStream(resource))
       {
@@ -121,7 +219,7 @@ namespace myoddweb.directorywatcher.utils
       {
         var fileHash = BitConverter.ToString(sha1.ComputeHash(ba)).Replace("-", string.Empty);
 
-        tempFile = Path.Combine(new[] { tempPath, dll });
+        tempFile = Path.Combine(new[] { EmbededFolder, dll });
         if (File.Exists(tempFile))
         {
           var bb = File.ReadAllBytes(tempFile);
@@ -136,10 +234,6 @@ namespace myoddweb.directorywatcher.utils
 
       if (!fileOk)
       {
-        if (!Directory.Exists(tempPath))
-        {
-          Directory.CreateDirectory(tempPath);
-        }
         File.WriteAllBytes(tempFile, ba);
       }
       return tempFile;
@@ -165,18 +259,33 @@ namespace myoddweb.directorywatcher.utils
     /// Create the watcher from the file system, throw if we are unable to do it.
     /// </summary>
     /// <returns></returns>
-    private static IWatcher1 CreateWatcherFromFileSystem()
+    private IWatcher1 CreateWatcherFromFileSystem()
     {
       try
       {
         try
         {
 #if DEBUG
-          var asm = TypeLoader.LoadFromFile(GetInteropFromFileSystem());
+          // while we debug the assembly we want to have access to the files
+          // so it is better to load from file system.
+          // otherwise we will load from the file system.
+          var assemblyFilePath = GetInteropFromFileSystem();
+          return TypeLoader.LoadTypeFromAssembly<IWatcher1>(assemblyFilePath);
 #else
-          var asm = TypeLoader.LoadFromFile(GetInteropResourceFileSystem());
+          try
+          {
+            // try and get the files from the file system.
+            var assemblyFilePath = GetInteropResourceFileSystem();
+            return TypeLoader.LoadTypeFromAssembly<IWatcher1>(assemblyFilePath);
+          }
+          catch
+          {
+            // something broke ... try and load from the embeded files.
+            // we will throw again if there is a further problem...
+            var assemblyFilePath = GetInteropFromFileSystem();
+            return TypeLoader.LoadTypeFromAssembly<IWatcher1>(assemblyFilePath);
+          }
 #endif
-          return TypeLoader.LoadTypeFromAssembly<IWatcher1>(asm);
         }
         catch (Exception e)
         {
