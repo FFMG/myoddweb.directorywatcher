@@ -27,14 +27,12 @@ namespace myoddweb
      */
     MonitorReadDirectoryChangesCommon::MonitorReadDirectoryChangesCommon(
       Monitor& parent,
-      const unsigned long bufferLength) :
-      _hDirectory(nullptr),
-      _buffer(nullptr),
-      _bufferLength(bufferLength),
+      const unsigned long bufferLength
+    ) :
+      _data( bufferLength),
       _parent( parent ),
       _th(nullptr)
     {
-      memset(&_overlapped, 0, sizeof(OVERLAPPED));
     }
 
     MonitorReadDirectoryChangesCommon::~MonitorReadDirectoryChangesCommon()
@@ -52,9 +50,7 @@ namespace myoddweb
       Reset();
 
       // create the buffer.
-      _buffer = new unsigned char[_bufferLength];
-      memset(_buffer, 0, sizeof(unsigned char)*_bufferLength);
-      _overlapped.hEvent = this;
+      _data.Start( this );
 
       // start the worker thread
       // in turn it will start the reading.
@@ -76,34 +72,13 @@ namespace myoddweb
      */
     void MonitorReadDirectoryChangesCommon::Reset()
     {
-      if (IsOpen())
-      {
-        CloseHandle(_hDirectory);
-      }
-      // the directory is closed.
-      _hDirectory = nullptr;
-
-      // stop the thread
+      // stop and wait for the buffer to complete.
+      // we have to wait first otherwise the next step
+      // will reset the buffer and cause posible issues.
       StopAndResetThread();
 
-      // stop the bufdfer
-      ResetBuffer();
-
-      // reset the overleapped.
-      memset(&_overlapped, 0, sizeof(OVERLAPPED));
-    }
-
-    /**
-     * \brief delete the buffer, (if used), and reset the value.
-     */
-    void MonitorReadDirectoryChangesCommon::ResetBuffer()
-    {
-      if (_buffer == nullptr)
-      {
-        return;
-      }
-      delete[] _buffer;
-      _buffer = nullptr;
+      // clear the data
+      _data.Clear();
     }
 
     /**
@@ -138,16 +113,16 @@ namespace myoddweb
     {
       // check if this was done alread
       // we cannot use IsOpen() as INVALID_HANDLE_VALUE would cause a return false.
-      if (_hDirectory != nullptr)
+      if (_data.DirectoryHandle() != nullptr)
       {
-        return _hDirectory != INVALID_HANDLE_VALUE;
+        return _data.DirectoryHandle() != INVALID_HANDLE_VALUE;
       }
 
       // how we want to open this directory.
       const auto shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
       const auto fileAttr = FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED;
 
-      _hDirectory = ::CreateFileW(
+      auto hDirectory = ::CreateFileW(
         _parent.Path().c_str(),					    // the path we are watching
         FILE_LIST_DIRECTORY,        // required for ReadDirectoryChangesW( ... )
         shareMode,
@@ -157,8 +132,11 @@ namespace myoddweb
         nullptr                     // file with attributes to copy
       );
 
+      // set the data.
+      _data.DirectoryHandle(hDirectory);
+
       // check if it all worked.
-      if (IsOpen())
+      if ( _data.IsValidHandle())
       {
         return true;
       }
@@ -219,20 +197,11 @@ namespace myoddweb
     }
 
     /**
-     * \brief Check if the file is open properly
-     * \return if the file has been open already.
-     */
-    bool MonitorReadDirectoryChangesCommon::IsOpen() const
-    {
-      return _hDirectory != nullptr && _hDirectory != INVALID_HANDLE_VALUE;
-    }
-
-    /**
      * \brief Start the read process
      */
     void MonitorReadDirectoryChangesCommon::Read()
     {
-      if (!IsOpen())
+      if (!_data.IsValidHandle())
       {
         return;
       }
@@ -244,13 +213,13 @@ namespace myoddweb
 
       // This call needs to be reissued after every APC.
       if (!::ReadDirectoryChangesW(
-        _hDirectory,
-        _buffer,
-        _bufferLength,
+        _data.DirectoryHandle(),
+        _data.Buffer(),
+        _data.BufferLength(),
         _parent.Recursive(),
         notifyFilter,
-        nullptr,                  // bytes returned, (not used here as we are async)
-        &_overlapped,             // buffer with our information
+        nullptr,                      // bytes returned, (not used here as we are async)
+        _data.Overlapped(),           // buffer with our information
         &FileIoCompletionRoutine
       ))
       {
@@ -293,7 +262,15 @@ namespace myoddweb
       _ASSERTE(dwNumberOfBytesTransfered >= offsetof(FILE_NOTIFY_INFORMATION, FileName) + sizeof(WCHAR));
 
       // clone the data so we can start reading right away.
-      const auto pBufferBk = obj->Clone(dwNumberOfBytesTransfered);
+      unsigned char* pBufferBk = nullptr;
+      try
+      {
+        pBufferBk = obj->_data.Clone(dwNumberOfBytesTransfered);
+      }
+      catch (...)
+      {
+        obj->_parent.AddEventError(ManagedEventError::Memory);
+      }
 
       // Get the new read issued as fast as possible. The documentation
       // says that the original OVERLAPPED structure will not be used
@@ -304,37 +281,6 @@ namespace myoddweb
       // so we can now process the data
       // @todo this should be moved to a thread.
       obj->ProcessNotificationFromBackup(pBufferBk);
-    }
-
-    /**
-     * \brief Clone the buffer into a temp buffer, we will pass ownership of the new buffer to the caller.
-     * \param ulSize the number of bytes we want to copy over.
-     * \return unsigned char* the newly created buffer.
-     */
-    unsigned char* MonitorReadDirectoryChangesCommon::Clone(const unsigned long ulSize) const
-    {
-      // if the size if more than we can offer we need to prevent an overflow.
-      if (ulSize > _bufferLength)
-      {
-        return nullptr;
-      }
-
-      try
-      {
-        // create the clone
-        const auto pBuffer = new unsigned char[ulSize];
-
-        // copy it.
-        memcpy(pBuffer, _buffer, ulSize);
-
-        // return it.
-        return pBuffer;
-      }
-      catch (...)
-      {
-        _parent.AddEventError(ManagedEventError::Memory);
-        return nullptr;
-      }
     }
 
     /**

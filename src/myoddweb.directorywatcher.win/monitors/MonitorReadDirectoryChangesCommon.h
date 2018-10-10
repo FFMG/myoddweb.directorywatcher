@@ -15,6 +15,7 @@
 #pragma once
 #include <windows.h>
 #include "Monitor.h"
+#include "MonitorData.h"
 #include <future>
 #include "../utils/EventAction.h"
 
@@ -50,29 +51,24 @@ namespace myoddweb
 
     private:
 #pragma region
-      void ResetBuffer();
       void Reset();
       void StopAndResetThread();
 #pragma endregion Reset/Stop functions
 
       bool OpenDirectory();
-      bool IsOpen() const;
       void ProcessNotificationFromBackup(const unsigned char* pBuffer) const;
-      unsigned char* Clone(unsigned long ulSize) const;
 
       void Read();
       void Run();
 
-    private:
-      HANDLE _hDirectory;
-      unsigned char* _buffer;
-      const unsigned long _bufferLength;
+      /**
+       * \brief all the data used by the monitor.
+       */
+      MonitorData _data;
 
       /**
-       * \brief the overlapped
+       * \brief the parent monitor
        */
-      OVERLAPPED	_overlapped{};
-
       Monitor& _parent;
 #pragma region
       /**

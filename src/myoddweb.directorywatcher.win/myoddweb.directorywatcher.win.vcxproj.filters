@@ -30,6 +30,9 @@
     <ClCompile Include="utils\Io.cpp">
       <Filter>utils</Filter>
     </ClCompile>
+    <ClCompile Include="monitors\MonitorData.cpp">
+      <Filter>monitors</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -76,6 +79,9 @@
     </ClInclude>
     <ClInclude Include="utils\EventAction.h">
       <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\MonitorData.h">
+      <Filter>monitors</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
