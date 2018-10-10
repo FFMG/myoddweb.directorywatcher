@@ -17,38 +17,44 @@
 #include "EventAction.h"
 #include "EventError.h"
 
-/**
- * \brief Information about a file/folder event.
- */
-struct EventInformation
+namespace myoddweb
 {
-  /**
-   * \brief the time in Ms when this event was recorded.
-   */
-  long long TimeMillisecondsUtc{};
+  namespace directorywatcher
+  {
+    /**
+     * \brief Information about a file/folder event.
+     */
+    struct EventInformation
+    {
+      /**
+       * \brief the time in Ms when this event was recorded.
+       */
+      long long TimeMillisecondsUtc{};
 
-  /**
-   * \brief the action we are recording
-   */
-  ManagedEventAction Action;
+      /**
+       * \brief the action we are recording
+       */
+      ManagedEventAction Action;
 
-  /**
-   * \brief the action we are recording
-   */
-  ManagedEventError Error;
+      /**
+       * \brief the action we are recording
+       */
+      EventError Error;
 
-  /**
-   * \brief the filename/folder that was updated. 
-   */
-  std::wstring Name;
+      /**
+       * \brief the filename/folder that was updated.
+       */
+      std::wstring Name;
 
-  /**
-   * \brief the old name in the case of a rename.
-   */
-  std::wstring OldName;
+      /**
+       * \brief the old name in the case of a rename.
+       */
+      std::wstring OldName;
 
-  /**
- * \brief Boolean if the update is a file or a directory.
-   */
-  bool IsFile;
-};
+      /**
+     * \brief Boolean if the update is a file or a directory.
+       */
+      bool IsFile;
+    };
+  }
+}

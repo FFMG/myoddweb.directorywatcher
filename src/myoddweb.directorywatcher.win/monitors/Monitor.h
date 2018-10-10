@@ -46,7 +46,7 @@ namespace myoddweb
 
       void AddEvent(ManagedEventAction action, const std::wstring& fileName, bool isFile ) const;
       void AddRenameEvent(const std::wstring& newFileName, const std::wstring& oldFilename, bool isFile) const;
-      void AddEventError(ManagedEventError action) const;
+      void AddEventError(EventError action) const;
 
     private:
       const __int64 _id;

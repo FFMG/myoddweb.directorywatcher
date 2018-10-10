@@ -7,6 +7,7 @@
 
 using myoddweb::directorywatcher::Collector;
 using myoddweb::directorywatcher::Event;
+using myoddweb::directorywatcher::EventError;
 
 TEST(Collector, EmptyCollectorReturnsNothing) {
 
@@ -24,7 +25,7 @@ TEST(Collector, PathIsValidWithTwoBackSlash) {
 
   // create new one.
   Collector c;
-  c.Add( ManagedEventAction::Added, L"c:\\", L"\\foo\\bar.txt", true, ManagedEventError::None);
+  c.Add( ManagedEventAction::Added, L"c:\\", L"\\foo\\bar.txt", true, EventError::None);
 
   // get it.
   std::vector<Event> events;
@@ -37,7 +38,7 @@ TEST(Collector, PathIsValidWithOneBackSlashOnPath) {
 
   // create new one.
   Collector c;
-  c.Add(ManagedEventAction::Added, L"c:\\", L"foo\\bar.txt", true, ManagedEventError::None);
+  c.Add(ManagedEventAction::Added, L"c:\\", L"foo\\bar.txt", true, EventError::None);
 
   // get it.
   std::vector<Event> events;
@@ -50,7 +51,7 @@ TEST(Collector, PathIsValidWithOneBackSlashOnFileName) {
 
   // create new one.
   Collector c;
-  c.Add(ManagedEventAction::Added, L"c:", L"\\foo\\bar.txt", true, ManagedEventError::None );
+  c.Add(ManagedEventAction::Added, L"c:", L"\\foo\\bar.txt", true, EventError::None );
 
   // get it.
   std::vector<Event> events;

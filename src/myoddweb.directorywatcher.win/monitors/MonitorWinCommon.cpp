@@ -142,7 +142,7 @@ namespace myoddweb
       }
 
       // we could not access this
-      _parent.AddEventError(ManagedEventError::Access);
+      _parent.AddEventError(EventError::Access);
 
       return false;
     }
@@ -182,7 +182,7 @@ namespace myoddweb
       // if it is open already then nothing should happen here.
       if (!OpenDirectory())
       {
-        _parent.AddEventError(ManagedEventError::Access);
+        _parent.AddEventError(EventError::Access);
         return;
       }
 
@@ -223,7 +223,7 @@ namespace myoddweb
         &FileIoCompletionRoutine
       ))
       {
-        _parent.AddEventError(ManagedEventError::CannotStart);
+        _parent.AddEventError(EventError::CannotStart);
       }
     }
 
@@ -241,7 +241,7 @@ namespace myoddweb
 
       if (dwErrorCode == ERROR_OPERATION_ABORTED)
       {
-        obj->_parent.AddEventError(ManagedEventError::Aborted);
+        obj->_parent.AddEventError(EventError::Aborted);
         return;
       }
 
@@ -250,7 +250,7 @@ namespace myoddweb
       // fails with the error code ERROR_NOTIFY_ENUM_DIR.
       if (0 == dwNumberOfBytesTransfered)
       {
-        obj->_parent.AddEventError(ManagedEventError::Overflow);
+        obj->_parent.AddEventError(EventError::Overflow);
 
         // noting to read, just restart
         obj->Read();
@@ -269,7 +269,7 @@ namespace myoddweb
       }
       catch (...)
       {
-        obj->_parent.AddEventError(ManagedEventError::Memory);
+        obj->_parent.AddEventError(EventError::Memory);
       }
 
       // Get the new read issued as fast as possible. The documentation
@@ -295,7 +295,7 @@ namespace myoddweb
         // overflow
         if (nullptr == pBuffer)
         {
-          _parent.AddEventError(ManagedEventError::Overflow);
+          _parent.AddEventError(EventError::Overflow);
           return;
         }
 
@@ -372,7 +372,7 @@ namespace myoddweb
       {
         // regadless what happens
         // we have to free the memory.
-        _parent.AddEventError(ManagedEventError::Memory);
+        _parent.AddEventError(EventError::Memory);
       }
 
       // we are done with this buffer.

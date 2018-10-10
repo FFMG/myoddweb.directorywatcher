@@ -65,7 +65,7 @@ namespace myoddweb
      * \param isFile if this is a file or a folder.
      * \param error if there was an error related
      */
-    void Collector::Add(const ManagedEventAction action, const std::wstring& path, const std::wstring& filename, bool isFile, ManagedEventError error)
+    void Collector::Add(const ManagedEventAction action, const std::wstring& path, const std::wstring& filename, bool isFile, EventError error)
     {
       // just add the action without an old filename.
       Add(action, path, filename, L"", isFile, error );
@@ -79,7 +79,7 @@ namespace myoddweb
      * \param isFile if this is a file or a folder.
      * \param error if there is an error related to the rename
      */
-    void Collector::AddRename(const std::wstring& path, const std::wstring& newFilename, const std::wstring& oldFilename, bool isFile, ManagedEventError error)
+    void Collector::AddRename(const std::wstring& path, const std::wstring& newFilename, const std::wstring& oldFilename, bool isFile, EventError error)
     {
       // just add the action without an old filename.
       Add(ManagedEventAction::Renamed, path, newFilename, oldFilename, isFile, error );
@@ -94,7 +94,7 @@ namespace myoddweb
      * \param isFile if this is a file or a folder.
      * \param error if there was an error related to the action
      */
-    void Collector::Add( const ManagedEventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName, const bool isFile, ManagedEventError error)
+    void Collector::Add( const ManagedEventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName, const bool isFile, EventError error)
     {
       try
       {
@@ -233,7 +233,7 @@ namespace myoddweb
           // not sure this is posible
           // so we will turn the event action into an error.
           e.Action = static_cast<int>(ManagedEventAction::Unknown);
-          e.Error = static_cast<int>(ManagedEventError::NoFileData);
+          e.Error = static_cast<int>(EventError::NoFileData);
         }
       }
     }
@@ -286,7 +286,7 @@ namespace myoddweb
      * \brief convert an EventError to an un-managed IError
      * so it can be returned to the calling interface.
      */
-    int Collector::ConvertEventError(const ManagedEventError& error)
+    int Collector::ConvertEventError(const EventError& error)
     {
       return static_cast<int>(error);
     }

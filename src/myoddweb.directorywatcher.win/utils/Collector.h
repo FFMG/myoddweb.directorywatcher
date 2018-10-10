@@ -37,8 +37,8 @@ namespace myoddweb
       explicit Collector( short maxAgeMs );
 
     public:
-      void Add(ManagedEventAction action, const std::wstring& path, const std::wstring& filename, bool isFile, ManagedEventError error);
-      void AddRename(const std::wstring& path, const std::wstring&newFilename, const std::wstring&oldFilename, bool isFile, ManagedEventError error);
+      void Add(ManagedEventAction action, const std::wstring& path, const std::wstring& filename, bool isFile, EventError error);
+      void AddRename(const std::wstring& path, const std::wstring&newFilename, const std::wstring&oldFilename, bool isFile, EventError error);
 
       /**
        * \brief fill the vector with all the values currently on record.
@@ -48,7 +48,7 @@ namespace myoddweb
       long long GetEvents( std::vector<Event>& events);
 
     private:
-      void Add(ManagedEventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName, bool isFile, ManagedEventError error);
+      void Add(ManagedEventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName, bool isFile, EventError error);
 
       /**
        * \brief This is the oldest number of ms we want something to be.
@@ -99,7 +99,7 @@ namespace myoddweb
        * \brief convert an EventError to an un-managed IError
        * so it can be returned to the calling interface.
        */
-      static int ConvertEventError(const ManagedEventError& error);
+      static int ConvertEventError(const EventError& error);
 
       /**
        * \brief check if the given information already exists in the source
