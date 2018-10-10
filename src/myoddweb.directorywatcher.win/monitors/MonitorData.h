@@ -16,7 +16,7 @@
 class MonitorData
 {
 public:
-  MonitorData( unsigned long bufferLength);
+  explicit MonitorData( unsigned long bufferLength);
   ~MonitorData();
 
   void Prepare( void* object );

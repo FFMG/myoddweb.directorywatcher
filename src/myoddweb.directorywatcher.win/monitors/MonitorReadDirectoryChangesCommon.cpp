@@ -50,7 +50,7 @@ namespace myoddweb
       Reset();
 
       // create the buffer.
-      _data.Start( this );
+      _data.Prepare( this );
 
       // start the worker thread
       // in turn it will start the reading.
