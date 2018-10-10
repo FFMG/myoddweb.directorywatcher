@@ -71,29 +71,9 @@ namespace myoddweb.directorywatcher.utils
           {
             Directory.CreateDirectory(embededFolder);
           }
-          _embededFolder = embededFolder;
 
           // last chance, either return what we have or simply set the value.
-          return _embededFolder;
-        }
-      }
-    }
-
-    /// <summary>
-    /// Clean up old directories.
-    /// </summary>
-    private static void RemoveOldDirectories()
-    {
-      var directories = Directory.GetDirectories(Path.GetTempPath(), $"wr.*");
-      foreach (var directory in directories)
-      {
-        try
-        {
-          Directory.Delete(directory, true);
-        }
-        catch
-        {
-          // we cannot do much about this here.
+          return _embededFolder ?? (_embededFolder = embededFolder);
         }
       }
     }
@@ -153,24 +133,35 @@ namespace myoddweb.directorywatcher.utils
       {
         lock (Lock)
         {
-          if (_embededFolder != null)
-          {
-            try
-            {
-              Directory.Delete( _embededFolder, true );
-            }
-            catch
-            {
-              // we cannot delete it
-              // probably still loaded/running
-            }
-            _embededFolder = null;
-          }
+          // reset the folder name
+          _embededFolder = null;
+
+          // we are done with the instance as well
+          _manager = null;
+
+          // remove the old directories if we can.
+          RemoveOldDirectories();
         }
       }
+    }
 
-      // we are done with the instance as well
-      _manager = null;
+    /// <summary>
+    /// Clean up old directories.
+    /// </summary>
+    private static void RemoveOldDirectories()
+    {
+      var directories = Directory.GetDirectories(Path.GetTempPath(), "wr.*");
+      foreach (var directory in directories)
+      {
+        try
+        {
+          Directory.Delete(directory, true);
+        }
+        catch
+        {
+          // we cannot do much about this here.
+        }
+      }
     }
 
     /// <summary>
@@ -197,23 +188,34 @@ namespace myoddweb.directorywatcher.utils
     /// 'Borrowed' from https://www.codeproject.com/Articles/528178/Load-DLL-From-Embedded-Resource
     /// </summary>
     /// <returns></returns>
-    private string GetInteropResourceFileSystem( string resource, string dll )
+    private byte[] GetEmbededResource(string resource )
     {
-      byte[] ba;
-      var fileOk = false;
-      string tempFile;
-      
       var curAsm = Assembly.GetExecutingAssembly();
       using (var stm = curAsm.GetManifestResourceStream(resource))
       {
         // Either the file is not existed or it is not mark as embedded resource
         if (stm == null)
+        {
           throw new Exception(resource + " is not found in Embedded Resources.");
+        }
 
         // Get byte[] from the file from embedded resource
-        ba = new byte[(int)stm.Length];
+        var ba = new byte[(int)stm.Length];
         stm.Read(ba, 0, (int)stm.Length);
+        return ba;
       }
+    }
+
+    /// <summary>
+    /// 'Borrowed' from https://www.codeproject.com/Articles/528178/Load-DLL-From-Embedded-Resource
+    /// </summary>
+    /// <returns></returns>
+    private string GetInteropResourceFileSystem( string resource, string dll )
+    {
+      //  we throw in the function if we cannot locate the data.
+      var ba = GetEmbededResource( resource);
+      var fileOk = false;
+      string tempFile;
 
       using (var sha1 = new SHA1CryptoServiceProvider())
       {
@@ -251,7 +253,6 @@ namespace myoddweb.directorywatcher.utils
       {
         dllInteropPath = Path.Combine(directoryName, "x64\\myoddweb.directorywatcher.interop.dll");
       }
-
       return dllInteropPath;
     }
 

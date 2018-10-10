@@ -161,7 +161,7 @@ namespace myoddweb
      * \param ulSize the max numberof bytes we want to copy
      * \return the cloned data.
      */
-    unsigned char*  MonitorData::Clone(const unsigned long ulSize) const
+    unsigned char* MonitorData::Clone(const unsigned long ulSize) const
     {
       // if the size if more than we can offer we need to prevent an overflow.
       if (ulSize > _bufferLength)
