@@ -12,25 +12,25 @@
     <ClCompile Include="utils\MonitorsManager.cpp">
       <Filter>utils</Filter>
     </ClCompile>
-    <ClCompile Include="monitors\MonitorReadDirectoryChanges.cpp">
-      <Filter>monitors</Filter>
-    </ClCompile>
     <ClCompile Include="utils\Collector.cpp">
       <Filter>utils</Filter>
-    </ClCompile>
-    <ClCompile Include="monitors\MonitorReadDirectoryChangesDirectories.cpp">
-      <Filter>monitors</Filter>
-    </ClCompile>
-    <ClCompile Include="monitors\MonitorReadDirectoryChangesFiles.cpp">
-      <Filter>monitors</Filter>
-    </ClCompile>
-    <ClCompile Include="monitors\MonitorReadDirectoryChangesCommon.cpp">
-      <Filter>monitors</Filter>
     </ClCompile>
     <ClCompile Include="utils\Io.cpp">
       <Filter>utils</Filter>
     </ClCompile>
     <ClCompile Include="monitors\MonitorData.cpp">
+      <Filter>monitors</Filter>
+    </ClCompile>
+    <ClCompile Include="monitors\MonitorWin.cpp">
+      <Filter>monitors</Filter>
+    </ClCompile>
+    <ClCompile Include="monitors\MonitorWinCommon.cpp">
+      <Filter>monitors</Filter>
+    </ClCompile>
+    <ClCompile Include="monitors\MonitorWinDirectories.cpp">
+      <Filter>monitors</Filter>
+    </ClCompile>
+    <ClCompile Include="monitors\MonitorWinFiles.cpp">
       <Filter>monitors</Filter>
     </ClCompile>
   </ItemGroup>
@@ -47,9 +47,6 @@
     <ClInclude Include="utils\MonitorsManager.h">
       <Filter>utils</Filter>
     </ClInclude>
-    <ClInclude Include="monitors\MonitorReadDirectoryChanges.h">
-      <Filter>monitors</Filter>
-    </ClInclude>
     <ClInclude Include="utils\Collector.h">
       <Filter>utils</Filter>
     </ClInclude>
@@ -62,15 +59,6 @@
     <ClInclude Include="utils\Event.h">
       <Filter>utils</Filter>
     </ClInclude>
-    <ClInclude Include="monitors\MonitorReadDirectoryChangesDirectories.h">
-      <Filter>monitors</Filter>
-    </ClInclude>
-    <ClInclude Include="monitors\MonitorReadDirectoryChangesFiles.h">
-      <Filter>monitors</Filter>
-    </ClInclude>
-    <ClInclude Include="monitors\MonitorReadDirectoryChangesCommon.h">
-      <Filter>monitors</Filter>
-    </ClInclude>
     <ClInclude Include="utils\Io.h">
       <Filter>utils</Filter>
     </ClInclude>
@@ -81,6 +69,18 @@
       <Filter>utils</Filter>
     </ClInclude>
     <ClInclude Include="monitors\MonitorData.h">
+      <Filter>monitors</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\MonitorWin.h">
+      <Filter>monitors</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\MonitorWinCommon.h">
+      <Filter>monitors</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\MonitorWinDirectories.h">
+      <Filter>monitors</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\MonitorWinFiles.h">
       <Filter>monitors</Filter>
     </ClInclude>
   </ItemGroup>

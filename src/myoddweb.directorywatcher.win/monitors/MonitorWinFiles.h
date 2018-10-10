@@ -14,20 +14,20 @@
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #pragma once
 #include "Monitor.h"
-#include "MonitorReadDirectoryChangesCommon.h"
+#include "MonitorWinCommon.h"
 #include "../utils/EventAction.h"
 
 namespace myoddweb
 {
   namespace directorywatcher
   {
-    class MonitorReadDirectoryChangesFiles : public MonitorReadDirectoryChangesCommon
+    class MonitorWinFiles : public MonitorWinCommon
     {
     public:
-      MonitorReadDirectoryChangesFiles(Monitor& parent, unsigned long bufferLength);
+      MonitorWinFiles(Monitor& parent, unsigned long bufferLength);
 
     public:
-      virtual ~MonitorReadDirectoryChangesFiles() = default;
+      virtual ~MonitorWinFiles() = default;
 
     protected:
       /**

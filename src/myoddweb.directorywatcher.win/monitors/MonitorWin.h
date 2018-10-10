@@ -16,29 +16,29 @@
 #include <Windows.h>
 #include "Monitor.h"
 #include <future>
-#include "MonitorReadDirectoryChangesCommon.h"
+#include "MonitorWinCommon.h"
 
 namespace myoddweb
 {
   namespace directorywatcher
   {
-    class MonitorReadDirectoryChanges : public Monitor
+    class MonitorWin : public Monitor
     {
     public:
-      MonitorReadDirectoryChanges(__int64 id, const Request& request );
+      MonitorWin(__int64 id, const Request& request );
 
     protected:
-      MonitorReadDirectoryChanges(__int64 id, const Request& request, unsigned long bufferLength);
+      MonitorWin(__int64 id, const Request& request, unsigned long bufferLength);
 
     public:
-      virtual ~MonitorReadDirectoryChanges();
+      virtual ~MonitorWin();
 
       bool Start() override;
       void Stop() override;
 
     private:
-      MonitorReadDirectoryChangesCommon* _directories;
-      MonitorReadDirectoryChangesCommon* _files;
+      MonitorWinCommon* _directories;
+      MonitorWinCommon* _files;
 
       const unsigned long _bufferLength;
     };

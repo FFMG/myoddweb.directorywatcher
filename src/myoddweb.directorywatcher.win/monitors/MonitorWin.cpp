@@ -12,11 +12,11 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
-#include "MonitorReadDirectoryChanges.h"
+#include "MonitorWin.h"
 #include <string>
 #include <process.h>
-#include "MonitorReadDirectoryChangesDirectories.h"
-#include "MonitorReadDirectoryChangesFiles.h"
+#include "MonitorWinDirectories.h"
+#include "MonitorWinFiles.h"
 
 namespace myoddweb
 {
@@ -34,8 +34,8 @@ namespace myoddweb
      * \param id the unique id of this monitor
      * \param request details of the request.
      */
-    MonitorReadDirectoryChanges::MonitorReadDirectoryChanges( const __int64 id, const Request& request) :
-      MonitorReadDirectoryChanges(id, request, MAX_BUFFER_SIZE )
+    MonitorWin::MonitorWin( const __int64 id, const Request& request) :
+      MonitorWin(id, request, MAX_BUFFER_SIZE )
     {
     }
 
@@ -45,7 +45,7 @@ namespace myoddweb
      * \param request details of the request.
      * \param bufferLength the size of the buffer
      */
-    MonitorReadDirectoryChanges::MonitorReadDirectoryChanges( const __int64 id, const Request& request, const unsigned long bufferLength) :
+    MonitorWin::MonitorWin( const __int64 id, const Request& request, const unsigned long bufferLength) :
       Monitor(id, request),
       _directories(nullptr),
       _files( nullptr),
@@ -53,20 +53,20 @@ namespace myoddweb
     {
     }
 
-    MonitorReadDirectoryChanges::~MonitorReadDirectoryChanges()
+    MonitorWin::~MonitorWin()
     {
-      MonitorReadDirectoryChanges::Stop();
+      MonitorWin::Stop();
     }
 
     /**
      * \brief Stop monitoring
      */
-    bool MonitorReadDirectoryChanges::Start()
+    bool MonitorWin::Start()
     {
       Stop();
 
-      _directories = new MonitorReadDirectoryChangesDirectories( *this, _bufferLength );
-      _files = new MonitorReadDirectoryChangesFiles(*this, _bufferLength);
+      _directories = new MonitorWinDirectories( *this, _bufferLength );
+      _files = new MonitorWinFiles(*this, _bufferLength);
 
       _directories->Start();
       _files->Start();
@@ -77,7 +77,7 @@ namespace myoddweb
     /**
      * \brief Stop monitoring
      */
-    void MonitorReadDirectoryChanges::Stop()
+    void MonitorWin::Stop()
     {
       if (_directories != nullptr)
       {

@@ -2,6 +2,8 @@
 
 #include "../myoddweb.directorywatcher.win/monitors/MonitorData.h"
 
+using myoddweb::directorywatcher::MonitorData;
+
 TEST(MonitorData, BufferLenghValueIsSaved) {
   MonitorData md(100);
   ASSERT_EQ(100, md.BufferLength() );

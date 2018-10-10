@@ -23,13 +23,13 @@ namespace myoddweb
 {
   namespace directorywatcher
   {
-    class MonitorReadDirectoryChangesCommon
+    class MonitorWinCommon
     {
     public:
-      MonitorReadDirectoryChangesCommon( Monitor& parent, unsigned long bufferLength);
+      MonitorWinCommon( Monitor& parent, unsigned long bufferLength);
 
     public:
-      virtual ~MonitorReadDirectoryChangesCommon();
+      virtual ~MonitorWinCommon();
 
       virtual bool Start();
       virtual void Stop();
@@ -47,7 +47,7 @@ namespace myoddweb
         _OVERLAPPED* lpOverlapped         // I/O information buffer
       );
 
-      static void RunThread(MonitorReadDirectoryChangesCommon* obj);
+      static void RunThread(MonitorWinCommon* obj);
 
     private:
 #pragma region

@@ -13,7 +13,7 @@
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #include <process.h>
-#include "MonitorReadDirectoryChangesFiles.h"
+#include "MonitorWinFiles.h"
 
 namespace myoddweb
 {
@@ -22,8 +22,8 @@ namespace myoddweb
     /**
      * \brief Create the Monitor that uses ReadDirectoryChanges
      */
-    MonitorReadDirectoryChangesFiles::MonitorReadDirectoryChangesFiles(Monitor& parent, unsigned long bufferLength) :
-      MonitorReadDirectoryChangesCommon(parent, bufferLength)
+    MonitorWinFiles::MonitorWinFiles(Monitor& parent, unsigned long bufferLength) :
+      MonitorWinCommon(parent, bufferLength)
     {
     }
 
@@ -31,7 +31,7 @@ namespace myoddweb
      * Get the notification filter.
      * \return the notification filter
      */
-    unsigned long MonitorReadDirectoryChangesFiles::GetNotifyFilter() const
+    unsigned long MonitorWinFiles::GetNotifyFilter() const
     {
       // what we are looking for.
       // https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-findfirstchangenotificationa
@@ -77,7 +77,7 @@ namespace myoddweb
      * \param path the file we are checking.
      * \return if the string given is a file or not.
      */
-    bool MonitorReadDirectoryChangesFiles::IsFile(const ManagedEventAction action, const std::wstring& path) const
+    bool MonitorWinFiles::IsFile(const ManagedEventAction action, const std::wstring& path) const
     {
       try
       {
@@ -100,7 +100,7 @@ namespace myoddweb
           return true;
 
         default:
-          return MonitorReadDirectoryChangesCommon::IsFile(action, path);
+          return MonitorWinCommon::IsFile(action, path);
         }
       }
       catch (...)

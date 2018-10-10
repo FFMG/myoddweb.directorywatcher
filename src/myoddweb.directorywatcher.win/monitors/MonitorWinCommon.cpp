@@ -14,7 +14,7 @@
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #include <process.h>
 #include <windows.h>
-#include "MonitorReadDirectoryChangesCommon.h"
+#include "MonitorWinCommon.h"
 #include "../utils/Io.h"
 #include "../utils/EventError.h"
 
@@ -25,7 +25,7 @@ namespace myoddweb
     /**
      * \brief Create the Monitor that uses ReadDirectoryChanges
      */
-    MonitorReadDirectoryChangesCommon::MonitorReadDirectoryChangesCommon(
+    MonitorWinCommon::MonitorWinCommon(
       Monitor& parent,
       const unsigned long bufferLength
     ) :
@@ -35,7 +35,7 @@ namespace myoddweb
     {
     }
 
-    MonitorReadDirectoryChangesCommon::~MonitorReadDirectoryChangesCommon()
+    MonitorWinCommon::~MonitorWinCommon()
     {
       Reset();
     }
@@ -44,7 +44,7 @@ namespace myoddweb
      * \brief https://docs.microsoft.com/en-gb/windows/desktop/api/winbase/nf-winbase-readdirectorychangesexw
      * \return success or not.
      */
-    bool MonitorReadDirectoryChangesCommon::Start()
+    bool MonitorWinCommon::Start()
     {
       // close everything
       Reset();
@@ -62,7 +62,7 @@ namespace myoddweb
     /**
      * \brief Stop monitoring
      */
-    void MonitorReadDirectoryChangesCommon::Stop()
+    void MonitorWinCommon::Stop()
     {
       Reset();
     }
@@ -70,7 +70,7 @@ namespace myoddweb
     /**
      * \brief Close all the handles, delete pointers and reset all the values.
      */
-    void MonitorReadDirectoryChangesCommon::Reset()
+    void MonitorWinCommon::Reset()
     {
       // stop and wait for the buffer to complete.
       // we have to wait first otherwise the next step
@@ -84,7 +84,7 @@ namespace myoddweb
     /**
      * \brief Stop the worker thread, wait for it to complete and then delete it.
      */
-    void MonitorReadDirectoryChangesCommon::StopAndResetThread()
+    void MonitorWinCommon::StopAndResetThread()
     {
       if (_th == nullptr)
       {
@@ -109,7 +109,7 @@ namespace myoddweb
      * \brief Open the directory we want to watch
      * \return if there was a problem opening the file.
      */
-    bool MonitorReadDirectoryChangesCommon::OpenDirectory()
+    bool MonitorWinCommon::OpenDirectory()
     {
       // check if this was done alread
       // we cannot use IsOpen() as INVALID_HANDLE_VALUE would cause a return false.
@@ -150,7 +150,7 @@ namespace myoddweb
     /**
      * \brief Start the worker thread so we can monitor for events.
      */
-    void MonitorReadDirectoryChangesCommon::StartWorkerThread()
+    void MonitorWinCommon::StartWorkerThread()
     {
       // stop the old one... if any
       StopAndResetThread();
@@ -160,14 +160,14 @@ namespace myoddweb
       _futureObj = _exitSignal.get_future();
 
       // we can now looking for changes.
-      _th = new std::thread(&MonitorReadDirectoryChangesCommon::RunThread, this);
+      _th = new std::thread(&MonitorWinCommon::RunThread, this);
     }
 
     /**
      * \brief the worker thread that runs the code itself.
      * \param obj pointer to this instance of the class.
      */
-    void MonitorReadDirectoryChangesCommon::RunThread(MonitorReadDirectoryChangesCommon* obj)
+    void MonitorWinCommon::RunThread(MonitorWinCommon* obj)
     {
       // Run the thread.
       obj->Run();
@@ -176,7 +176,7 @@ namespace myoddweb
     /**
      * \brief Begin the actual work
      */
-    void MonitorReadDirectoryChangesCommon::Run()
+    void MonitorWinCommon::Run()
     {
       // try and open the directory
       // if it is open already then nothing should happen here.
@@ -199,7 +199,7 @@ namespace myoddweb
     /**
      * \brief Start the read process
      */
-    void MonitorReadDirectoryChangesCommon::Read()
+    void MonitorWinCommon::Read()
     {
       if (!_data.IsValidHandle())
       {
@@ -230,14 +230,14 @@ namespace myoddweb
     /***
      * \brief The async callback function for ReadDirectoryChangesW
      */
-    void CALLBACK MonitorReadDirectoryChangesCommon::FileIoCompletionRoutine(
+    void CALLBACK MonitorWinCommon::FileIoCompletionRoutine(
       const unsigned long dwErrorCode,
       const unsigned long dwNumberOfBytesTransfered,
       _OVERLAPPED* lpOverlapped
     )
     {
       // get the object we are working with
-      auto obj = static_cast<MonitorReadDirectoryChangesCommon*>(lpOverlapped->hEvent);
+      auto obj = static_cast<MonitorWinCommon*>(lpOverlapped->hEvent);
 
       if (dwErrorCode == ERROR_OPERATION_ABORTED)
       {
@@ -288,7 +288,7 @@ namespace myoddweb
      *        we own this buffer and we mus delete it at the end.
      * \param pBuffer
      */
-    void MonitorReadDirectoryChangesCommon::ProcessNotificationFromBackup(const unsigned char* pBuffer) const
+    void MonitorWinCommon::ProcessNotificationFromBackup(const unsigned char* pBuffer) const
     {
       try
       {
@@ -385,7 +385,7 @@ namespace myoddweb
      * \param path the file we are checking.
      * \return if the string given is a file or not.
      */
-    bool MonitorReadDirectoryChangesCommon::IsFile(const ManagedEventAction action, const std::wstring& path) const
+    bool MonitorWinCommon::IsFile(const ManagedEventAction action, const std::wstring& path) const
     {
       try
       {

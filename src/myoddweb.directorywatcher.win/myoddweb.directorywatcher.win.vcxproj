@@ -158,10 +158,10 @@
   <ItemGroup>
     <ClInclude Include="monitors\Monitor.h" />
     <ClInclude Include="monitors\MonitorData.h" />
-    <ClInclude Include="monitors\MonitorReadDirectoryChanges.h" />
-    <ClInclude Include="monitors\MonitorReadDirectoryChangesCommon.h" />
-    <ClInclude Include="monitors\MonitorReadDirectoryChangesDirectories.h" />
-    <ClInclude Include="monitors\MonitorReadDirectoryChangesFiles.h" />
+    <ClInclude Include="monitors\MonitorWin.h" />
+    <ClInclude Include="monitors\MonitorWinCommon.h" />
+    <ClInclude Include="monitors\MonitorWinDirectories.h" />
+    <ClInclude Include="monitors\MonitorWinFiles.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="utils\Collector.h" />
@@ -188,25 +188,25 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="monitors\MonitorReadDirectoryChanges.cpp">
+    <ClCompile Include="monitors\MonitorWin.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="monitors\MonitorReadDirectoryChangesCommon.cpp">
+    <ClCompile Include="monitors\MonitorWinCommon.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="monitors\MonitorReadDirectoryChangesDirectories.cpp">
+    <ClCompile Include="monitors\MonitorWinDirectories.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="monitors\MonitorReadDirectoryChangesFiles.cpp">
+    <ClCompile Include="monitors\MonitorWinFiles.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
