@@ -13,6 +13,9 @@
     </ClCompile>
     <ClCompile Include="IoTests.cpp" />
     <ClCompile Include="CollectorTests.cpp" />
+    <ClCompile Include="..\myoddweb.directorywatcher.win\monitors\MonitorData.cpp">
+      <Filter>win\monitors</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -28,6 +31,10 @@
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Io.h">
       <Filter>win\utils</Filter>
     </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\MonitorData.h">
+      <Filter>win\monitors</Filter>
+    </ClInclude>
+    <ClInclude Include="MonitorDataTests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="win">
@@ -35,6 +42,9 @@
     </Filter>
     <Filter Include="win\utils">
       <UniqueIdentifier>{a5c75545-6246-46eb-b482-0d0bbb707d05}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="win\monitors">
+      <UniqueIdentifier>{196163e7-58dd-46a6-8a8e-4745c9020cf8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
