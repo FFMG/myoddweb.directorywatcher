@@ -256,18 +256,27 @@ namespace myoddweb.directorywatcher
       _source = new CancellationTokenSource();
 
       // start the next task
-      _task = ManageEvents( _source.Token );
+      _task = ProcessEvents( _source.Token );
     }
 
-    private async Task<bool> ManageEvents( CancellationToken token )
+    /// <summary>
+    /// Thread that will process the events and call the watchers.
+    /// This is a long running thread that we will keep calling while we have events
+    /// or until stop is called.
+    /// </summary>
+    /// <param name="token"></param>
+    /// <returns></returns>
+    private async Task<bool> ProcessEvents( CancellationToken token )
     {
       //  how big we want to allow the list of tasks to be.
+      // before we 'clean' the completed list.
       const int maxNumTasks = 1028;
 
-      // the list of tasks.
-      var tasks = new List<Task>();
+      // the list of tasks .
+      var tasks = new List<Task>(maxNumTasks);
       try
       {
+        // loop around while we process events.
         while (!_source.IsCancellationRequested)
         {
           try
@@ -278,8 +287,10 @@ namespace myoddweb.directorywatcher
               continue;
             }
 
+            // then call the various actions.
             foreach (var e in events)
             {
+              // do we have an error.
               if (e.Error != EventError.None)
               {
                 if (OnErrorAsync != null)
@@ -298,7 +309,6 @@ namespace myoddweb.directorywatcher
                     tasks.Add(Task.Run(() => 
                       OnAddedAsync?.Invoke(new FileSystemEvent(e), token), token));
                   }
-
                   break;
 
                 case EventAction.Removed:
@@ -307,7 +317,6 @@ namespace myoddweb.directorywatcher
                     tasks.Add(Task.Run(() => 
                       OnRemovedAsync?.Invoke(new FileSystemEvent(e), token), token));
                   }
-
                   break;
 
                 case EventAction.Touched:
@@ -316,7 +325,6 @@ namespace myoddweb.directorywatcher
                     tasks.Add(Task.Run(() => 
                       OnTouchedAsync?.Invoke(new FileSystemEvent(e), token), token));
                   }
-
                   break;
 
                 case EventAction.Renamed:
@@ -325,7 +333,6 @@ namespace myoddweb.directorywatcher
                     tasks.Add(Task.Run(() => 
                       OnRenamedAsync?.Invoke(new RenamedFileSystemEvent(e), token), token));
                   }
-
                   break;
               }
 
@@ -335,11 +342,20 @@ namespace myoddweb.directorywatcher
               }
             }
           }
-          catch (Exception)
+          catch
           {
-            if (OnErrorAsync != null)
+            try
             {
-              tasks.Add(Task.Run(() => OnErrorAsync(new utils.EventError(EventError.General, DateTime.UtcNow), token), token));
+              // on of the functions threw an error.
+              if (OnErrorAsync != null)
+              {
+                tasks.Add(Task.Run(() => OnErrorAsync(new utils.EventError(EventError.General, DateTime.UtcNow), token), token));
+              }
+            }
+            catch
+            {
+              // the error .. threw an error...
+              // I give up with this error.
             }
           }
           finally
@@ -365,7 +381,6 @@ namespace myoddweb.directorywatcher
       }
       return true;
     }
-
     #endregion
   }
 }

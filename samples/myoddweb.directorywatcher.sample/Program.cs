@@ -14,6 +14,7 @@
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace myoddweb.directorywatcher.sample
 {
@@ -35,29 +36,15 @@ namespace myoddweb.directorywatcher.sample
             watch.Add(new Request(drv.Name, true));
           }
         }
-        //watch.Add(new Request("c:\\", true));
-        //watch.Add(new Request("d:\\", true));
-        //watch.Add(new Request("H:\\temp", true));
-        //watch.Add(new Request("h:\\", true));
 
-        // prepare the console watcher.
+        // prepare the console watcher so we can output pretty messages.
         var cw = new ConsoleWatch(watch);
 
         // start watching
         watch.Start();
-        
-        var exitEvent = new ManualResetEvent(false);
-        Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs e)
-        {
-          e.Cancel = true;
-          Console.WriteLine("Stop detected.");
-          exitEvent.Set();
-        };
 
-        // do something
-        // then wait for the user to press a key
-
-        exitEvent.WaitOne();
+        // listen for the Ctrl+C 
+        WaitForCtrlC();
 
         // stop everything.
         watch.Stop();
@@ -71,6 +58,18 @@ namespace myoddweb.directorywatcher.sample
           Console.WriteLine(ex.Message);
         }
       }
+    }
+
+    private static void WaitForCtrlC()
+    {
+      var exitEvent = new ManualResetEvent(false);
+      Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs e)
+      {
+        e.Cancel = true;
+        Console.WriteLine("Stop detected.");
+        exitEvent.Set();
+      };
+      exitEvent.WaitOne();
     }
   }
 }
