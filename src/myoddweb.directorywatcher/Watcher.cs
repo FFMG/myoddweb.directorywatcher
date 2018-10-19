@@ -334,6 +334,9 @@ namespace myoddweb.directorywatcher
                       OnRenamedAsync?.Invoke(new RenamedFileSystemEvent(e), token), token));
                   }
                   break;
+
+                default:
+                  throw new NotSupportedException( $"Received an unknown Action: {e.Action.ToString("G")}");
               }
 
               if (tasks.Count > maxNumTasks)
