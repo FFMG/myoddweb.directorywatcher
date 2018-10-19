@@ -336,7 +336,7 @@ namespace myoddweb.directorywatcher
                   break;
 
                 default:
-                  throw new NotSupportedException( $"Received an unknown Action: {e.Action.ToString("G")}");
+                  throw new NotSupportedException( $"Received an unknown Action: {e.Action:G}");
               }
 
               if (tasks.Count > maxNumTasks)
