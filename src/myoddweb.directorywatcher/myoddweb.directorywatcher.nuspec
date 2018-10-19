@@ -11,6 +11,7 @@
     <tags>DirectoryWatcher,FileSystemWatcher,IO,FileSystem,System.IO.FileSystemWatcher,4.5.2,Opensource</tags>
     <copyright>@copyright 2017-2018 Florent Guelfucci</copyright>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <repository>https://github.com/FFMG/myoddweb.directorywatcher</repository>
     <language>en-UK</language>
     <dependencies>
       <group targetFramework="net452"></group>
