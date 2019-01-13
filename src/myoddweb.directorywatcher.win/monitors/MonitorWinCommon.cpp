@@ -13,7 +13,7 @@
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #include <process.h>
-#include <windows.h>
+#include <Windows.h>
 #include "MonitorWinCommon.h"
 #include "../utils/Io.h"
 #include "../utils/EventError.h"
@@ -122,8 +122,8 @@ namespace myoddweb
       const auto shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
       const auto fileAttr = FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED;
 
-      auto hDirectory = ::CreateFileW(
-        _parent.Path().c_str(),					    // the path we are watching
+      const auto hDirectory = ::CreateFileW(
+        _parent.Path().c_str(),			// the path we are watching
         FILE_LIST_DIRECTORY,        // required for ReadDirectoryChangesW( ... )
         shareMode,
         nullptr,                    // security descriptor
@@ -304,7 +304,7 @@ namespace myoddweb
         std::wstring oldFilename;
 
         // get the file information
-        auto pRecord = (FILE_NOTIFY_INFORMATION*)pBuffer;;
+        auto pRecord = (FILE_NOTIFY_INFORMATION*)pBuffer;
         for (;;)
         {
           // get the filename

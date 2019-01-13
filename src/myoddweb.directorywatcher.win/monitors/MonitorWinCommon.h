@@ -44,7 +44,7 @@ namespace myoddweb
       static void CALLBACK FileIoCompletionRoutine(
         unsigned long dwErrorCode,							  // completion code
         unsigned long dwNumberOfBytesTransfered,	// number of bytes transferred
-        _OVERLAPPED* lpOverlapped         // I/O information buffer
+        _OVERLAPPED* lpOverlapped                 // I/O information buffer
       );
 
       static void RunThread(MonitorWinCommon* obj);

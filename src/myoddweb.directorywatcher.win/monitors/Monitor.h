@@ -26,7 +26,7 @@ namespace myoddweb
     class Monitor
     {
     public:
-      Monitor(__int64 id, const Request& request);
+      Monitor(__int64 id, Request request);
       virtual ~Monitor();
 
       __int64 Id() const;

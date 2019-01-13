@@ -13,15 +13,16 @@
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #include <Windows.h>
+#include <utility>
 #include "Monitor.h"
 
 namespace myoddweb
 {
   namespace directorywatcher
   {
-    Monitor::Monitor(__int64 id, const Request& request) :
+    Monitor::Monitor(const __int64 id, Request request) :
       _id(id),
-      _request(request),
+      _request(std::move(request)),
       _eventCollector(nullptr)
     {
       _eventCollector = new Collector();
