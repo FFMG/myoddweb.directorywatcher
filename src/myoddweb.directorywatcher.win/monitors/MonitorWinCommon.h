@@ -13,7 +13,7 @@
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #pragma once
-#include <windows.h>
+#include <Windows.h>
 #include "Monitor.h"
 #include "MonitorData.h"
 #include <future>
@@ -27,6 +27,11 @@ namespace myoddweb
     {
     public:
       MonitorWinCommon( const Monitor& parent, unsigned long bufferLength);
+
+    private:
+      // prevent copies.
+      MonitorWinCommon(const MonitorWinCommon& ) = delete;
+      MonitorWinCommon& operator=(const MonitorWinCommon&) = delete;
 
     public:
       virtual ~MonitorWinCommon();

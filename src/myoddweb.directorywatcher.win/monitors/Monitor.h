@@ -53,6 +53,10 @@ namespace myoddweb
       const Request _request;
 
       Collector* _eventCollector;
+
+    private:
+      Monitor(const Monitor&) = delete;
+      Monitor& operator=(const Monitor&) = delete;
     };
   }
 }
