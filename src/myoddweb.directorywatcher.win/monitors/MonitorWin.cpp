@@ -65,14 +65,21 @@ namespace myoddweb
     {
       Stop();
 
-      // start monitoring the directories
-      _directories = new MonitorWinDirectories( *this, _bufferLength );
-      _directories->Start();
+      try
+      {
+        // start monitoring the directories
+        _directories = new MonitorWinDirectories(*this, _bufferLength);
+        _directories->Start();
 
-      // and then the files.
-      _files = new MonitorWinFiles(*this, _bufferLength);
-      _files->Start();
-
+        // and then the files.
+        _files = new MonitorWinFiles(*this, _bufferLength);
+        _files->Start();
+      }
+      catch(...)
+      {
+        AddEventError(EventError::CannotStart);
+        return false;
+      }
       return true;
     }
 
