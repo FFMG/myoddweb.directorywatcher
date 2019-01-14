@@ -26,7 +26,7 @@ namespace myoddweb
     class MonitorWinCommon
     {
     public:
-      MonitorWinCommon( Monitor& parent, unsigned long bufferLength);
+      MonitorWinCommon( const Monitor& parent, unsigned long bufferLength);
 
     public:
       virtual ~MonitorWinCommon();
@@ -69,7 +69,7 @@ namespace myoddweb
       /**
        * \brief the parent monitor
        */
-      Monitor& _parent;
+      const Monitor& _parent;
 #pragma region
       /**
        * \brief signal to stop the thread.

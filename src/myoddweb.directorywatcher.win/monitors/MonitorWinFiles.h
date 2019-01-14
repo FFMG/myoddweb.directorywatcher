@@ -24,7 +24,7 @@ namespace myoddweb
     class MonitorWinFiles : public MonitorWinCommon
     {
     public:
-      MonitorWinFiles(Monitor& parent, unsigned long bufferLength);
+      MonitorWinFiles(const Monitor& parent, unsigned long bufferLength);
 
     public:
       virtual ~MonitorWinFiles() = default;

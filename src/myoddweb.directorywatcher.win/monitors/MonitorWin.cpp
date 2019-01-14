@@ -65,10 +65,12 @@ namespace myoddweb
     {
       Stop();
 
+      // start monitoring the directories
       _directories = new MonitorWinDirectories( *this, _bufferLength );
-      _files = new MonitorWinFiles(*this, _bufferLength);
-
       _directories->Start();
+
+      // and then the files.
+      _files = new MonitorWinFiles(*this, _bufferLength);
       _files->Start();
 
       return true;

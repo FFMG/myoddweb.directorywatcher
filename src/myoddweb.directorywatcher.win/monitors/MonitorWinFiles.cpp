@@ -22,7 +22,7 @@ namespace myoddweb
     /**
      * \brief Create the Monitor that uses ReadDirectoryChanges
      */
-    MonitorWinFiles::MonitorWinFiles(Monitor& parent, unsigned long bufferLength) :
+    MonitorWinFiles::MonitorWinFiles(const Monitor& parent, unsigned long bufferLength) :
       MonitorWinCommon(parent, bufferLength)
     {
     }

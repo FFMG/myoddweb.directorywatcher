@@ -24,7 +24,7 @@ namespace myoddweb
     class MonitorWinDirectories : public MonitorWinCommon
     {
     public:
-      MonitorWinDirectories(Monitor& parent, unsigned long bufferLength);
+      MonitorWinDirectories(const Monitor& parent, unsigned long bufferLength);
 
     public:
       virtual ~MonitorWinDirectories() = default;
