@@ -12,29 +12,39 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
-#pragma once
-#include "Monitor.h"
-#include "MonitorWinCommon.h"
-#include "../utils/EventAction.h"
+#include <process.h>
+#include "MonitorDirectories.h"
 
 namespace myoddweb
 {
   namespace directorywatcher
   {
-    class MonitorWinDirectories : public MonitorWinCommon
+    namespace win
     {
-    public:
-      MonitorWinDirectories(const Monitor& parent, unsigned long bufferLength);
+      /**
+       * \brief Create the Monitor that uses ReadDirectoryChanges
+       */
+      MonitorDirectories::MonitorDirectories(const Monitor& parent, const unsigned long bufferLength) :
+        MonitorCommon(parent, bufferLength)
+      {
+      }
 
-    public:
-      virtual ~MonitorWinDirectories() = default;
-
-    protected:
       /**
        * Get the notification filter.
        * \return the notification filter
        */
-      unsigned long GetNotifyFilter() const override;
+      unsigned long MonitorDirectories::GetNotifyFilter() const
+      {
+        // what we are looking for.
+        // https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-findfirstchangenotificationa
+        // https://docs.microsoft.com/en-gb/windows/desktop/api/WinBase/nf-winbase-readdirectorychangesw
+        return
+          // Any directory-name change in the watched directory or subtree causes a change 
+          // notification wait operation to return. 
+          // Changes include creating or deleting a directory
+          FILE_NOTIFY_CHANGE_DIR_NAME
+          ;
+      }
 
       /**
        * \brief check if a given string is a file or a directory.
@@ -42,7 +52,12 @@ namespace myoddweb
        * \param path the file we are checking.
        * \return if the string given is a file or not.
        */
-      bool IsFile( EventAction action, const std::wstring& path) const override;
-    };
+      bool MonitorDirectories::IsFile(const EventAction action, const std::wstring& path) const
+      {
+        // we are the directory monitor
+        // so it can never be a file.
+        return false;
+      }
+    }
   }
 }

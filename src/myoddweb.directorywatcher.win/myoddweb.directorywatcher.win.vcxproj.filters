@@ -21,16 +21,16 @@
     <ClCompile Include="monitors\MonitorData.cpp">
       <Filter>monitors</Filter>
     </ClCompile>
-    <ClCompile Include="monitors\MonitorWin.cpp">
-      <Filter>monitors</Filter>
+    <ClCompile Include="monitors\win\MonitorCommon.cpp">
+      <Filter>monitors\win</Filter>
     </ClCompile>
-    <ClCompile Include="monitors\MonitorWinCommon.cpp">
-      <Filter>monitors</Filter>
+    <ClCompile Include="monitors\win\MonitorDirectories.cpp">
+      <Filter>monitors\win</Filter>
     </ClCompile>
-    <ClCompile Include="monitors\MonitorWinDirectories.cpp">
-      <Filter>monitors</Filter>
+    <ClCompile Include="monitors\win\MonitorFiles.cpp">
+      <Filter>monitors\win</Filter>
     </ClCompile>
-    <ClCompile Include="monitors\MonitorWinFiles.cpp">
+    <ClCompile Include="monitors\WinMonitor.cpp">
       <Filter>monitors</Filter>
     </ClCompile>
   </ItemGroup>
@@ -71,16 +71,16 @@
     <ClInclude Include="monitors\MonitorData.h">
       <Filter>monitors</Filter>
     </ClInclude>
-    <ClInclude Include="monitors\MonitorWin.h">
-      <Filter>monitors</Filter>
+    <ClInclude Include="monitors\win\MonitorCommon.h">
+      <Filter>monitors\win</Filter>
     </ClInclude>
-    <ClInclude Include="monitors\MonitorWinCommon.h">
-      <Filter>monitors</Filter>
+    <ClInclude Include="monitors\win\MonitorDirectories.h">
+      <Filter>monitors\win</Filter>
     </ClInclude>
-    <ClInclude Include="monitors\MonitorWinDirectories.h">
-      <Filter>monitors</Filter>
+    <ClInclude Include="monitors\win\MonitorFiles.h">
+      <Filter>monitors\win</Filter>
     </ClInclude>
-    <ClInclude Include="monitors\MonitorWinFiles.h">
+    <ClInclude Include="monitors\WinMonitor.h">
       <Filter>monitors</Filter>
     </ClInclude>
   </ItemGroup>
@@ -90,6 +90,9 @@
     </Filter>
     <Filter Include="monitors">
       <UniqueIdentifier>{3a7a7900-1bb3-42f1-a795-90260895d559}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="monitors\win">
+      <UniqueIdentifier>{a32f6589-bd87-4036-806b-113b8ce4df6a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

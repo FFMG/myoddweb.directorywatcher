@@ -13,36 +13,38 @@
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #pragma once
-#include "Monitor.h"
-#include "MonitorWinCommon.h"
-#include "../utils/EventAction.h"
+#include "MonitorCommon.h"
+#include "../../utils/EventAction.h"
 
 namespace myoddweb
 {
   namespace directorywatcher
   {
-    class MonitorWinFiles : public MonitorWinCommon
+    namespace win
     {
-    public:
-      MonitorWinFiles(const Monitor& parent, unsigned long bufferLength);
+      class MonitorDirectories : public MonitorCommon
+      {
+      public:
+        MonitorDirectories(const Monitor& parent, unsigned long bufferLength);
 
-    public:
-      virtual ~MonitorWinFiles() = default;
+      public:
+        virtual ~MonitorDirectories() = default;
 
-    protected:
-      /**
-       * Get the notification filter.
-       * \return the notification filter
-       */
-      unsigned long GetNotifyFilter() const override;
+      protected:
+        /**
+         * Get the notification filter.
+         * \return the notification filter
+         */
+        unsigned long GetNotifyFilter() const override;
 
-      /**
-       * \brief check if a given string is a file or a directory.
-       * \param action the action we are looking at
-       * \param path the file we are checking.
-       * \return if the string given is a file or not.
-       */
-      bool IsFile(EventAction action, const std::wstring& path) const override;
-    };
+        /**
+         * \brief check if a given string is a file or a directory.
+         * \param action the action we are looking at
+         * \param path the file we are checking.
+         * \return if the string given is a file or not.
+         */
+        bool IsFile(EventAction action, const std::wstring& path) const override;
+      };
+    }
   }
 }

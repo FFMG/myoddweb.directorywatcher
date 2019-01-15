@@ -14,7 +14,7 @@
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #include "MonitorsManager.h"
 #include "Lock.h"
-#include "../monitors/MonitorWin.h"
+#include "../monitors/WinMonitor.h"
 
 namespace myoddweb
 {
@@ -180,7 +180,7 @@ namespace myoddweb
           }
 
           // create the new monitor
-          const auto monitor = new MonitorWin(id, request);
+          const auto monitor = new WinMonitor(id, request);
 
           // first add it to the list
           _monitors[monitor->Id()] = monitor;

@@ -12,11 +12,11 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
-#include "MonitorWin.h"
+#include "WinMonitor.h"
 #include <string>
 #include <process.h>
-#include "MonitorWinDirectories.h"
-#include "MonitorWinFiles.h"
+#include "win/MonitorDirectories.h"
+#include "win/MonitorFiles.h"
 
 namespace myoddweb
 {
@@ -27,15 +27,15 @@ namespace myoddweb
      * ReadDirectoryChangesW fails with ERROR_INVALID_PARAMETER when the buffer length is greater than 64KB
      * \see https://docs.microsoft.com/en-us/windows/desktop/api/winbase/nf-winbase-readdirectorychangesw
      */
-    #define MAX_BUFFER_SIZE (unsigned long)65536
+#define MAX_BUFFER_SIZE (unsigned long)65536
 
-    /**
-     * \brief Create the Monitor that uses ReadDirectoryChanges
-     * \param id the unique id of this monitor
-     * \param request details of the request.
-     */
-    MonitorWin::MonitorWin( const __int64 id, const Request& request) :
-      MonitorWin(id, request, MAX_BUFFER_SIZE )
+     /**
+      * \brief Create the Monitor that uses ReadDirectoryChanges
+      * \param id the unique id of this monitor
+      * \param request details of the request.
+      */
+    WinMonitor::WinMonitor(const __int64 id, const Request& request) :
+      WinMonitor(id, request, MAX_BUFFER_SIZE)
     {
     }
 
@@ -45,37 +45,37 @@ namespace myoddweb
      * \param request details of the request.
      * \param bufferLength the size of the buffer
      */
-    MonitorWin::MonitorWin( const __int64 id, const Request& request, const unsigned long bufferLength) :
+    WinMonitor::WinMonitor(const __int64 id, const Request& request, const unsigned long bufferLength) :
       Monitor(id, request),
       _directories(nullptr),
-      _files( nullptr),
+      _files(nullptr),
       _bufferLength(bufferLength)
     {
     }
 
-    MonitorWin::~MonitorWin()
+    WinMonitor::~WinMonitor()
     {
-      MonitorWin::Stop();
+      WinMonitor::Stop();
     }
 
     /**
      * \brief Stop monitoring
      */
-    bool MonitorWin::Start()
+    bool WinMonitor::Start()
     {
       Stop();
 
       try
       {
         // start monitoring the directories
-        _directories = new MonitorWinDirectories(*this, _bufferLength);
+        _directories = new win::MonitorDirectories(*this, _bufferLength);
         _directories->Start();
 
         // and then the files.
-        _files = new MonitorWinFiles(*this, _bufferLength);
+        _files = new win::MonitorFiles(*this, _bufferLength);
         _files->Start();
       }
-      catch(...)
+      catch (...)
       {
         AddEventError(EventError::CannotStart);
         return false;
@@ -86,7 +86,7 @@ namespace myoddweb
     /**
      * \brief Stop monitoring
      */
-    void MonitorWin::Stop()
+    void WinMonitor::Stop()
     {
       if (_directories != nullptr)
       {
