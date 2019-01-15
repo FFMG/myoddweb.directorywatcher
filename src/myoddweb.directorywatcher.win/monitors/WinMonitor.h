@@ -16,7 +16,7 @@
 #include <Windows.h>
 #include "Monitor.h"
 #include <future>
-#include "win/MonitorCommon.h"
+#include "win/Common.h"
 
 namespace myoddweb
 {
@@ -37,8 +37,8 @@ namespace myoddweb
       void Stop() override;
 
     private:
-      win::MonitorCommon* _directories;
-      win::MonitorCommon* _files;
+      win::Common* _directories;
+      win::Common* _files;
 
       const unsigned long _bufferLength;
     };

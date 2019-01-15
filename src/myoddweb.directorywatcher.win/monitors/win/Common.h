@@ -15,7 +15,7 @@
 #pragma once
 #include <Windows.h>
 #include "../Monitor.h"
-#include "../MonitorData.h"
+#include "Data.h"
 #include <future>
 #include "../../utils/EventAction.h"
 
@@ -25,25 +25,27 @@ namespace myoddweb
   {
     namespace win
     {
-      class MonitorCommon
+      class Common
       {
       public:
-        MonitorCommon(const Monitor& parent, unsigned long bufferLength);
+        Common(const Monitor& parent, unsigned long bufferLength);
 
       private:
-        // prevent copies.
-        MonitorCommon(const MonitorCommon&) = delete;
-        MonitorCommon& operator=(const MonitorCommon&) = delete;
+        /**
+         * \brief prevent copies.
+         */
+        Common(const Common&) = delete;
+        Common& operator=(const Common&) = delete;
 
       public:
-        virtual ~MonitorCommon();
+        virtual ~Common();
 
         virtual bool Start();
         virtual void Stop();
 
       protected:
         /**
-         * Get the notification filter.
+         * \brief Get the notification filter.
          * \return the notification filter
          */
         virtual unsigned long GetNotifyFilter() const = 0;
@@ -54,7 +56,7 @@ namespace myoddweb
           _OVERLAPPED* lpOverlapped                 // I/O information buffer
         );
 
-        static void RunThread(MonitorCommon* obj);
+        static void RunThread(Common* obj);
 
       private:
 #pragma region
@@ -71,7 +73,7 @@ namespace myoddweb
         /**
          * \brief all the data used by the monitor.
          */
-        MonitorData _data;
+        Data _data;
 
         /**
          * \brief the parent monitor

@@ -14,7 +14,7 @@
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #include <process.h>
 #include <Windows.h>
-#include "MonitorCommon.h"
+#include "Common.h"
 #include "../../utils/Io.h"
 #include "../../utils/EventError.h"
 
@@ -27,7 +27,7 @@ namespace myoddweb
       /**
        * \brief Create the Monitor that uses ReadDirectoryChanges
        */
-      MonitorCommon::MonitorCommon(
+      Common::Common(
         const Monitor& parent,
         const unsigned long bufferLength
       ) :
@@ -37,7 +37,7 @@ namespace myoddweb
       {
       }
 
-      MonitorCommon::~MonitorCommon()
+      Common::~Common()
       {
         Reset();
       }
@@ -46,7 +46,7 @@ namespace myoddweb
        * \brief https://docs.microsoft.com/en-gb/windows/desktop/api/winbase/nf-winbase-readdirectorychangesexw
        * \return success or not.
        */
-      bool MonitorCommon::Start()
+      bool Common::Start()
       {
         // close everything
         Reset();
@@ -64,7 +64,7 @@ namespace myoddweb
       /**
        * \brief Stop monitoring
        */
-      void MonitorCommon::Stop()
+      void Common::Stop()
       {
         Reset();
       }
@@ -72,7 +72,7 @@ namespace myoddweb
       /**
        * \brief Close all the handles, delete pointers and reset all the values.
        */
-      void MonitorCommon::Reset()
+      void Common::Reset()
       {
         // stop and wait for the buffer to complete.
         // we have to wait first otherwise the next step
@@ -86,7 +86,7 @@ namespace myoddweb
       /**
        * \brief Stop the worker thread, wait for it to complete and then delete it.
        */
-      void MonitorCommon::StopAndResetThread()
+      void Common::StopAndResetThread()
       {
         if (_th == nullptr)
         {
@@ -111,7 +111,7 @@ namespace myoddweb
        * \brief Open the directory we want to watch
        * \return if there was a problem opening the file.
        */
-      bool MonitorCommon::OpenDirectory()
+      bool Common::OpenDirectory()
       {
         // check if this was done alread
         // we cannot use IsOpen() as INVALID_HANDLE_VALUE would cause a return false.
@@ -152,7 +152,7 @@ namespace myoddweb
       /**
        * \brief Start the worker thread so we can monitor for events.
        */
-      void MonitorCommon::StartWorkerThread()
+      void Common::StartWorkerThread()
       {
         // stop the old one... if any
         StopAndResetThread();
@@ -162,14 +162,14 @@ namespace myoddweb
         _futureObj = _exitSignal.get_future();
 
         // we can now looking for changes.
-        _th = new std::thread(&MonitorCommon::RunThread, this);
+        _th = new std::thread(&Common::RunThread, this);
       }
 
       /**
        * \brief the worker thread that runs the code itself.
        * \param obj pointer to this instance of the class.
        */
-      void MonitorCommon::RunThread(MonitorCommon* obj)
+      void Common::RunThread(Common* obj)
       {
         // Run the thread.
         obj->Run();
@@ -178,7 +178,7 @@ namespace myoddweb
       /**
        * \brief Begin the actual work
        */
-      void MonitorCommon::Run()
+      void Common::Run()
       {
         // try and open the directory
         // if it is open already then nothing should happen here.
@@ -201,7 +201,7 @@ namespace myoddweb
       /**
        * \brief Start the read process
        */
-      void MonitorCommon::Read()
+      void Common::Read()
       {
         if (!_data.IsValidHandle())
         {
@@ -232,14 +232,14 @@ namespace myoddweb
       /***
        * \brief The async callback function for ReadDirectoryChangesW
        */
-      void CALLBACK MonitorCommon::FileIoCompletionRoutine(
+      void CALLBACK Common::FileIoCompletionRoutine(
         const unsigned long dwErrorCode,
         const unsigned long dwNumberOfBytesTransfered,
         _OVERLAPPED* lpOverlapped
       )
       {
         // get the object we are working with
-        auto obj = static_cast<MonitorCommon*>(lpOverlapped->hEvent);
+        auto obj = static_cast<Common*>(lpOverlapped->hEvent);
 
         if (dwErrorCode == ERROR_OPERATION_ABORTED)
         {
@@ -290,7 +290,7 @@ namespace myoddweb
        *        we own this buffer and we mus delete it at the end.
        * \param pBuffer
        */
-      void MonitorCommon::ProcessNotificationFromBackup(const unsigned char* pBuffer) const
+      void Common::ProcessNotificationFromBackup(const unsigned char* pBuffer) const
       {
         try
         {
@@ -387,7 +387,7 @@ namespace myoddweb
        * \param path the file we are checking.
        * \return if the string given is a file or not.
        */
-      bool MonitorCommon::IsFile(const EventAction action, const std::wstring& path) const
+      bool Common::IsFile(const EventAction action, const std::wstring& path) const
       {
         try
         {

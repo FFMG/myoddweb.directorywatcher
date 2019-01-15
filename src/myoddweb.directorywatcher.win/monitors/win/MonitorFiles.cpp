@@ -25,7 +25,7 @@ namespace myoddweb
        * \brief Create the Monitor that uses ReadDirectoryChanges
        */
       MonitorFiles::MonitorFiles(const Monitor& parent, unsigned long bufferLength) :
-        MonitorCommon(parent, bufferLength)
+        Common(parent, bufferLength)
       {
       }
 
@@ -102,7 +102,7 @@ namespace myoddweb
             return true;
 
           default:
-            return MonitorCommon::IsFile(action, path);
+            return Common::IsFile(action, path);
           }
         }
         catch (...)

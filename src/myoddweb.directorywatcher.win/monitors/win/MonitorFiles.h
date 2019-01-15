@@ -14,7 +14,7 @@
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #pragma once
 #include "../Monitor.h"
-#include "MonitorCommon.h"
+#include "Common.h"
 #include "../../utils/EventAction.h"
 
 namespace myoddweb
@@ -23,7 +23,7 @@ namespace myoddweb
   {
     namespace win
     {
-      class MonitorFiles : public MonitorCommon
+      class MonitorFiles : public Common
       {
       public:
         MonitorFiles(const directorywatcher::Monitor& parent, unsigned long bufferLength);

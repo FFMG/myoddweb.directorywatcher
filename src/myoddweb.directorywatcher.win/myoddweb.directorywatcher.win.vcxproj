@@ -157,9 +157,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="monitors\Monitor.h" />
-    <ClInclude Include="monitors\MonitorData.h" />
     <ClInclude Include="monitors\WinMonitor.h" />
-    <ClInclude Include="monitors\win\MonitorCommon.h" />
+    <ClInclude Include="monitors\win\Data.h" />
+    <ClInclude Include="monitors\win\Common.h" />
     <ClInclude Include="monitors\win\MonitorDirectories.h" />
     <ClInclude Include="monitors\win\MonitorFiles.h" />
     <ClInclude Include="stdafx.h" />
@@ -188,13 +188,13 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="monitors\MonitorData.cpp">
+    <ClCompile Include="monitors\win\Data.cpp" >
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="monitors\win\MonitorCommon.cpp" >
+    <ClCompile Include="monitors\win\Common.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
