@@ -22,13 +22,13 @@ namespace myoddweb
   {
     namespace win
     {
-      class MonitorDirectories : public Common
+      class Directories : public Common
       {
       public:
-        MonitorDirectories(const Monitor& parent, unsigned long bufferLength);
+        Directories(const Monitor& parent, unsigned long bufferLength);
 
       public:
-        virtual ~MonitorDirectories() = default;
+        virtual ~Directories() = default;
 
       protected:
         /**

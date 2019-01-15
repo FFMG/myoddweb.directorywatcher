@@ -15,8 +15,8 @@
 #include "WinMonitor.h"
 #include <string>
 #include <process.h>
-#include "win/MonitorDirectories.h"
-#include "win/MonitorFiles.h"
+#include "win/Directories.h"
+#include "win/Files.h"
 
 namespace myoddweb
 {
@@ -68,11 +68,11 @@ namespace myoddweb
       try
       {
         // start monitoring the directories
-        _directories = new win::MonitorDirectories(*this, _bufferLength);
+        _directories = new win::Directories(*this, _bufferLength);
         _directories->Start();
 
         // and then the files.
-        _files = new win::MonitorFiles(*this, _bufferLength);
+        _files = new win::Files(*this, _bufferLength);
         _files->Start();
       }
       catch (...)

@@ -23,13 +23,13 @@ namespace myoddweb
   {
     namespace win
     {
-      class MonitorFiles : public Common
+      class Files : public Common
       {
       public:
-        MonitorFiles(const directorywatcher::Monitor& parent, unsigned long bufferLength);
+        Files(const directorywatcher::Monitor& parent, unsigned long bufferLength);
 
       public:
-        virtual ~MonitorFiles() = default;
+        virtual ~Files() = default;
 
       protected:
         /**

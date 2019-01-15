@@ -18,22 +18,19 @@
     <ClCompile Include="utils\Io.cpp">
       <Filter>utils</Filter>
     </ClCompile>
-    <ClCompile Include="monitors\MonitorData.cpp">
-      <Filter>monitors</Filter>
-    </ClCompile>
-    <ClCompile Include="monitors\win\MonitorCommon.cpp">
-      <Filter>monitors\win</Filter>
-    </ClCompile>
-    <ClCompile Include="monitors\win\MonitorDirectories.cpp">
-      <Filter>monitors\win</Filter>
-    </ClCompile>
-    <ClCompile Include="monitors\win\MonitorFiles.cpp">
-      <Filter>monitors\win</Filter>
-    </ClCompile>
     <ClCompile Include="monitors\WinMonitor.cpp">
       <Filter>monitors</Filter>
     </ClCompile>
     <ClCompile Include="monitors\win\Data.cpp">
+      <Filter>monitors\win</Filter>
+    </ClCompile>
+    <ClCompile Include="monitors\win\Common.cpp">
+      <Filter>monitors\win</Filter>
+    </ClCompile>
+    <ClCompile Include="monitors\win\Directories.cpp">
+      <Filter>monitors\win</Filter>
+    </ClCompile>
+    <ClCompile Include="monitors\win\Files.cpp">
       <Filter>monitors\win</Filter>
     </ClCompile>
   </ItemGroup>
@@ -71,22 +68,19 @@
     <ClInclude Include="utils\EventAction.h">
       <Filter>utils</Filter>
     </ClInclude>
-    <ClInclude Include="monitors\MonitorData.h">
-      <Filter>monitors</Filter>
-    </ClInclude>
-    <ClInclude Include="monitors\win\MonitorCommon.h">
-      <Filter>monitors\win</Filter>
-    </ClInclude>
-    <ClInclude Include="monitors\win\MonitorDirectories.h">
-      <Filter>monitors\win</Filter>
-    </ClInclude>
-    <ClInclude Include="monitors\win\MonitorFiles.h">
-      <Filter>monitors\win</Filter>
-    </ClInclude>
     <ClInclude Include="monitors\WinMonitor.h">
       <Filter>monitors</Filter>
     </ClInclude>
     <ClInclude Include="monitors\win\Data.h">
+      <Filter>monitors\win</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\win\Files.h">
+      <Filter>monitors\win</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\win\Common.h">
+      <Filter>monitors\win</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\win\Directories.h">
       <Filter>monitors\win</Filter>
     </ClInclude>
   </ItemGroup>
