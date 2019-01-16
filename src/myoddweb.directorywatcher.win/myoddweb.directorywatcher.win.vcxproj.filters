@@ -33,6 +33,9 @@
     <ClCompile Include="monitors\win\Files.cpp">
       <Filter>monitors\win</Filter>
     </ClCompile>
+    <ClCompile Include="monitors\MultipleWinMonitor.cpp">
+      <Filter>monitors</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -82,6 +85,9 @@
     </ClInclude>
     <ClInclude Include="monitors\win\Directories.h">
       <Filter>monitors\win</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\MultipleWinMonitor.h">
+      <Filter>monitors</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

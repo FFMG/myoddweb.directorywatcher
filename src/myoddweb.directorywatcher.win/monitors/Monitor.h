@@ -26,8 +26,11 @@ namespace myoddweb
     class Monitor
     {
     public:
-      Monitor(__int64 id, Request request);
+      Monitor(__int64 id, const Request& request);
       virtual ~Monitor();
+
+      Monitor(const Monitor&) = delete;
+      Monitor& operator=(const Monitor&) = delete;
 
       __int64 Id() const;
       const std::wstring& Path() const;
@@ -39,24 +42,20 @@ namespace myoddweb
        * \param events the events we will be filling
        * \return the number of events we found.
        */
-      virtual long long GetEvents(std::vector<myoddweb::directorywatcher::Event>& events) const;
+      virtual long long GetEvents(std::vector<Event>& events) const;
 
       virtual bool Start() = 0;
       virtual void Stop() = 0;
 
       void AddEvent(EventAction action, const std::wstring& fileName, bool isFile ) const;
       void AddRenameEvent(const std::wstring& newFileName, const std::wstring& oldFilename, bool isFile) const;
-      void AddEventError(EventError action) const;
+      void AddEventError(EventError error) const;
 
-    private:
+    protected:
       const __int64 _id;
       const Request _request;
 
       Collector* _eventCollector;
-
-    private:
-      Monitor(const Monitor&) = delete;
-      Monitor& operator=(const Monitor&) = delete;
     };
   }
 }

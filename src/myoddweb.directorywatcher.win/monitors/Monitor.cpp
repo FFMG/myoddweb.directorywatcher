@@ -20,9 +20,9 @@ namespace myoddweb
 {
   namespace directorywatcher
   {
-    Monitor::Monitor(const __int64 id, Request request) :
+    Monitor::Monitor(const __int64 id, const Request& request) :
       _id(id),
-      _request(std::move(request)),
+      _request(request),
       _eventCollector(nullptr)
     {
       _eventCollector = new Collector();

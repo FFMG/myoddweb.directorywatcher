@@ -31,6 +31,13 @@ namespace myoddweb
       public:
         virtual ~Files() = default;
 
+      private:
+        /**
+         * \brief prevent copies.
+         */
+        Files(const Files&) = delete;
+        Files& operator=(const Files&) = delete;
+
       protected:
         /**
          * Get the notification filter.

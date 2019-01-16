@@ -27,7 +27,7 @@ namespace myoddweb
      * ReadDirectoryChangesW fails with ERROR_INVALID_PARAMETER when the buffer length is greater than 64KB
      * \see https://docs.microsoft.com/en-us/windows/desktop/api/winbase/nf-winbase-readdirectorychangesw
      */
-#define MAX_BUFFER_SIZE (unsigned long)65536
+    #define MAX_BUFFER_SIZE (unsigned long)65536
 
      /**
       * \brief Create the Monitor that uses ReadDirectoryChanges
@@ -59,7 +59,7 @@ namespace myoddweb
     }
 
     /**
-     * \brief Stop monitoring
+     * \brief Start monitoring
      */
     bool WinMonitor::Start()
     {

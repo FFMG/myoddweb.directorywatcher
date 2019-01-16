@@ -27,13 +27,14 @@ namespace myoddweb
     {
       class Common
       {
-      public:
+      protected:
         Common(const Monitor& parent, unsigned long bufferLength);
 
       private:
         /**
          * \brief prevent copies.
          */
+        Common() = delete;
         Common(const Common&) = delete;
         Common& operator=(const Common&) = delete;
 

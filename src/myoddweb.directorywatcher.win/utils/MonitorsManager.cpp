@@ -15,6 +15,7 @@
 #include "MonitorsManager.h"
 #include "Lock.h"
 #include "../monitors/WinMonitor.h"
+#include "../monitors/MultipleWinMonitor.h"
 
 namespace myoddweb
 {
@@ -180,7 +181,8 @@ namespace myoddweb
           }
 
           // create the new monitor
-          const auto monitor = new WinMonitor(id, request);
+//          const auto monitor = new WinMonitor(id, request);
+          const auto monitor = new MultipleWinMonitor(id, request);
 
           // first add it to the list
           _monitors[monitor->Id()] = monitor;
