@@ -59,7 +59,22 @@ namespace myoddweb
        * \param rhsIsFile if the rhs is a file, then we will not add a trailling back-slash
        * \return all the sub-folders, (if any).
        */
-      static std::wstring FolderJoin(const std::wstring& lhs, const std::wstring& rhs, bool rhsIsFile );
+      static std::wstring Join(const std::wstring& lhs, const std::wstring& rhs, bool rhsIsFile );
+
+      /**
+       * \brief Check if a given directory is a dot or double dot
+       * \param directory the lhs folder.
+       * \return if it is a dot directory or not
+       */
+      static bool IsDot(const std::wstring& directory );
+
+      /**
+       * \brief Create all the sub-requests for a prarent request.
+       * \param parent the parent request itselft.
+       * \param maxNumberOfChildren the maximum number of children we will allow
+       * \return all the requests.
+       */
+      static void CreateRequests(const Request& parent, const int maxNumberOfChildren, std::vector<Request>& requests );
     };
   }
 }

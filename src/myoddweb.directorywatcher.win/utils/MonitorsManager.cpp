@@ -165,7 +165,7 @@ namespace myoddweb
      * \param request the request we are creating
      * \return the value.
      */
-    Monitor* MonitorsManager::CreateAndStart(const Request& request)
+    Monitor* MonitorsManager::CreateAndddToList(const Request& request)
     {
       auto guard = Lock(_lock);
       try
@@ -173,7 +173,7 @@ namespace myoddweb
         for (;;)
         {
           // try and look for an used id.
-          auto id = GetId();
+          const auto id = GetId();
           if (_monitors.find(id) != _monitors.end())
           {
             // get another id.
@@ -181,32 +181,66 @@ namespace myoddweb
           }
 
           // create the new monitor
-//          const auto monitor = new WinMonitor(id, request);
-          const auto monitor = new MultipleWinMonitor(id, request);
+          Monitor* monitor;
+          if (request.Recursive)
+          {
+            monitor = new MultipleWinMonitor(id, request);
+          }
+          else
+          {
+            monitor = new WinMonitor(id, request);
+          }
 
-          // first add it to the list
+          // add it to the ilist
           _monitors[monitor->Id()] = monitor;
 
-          try
-          {
-            // and start monitoring for changes.
-            monitor->Start();
-          }
-          catch (...)
-          {
-            // exception while trying to start
-            // remove the one we just added.
-            StopAndDelete(monitor->Id());
-
-            // and return null.
-            return nullptr;
-          }
+          // and we are done with it.
           return monitor;
         }
       }
       catch (...)
       {
         // something broke while trying to create this monitor.
+        return nullptr;
+      }
+    }
+
+    /***
+     * \brief Create a monitor instance and add it to the list.
+     * \param request the request we are creating
+     * \return the value.
+     */
+    Monitor* MonitorsManager::CreateAndStart(const Request& request)
+    {
+      Monitor* monitor = nullptr;
+      try
+      {
+        // create a monitor and then add it to our list.
+        monitor = CreateAndddToList(request);
+
+        // we could not create the monitor for some reason
+        if( nullptr == monitor)
+        {
+          // @todo we need to log this here.
+          return nullptr;
+        }
+
+        // and start monitoring for changes.
+        monitor->Start();
+
+        // and return the monitor we created.
+        return monitor;
+      }
+      catch (...)
+      {
+        // exception while trying to start
+        // remove the one we just added.
+        if (monitor != nullptr)
+        {
+          StopAndDelete(monitor->Id());
+        }
+
+        // and return null.
         return nullptr;
       }
     }

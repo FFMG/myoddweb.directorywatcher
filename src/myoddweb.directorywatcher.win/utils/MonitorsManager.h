@@ -61,6 +61,13 @@ namespace myoddweb
       Monitor* CreateAndStart(const Request& request);
 
       /**
+       * \brief Create a monitor and add it to our list.
+       * \param request the request we are creating the monitor with
+       * \return the created monitor.
+       */
+      Monitor* CreateAndddToList(const Request& request);
+
+      /**
        * \brief stop a monitor and then get rid of it.
        * \paramn id the id we want to delete.
        * \return false if there was a problem or if it does not exist.

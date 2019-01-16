@@ -85,7 +85,7 @@ namespace myoddweb
      * \param rhsIsFile if the rhs is a file, then we will not add a trailling back-slash
      * \return all the sub-folders, (if any).
      */
-    std::wstring MultipleWinMonitor::FolderJoin(const std::wstring& lhs, const std::wstring& rhs, const bool rhsIsFile)
+    std::wstring MultipleWinMonitor::Join(const std::wstring& lhs, const std::wstring& rhs, const bool rhsIsFile)
     {
       const auto ll = lhs.length();
       if (ll > 0)
@@ -93,7 +93,7 @@ namespace myoddweb
         const auto c = lhs[ll - 1];
         if (c == L'\\' || c == L'/' )
         {
-          return FolderJoin(lhs.substr(0, ll - 1), rhs, rhsIsFile);
+          return Join(lhs.substr(0, ll - 1), rhs, rhsIsFile);
         }
       }
 
@@ -103,10 +103,20 @@ namespace myoddweb
         const auto c = rhs[0];
         if (c == L'\\' || c == L'/')
         {
-          return FolderJoin(lhs, rhs.substr(1, lr - 1), rhsIsFile);
+          return Join(lhs, rhs.substr(1, lr - 1), rhsIsFile);
         }
       }
       return lhs + L'\\' + rhs + (rhsIsFile ? L"" : L"\\");
+    }
+
+    /**
+     * \brief Check if a given directory is a dot or double dot
+     * \param directory the lhs folder.
+     * \return if it is a dot directory or not
+     */
+    bool MultipleWinMonitor::IsDot(const std::wstring& directory)
+    {
+      return directory == L"." || directory == L"..";
     }
 
     /**
@@ -117,15 +127,19 @@ namespace myoddweb
     std::vector<std::wstring> MultipleWinMonitor::GetAllSubFolders(const std::wstring& folder)
     {
       std::vector<std::wstring> names;
-      auto searchPath = FolderJoin( folder, L"/*.*", true );
+      auto searchPath = Join( folder, L"/*.*", true );
       WIN32_FIND_DATA fd= {};
       const auto hFind = ::FindFirstFile(searchPath.c_str(), &fd);
       if (hFind != INVALID_HANDLE_VALUE) {
         do {
           // read all (real) files in current folder
           // , delete '!' read other 2 default folder . and ..
-          if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY) {
-            names.emplace_back(FolderJoin( folder, fd.cFileName, false ));
+          if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY) 
+          {
+            if (!IsDot(fd.cFileName))
+            {
+              names.emplace_back(Join(folder, fd.cFileName, false));
+            }
           }
         } while (::FindNextFile(hFind, &fd));
         ::FindClose(hFind);
@@ -163,25 +177,60 @@ namespace myoddweb
     }
 
     /**
+     * \brief Create all the sub-requests for a prarent request.
+     * \param parent the parent request itselft.
+     * \param maxNumberOfChildren the maximum number of children we will allow
+     * \return all the requests.
+     */
+    void MultipleWinMonitor::CreateRequests(const Request& parent, const int maxNumberOfChildren, std::vector<Request>& requests )
+    {
+      // if the parent was not recursive
+      // then we do not need to go further.
+      if( !parent.Recursive )
+      {
+        requests.push_back(parent);
+        return;
+      }
+
+      // look for all the sub-paths
+      const auto subPaths = GetAllSubFolders(parent.Path);
+      if( static_cast<int>(subPaths.size()) > maxNumberOfChildren || subPaths.empty())
+      {
+        // we will breach the number of children
+        requests.push_back(parent);
+        return;
+      }
+
+      // adding all the sub-paths will not breach the limit.
+      // so we can add the parent, but non-recuresive.
+      requests.push_back({ parent.Path, false });
+
+      // now try and add all the subpath
+      for (const auto& path : subPaths)
+      {
+        const int updatedMaxNumberOfChildren = maxNumberOfChildren - subPaths.size() - requests.size();
+        CreateRequests({ path, true }, updatedMaxNumberOfChildren, requests );
+      }
+    }
+
+    /**
      * \brief create a list of monitors.
      */
     void MultipleWinMonitor::CreateMonitors(const Request& request)
     {
-      // if we are not recursive, no need to go further.
-      if( !request.Recursive )
-      {
-        _monitors.push_back(new WinMonitor(_monitors.size(), request));
-        return;
-      }
+      // (re)create all the requests.
+      std::vector<Request> requests;
+      CreateRequests(request, 256, requests);
 
-      // so add the non-recursive path
-      CreateMonitors({ request.Path, false });
-
-      // and add all the sub-directories.
-      const auto subPaths = GetAllSubFolders(request.Path);
-      for(const auto& path : subPaths )
+      // then add them all.
+      for(const auto& subRequest : requests)
       {
-        _monitors.push_back(new WinMonitor(_monitors.size(), { path, true }));
+        // the id does not really matter, but it will be
+        // unique to our list of monitors.
+        const auto id = _monitors.size();
+
+        // then create the monitor and add it to our list.
+        _monitors.push_back(new WinMonitor( id , subRequest ));
       }
     }
   }
