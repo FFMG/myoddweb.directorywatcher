@@ -21,6 +21,11 @@ namespace myoddweb
     MultipleWinMonitor::MultipleWinMonitor(const __int64 id, const Request& request) :
       Monitor(id, request)
     {
+      // use a standar monitor for non recursive items.
+      if( !request.Recursive )
+      {
+        throw std::invalid_argument("The multiple monitor must be recursive.");
+      }
     }
 
     MultipleWinMonitor::~MultipleWinMonitor()
@@ -39,7 +44,7 @@ namespace myoddweb
       try
       {
         // try and create the list of monitors.
-        CreateMonitors( _request );
+        CreateMonitors(_request, 256 );
 
         // and start them all.
         for (auto it = _monitors.begin(); it != _monitors.end(); ++it)
@@ -177,19 +182,32 @@ namespace myoddweb
     }
 
     /**
+     * \brief get the next available id.
+     * \return the next usable id.
+     */
+    long MultipleWinMonitor::GetNextId() const
+    {
+      // the id does not really matter, but it will be
+      // unique to our list of monitors.
+      return static_cast<long>( _monitors.size() );
+    }
+
+
+    /**
      * \brief Create all the sub-requests for a prarent request.
      * \param parent the parent request itselft.
      * \param maxNumberOfChildren the maximum number of children we will allow
-     * \param requests the ongoing list of requests
-     * \return all the requests.
      */
-    void MultipleWinMonitor::CreateRequests(const Request& parent, const int maxNumberOfChildren, std::vector<Request>& requests )
+    void MultipleWinMonitor::CreateMonitors(const Request& parent, const int maxNumberOfChildren)
     {
+      // get the next id.
+      const auto id = GetNextId();
+
       // if the parent was not recursive
       // then we do not need to go further.
       if( !parent.Recursive )
       {
-        requests.push_back(parent);
+        _monitors.push_back( new WinMonitor(id, parent));
         return;
       }
 
@@ -198,40 +216,19 @@ namespace myoddweb
       if( static_cast<int>(subPaths.size()) > maxNumberOfChildren || subPaths.empty())
       {
         // we will breach the number of children
-        requests.push_back(parent);
+        _monitors.push_back(new WinMonitor(id, parent));
         return;
       }
 
       // adding all the sub-paths will not breach the limit.
       // so we can add the parent, but non-recuresive.
-      requests.push_back({ parent.Path, false });
+      _monitors.push_back(new WinMonitor(id, { parent.Path, false }));
 
       // now try and add all the subpath
       for (const auto& path : subPaths)
       {
-        const int updatedMaxNumberOfChildren = maxNumberOfChildren - subPaths.size() - requests.size();
-        CreateRequests({ path, true }, updatedMaxNumberOfChildren, requests );
-      }
-    }
-
-    /**
-     * \brief create a list of monitors.
-     */
-    void MultipleWinMonitor::CreateMonitors(const Request& request)
-    {
-      // (re)create all the requests.
-      std::vector<Request> requests;
-      CreateRequests(request, 256, requests);
-
-      // then add them all.
-      for(const auto& subRequest : requests)
-      {
-        // the id does not really matter, but it will be
-        // unique to our list of monitors.
-        const auto id = _monitors.size();
-
-        // then create the monitor and add it to our list.
-        _monitors.push_back(new WinMonitor( id , subRequest ));
+        const int updatedMaxNumberOfChildren = maxNumberOfChildren - subPaths.size() - _monitors.size();
+        CreateMonitors({ path, true }, updatedMaxNumberOfChildren );
       }
     }
   }

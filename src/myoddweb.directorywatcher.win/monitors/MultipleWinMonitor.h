@@ -38,7 +38,7 @@ namespace myoddweb
       /**
        * \brief the current monitors.
        */
-      std::vector<WinMonitor*> _monitors;
+      std::vector<Monitor*> _monitors;
 
       /**
        * \brief create a list of monitors.
@@ -69,13 +69,17 @@ namespace myoddweb
       static bool IsDot(const std::wstring& directory );
 
       /**
+       * \brief get the next available id.
+       * \return the next usable id.
+       */
+      long GetNextId() const;
+
+      /**
        * \brief Create all the sub-requests for a prarent request.
        * \param parent the parent request itselft.
        * \param maxNumberOfChildren the maximum number of children we will allow
-       * \param requests the ongoing list of requests
-       * \return all the requests.
        */
-      static void CreateRequests(const Request& parent, const int maxNumberOfChildren, std::vector<Request>& requests );
+      void CreateMonitors(const Request& parent, const int maxNumberOfChildren );
     };
   }
 }
