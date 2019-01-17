@@ -180,6 +180,7 @@ namespace myoddweb
      * \brief Create all the sub-requests for a prarent request.
      * \param parent the parent request itselft.
      * \param maxNumberOfChildren the maximum number of children we will allow
+     * \param requests the ongoing list of requests
      * \return all the requests.
      */
     void MultipleWinMonitor::CreateRequests(const Request& parent, const int maxNumberOfChildren, std::vector<Request>& requests )
