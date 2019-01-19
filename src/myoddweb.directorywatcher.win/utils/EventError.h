@@ -58,7 +58,12 @@ namespace myoddweb
       /**
        * \brief We did not have any file data
        */
-      NoFileData = 7
+      NoFileData = 7,
+
+      /**
+       * \brief We could not stop the monitor?
+       */
+      CannotStop = 8,
     };
   }
 }

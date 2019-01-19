@@ -241,9 +241,25 @@ namespace myoddweb
         // get the object we are working with
         auto obj = static_cast<Common*>(lpOverlapped->hEvent);
 
-        if (dwErrorCode == ERROR_OPERATION_ABORTED)
+        if (dwErrorCode != ERROR_SUCCESS)
         {
-          obj->_parent.AddEventError(EventError::Aborted);
+          if (dwErrorCode == ERROR_OPERATION_ABORTED)
+          {
+            obj->_parent.AddEventError(EventError::Aborted);
+            return;
+          }
+
+          // https://msdn.microsoft.com/en-gb/574eccda-03eb-4e8a-9d74-cfaecc7312ce?f=255&MSPPError=-2147217396
+          OVERLAPPED stOverlapped;
+          DWORD dwBytesRead = 0;
+          if (!GetOverlappedResult(obj->_data.DirectoryHandle(),
+            &stOverlapped,
+            &dwBytesRead,
+            FALSE))
+          {
+            const auto dwError = GetLastError();
+            obj->_parent.AddEventError(EventError::Overflow);
+          }
           return;
         }
 
@@ -252,8 +268,6 @@ namespace myoddweb
         // fails with the error code ERROR_NOTIFY_ENUM_DIR.
         if (0 == dwNumberOfBytesTransfered)
         {
-          obj->_parent.AddEventError(EventError::Overflow);
-
           // noting to read, just restart
           obj->Read();
           return;

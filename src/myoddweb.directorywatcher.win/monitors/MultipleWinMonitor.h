@@ -24,6 +24,14 @@ namespace myoddweb
       public Monitor
     {
     private:
+      enum State
+      {
+        Starting,
+        Started,
+        Stopping,
+        Stopped
+      };
+    private:
       MultipleWinMonitor(__int64 id, const Request& request, const int depth, const int maxDepth );
 
     public:
@@ -44,27 +52,15 @@ namespace myoddweb
       std::vector<Monitor*> _monitors;
 
       /**
-       * \brief Get all the sub folders of a given folder.
-       * \param folder the starting folder.
-       * \return all the sub-folders, (if any). 
+       * \brief this is the current state.
        */
-      static std::vector<std::wstring> GetAllSubFolders(const std::wstring& folder);
+      State _state;
 
       /**
-       * \brief join 2 parts of a path
-       * \param lhs the lhs folder.
-       * \param rhs the rhs file/folder
-       * \param rhsIsFile if the rhs is a file, then we will not add a trailling back-slash
-       * \return all the sub-folders, (if any).
+       * \brief return if the current state is the same as the one we are after.
+       * \param state the state we are checking against.
        */
-      static std::wstring Join(const std::wstring& lhs, const std::wstring& rhs, bool rhsIsFile );
-
-      /**
-       * \brief Check if a given directory is a dot or double dot
-       * \param directory the lhs folder.
-       * \return if it is a dot directory or not
-       */
-      static bool IsDot(const std::wstring& directory );
+      bool Is(State state) const;
 
       /**
        * \brief get the next available id.
@@ -84,6 +80,29 @@ namespace myoddweb
        * \brief Clear all the current data
        */
       void Delete();
+
+      /**
+       * \brief Get all the sub folders of a given folder.
+       * \param folder the starting folder.
+       * \return all the sub-folders, (if any).
+       */
+      static std::vector<std::wstring> GetAllSubFolders(const std::wstring& folder);
+
+      /**
+       * \brief join 2 parts of a path
+       * \param lhs the lhs folder.
+       * \param rhs the rhs file/folder
+       * \param rhsIsFile if the rhs is a file, then we will not add a trailling back-slash
+       * \return all the sub-folders, (if any).
+       */
+      static std::wstring Join(const std::wstring& lhs, const std::wstring& rhs, bool rhsIsFile);
+
+      /**
+       * \brief Check if a given directory is a dot or double dot
+       * \param directory the lhs folder.
+       * \return if it is a dot directory or not
+       */
+      static bool IsDot(const std::wstring& directory);
     };
   }
 }
