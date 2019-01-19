@@ -23,6 +23,9 @@ namespace myoddweb
     class MultipleWinMonitor :
       public Monitor
     {
+    private:
+      MultipleWinMonitor(__int64 id, const Request& request, const int depth, const int maxDepth );
+
     public:
       MultipleWinMonitor(__int64 id, const Request& request);
       virtual ~MultipleWinMonitor();
@@ -39,11 +42,6 @@ namespace myoddweb
        * \brief the current monitors.
        */
       std::vector<Monitor*> _monitors;
-
-      /**
-       * \brief create a list of monitors.
-       */
-      void CreateMonitors(const Request& request );
 
       /**
        * \brief Get all the sub folders of a given folder.
@@ -78,8 +76,14 @@ namespace myoddweb
        * \brief Create all the sub-requests for a prarent request.
        * \param parent the parent request itselft.
        * \param maxNumberOfChildren the maximum number of children we will allow
+       * \return The number of monitors we created.
        */
-      void CreateMonitors(const Request& parent, const int maxNumberOfChildren );
+      void CreateMonitors(const Request& parent, const int depth, const int maxDepth);
+
+      /**
+       * \brief Clear all the current data
+       */
+      void Delete();
     };
   }
 }

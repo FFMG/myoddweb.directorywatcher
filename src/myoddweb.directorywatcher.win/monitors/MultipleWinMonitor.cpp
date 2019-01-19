@@ -19,6 +19,11 @@ namespace myoddweb
   namespace directorywatcher
   {
     MultipleWinMonitor::MultipleWinMonitor(const __int64 id, const Request& request) :
+      MultipleWinMonitor(id, request, 0, 2 )
+    {
+    }
+
+    MultipleWinMonitor::MultipleWinMonitor(const __int64 id, const Request& request, const int depth, const int maxDepth) :
       Monitor(id, request)
     {
       // use a standar monitor for non recursive items.
@@ -26,11 +31,39 @@ namespace myoddweb
       {
         throw std::invalid_argument("The multiple monitor must be recursive.");
       }
+
+      // try and create the list of monitors.
+      CreateMonitors(_request, depth, maxDepth );
     }
 
     MultipleWinMonitor::~MultipleWinMonitor()
     {
-      MultipleWinMonitor::Stop();
+      Delete();
+    }
+
+    /**
+     * \brief Clear all the current data
+     */
+    void MultipleWinMonitor::Delete()
+    {
+      // stop everything
+      Stop();
+
+      try
+      {
+        // and the monitors.
+        for (auto it = _monitors.begin(); it != _monitors.end(); ++it)
+        {
+          delete *it;
+        }
+        // all done
+        _monitors.clear();
+      }
+      catch (...)
+      {
+        // we might as well clear everything now.
+        _monitors.clear();
+      }
     }
 
     /**
@@ -43,9 +76,6 @@ namespace myoddweb
 
       try
       {
-        // try and create the list of monitors.
-        CreateMonitors(_request, 256 );
-
         // and start them all.
         for (auto it = _monitors.begin(); it != _monitors.end(); ++it)
         {
@@ -68,18 +98,14 @@ namespace myoddweb
     {
       try
       {
+        // and the monitors.
         for (auto it = _monitors.begin(); it != _monitors.end(); ++it)
         {
           (*it)->Stop();
-          delete *it;
         }
-        // all done
-        _monitors.clear();
       }
       catch (...)
       {
-        // we might as well clear everything now.
-        _monitors.clear();
       }
     }
 
@@ -192,13 +218,12 @@ namespace myoddweb
       return static_cast<long>( _monitors.size() );
     }
 
-
     /**
      * \brief Create all the sub-requests for a prarent request.
      * \param parent the parent request itselft.
      * \param maxNumberOfChildren the maximum number of children we will allow
      */
-    void MultipleWinMonitor::CreateMonitors(const Request& parent, const int maxNumberOfChildren)
+    void MultipleWinMonitor::CreateMonitors(const Request& parent, const int depth, const int maxDepth)
     {
       // get the next id.
       const auto id = GetNextId();
@@ -207,28 +232,28 @@ namespace myoddweb
       // then we do not need to go further.
       if( !parent.Recursive )
       {
-        _monitors.push_back( new WinMonitor(id, parent));
+        _monitors.push_back( new WinMonitor(id, parent) );
         return;
       }
 
       // look for all the sub-paths
       const auto subPaths = GetAllSubFolders(parent.Path);
-      if( static_cast<int>(subPaths.size()) > maxNumberOfChildren || subPaths.empty())
+      if( depth >= maxDepth || subPaths.empty())
       {
-        // we will breach the number of children
+        // we will breach the depth
         _monitors.push_back(new WinMonitor(id, parent));
         return;
       }
 
       // adding all the sub-paths will not breach the limit.
       // so we can add the parent, but non-recuresive.
-      _monitors.push_back(new WinMonitor(id, { parent.Path, false }));
+      _monitors.push_back( new WinMonitor(id, { parent.Path, false }) );
 
       // now try and add all the subpath
       for (const auto& path : subPaths)
       {
-        const int updatedMaxNumberOfChildren = maxNumberOfChildren - subPaths.size() - _monitors.size();
-        CreateMonitors({ path, true }, updatedMaxNumberOfChildren );
+        const auto multiMonitor = new MultipleWinMonitor(GetNextId(), { path, true }, depth+1, maxDepth );
+        _monitors.push_back(multiMonitor);
       }
     }
   }
