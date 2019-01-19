@@ -20,9 +20,9 @@ namespace myoddweb
 {
   namespace directorywatcher
   {
-    Monitor::Monitor(const __int64 id, const Request& request) :
+    Monitor::Monitor(const __int64 id, Request request) :
       _id(id),
-      _request(request),
+      _request(std::move(request)),
       _eventCollector(nullptr)
     {
       _eventCollector = new Collector();
@@ -75,7 +75,7 @@ namespace myoddweb
      * \param fileName
      * \param isFile
      */
-    void Monitor::AddEvent(const EventAction action, const std::wstring& fileName, bool isFile) const
+    void Monitor::AddEvent(const EventAction action, const std::wstring& fileName, const bool isFile) const
     {
       _eventCollector->Add(action, Path(), fileName, isFile, EventError::None);
     }
@@ -86,7 +86,7 @@ namespace myoddweb
      * \param oldFilename
      * \param isFile
      */
-    void Monitor::AddRenameEvent(const std::wstring& newFileName, const std::wstring& oldFilename, bool isFile) const
+    void Monitor::AddRenameEvent(const std::wstring& newFileName, const std::wstring& oldFilename, const bool isFile) const
     {
       _eventCollector->AddRename(Path(), newFileName, oldFilename, isFile, EventError::None );
     }

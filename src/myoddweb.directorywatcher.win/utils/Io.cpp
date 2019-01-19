@@ -12,21 +12,13 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
-#include <windows.h>
+#include <Windows.h>
 #include "Io.h"
 
 namespace myoddweb
 {
   namespace directorywatcher
   {
-    Io::Io()
-    {
-    }
-
-    Io::~Io()
-    {
-    }
-
     /**
      * \brief check if a given string is a file or a directory.
      * \param path the file we are checking.
@@ -145,6 +137,46 @@ namespace myoddweb
 
       // if we are here, they both seem to have a backslash
       return Combine(lhs.substr(0, sl - 1), rhs.substr(1, sr - 1));
+    }
+
+    /**
+     * \brief Check if a given directory is a dot or double dot
+     * \param directory the lhs folder.
+     * \return if it is a dot directory or not
+     */
+    bool Io::IsDot(const std::wstring& directory)
+    {
+      return directory == L"." || directory == L"..";
+    }
+
+    /**
+     * \brief Get all the sub folders of a given folder.
+     * \param folder the starting folder.
+     * \return all the sub-folders, (if any).
+     */
+    std::vector<std::wstring> Io::GetAllSubFolders(const std::wstring& folder)
+    {
+      std::vector<std::wstring> subFolders;
+      auto searchPath = Io::Combine(folder, L"/*.*");
+      WIN32_FIND_DATA fd = {};
+      const auto hFind = ::FindFirstFile(searchPath.c_str(), &fd);
+      if (hFind != INVALID_HANDLE_VALUE)
+      {
+        do
+        {
+          // read all (real) files in current folder
+          // , delete '!' read other 2 default folder . and ..
+          if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
+          {
+            if (!Io::IsDot(fd.cFileName))
+            {
+              subFolders.emplace_back(Io::Combine(folder, fd.cFileName));
+            }
+          }
+        } while (::FindNextFile(hFind, &fd));
+        ::FindClose(hFind);
+      }
+      return subFolders;
     }
   }
 }

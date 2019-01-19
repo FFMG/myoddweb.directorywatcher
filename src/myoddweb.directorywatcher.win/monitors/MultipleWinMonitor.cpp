@@ -13,6 +13,7 @@
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #include "MultipleWinMonitor.h"
+#include "../utils/Io.h"
 
 namespace myoddweb
 {
@@ -206,7 +207,7 @@ namespace myoddweb
       }
 
       // look for all the sub-paths
-      const auto subPaths = GetAllSubFolders(parent.Path);
+      const auto subPaths = Io::GetAllSubFolders(parent.Path);
       if( depth >= maxDepth || subPaths.empty())
       {
         // we will breach the depth
@@ -221,83 +222,10 @@ namespace myoddweb
       // now try and add all the subpath
       for (const auto& path : subPaths)
       {
-        const auto multiMonitor = new MultipleWinMonitor(GetNextId(), { path, true }, depth+1, maxDepth );
+        const auto multiMonitor = new MultipleWinMonitor( GetNextId(), { path, true }, depth+1, maxDepth );
         _monitors.push_back(multiMonitor);
       }
     }
     #pragma endregion
-
-    #pragma region Static Functions
-    /**
-     * \brief join 2 parts of a path
-     * \param lhs the lhs folder.
-     * \param rhs the rhs file/folder
-     * \param rhsIsFile if the rhs is a file, then we will not add a trailling back-slash
-     * \return all the sub-folders, (if any).
-     */
-    std::wstring MultipleWinMonitor::Join(const std::wstring& lhs, const std::wstring& rhs, const bool rhsIsFile)
-    {
-      const auto ll = lhs.length();
-      if (ll > 0)
-      {
-        const auto c = lhs[ll - 1];
-        if (c == L'\\' || c == L'/')
-        {
-          return Join(lhs.substr(0, ll - 1), rhs, rhsIsFile);
-        }
-      }
-
-      const auto lr = rhs.length();
-      if (lr > 0)
-      {
-        const auto c = rhs[0];
-        if (c == L'\\' || c == L'/')
-        {
-          return Join(lhs, rhs.substr(1, lr - 1), rhsIsFile);
-        }
-      }
-      return lhs + L'\\' + rhs + (rhsIsFile ? L"" : L"\\");
-    }
-
-    /**
-     * \brief Check if a given directory is a dot or double dot
-     * \param directory the lhs folder.
-     * \return if it is a dot directory or not
-     */
-    bool MultipleWinMonitor::IsDot(const std::wstring& directory)
-    {
-      return directory == L"." || directory == L"..";
-    }
-
-    /**
-     * \brief Get all the sub folders of a given folder.
-     * \param folder the starting folder.
-     * \return all the sub-folders, (if any).
-     */
-    std::vector<std::wstring> MultipleWinMonitor::GetAllSubFolders(const std::wstring& folder)
-    {
-      std::vector<std::wstring> subFolders;
-      auto searchPath = Join(folder, L"/*.*", true);
-      WIN32_FIND_DATA fd = {};
-      const auto hFind = ::FindFirstFile(searchPath.c_str(), &fd);
-      if (hFind != INVALID_HANDLE_VALUE) 
-      {
-        do 
-        {
-          // read all (real) files in current folder
-          // , delete '!' read other 2 default folder . and ..
-          if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
-          {
-            if (!IsDot(fd.cFileName))
-            {
-              subFolders.emplace_back(Join(folder, fd.cFileName, false));
-            }
-          }
-        } while (::FindNextFile(hFind, &fd));
-        ::FindClose(hFind);
-      }
-      return subFolders;
-    }
-    #pragma endregion    
   }
 }

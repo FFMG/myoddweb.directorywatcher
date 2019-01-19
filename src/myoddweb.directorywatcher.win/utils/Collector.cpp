@@ -99,7 +99,7 @@ namespace myoddweb
       try
       {
         // get the combined path.
-        const auto combinedPath = filename.empty() ? path : Io::Combine(path, filename);
+        const auto combinedPath = filename.empty() ? (isFile ? L"" : path) : Io::Combine(path, filename);
 
         // We first create the event outside the lock
         // that way, we only have the lock for the shortest

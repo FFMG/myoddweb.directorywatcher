@@ -20,10 +20,8 @@ namespace myoddweb
 {
   namespace directorywatcher
   {
-    class MultipleWinMonitor :
-      public Monitor
+    class MultipleWinMonitor : public Monitor
     {
-    private:
       enum State
       {
         Starting,
@@ -31,13 +29,15 @@ namespace myoddweb
         Stopping,
         Stopped
       };
-    private:
       MultipleWinMonitor(__int64 id, const Request& request, const int depth, const int maxDepth );
 
     public:
       MultipleWinMonitor(__int64 id, const Request& request);
       virtual ~MultipleWinMonitor();
 
+      MultipleWinMonitor& operator=(MultipleWinMonitor&& other) = delete;
+      MultipleWinMonitor(MultipleWinMonitor&&) = delete;
+      MultipleWinMonitor() = delete;
       MultipleWinMonitor(const MultipleWinMonitor&) = delete;
       MultipleWinMonitor& operator=(const MultipleWinMonitor&) = delete;
 
@@ -80,29 +80,6 @@ namespace myoddweb
        * \brief Clear all the current data
        */
       void Delete();
-
-      /**
-       * \brief Get all the sub folders of a given folder.
-       * \param folder the starting folder.
-       * \return all the sub-folders, (if any).
-       */
-      static std::vector<std::wstring> GetAllSubFolders(const std::wstring& folder);
-
-      /**
-       * \brief join 2 parts of a path
-       * \param lhs the lhs folder.
-       * \param rhs the rhs file/folder
-       * \param rhsIsFile if the rhs is a file, then we will not add a trailling back-slash
-       * \return all the sub-folders, (if any).
-       */
-      static std::wstring Join(const std::wstring& lhs, const std::wstring& rhs, bool rhsIsFile);
-
-      /**
-       * \brief Check if a given directory is a dot or double dot
-       * \param directory the lhs folder.
-       * \return if it is a dot directory or not
-       */
-      static bool IsDot(const std::wstring& directory);
     };
   }
 }
