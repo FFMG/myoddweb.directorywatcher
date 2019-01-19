@@ -221,7 +221,8 @@ namespace myoddweb
     /**
      * \brief Create all the sub-requests for a prarent request.
      * \param parent the parent request itselft.
-     * \param maxNumberOfChildren the maximum number of children we will allow
+     * \param depth the current depth.
+     * \param maxDepth the maximum depth we want to go to.
      */
     void MultipleWinMonitor::CreateMonitors(const Request& parent, const int depth, const int maxDepth)
     {
