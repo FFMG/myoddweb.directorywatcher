@@ -97,7 +97,7 @@ namespace myoddweb
      */
     void Monitor::AddEventError(const EventError error) const
     {
-      _eventCollector->Add(EventAction::Unknown, L"", L"", false, error );
+      _eventCollector->Add(EventAction::Unknown, Path(), L"", false, error );
     }
 
     /**

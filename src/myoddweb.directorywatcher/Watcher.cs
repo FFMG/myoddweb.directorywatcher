@@ -26,6 +26,7 @@ namespace myoddweb.directorywatcher
   public class Watcher : IWatcher2
   {
     #region Member variables
+
     /// <summary>
     /// To stop the running task
     /// </summary>
@@ -50,9 +51,11 @@ namespace myoddweb.directorywatcher
     /// The list of requests.
     /// </summary>
     private readonly IList<IRequest> _pendingRequests = new List<IRequest>();
+
     #endregion
 
     #region Events
+
     /// <inheritdoc />
     public event WatcherEvent<IFileSystemEvent> OnTouchedAsync;
 
@@ -67,9 +70,11 @@ namespace myoddweb.directorywatcher
 
     /// <inheritdoc />
     public event WatcherEvent<IEventError> OnErrorAsync;
+
     #endregion
 
     #region IWatcher1/IWatcher2
+
     /// <inheritdoc />
     public long Start(IRequest request)
     {
@@ -101,7 +106,7 @@ namespace myoddweb.directorywatcher
 
       // we have not started 
       // so just add it to the queue
-      _pendingRequests.Add( request );
+      _pendingRequests.Add(request);
 
       // all good.
       return true;
@@ -126,9 +131,9 @@ namespace myoddweb.directorywatcher
     }
 
     /// <inheritdoc />
-    public long GetEvents(long id, out IList<IEvent> events )
+    public long GetEvents(long id, out IList<IEvent> events)
     {
-      return WatcherManager.Get.GetEvents(id, out events );
+      return WatcherManager.Get.GetEvents(id, out events);
     }
 
     /// <inheritdoc />
@@ -207,6 +212,7 @@ namespace myoddweb.directorywatcher
         {
           Stop(id);
         }
+
         return true;
       }
       finally
@@ -224,15 +230,18 @@ namespace myoddweb.directorywatcher
       {
         if (GetEvents(id, out var currentEvents) > 0)
         {
-          allEvents.AddRange( currentEvents );
+          allEvents.AddRange(currentEvents);
         }
       }
+
       events = allEvents;
       return allEvents.Count;
     }
+
     #endregion
 
     #region Private functions
+
     private void StopInternalEvents()
     {
       // are we running?
@@ -256,7 +265,84 @@ namespace myoddweb.directorywatcher
       _source = new CancellationTokenSource();
 
       // start the next task
-      _task = ProcessEvents( _source.Token );
+      _task = ProcessEvents(_source.Token);
+    }
+
+    private Task CreateProcessEvent(IEvent e, CancellationToken token)
+    {
+      // do we have an error.
+      if (e.Error != EventError.None)
+      {
+        if (OnErrorAsync != null)
+        {
+          return Task.Run(() => OnErrorAsync?.Invoke(new utils.EventError(e.Error, e.DateTimeUtc), token), token);
+        }
+        return Task.FromResult(false);
+      }
+
+      switch (e.Action)
+      {
+        case EventAction.Added:
+          if (OnAddedAsync != null)
+          {
+            return Task.Run(() => OnAddedAsync?.Invoke(new FileSystemEvent(e), token), token);
+          }
+          return Task.FromResult(false);
+
+        case EventAction.Removed:
+          if (OnRemovedAsync != null)
+          {
+            return Task.Run(() => OnRemovedAsync?.Invoke(new FileSystemEvent(e), token), token);
+          }
+          return Task.FromResult(false);
+
+        case EventAction.Touched:
+          if (OnTouchedAsync != null)
+          {
+            return Task.Run(() => OnTouchedAsync?.Invoke(new FileSystemEvent(e), token), token);
+          }
+          return Task.FromResult(false);
+
+        case EventAction.Renamed:
+          if (OnRenamedAsync != null)
+          {
+            return Task.Run(() => OnRenamedAsync?.Invoke(new RenamedFileSystemEvent(e), token), token);
+          }
+          return Task.FromResult(false);
+
+        default:
+          throw new NotSupportedException($"Received an unknown Action: {e.Action:G}");
+      }
+    }
+
+    /// <summary>
+    /// Create the events for each events.
+    /// </summary>
+    /// <param name="events"></param>
+    /// <param name="maxNumTasks"></param>
+    /// <param name="token"></param>
+    /// <returns></returns>
+    private IEnumerable<Task> CreateProcessEvents( IEnumerable<IEvent> events, int maxNumTasks, CancellationToken token)
+    {
+      // the created events.
+      var tasks = new List<Task>(maxNumTasks);
+
+      // then call the various actions.
+      foreach (var e in events)
+      {
+        try
+        {
+          tasks.Add(CreateProcessEvent(e, token));
+        }
+        catch
+        {
+          if (OnErrorAsync != null)
+          {
+            tasks.Add(Task.Run(() => OnErrorAsync(new utils.EventError(EventError.General, DateTime.UtcNow), token), token));
+          }
+        }
+      }
+      return tasks;
     }
 
     /// <summary>
@@ -287,62 +373,13 @@ namespace myoddweb.directorywatcher
               continue;
             }
 
-            // then call the various actions.
-            foreach (var e in events)
+            // process all the events.
+            tasks.AddRange( CreateProcessEvents(events, maxNumTasks, token) );
+
+            // create the tasks that are complete.
+            if (tasks.Count > maxNumTasks)
             {
-              // do we have an error.
-              if (e.Error != EventError.None)
-              {
-                if (OnErrorAsync != null)
-                {
-                  tasks.Add(Task.Run(() =>
-                      OnErrorAsync?.Invoke(new utils.EventError(e.Error, e.DateTimeUtc), token)
-                    , token));
-                }
-              }
-
-              switch (e.Action)
-              {
-                case EventAction.Added:
-                  if (OnAddedAsync != null)
-                  {
-                    tasks.Add(Task.Run(() => 
-                      OnAddedAsync?.Invoke(new FileSystemEvent(e), token), token));
-                  }
-                  break;
-
-                case EventAction.Removed:
-                  if (OnRemovedAsync != null)
-                  {
-                    tasks.Add(Task.Run(() => 
-                      OnRemovedAsync?.Invoke(new FileSystemEvent(e), token), token));
-                  }
-                  break;
-
-                case EventAction.Touched:
-                  if (OnTouchedAsync != null)
-                  {
-                    tasks.Add(Task.Run(() => 
-                      OnTouchedAsync?.Invoke(new FileSystemEvent(e), token), token));
-                  }
-                  break;
-
-                case EventAction.Renamed:
-                  if (OnRenamedAsync != null)
-                  {
-                    tasks.Add(Task.Run(() => 
-                      OnRenamedAsync?.Invoke(new RenamedFileSystemEvent(e), token), token));
-                  }
-                  break;
-
-                default:
-                  throw new NotSupportedException( $"Received an unknown Action: {e.Action:G}");
-              }
-
-              if (tasks.Count > maxNumTasks)
-              {
-                tasks.RemoveAll(t => t.IsCompleted);
-              }
+              tasks.RemoveAll(t => t.IsCompleted);
             }
           }
           catch

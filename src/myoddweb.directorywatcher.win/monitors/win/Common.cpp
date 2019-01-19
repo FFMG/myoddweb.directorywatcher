@@ -142,10 +142,6 @@ namespace myoddweb
         {
           return true;
         }
-
-        // we could not access this
-        _parent.AddEventError(EventError::Access);
-
         return false;
       }
 
@@ -184,6 +180,7 @@ namespace myoddweb
         // if it is open already then nothing should happen here.
         if (!OpenDirectory())
         {
+          // we could not access this
           _parent.AddEventError(EventError::Access);
           return;
         }
