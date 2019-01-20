@@ -17,6 +17,7 @@
 #include "Common.h"
 #include "../../utils/Io.h"
 #include "../../utils/EventError.h"
+#include "../../utils/MonitorsManager.h"
 
 namespace myoddweb
 {
@@ -24,11 +25,16 @@ namespace myoddweb
   {
     namespace win
     {
+      /*
+       * The number of ms we want to sleep between reads.
+       */
+      #define SLEEP_BETWEEN_READS 100 
+
       /**
        * \brief Create the Monitor that uses ReadDirectoryChanges
        */
       Common::Common(
-        const Monitor& parent,
+        Monitor& parent,
         const unsigned long bufferLength
       ) :
         _data(bufferLength),
@@ -39,7 +45,7 @@ namespace myoddweb
 
       Common::~Common()
       {
-        Reset();
+        Common::Stop();
       }
 
       /**
@@ -49,7 +55,7 @@ namespace myoddweb
       bool Common::Start()
       {
         // close everything
-        Reset();
+        Stop();
 
         // create the buffer.
         _data.Prepare(this);
@@ -62,17 +68,9 @@ namespace myoddweb
       }
 
       /**
-       * \brief Stop monitoring
-       */
-      void Common::Stop()
-      {
-        Reset();
-      }
-
-      /**
        * \brief Close all the handles, delete pointers and reset all the values.
        */
-      void Common::Reset()
+      void Common::Stop()
       {
         // stop and wait for the buffer to complete.
         // we have to wait first otherwise the next step
@@ -138,11 +136,7 @@ namespace myoddweb
         _data.DirectoryHandle(hDirectory);
 
         // check if it all worked.
-        if (_data.IsValidHandle())
-        {
-          return true;
-        }
-        return false;
+        return _data.IsValidHandle();
       }
 
       /**
@@ -191,8 +185,12 @@ namespace myoddweb
         // now we keep on waiting.
         while (_futureObj.wait_for(std::chrono::milliseconds(1)) == std::future_status::timeout)
         {
-          SleepEx(100, true);
+          // wait a little.
+          SleepEx(SLEEP_BETWEEN_READS, true);
         }
+
+        // if we are here... we can release the data
+        _data.Clear();
       }
 
       /**
@@ -222,7 +220,55 @@ namespace myoddweb
           &FileIoCompletionRoutine
         ))
         {
-          _parent.AddEventError(EventError::CannotStart);
+          // we could not create the monitoring
+          // so we might as well get out now.
+          _parent.AddEventError(EventError::Access);
+          _data.Clear();
+          return;
+        }
+
+        // If we are not monitoring folder changes
+        // then we need to check our own folder withour recursion.
+        // that way, if it is deleted, we will be able to release the handle(s).
+        if ((notifyFilter & FILE_NOTIFY_CHANGE_DIR_NAME) != FILE_NOTIFY_CHANGE_DIR_NAME)
+        {
+          if (!::ReadDirectoryChangesW(
+            _data.DirectoryHandle(),
+            _data.Buffer(),
+            _data.BufferLength(),
+            _parent.Recursive(),
+            FILE_NOTIFY_CHANGE_DIR_NAME,
+            nullptr,                      // bytes returned, (not used here as we are async)
+            _data.Overlapped(),           // buffer with our information
+            &FileIoCompletionRoutine
+          ))
+          {
+            _parent.AddEventError(EventError::Access);
+          }
+        }
+      }
+
+      /***
+       * \brief The async callback function for ReadDirectoryChangesW
+       *        This function only looks for deleted folders.
+       */
+      void CALLBACK Common::FileIoCompletionRoutineDeletedFolders
+      (
+        const unsigned long dwErrorCode,
+        const unsigned long dwNumberOfBytesTransfered,
+        _OVERLAPPED* lpOverlapped
+      )
+      {
+        switch (dwErrorCode)
+        {
+        default:
+        case ERROR_SUCCESS:// all good or we do not care about this.
+          return;
+
+        case ERROR_ACCESS_DENIED:
+          auto obj = static_cast<Common*>(lpOverlapped->hEvent);
+          obj->_data.Clear();
+          break;
         }
       }
 
@@ -238,14 +284,28 @@ namespace myoddweb
         // get the object we are working with
         auto obj = static_cast<Common*>(lpOverlapped->hEvent);
 
-        if (dwErrorCode != ERROR_SUCCESS)
+        // do we have an object?
+        // should never happen ... but still.
+        if (nullptr == obj)
         {
-          if (dwErrorCode == ERROR_OPERATION_ABORTED)
-          {
-            obj->_parent.AddEventError(EventError::Aborted);
-            return;
-          }
+          return;
+        }
 
+        switch( dwErrorCode )
+        {
+        case ERROR_SUCCESS:// all good, continue;
+          break;
+
+        case ERROR_OPERATION_ABORTED:
+          obj->_parent.AddEventError(EventError::Aborted);
+          return;
+
+        case ERROR_ACCESS_DENIED:
+          obj->_data.Clear();
+          obj->_parent.AddEventError(EventError::Access);
+          return;
+
+        default:
           // https://msdn.microsoft.com/en-gb/574eccda-03eb-4e8a-9d74-cfaecc7312ce?f=255&MSPPError=-2147217396
           OVERLAPPED stOverlapped;
           DWORD dwBytesRead = 0;

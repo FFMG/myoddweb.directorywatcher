@@ -24,7 +24,7 @@ namespace myoddweb
       /**
        * \brief Create the Monitor that uses ReadDirectoryChanges
        */
-      Directories::Directories(const Monitor& parent, const unsigned long bufferLength) :
+      Directories::Directories(Monitor& parent, const unsigned long bufferLength) :
         Common(parent, bufferLength)
       {
       }

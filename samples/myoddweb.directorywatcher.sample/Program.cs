@@ -14,7 +14,6 @@
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace myoddweb.directorywatcher.sample
 {
@@ -38,7 +37,7 @@ namespace myoddweb.directorywatcher.sample
         }
 
         // prepare the console watcher so we can output pretty messages.
-        var cw = new ConsoleWatch(watch);
+        var _ = new ConsoleWatch(watch);
 
         // start watching
         watch.Start();

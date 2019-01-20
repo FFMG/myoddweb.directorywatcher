@@ -15,6 +15,7 @@
 #include <Windows.h>
 #include <utility>
 #include "Monitor.h"
+#include "../utils/Lock.h"
 
 namespace myoddweb
 {
@@ -23,7 +24,8 @@ namespace myoddweb
     Monitor::Monitor(const __int64 id, Request request) :
       _id(id),
       _request(std::move(request)),
-      _eventCollector(nullptr)
+      _eventCollector(nullptr),
+      _state(Stopped)
     {
       _eventCollector = new Collector();
     }
@@ -108,6 +110,94 @@ namespace myoddweb
     long long Monitor::GetEvents(std::vector<Event>& events) const
     {
       return _eventCollector->GetEvents(events);
+    }
+
+    /**
+     * \brief return if the current state is the same as the one we are after.
+     * \param state the state we are checking against.
+     */
+    bool Monitor::Is(const State state) const
+    {
+      return _state == state;
+    }
+
+    /**
+     * \brief Start the monitoring, if needed.
+     * \return success or not.
+     */
+    bool Monitor::Start()
+    {
+      if (Is(Started))
+      {
+        return true;
+      }
+
+      // guard for multiple entry.
+      auto guard = Lock(_lock);
+
+      // are we already started?
+      if( Is(Started))
+      {
+        return true;
+      }
+
+      // we are starting
+      _state = Starting;
+
+      try
+      {
+        // derived class to start
+        OnStart();
+
+        // all good
+        _state = Started;
+
+        // done.
+        return true;
+      }
+      catch (...)
+      {
+        _state = Stopped;
+        AddEventError(EventError::CannotStart);
+        return false;
+      }
+    }
+
+    /**
+     * \brief Stop the monitoring if needed.
+     */
+    void Monitor::Stop()
+    {
+      if (Is(Stopped))
+      {
+        return;
+      }
+
+      // guard for multiple entry.
+      auto guard = Lock(_lock);
+
+      // are we stopped already?
+      if( Is(Stopped))
+      {
+        return;
+      }
+
+      // we are stopping
+      _state = Stopping;
+
+      try
+      {
+        // then do the stop
+        OnStop();
+
+        // we are now done
+        _state = Stopped;
+      }
+      catch(std::exception const & ex )
+      {
+        _state = Stopped;
+        AddEventError(EventError::CannotStop);
+      }
     }
   }
 }

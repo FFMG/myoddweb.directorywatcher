@@ -25,7 +25,7 @@ namespace myoddweb
       class Directories : public Common
       {
       public:
-        Directories(const Monitor& parent, unsigned long bufferLength);
+        Directories(Monitor& parent, unsigned long bufferLength);
 
       public:
         virtual ~Directories() = default;

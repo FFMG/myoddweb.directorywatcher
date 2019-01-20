@@ -22,13 +22,6 @@ namespace myoddweb
   {
     class MultipleWinMonitor : public Monitor
     {
-      enum State
-      {
-        Starting,
-        Started,
-        Stopping,
-        Stopped
-      };
       MultipleWinMonitor(__int64 id, const Request& request, const int depth, const int maxDepth );
 
     public:
@@ -41,8 +34,8 @@ namespace myoddweb
       MultipleWinMonitor(const MultipleWinMonitor&) = delete;
       MultipleWinMonitor& operator=(const MultipleWinMonitor&) = delete;
 
-      bool Start() override;
-      void Stop() override;
+      void OnStart() override;
+      void OnStop() override;
       long long GetEvents(std::vector<Event>& events) const override;
 
     private:
@@ -50,17 +43,6 @@ namespace myoddweb
        * \brief the current monitors.
        */
       std::vector<Monitor*> _monitors;
-
-      /**
-       * \brief this is the current state.
-       */
-      State _state;
-
-      /**
-       * \brief return if the current state is the same as the one we are after.
-       * \param state the state we are checking against.
-       */
-      bool Is(State state) const;
 
       /**
        * \brief get the next available id.

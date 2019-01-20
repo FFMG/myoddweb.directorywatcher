@@ -47,18 +47,46 @@ namespace myoddweb
        */
       virtual long long GetEvents(std::vector<Event>& events) const;
 
-      virtual bool Start() = 0;
-      virtual void Stop() = 0;
+      virtual void OnStart() = 0;
+      virtual void OnStop() = 0;
 
       void AddEvent(EventAction action, const std::wstring& fileName, bool isFile ) const;
       void AddRenameEvent(const std::wstring& newFileName, const std::wstring& oldFilename, bool isFile) const;
       void AddEventError(EventError error) const;
+
+      bool Start();
+      void Stop();
 
     protected:
       const __int64 _id;
       const Request _request;
 
       Collector* _eventCollector;
+
+      enum State
+      {
+        Starting,
+        Started,
+        Stopping,
+        Stopped
+      };
+
+      /**
+       * \brief return if the current state is the same as the one we are after.
+       * \param state the state we are checking against.
+       */
+      bool Is(State state) const;
+
+    private:
+      /**
+       * \brief this is the current state.
+       */
+      State _state;
+
+      /**
+       * \brief the locks so we can add data.
+       */
+      std::recursive_mutex _lock;
     };
   }
 }

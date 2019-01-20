@@ -28,7 +28,7 @@ namespace myoddweb
       class Common
       {
       protected:
-        Common(const Monitor& parent, unsigned long bufferLength);
+        Common( Monitor& parent, unsigned long bufferLength);
 
       private:
         /**
@@ -57,13 +57,16 @@ namespace myoddweb
           _OVERLAPPED* lpOverlapped                 // I/O information buffer
         );
 
+        static void CALLBACK FileIoCompletionRoutineDeletedFolders(
+          unsigned long dwErrorCode,							  // completion code
+          unsigned long dwNumberOfBytesTransfered,	// number of bytes transferred
+          _OVERLAPPED* lpOverlapped                 // I/O information buffer
+        );
+
         static void RunThread(Common* obj);
 
       private:
-#pragma region
-        void Reset();
         void StopAndResetThread();
-#pragma endregion Reset/Stop functions
 
         bool OpenDirectory();
         void ProcessNotificationFromBackup(const unsigned char* pBuffer) const;
@@ -79,7 +82,7 @@ namespace myoddweb
         /**
          * \brief the parent monitor
          */
-        const Monitor& _parent;
+        Monitor& _parent;
 #pragma region
         /**
          * \brief signal to stop the thread.

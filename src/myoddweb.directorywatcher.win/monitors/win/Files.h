@@ -26,7 +26,7 @@ namespace myoddweb
       class Files : public Common
       {
       public:
-        Files(const directorywatcher::Monitor& parent, unsigned long bufferLength);
+        Files( Monitor& parent, unsigned long bufferLength);
 
       public:
         virtual ~Files() = default;

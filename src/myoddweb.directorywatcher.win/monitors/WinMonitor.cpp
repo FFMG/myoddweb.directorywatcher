@@ -61,52 +61,35 @@ namespace myoddweb
     /**
      * \brief Start monitoring
      */
-    bool WinMonitor::Start()
+    void WinMonitor::OnStart()
     {
-      Stop();
+      // start monitoring the directories
+      _directories = new win::Directories(*this, _bufferLength);
+      _directories->Start();
 
-      try
-      {
-        // start monitoring the directories
-        _directories = new win::Directories(*this, _bufferLength);
-        _directories->Start();
-
-        // and then the files.
-        _files = new win::Files(*this, _bufferLength);
-        _files->Start();
-      }
-      catch (...)
-      {
-        AddEventError(EventError::CannotStart);
-        return false;
-      }
-      return true;
+      // and then the files.
+      _files = new win::Files(*this, _bufferLength);
+      _files->Start();
     }
 
     /**
      * \brief Stop monitoring
      */
-    void WinMonitor::Stop()
+    void WinMonitor::OnStop()
     {
-      try
+      if (_directories != nullptr)
       {
-        if (_directories != nullptr)
-        {
-          _directories->Stop();
-          delete _directories;
-        }
-        if (_files != nullptr)
-        {
-          _files->Stop();
-          delete _files;
-        }
-        _directories = nullptr;
-        _files = nullptr;
+        _directories->Stop();
+        delete _directories;
       }
-      catch (...)
+      _directories = nullptr;
+
+      if (_files != nullptr)
       {
-        AddEventError(EventError::CannotStop);
+        _files->Stop();
+        delete _files;
       }
+      _files = nullptr;
     }
   }
 }

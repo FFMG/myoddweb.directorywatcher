@@ -67,6 +67,9 @@ namespace myoddweb.directorywatcher.utils
         case interfaces.EventError.NoFileData:
           return "The raised event did not have any valid file name";
 
+        case interfaces.EventError.CannotStop:
+          return "There was an issue trying to stop the watcher(s)";
+
         case interfaces.EventError.None:
           return "No Error";
 

@@ -55,6 +55,11 @@ namespace myoddweb.directorywatcher.interfaces
     /// <summary>
     /// The event did not have any file data.
     /// </summary>
-    NoFileData = 7
+    NoFileData = 7,
+
+    /// <summary>
+    /// There was an issue trying to stop the watcher(s)
+    /// </summary>
+    CannotStop = 8
   }
 }

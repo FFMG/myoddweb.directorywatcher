@@ -27,7 +27,6 @@ namespace myoddweb
         explicit Data(unsigned long bufferLength);
         ~Data();
 
-      private:
         /**
          * \brief Prevent copy construction
          */

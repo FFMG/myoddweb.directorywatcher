@@ -33,8 +33,8 @@ namespace myoddweb
     public:
       virtual ~WinMonitor();
 
-      bool Start() override;
-      void Stop() override;
+      void OnStart() override;
+      void OnStop() override;
 
     private:
       win::Common* _directories;

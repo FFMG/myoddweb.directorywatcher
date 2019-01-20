@@ -25,8 +25,7 @@ namespace myoddweb
     }
 
     MultipleWinMonitor::MultipleWinMonitor(const __int64 id, const Request& request, const int depth, const int maxDepth) :
-      Monitor(id, request),
-      _state( Stopped )
+      Monitor(id, request)
     {
       // use a standar monitor for non recursive items.
       if( !request.Recursive )
@@ -46,58 +45,25 @@ namespace myoddweb
     /**
      * \brief Start monitoring
      */
-    bool MultipleWinMonitor::Start()
+    void MultipleWinMonitor::OnStart()
     {
-      // sstop and clear everything
-      Stop();
-
-      // we are starting
-      _state = Starting;
-
-      try
+      // and start them all.
+      for (auto it = _monitors.begin(); it != _monitors.end(); ++it)
       {
-        // and start them all.
-        for (auto it = _monitors.begin(); it != _monitors.end(); ++it)
-        {
-          (*it)->Start();
-        }
-
-        // all good
-        _state = Started;
+        (*it)->Start();
       }
-      catch(...)
-      {
-        _state = Stopped;
-        AddEventError(EventError::CannotStart);
-        return false;
-
-      }
-      return false;
     }
 
     /**
      * \brief Start monitoring
      */
-    void MultipleWinMonitor::Stop()
+    void MultipleWinMonitor::OnStop()
     {
-      // we are stopping.
-      _state = Stopping;
-
       // and the monitors.
       for (auto it = _monitors.begin(); it != _monitors.end(); ++it)
       {
-        try
-        {
-          (*it)->Stop();
-        }
-        catch (...)
-        {
-          AddEventError(EventError::CannotStop);
-        }
+        (*it)->Stop();
       }
-
-      // regaldess what happned, we stopped.
-      _state = Stopped;
     }
 
     /**
@@ -136,15 +102,6 @@ namespace myoddweb
     }
 
     #pragma region Private Functions
-    /**
-     * \brief return if the current state is the same as the one we are after.
-     * \param state the state we are checking against.
-     */
-    bool MultipleWinMonitor::Is(const State state) const
-    {
-      return _state == state;
-    }
-
     /**
      * \brief Clear all the current data
      */
