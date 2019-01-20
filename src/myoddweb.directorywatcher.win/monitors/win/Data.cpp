@@ -13,6 +13,7 @@
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #include <cstring>
+#include <utility>
 #include <Windows.h>
 #include "Data.h"
 
@@ -22,27 +23,43 @@ namespace myoddweb
   {
     namespace win
     {
-      Data::Data(const unsigned long bufferLength) :
+      Data::Data(const Monitor& monitor, const unsigned long bufferLength)
+        :
+        _lpCompletionRoutine(nullptr), 
+        _object(nullptr),
         _hDirectory(nullptr),
         _buffer(nullptr),
-        _bufferLength(bufferLength)
+        _bufferLength(bufferLength),
+        _folder(nullptr),
+        _monitor(monitor)
       {
-        memset(&_overlapped, 0, sizeof(OVERLAPPED));
       }
 
       Data::~Data()
       {
-        Clear();
+        Close();
+
+        // clear the folder.
+        delete _folder;
+        _folder = nullptr;
       }
 
       /**
        * \brief Prepare the buffer and structure for processing.
        * \param object the object we would like to pass to the `OVERLAPPED` structure.
+       * \param bufferLength the lenght of the buffer.
        */
-      void Data::Prepare(void* object)
+      void Data::PrepareMonitor(void* object, const unsigned long bufferLength, const _COMPLETION_ROUTINE lpCompletionRoutine)
       {
         // make sure that the buffer is clear
         ClearBuffer();
+
+        // the buffer
+        _bufferLength = bufferLength;
+
+        _object = object;
+
+        _lpCompletionRoutine = lpCompletionRoutine;
 
         // then we can create it.
         _buffer = new unsigned char[_bufferLength];
@@ -50,14 +67,17 @@ namespace myoddweb
 
         // save the overlapped opject.
         ClearOverlapped();
-        _overlapped.hEvent = object;
+        _overlapped.hEvent = this;
       }
 
       /**
        * \brief Clear all the data
        */
-      void Data::Clear()
+      void Data::Close()
       {
+        // close the folder
+        CloseFolder();
+
         // the handle 
         ClearHandle();
 
@@ -67,6 +87,19 @@ namespace myoddweb
         // clear the overlapped structure.
         ClearOverlapped();
       }
+
+      /**
+       * \brief if we opened the folder data, close it now.
+       */
+      void Data::CloseFolder() const
+      {
+        if( nullptr == _folder )
+        {
+          return;
+        }
+        _folder->Close();
+      }
+
 
       /**
        * \brief Clear the handle
@@ -122,15 +155,6 @@ namespace myoddweb
       }
 
       /**
-       * \brief set the directory handle
-       * \param handle the directory handle we want to save
-       */
-      void Data::DirectoryHandle(void* handle)
-      {
-        _hDirectory = handle;
-      }
-
-      /**
        * \brief get the current buffer
        * \return the void* buffer.
        */
@@ -179,6 +203,96 @@ namespace myoddweb
 
         // return it.
         return pBuffer;
+      }
+
+      bool Data::Open( )
+      {
+        // check if this was done alread
+        // we cannot use IsOpen() as INVALID_HANDLE_VALUE would cause a return false.
+        if (DirectoryHandle() != nullptr)
+        {
+          return DirectoryHandle() != INVALID_HANDLE_VALUE;
+        }
+
+        // how we want to open this directory.
+        const auto shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
+        const auto fileAttr = FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED;
+
+        _hDirectory = ::CreateFileW(
+          _monitor.Path().c_str(),			// the path we are watching
+          FILE_LIST_DIRECTORY,        // required for ReadDirectoryChangesW( ... )
+          shareMode,
+          nullptr,                    // security descriptor
+          OPEN_EXISTING,              // how to create
+          fileAttr,
+          nullptr                     // file with attributes to copy
+        );
+
+        // check if it all worked.
+        return IsValidHandle();
+      }
+
+      bool Data::Start(void* object, const unsigned long notifyFilter, const bool recursive, _COMPLETION_ROUTINE completion )
+      {
+        PrepareMonitor(object, _bufferLength, completion);
+
+        // This call needs to be reissued after every APC.
+        if( !::ReadDirectoryChangesW(
+          DirectoryHandle(),
+          Buffer(),
+          BufferLength(),
+          recursive,
+          notifyFilter,
+          nullptr,                // bytes returned, (not used here as we are async)
+          Overlapped(),           // buffer with our information
+          &FileIoCompletionRoutine
+        ))
+        {
+          return false;
+        }
+
+        // If we are not monitoring folder changes
+        // then we need to check our own folder withour recursion.
+        // that way, if it is deleted, we will be able to release the handle(s).
+        if ((notifyFilter & FILE_NOTIFY_CHANGE_DIR_NAME) != FILE_NOTIFY_CHANGE_DIR_NAME)
+        {
+          if( nullptr == _folder )
+          {
+            _folder = new Data(_monitor, _bufferLength);
+          }
+
+          if(_folder->_hDirectory == nullptr )
+          {
+            _folder->Open();
+          }
+          if (_folder->IsValidHandle() )
+          {
+            _folder->Start(nullptr, FILE_NOTIFY_CHANGE_DIR_NAME, false, completion);
+          }
+        }
+        return true;
+      }
+
+      /***
+       * \brief The async callback function for ReadDirectoryChangesW
+       */
+      void CALLBACK Data::FileIoCompletionRoutine(
+        const unsigned long dwErrorCode,
+        const unsigned long dwNumberOfBytesTransfered,
+        _OVERLAPPED* lpOverlapped
+      )
+      {
+        // get the object we are working with
+        const auto obj = static_cast<Data*>(lpOverlapped->hEvent);
+
+        // do we have an object?
+        // should never happen ... but still.
+        if (nullptr == obj)
+        {
+          return;
+        }
+
+        obj->_lpCompletionRoutine(dwErrorCode, dwNumberOfBytesTransfered, obj->_object, *obj);
       }
     }
   }

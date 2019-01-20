@@ -30,13 +30,15 @@ namespace myoddweb
       protected:
         Common( Monitor& parent, unsigned long bufferLength);
 
-      private:
+      public:
         /**
          * \brief prevent copies.
          */
         Common() = delete;
         Common(const Common&) = delete;
+        Common(Common&&) = delete;
         Common& operator=(const Common&) = delete;
+        Common& operator=(Common&&) = delete;
 
       public:
         virtual ~Common();
@@ -51,24 +53,18 @@ namespace myoddweb
          */
         virtual unsigned long GetNotifyFilter() const = 0;
 
-        static void CALLBACK FileIoCompletionRoutine(
-          unsigned long dwErrorCode,							  // completion code
-          unsigned long dwNumberOfBytesTransfered,	// number of bytes transferred
-          _OVERLAPPED* lpOverlapped                 // I/O information buffer
-        );
-
-        static void CALLBACK FileIoCompletionRoutineDeletedFolders(
-          unsigned long dwErrorCode,							  // completion code
-          unsigned long dwNumberOfBytesTransfered,	// number of bytes transferred
-          _OVERLAPPED* lpOverlapped                 // I/O information buffer
-        );
+        static void __stdcall FileIoCompletionRoutine(
+          unsigned long errorCode,
+          unsigned long mumberOfBytesTransfered,
+          void* object,
+          Data& data
+          );
 
         static void RunThread(Common* obj);
 
       private:
         void StopAndResetThread();
 
-        bool OpenDirectory();
         void ProcessNotificationFromBackup(const unsigned char* pBuffer) const;
 
         void Read();
@@ -77,20 +73,26 @@ namespace myoddweb
         /**
          * \brief all the data used by the monitor.
          */
-        Data _data;
+        Data* _data;
 
         /**
          * \brief the parent monitor
          */
         Monitor& _parent;
-#pragma region
+
+        /**
+         * \brief the max length of the buffers.
+         */
+        const unsigned long _bufferLength;
+        
+        #pragma region Thread variables
         /**
          * \brief signal to stop the thread.
          */
         std::promise<void> _exitSignal;
         std::future<void> _futureObj;
-        std::thread* _th;
-#pragma endregion Thread variables
+        std::thread* _th = nullptr;
+        #pragma endregion
 
         void StartWorkerThread();
 

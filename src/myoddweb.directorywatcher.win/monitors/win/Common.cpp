@@ -37,9 +37,9 @@ namespace myoddweb
         Monitor& parent,
         const unsigned long bufferLength
       ) :
-        _data(bufferLength),
+        _data(nullptr),
         _parent(parent),
-        _th(nullptr)
+        _bufferLength(bufferLength)
       {
       }
 
@@ -56,9 +56,6 @@ namespace myoddweb
       {
         // close everything
         Stop();
-
-        // create the buffer.
-        _data.Prepare(this);
 
         // start the worker thread
         // in turn it will start the reading.
@@ -77,8 +74,9 @@ namespace myoddweb
         // will reset the buffer and cause posible issues.
         StopAndResetThread();
 
-        // clear the data
-        _data.Clear();
+        // clear the data.
+        delete _data;
+        _data = nullptr;
       }
 
       /**
@@ -106,46 +104,15 @@ namespace myoddweb
       }
 
       /**
-       * \brief Open the directory we want to watch
-       * \return if there was a problem opening the file.
-       */
-      bool Common::OpenDirectory()
-      {
-        // check if this was done alread
-        // we cannot use IsOpen() as INVALID_HANDLE_VALUE would cause a return false.
-        if (_data.DirectoryHandle() != nullptr)
-        {
-          return _data.DirectoryHandle() != INVALID_HANDLE_VALUE;
-        }
-
-        // how we want to open this directory.
-        const auto shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
-        const auto fileAttr = FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED;
-
-        const auto hDirectory = ::CreateFileW(
-          _parent.Path().c_str(),			// the path we are watching
-          FILE_LIST_DIRECTORY,        // required for ReadDirectoryChangesW( ... )
-          shareMode,
-          nullptr,                    // security descriptor
-          OPEN_EXISTING,              // how to create
-          fileAttr,
-          nullptr                     // file with attributes to copy
-        );
-
-        // set the data.
-        _data.DirectoryHandle(hDirectory);
-
-        // check if it all worked.
-        return _data.IsValidHandle();
-      }
-
-      /**
        * \brief Start the worker thread so we can monitor for events.
        */
       void Common::StartWorkerThread()
       {
         // stop the old one... if any
         StopAndResetThread();
+
+        // start the data
+        _data = new Data(_parent, _bufferLength);
 
         // we can now reset our future
         // so we can cancel/stop the thread/
@@ -172,7 +139,7 @@ namespace myoddweb
       {
         // try and open the directory
         // if it is open already then nothing should happen here.
-        if (!OpenDirectory())
+        if (!_data->Open() )
         {
           // we could not access this
           _parent.AddEventError(EventError::Access);
@@ -190,7 +157,7 @@ namespace myoddweb
         }
 
         // if we are here... we can release the data
-        _data.Clear();
+        _data->Close();
       }
 
       /**
@@ -198,7 +165,7 @@ namespace myoddweb
        */
       void Common::Read()
       {
-        if (!_data.IsValidHandle())
+        if (!_data->IsValidHandle() )
         {
           return;
         }
@@ -208,67 +175,12 @@ namespace myoddweb
         // https://docs.microsoft.com/en-gb/windows/desktop/api/WinBase/nf-winbase-readdirectorychangesw
         const auto notifyFilter = GetNotifyFilter();
 
-        // This call needs to be reissued after every APC.
-        if (!::ReadDirectoryChangesW(
-          _data.DirectoryHandle(),
-          _data.Buffer(),
-          _data.BufferLength(),
-          _parent.Recursive(),
-          notifyFilter,
-          nullptr,                      // bytes returned, (not used here as we are async)
-          _data.Overlapped(),           // buffer with our information
-          &FileIoCompletionRoutine
-        ))
+        if( !_data->Start( this, notifyFilter, _parent.Recursive(), &FileIoCompletionRoutine))
         {
           // we could not create the monitoring
           // so we might as well get out now.
           _parent.AddEventError(EventError::Access);
-          _data.Clear();
-          return;
-        }
-
-        // If we are not monitoring folder changes
-        // then we need to check our own folder withour recursion.
-        // that way, if it is deleted, we will be able to release the handle(s).
-        if ((notifyFilter & FILE_NOTIFY_CHANGE_DIR_NAME) != FILE_NOTIFY_CHANGE_DIR_NAME)
-        {
-          if (!::ReadDirectoryChangesW(
-            _data.DirectoryHandle(),
-            _data.Buffer(),
-            _data.BufferLength(),
-            _parent.Recursive(),
-            FILE_NOTIFY_CHANGE_DIR_NAME,
-            nullptr,                      // bytes returned, (not used here as we are async)
-            _data.Overlapped(),           // buffer with our information
-            &FileIoCompletionRoutine
-          ))
-          {
-            _parent.AddEventError(EventError::Access);
-          }
-        }
-      }
-
-      /***
-       * \brief The async callback function for ReadDirectoryChangesW
-       *        This function only looks for deleted folders.
-       */
-      void CALLBACK Common::FileIoCompletionRoutineDeletedFolders
-      (
-        const unsigned long dwErrorCode,
-        const unsigned long dwNumberOfBytesTransfered,
-        _OVERLAPPED* lpOverlapped
-      )
-      {
-        switch (dwErrorCode)
-        {
-        default:
-        case ERROR_SUCCESS:// all good or we do not care about this.
-          return;
-
-        case ERROR_ACCESS_DENIED:
-          auto obj = static_cast<Common*>(lpOverlapped->hEvent);
-          obj->_data.Clear();
-          break;
+          _data->Close();
         }
       }
 
@@ -276,84 +188,93 @@ namespace myoddweb
        * \brief The async callback function for ReadDirectoryChangesW
        */
       void CALLBACK Common::FileIoCompletionRoutine(
-        const unsigned long dwErrorCode,
-        const unsigned long dwNumberOfBytesTransfered,
-        _OVERLAPPED* lpOverlapped
+        const unsigned long errorCode,
+        const unsigned long mumberOfBytesTransfered,
+        void* object,
+        Data& data
       )
       {
         // get the object we are working with
-        auto obj = static_cast<Common*>(lpOverlapped->hEvent);
+        auto obj = static_cast<Common*>(object);
 
-        // do we have an object?
-        // should never happen ... but still.
-        if (nullptr == obj)
-        {
-          return;
-        }
-
-        switch( dwErrorCode )
+        switch(errorCode)
         {
         case ERROR_SUCCESS:// all good, continue;
           break;
 
         case ERROR_OPERATION_ABORTED:
-          obj->_parent.AddEventError(EventError::Aborted);
+          if (obj != nullptr)
+          {
+            obj->_parent.AddEventError(EventError::Aborted);
+          }
           return;
 
         case ERROR_ACCESS_DENIED:
-          obj->_data.Clear();
-          obj->_parent.AddEventError(EventError::Access);
+          data.Close();
+          if (obj != nullptr)
+          {
+            obj->_parent.AddEventError(EventError::Access);
+          }
           return;
 
         default:
           // https://msdn.microsoft.com/en-gb/574eccda-03eb-4e8a-9d74-cfaecc7312ce?f=255&MSPPError=-2147217396
-          OVERLAPPED stOverlapped;
-          DWORD dwBytesRead = 0;
-          if (!GetOverlappedResult(obj->_data.DirectoryHandle(),
-            &stOverlapped,
-            &dwBytesRead,
-            FALSE))
-          {
-            const auto dwError = GetLastError();
-            obj->_parent.AddEventError(EventError::Overflow);
-          }
+          // OVERLAPPED stOverlapped;
+          // DWORD dwBytesRead = 0;
+          // if (!GetOverlappedResult(data.DirectoryHandle(),
+          //   &stOverlapped,
+          //   &dwBytesRead,
+          //   FALSE))
+          // {
+          //   const auto dwError = GetLastError();
+          //   obj->_parent.AddEventError(EventError::Overflow);
+          // }
           return;
         }
 
         // If the buffer overflows, the entire contents of the buffer are discarded, 
         // the lpBytesReturned parameter contains zero, and the ReadDirectoryChangesW function 
         // fails with the error code ERROR_NOTIFY_ENUM_DIR.
-        if (0 == dwNumberOfBytesTransfered)
+        if (0 == mumberOfBytesTransfered)
         {
           // noting to read, just restart
-          obj->Read();
+          if (obj != nullptr)
+          {
+            obj->Read();
+          }
           return;
         }
 
         // Can't use sizeof(FILE_NOTIFY_INFORMATION) because
         // the structure is padded to 16 bytes.
-        _ASSERTE(dwNumberOfBytesTransfered >= offsetof(FILE_NOTIFY_INFORMATION, FileName) + sizeof(WCHAR));
+        _ASSERTE(mumberOfBytesTransfered >= offsetof(FILE_NOTIFY_INFORMATION, FileName) + sizeof(WCHAR));
 
         // clone the data so we can start reading right away.
         unsigned char* pBufferBk = nullptr;
         try
         {
-          pBufferBk = obj->_data.Clone(dwNumberOfBytesTransfered);
+          pBufferBk = data.Clone(mumberOfBytesTransfered);
         }
         catch (...)
         {
-          obj->_parent.AddEventError(EventError::Memory);
+          if (obj != nullptr)
+          {
+            obj->_parent.AddEventError(EventError::Memory);
+          }
         }
 
         // Get the new read issued as fast as possible. The documentation
         // says that the original OVERLAPPED structure will not be used
         // again once the completion routine is called.
-        obj->Read();
+        if (obj != nullptr)
+        {
+          obj->Read();
 
-        // we cloned the data and restarted the read
-        // so we can now process the data
-        // @todo this should be moved to a thread.
-        obj->ProcessNotificationFromBackup(pBufferBk);
+          // we cloned the data and restarted the read
+          // so we can now process the data
+          // @todo this should be moved to a thread.
+          obj->ProcessNotificationFromBackup(pBufferBk);
+        }
       }
 
       /**

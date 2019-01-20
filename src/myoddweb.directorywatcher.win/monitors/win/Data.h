@@ -14,6 +14,7 @@
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #pragma once
 #include <Windows.h>
+#include "../Monitor.h"
 
 namespace myoddweb
 {
@@ -24,26 +25,33 @@ namespace myoddweb
       class Data
       {
       public:
-        explicit Data(unsigned long bufferLength);
+        typedef
+          void
+          ( *_COMPLETION_ROUTINE)(
+            unsigned long errorCode,
+            unsigned long mumberOfBytesTransfered,
+            void* object,
+            Data& data
+            );
+
+      public:
+        explicit Data(const Monitor& monitor, unsigned long bufferLength);
         ~Data();
 
         /**
          * \brief Prevent copy construction
          */
         Data(const Data&) = delete;
+        Data(Data&&) = delete;
         Data& operator=(const Data&) = delete;
+        Data& operator=(Data&& other) = delete;
+        Data() = delete;
 
       public:
         /**
-         * \brief Prepare the buffer and structure for processing.
-         * \param object the object we would like to pass to the `OVERLAPPED` structure.
-         */
-        void Prepare(void* object);
-
-        /**
          * \brief Clear all the data
          */
-        void Clear();
+        void Close();
 
         /**
          * \brief Check if the handle is valid
@@ -58,9 +66,8 @@ namespace myoddweb
 
         /**
          * \brief set the directory handle
-         * \param handle the directory handle we want to save
          */
-        void DirectoryHandle(void* handle);
+        bool Open();
 
         /**
          * \brief clone up to 'ulSize' bytes into a buffer.
@@ -88,7 +95,28 @@ namespace myoddweb
          */
         LPOVERLAPPED Overlapped();
 
+        bool Start(void* object, unsigned long notifyFilter, bool recursive, _COMPLETION_ROUTINE lpCompletionRoutine);
+
       private:
+        /**
+         * \brief Prepare the buffer and structure for processing.
+         * \param object the object we would like to pass to the `OVERLAPPED` structure.
+         * \param bufferLength the lenght of the buffer.
+         */
+        void PrepareMonitor(void* object, unsigned long bufferLength, _COMPLETION_ROUTINE lpCompletionRoutine);
+
+        _COMPLETION_ROUTINE _lpCompletionRoutine;
+
+        void* _object;
+
+        Data* _folder;
+
+        static void CALLBACK FileIoCompletionRoutine(
+          unsigned long dwErrorCode,							  // completion code
+          unsigned long dwNumberOfBytesTransfered,	// number of bytes transferred
+          _OVERLAPPED* lpOverlapped                 // I/O information buffer
+        );
+
         /**
          * \brief the handle of the directory, (and sub-directory)
          */
@@ -102,13 +130,19 @@ namespace myoddweb
         /**
          * \brief the buffer length
          */
-        const unsigned long _bufferLength;
+        unsigned long _bufferLength;
+
+        /**
+         * \brief the path
+         */
+        const Monitor& _monitor;
 
         /**
          * \brief the overlapped
          */
         OVERLAPPED	_overlapped{};
 
+        #pragma region Clearup
         /**
          * \brief Clear the handle
          */
@@ -120,9 +154,15 @@ namespace myoddweb
         void ClearBuffer();
 
         /**
+         * \brief if we opened the folder data, close it now.
+         */
+        void CloseFolder() const;
+
+        /**
          * \brief clear the overlapped structure.
          */
         void ClearOverlapped();
+        #pragma endregion 
       };
     }
   }
