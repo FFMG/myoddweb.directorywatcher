@@ -89,7 +89,7 @@
     <ClInclude Include="monitors\MultipleWinMonitor.h">
       <Filter>monitors</Filter>
     </ClInclude>
-    <ClInclude Include="Base.h">
+    <ClInclude Include="monitors\Base.h">
       <Filter>monitors</Filter>
     </ClInclude>
   </ItemGroup>
