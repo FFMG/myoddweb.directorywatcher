@@ -193,7 +193,7 @@ namespace myoddweb
         // we are now done
         _state = Stopped;
       }
-      catch(std::exception const & ex )
+      catch(... )
       {
         _state = Stopped;
         AddEventError(EventError::CannotStop);
