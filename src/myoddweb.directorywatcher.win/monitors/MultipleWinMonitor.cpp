@@ -12,7 +12,7 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
-#include "../Base.h"
+#include "Base.h"
 #include "MultipleWinMonitor.h"
 #include "../utils/Io.h"
 

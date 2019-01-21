@@ -109,7 +109,17 @@ namespace myoddweb
         //  is it open?
         if (IsValidHandle())
         {
-          CloseHandle(_hDirectory);
+          try
+          {
+            CloseHandle(_hDirectory);
+          }
+          catch(...)
+          {
+            // We can ignore this... as per the doc:
+            //   If the application is running under a debugger, the function will throw an exception if it receives either a handle value that is not valid or a pseudo-
+            //   handle value. This can happen if you close a handle twice, or if you call CloseHandle on a handle returned by the FindFirstFile function instead of 
+            //   calling the FindClose function.
+          }
         }
         // the directory is closed.
         _hDirectory = nullptr;
@@ -215,7 +225,7 @@ namespace myoddweb
         }
 
         // how we want to open this directory.
-        const auto shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
+        const auto shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE;
         const auto fileAttr = FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED;
 
         _hDirectory = ::CreateFileW(
