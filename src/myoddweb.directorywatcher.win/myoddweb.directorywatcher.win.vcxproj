@@ -156,6 +156,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Base.h" />
     <ClInclude Include="monitors\Monitor.h" />
     <ClInclude Include="monitors\MultipleWinMonitor.h" />
     <ClInclude Include="monitors\WinMonitor.h" />

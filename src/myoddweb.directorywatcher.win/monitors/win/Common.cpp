@@ -18,6 +18,7 @@
 #include "../../utils/Io.h"
 #include "../../utils/EventError.h"
 #include "../../utils/MonitorsManager.h"
+#include "../../Base.h"
 
 namespace myoddweb
 {
@@ -25,11 +26,6 @@ namespace myoddweb
   {
     namespace win
     {
-      /*
-       * The number of ms we want to sleep between reads.
-       */
-      #define SLEEP_BETWEEN_READS 100 
-
       /**
        * \brief Create the Monitor that uses ReadDirectoryChanges
        */
@@ -153,7 +149,7 @@ namespace myoddweb
         while (_futureObj.wait_for(std::chrono::milliseconds(1)) == std::future_status::timeout)
         {
           // wait a little.
-          SleepEx(SLEEP_BETWEEN_READS, true);
+          SleepEx(MYODDWEB_SLEEP_BETWEEN_READS, true);
         }
 
         // if we are here... we can release the data

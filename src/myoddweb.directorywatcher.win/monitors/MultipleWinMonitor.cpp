@@ -12,6 +12,7 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
+#include "../Base.h"
 #include "MultipleWinMonitor.h"
 #include "../utils/Io.h"
 
@@ -20,7 +21,7 @@ namespace myoddweb
   namespace directorywatcher
   {
     MultipleWinMonitor::MultipleWinMonitor(const __int64 id, const Request& request) :
-      MultipleWinMonitor(id, request, 0, 2 )
+      MultipleWinMonitor(id, request, 0, MYODDWEB_MAX_LEVEL_DEPTH)
     {
     }
 
@@ -165,7 +166,7 @@ namespace myoddweb
 
       // look for all the sub-paths
       const auto subPaths = Io::GetAllSubFolders(parent.Path);
-      if( depth >= maxDepth || subPaths.empty())
+      if( depth >= maxDepth || subPaths.empty() || subPaths.size() > MYODDWEB_MAX_NUMBER_OF_SUBPATH )
       {
         // we will breach the depth
         _monitors.push_back(new WinMonitor(id, parent));
@@ -179,8 +180,8 @@ namespace myoddweb
       // now try and add all the subpath
       for (const auto& path : subPaths)
       {
-        const auto multiMonitor = new MultipleWinMonitor( GetNextId(), { path, true }, depth+1, maxDepth );
-        _monitors.push_back(multiMonitor);
+        // add one more to the list.
+        _monitors.push_back( new MultipleWinMonitor( GetNextId(), { path, true }, depth+1, maxDepth ));
       }
     }
     #pragma endregion
