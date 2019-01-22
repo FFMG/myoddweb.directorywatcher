@@ -27,10 +27,10 @@ namespace myoddweb
         :
         _lpCompletionRoutine(nullptr), 
         _object(nullptr),
+        _folder(nullptr),
         _hDirectory(nullptr),
         _buffer(nullptr),
         _bufferLength(bufferLength),
-        _folder(nullptr),
         _monitor(monitor)
       {
       }
@@ -225,11 +225,11 @@ namespace myoddweb
         }
 
         // how we want to open this directory.
-        const auto shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE;
+        const auto shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
         const auto fileAttr = FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED;
 
-        _hDirectory = ::CreateFileW(
-          _monitor.Path().c_str(),			// the path we are watching
+        _hDirectory = CreateFileW(
+          _monitor.Path().c_str(),		// the path we are watching
           FILE_LIST_DIRECTORY,        // required for ReadDirectoryChangesW( ... )
           shareMode,
           nullptr,                    // security descriptor
