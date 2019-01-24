@@ -19,6 +19,10 @@ A fast and reliable File/Directory watcher for c#/c++ to replace the current .NE
 
 ## Installing
 ### Nuget
+
+[![NuGet Status](https://img.shields.io/nuget/v/MyOddWeb.DirectoryWatcher.svg)](https://www.nuget.org/packages/MyOddWeb.DirectoryWatcher/)
+[![NuGet Count](https://img.shields.io/nuget/dt/MyOddWeb.DirectoryWatcher.svg)](https://www.nuget.org/packages/MyOddWeb.DirectoryWatcher/)
+
 #### Package manager
 `Install-Package MyOddWeb.DirectoryWatcher`
 
