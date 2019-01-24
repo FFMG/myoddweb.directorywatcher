@@ -13,8 +13,24 @@
     </ClCompile>
     <ClCompile Include="IoTests.cpp" />
     <ClCompile Include="CollectorTests.cpp" />
-    <ClCompile Include="..\myoddweb.directorywatcher.win\monitors\MonitorData.cpp">
+    <ClCompile Include="MonitorDataTests.cpp" />
+    <ClCompile Include="..\myoddweb.directorywatcher.win\monitors\win\Data.cpp">
+      <Filter>win\monitors\win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\myoddweb.directorywatcher.win\monitors\WinMonitor.cpp">
       <Filter>win\monitors</Filter>
+    </ClCompile>
+    <ClCompile Include="..\myoddweb.directorywatcher.win\monitors\Monitor.cpp">
+      <Filter>win\monitors</Filter>
+    </ClCompile>
+    <ClCompile Include="..\myoddweb.directorywatcher.win\monitors\win\Common.cpp">
+      <Filter>win\monitors\win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\myoddweb.directorywatcher.win\monitors\win\Directories.cpp">
+      <Filter>win\monitors\win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\myoddweb.directorywatcher.win\monitors\win\Files.cpp">
+      <Filter>win\monitors\win</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -31,10 +47,30 @@
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Io.h">
       <Filter>win\utils</Filter>
     </ClInclude>
-    <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\MonitorData.h">
+    <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\win\Data.h">
+      <Filter>win\monitors\win</Filter>
+    </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\WinMonitor.h">
       <Filter>win\monitors</Filter>
     </ClInclude>
-    <ClInclude Include="MonitorDataTests.cpp" />
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Request.h">
+      <Filter>win\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\Base.h">
+      <Filter>win\monitors</Filter>
+    </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\Monitor.h">
+      <Filter>win\monitors</Filter>
+    </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\win\Common.h">
+      <Filter>win\monitors\win</Filter>
+    </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\win\Directories.h">
+      <Filter>win\monitors\win</Filter>
+    </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\win\Files.h">
+      <Filter>win\monitors\win</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="win">
@@ -45,6 +81,9 @@
     </Filter>
     <Filter Include="win\monitors">
       <UniqueIdentifier>{196163e7-58dd-46a6-8a8e-4745c9020cf8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="win\monitors\win">
+      <UniqueIdentifier>{d7f01a23-2e7a-4522-a337-e4de149356ff}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
