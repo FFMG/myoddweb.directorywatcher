@@ -48,6 +48,7 @@ namespace myoddweb
        * \brief Prepare the buffer and structure for processing.
        * \param object the object we would like to pass to the `OVERLAPPED` structure.
        * \param bufferLength the lenght of the buffer.
+       * \param lpCompletionRoutine the routine we will be calling when we get a valid notification
        */
       void Data::PrepareMonitor(void* object, const unsigned long bufferLength, const _COMPLETION_ROUTINE lpCompletionRoutine)
       {
@@ -57,8 +58,10 @@ namespace myoddweb
         // the buffer
         _bufferLength = bufferLength;
 
+        // the object
         _object = object;
 
+        // save the completion source.
         _lpCompletionRoutine = lpCompletionRoutine;
 
         // then we can create it.
@@ -242,9 +245,18 @@ namespace myoddweb
         return IsValidHandle();
       }
 
-      bool Data::Start(void* object, const unsigned long notifyFilter, const bool recursive, _COMPLETION_ROUTINE completion )
+      /**
+       * \brief start monitoring a given folder.
+       * \param object the object we will be passed by the overlapped param
+       * \param notifyFilter the notification filter, (what we are watching the folder for)
+       * \param recursive recursively check the given folder or not.
+       * \param lpCompletionRoutine the completion routine we will call.
+       * \return success or not
+       */
+      bool Data::Start(void* object, const unsigned long notifyFilter, const bool recursive, const _COMPLETION_ROUTINE lpCompletionRoutine)
       {
-        PrepareMonitor(object, _bufferLength, completion);
+        // prepare all the values
+        PrepareMonitor(object, _bufferLength, lpCompletionRoutine);
 
         // This call needs to be reissued after every APC.
         if( !::ReadDirectoryChangesW(
@@ -270,14 +282,13 @@ namespace myoddweb
           {
             _folder = new Data(_monitor, _bufferLength);
           }
-
           if(_folder->_hDirectory == nullptr )
           {
             _folder->Open();
           }
           if (_folder->IsValidHandle() )
           {
-            _folder->Start(nullptr, FILE_NOTIFY_CHANGE_DIR_NAME, false, completion);
+            _folder->Start(nullptr, FILE_NOTIFY_CHANGE_DIR_NAME, false, lpCompletionRoutine);
           }
         }
         return true;
@@ -295,6 +306,41 @@ namespace myoddweb
         // get the object we are working with
         const auto obj = static_cast<Data*>(lpOverlapped->hEvent);
 
+        switch (dwErrorCode)
+        {
+        case ERROR_SUCCESS:// all good, continue;
+          break;
+
+        case ERROR_OPERATION_ABORTED:
+          if (obj != nullptr)
+          {
+            obj->_monitor.AddEventError(EventError::Aborted);
+          }
+          return;
+
+        case ERROR_ACCESS_DENIED:
+          obj->Close();
+          if (obj != nullptr)
+          {
+            obj->_monitor.AddEventError(EventError::Access);
+          }
+          return;
+
+        default:
+          // https://msdn.microsoft.com/en-gb/574eccda-03eb-4e8a-9d74-cfaecc7312ce?f=255&MSPPError=-2147217396
+          OVERLAPPED stOverlapped;
+          DWORD dwBytesRead = 0;
+          if (!GetOverlappedResult(obj->DirectoryHandle(),
+              &stOverlapped,
+              &dwBytesRead,
+              FALSE))
+          {
+            const auto dwError = GetLastError();
+            obj->_monitor.AddEventError(EventError::Overflow);
+          }
+          return;
+        }
+
         // do we have an object?
         // should never happen ... but still.
         if (nullptr == obj)
@@ -302,7 +348,7 @@ namespace myoddweb
           return;
         }
 
-        obj->_lpCompletionRoutine(dwErrorCode, dwNumberOfBytesTransfered, obj->_object, *obj);
+        obj->_lpCompletionRoutine(dwNumberOfBytesTransfered, obj->_object, *obj);
       }
     }
   }

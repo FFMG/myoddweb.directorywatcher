@@ -184,7 +184,6 @@ namespace myoddweb
        * \brief The async callback function for ReadDirectoryChangesW
        */
       void CALLBACK Common::FileIoCompletionRoutine(
-        const unsigned long errorCode,
         const unsigned long mumberOfBytesTransfered,
         void* object,
         Data& data
@@ -192,41 +191,6 @@ namespace myoddweb
       {
         // get the object we are working with
         auto obj = static_cast<Common*>(object);
-
-        switch(errorCode)
-        {
-        case ERROR_SUCCESS:// all good, continue;
-          break;
-
-        case ERROR_OPERATION_ABORTED:
-          if (obj != nullptr)
-          {
-            obj->_parent.AddEventError(EventError::Aborted);
-          }
-          return;
-
-        case ERROR_ACCESS_DENIED:
-          data.Close();
-          if (obj != nullptr)
-          {
-            obj->_parent.AddEventError(EventError::Access);
-          }
-          return;
-
-        default:
-          // https://msdn.microsoft.com/en-gb/574eccda-03eb-4e8a-9d74-cfaecc7312ce?f=255&MSPPError=-2147217396
-          // OVERLAPPED stOverlapped;
-          // DWORD dwBytesRead = 0;
-          // if (!GetOverlappedResult(data.DirectoryHandle(),
-          //   &stOverlapped,
-          //   &dwBytesRead,
-          //   FALSE))
-          // {
-          //   const auto dwError = GetLastError();
-          //   obj->_parent.AddEventError(EventError::Overflow);
-          // }
-          return;
-        }
 
         // If the buffer overflows, the entire contents of the buffer are discarded, 
         // the lpBytesReturned parameter contains zero, and the ReadDirectoryChangesW function 

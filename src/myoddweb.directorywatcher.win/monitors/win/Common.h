@@ -54,7 +54,6 @@ namespace myoddweb
         virtual unsigned long GetNotifyFilter() const = 0;
 
         static void __stdcall FileIoCompletionRoutine(
-          unsigned long errorCode,
           unsigned long mumberOfBytesTransfered,
           void* object,
           Data& data

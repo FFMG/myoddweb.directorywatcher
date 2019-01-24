@@ -28,7 +28,6 @@ namespace myoddweb
         typedef
           void
           ( *_COMPLETION_ROUTINE)(
-            unsigned long errorCode,
             unsigned long mumberOfBytesTransfered,
             void* object,
             Data& data
@@ -95,6 +94,14 @@ namespace myoddweb
          */
         LPOVERLAPPED Overlapped();
 
+        /**
+         * \brief start monitoring a given folder.
+         * \param object the object we will be passed by the overlapped param
+         * \param notifyFilter the notification filter, (what we are watching the folder for)
+         * \param recursive recursively check the given folder or not.
+         * \param lpCompletionRoutine the completion routine we will call.
+         * \return success or not
+         */
         bool Start(void* object, unsigned long notifyFilter, bool recursive, _COMPLETION_ROUTINE lpCompletionRoutine);
 
       private:
@@ -102,6 +109,7 @@ namespace myoddweb
          * \brief Prepare the buffer and structure for processing.
          * \param object the object we would like to pass to the `OVERLAPPED` structure.
          * \param bufferLength the lenght of the buffer.
+         * \param lpCompletionRoutine the routine we will be calling when we get a valid notification
          */
         void PrepareMonitor(void* object, unsigned long bufferLength, _COMPLETION_ROUTINE lpCompletionRoutine);
 
