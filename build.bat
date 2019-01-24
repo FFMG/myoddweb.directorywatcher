@@ -2,6 +2,11 @@
 @IF "%~1" == "/t:Push" GOTO Push
 @IF "%~1" == "/t:Pack" GOTO Pack
 
+@rem build the x32 version and make sure the new version is in \src\bin\Release\Win32
+@rem build the x64 version and make sure the new version is in \src\bin\Release\x64
+@rem to pack call "build /t:Pack"
+
+
 :Pack
 .\tools\nuget\Nuget.exe pack ".\src\myoddweb.directorywatcher\myoddweb.directorywatcher.nuspec" -OutputDirectory ".\src\bin\."
 

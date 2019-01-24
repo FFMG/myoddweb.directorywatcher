@@ -14,7 +14,7 @@
     <repository>https://github.com/FFMG/myoddweb.directorywatcher</repository>
     <language>en-UK</language>
     <dependencies>
-      <group targetFramework="net452"></group>
+      <group targetFramework="net452"/>
     </dependencies>
   </metadata>
   
