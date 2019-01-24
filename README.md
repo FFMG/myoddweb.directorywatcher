@@ -1,4 +1,4 @@
-# Myoddweb.Directorywatcher
+# Myoddweb.Directorywatcher [![Release](https://img.shields.io/badge/release-v0.0.1.0-brightgreen.png?style=flat)](https://github.com/FFMG/myoddweb.directorywatcher/) [![Build Status](https://travis-ci.org/FFMG/myoddweb.directorywatcher.svg?branch=master)](https://travis-ci.org/FFMG/myoddweb.directorywatcher)
 A fast and reliable File/Directory watcher for c#/c++ to replace the current .NET `FileSystemWatcher` class.
 
 ## What it does
