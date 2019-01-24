@@ -71,7 +71,7 @@ namespace myoddweb
 
         /**
          * \brief check if we have to stop the current work.
-         * ]return bool if we have to stop or not.
+         * \return bool if we have to stop or not.
          */
         bool MustStop() const;
 
