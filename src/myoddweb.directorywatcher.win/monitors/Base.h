@@ -29,13 +29,6 @@ namespace myoddweb
      * The maximum number of subpath we want to allow in multiple windows monitor.
      * If the number is too large the number of running threads will cause issues.
      */
-    #define MYODDWEB_MAX_NUMBER_OF_SUBPATH 32L
-
-    /***
-     * The max number of levels we want to use.
-     * The higher the number the higher number of thread
-     * The smaller the number, the higher the rist of memory issues.
-     */
-    #define MYODDWEB_MAX_LEVEL_DEPTH 2
+    #define MYODDWEB_MAX_NUMBER_OF_SUBPATH 128L
   }
 }

@@ -22,8 +22,6 @@ namespace myoddweb
   {
     class MultipleWinMonitor : public Monitor
     {
-      MultipleWinMonitor(__int64 id, const Request& request, const int depth, const int maxDepth );
-
     public:
       MultipleWinMonitor(__int64 id, const Request& request);
       virtual ~MultipleWinMonitor();
@@ -53,10 +51,8 @@ namespace myoddweb
       /**
        * \brief Create all the sub-requests for a prarent request.
        * \param parent the parent request itselft.
-       * \param depth the current depth.
-       * \param maxDepth the maximum depth we want to go to.
        */
-      void CreateMonitors(const Request& parent, int depth, int maxDepth);
+      void CreateMonitors(const Request& parent );
 
       /**
        * \brief Clear all the current data

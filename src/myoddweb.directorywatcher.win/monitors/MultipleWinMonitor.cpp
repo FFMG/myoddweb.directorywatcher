@@ -21,11 +21,6 @@ namespace myoddweb
   namespace directorywatcher
   {
     MultipleWinMonitor::MultipleWinMonitor(const __int64 id, const Request& request) :
-      MultipleWinMonitor(id, request, 0, MYODDWEB_MAX_LEVEL_DEPTH)
-    {
-    }
-
-    MultipleWinMonitor::MultipleWinMonitor(const __int64 id, const Request& request, const int depth, const int maxDepth) :
       Monitor(id, request)
     {
       // use a standar monitor for non recursive items.
@@ -35,7 +30,7 @@ namespace myoddweb
       }
 
       // try and create the list of monitors.
-      CreateMonitors(_request, depth, maxDepth );
+      CreateMonitors(_request );
     }
 
     MultipleWinMonitor::~MultipleWinMonitor()
@@ -142,10 +137,8 @@ namespace myoddweb
     /**
      * \brief Create all the sub-requests for a prarent request.
      * \param parent the parent request itselft.
-     * \param depth the current depth.
-     * \param maxDepth the maximum depth we want to go to.
      */
-    void MultipleWinMonitor::CreateMonitors(const Request& parent, const int depth, const int maxDepth)
+    void MultipleWinMonitor::CreateMonitors(const Request& parent )
     {
       // if we are stopping, then we cannot go further.
       if( Is( Stopping) )
@@ -166,7 +159,7 @@ namespace myoddweb
 
       // look for all the sub-paths
       const auto subPaths = Io::GetAllSubFolders(parent.Path);
-      if( depth >= maxDepth || subPaths.empty() || subPaths.size() > MYODDWEB_MAX_NUMBER_OF_SUBPATH )
+      if( subPaths.empty() || (_monitors.size()+subPaths.size()) > MYODDWEB_MAX_NUMBER_OF_SUBPATH )
       {
         // we will breach the depth
         _monitors.push_back(new WinMonitor(id, parent));
@@ -181,7 +174,7 @@ namespace myoddweb
       for (const auto& path : subPaths)
       {
         // add one more to the list.
-        _monitors.push_back( new MultipleWinMonitor( GetNextId(), { path, true }, depth+1, maxDepth ));
+        CreateMonitors( { path, true } );
       }
     }
     #pragma endregion
