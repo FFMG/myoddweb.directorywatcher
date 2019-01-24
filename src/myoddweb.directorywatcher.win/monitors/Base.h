@@ -18,17 +18,23 @@ namespace myoddweb
 {
   namespace directorywatcher
   {
-    /*
-     * The number of ms we want to sleep between checks.
-     * The longer we wait, the more time shutdown will take
-     * The shorter we wait, the more CPU will be used.
+    /**
+     * The min number of Milliseconds we want to wait.
+     * If this number is too low then we will use more CPU.
      */
-    #define MYODDWEB_SLEEP_BETWEEN_READS 200L
+    constexpr auto MYODDWEB_MIN_THREAD_SLEEP = 2L;
+
+    /*
+     * The maximum number of Milliseconds we want to sleep.
+     * If this number is too low then we will use more CPU
+     * But if it is too high then shutdown could be really slow.
+     */
+    constexpr auto  MYODDWEB_MAX_THREAD_SLEEP = 256L;
 
     /**
      * The maximum number of subpath we want to allow in multiple windows monitor.
      * If the number is too large the number of running threads will cause issues.
      */
-    #define MYODDWEB_MAX_NUMBER_OF_SUBPATH 128L
+    constexpr auto MYODDWEB_MAX_NUMBER_OF_SUBPATH = 64L;
   }
 }

@@ -70,6 +70,18 @@ namespace myoddweb
         void Run();
 
         /**
+         * \brief check if we have to stop the current work.
+         * ]return bool if we have to stop or not.
+         */
+        bool MustStop() const;
+
+        /**
+         * \brief if this value is true, then we will force a stop.
+         *        this includes all the looks and so on.
+         */
+        bool _mustStop;
+
+        /**
          * \brief all the data used by the monitor.
          */
         Data* _data;

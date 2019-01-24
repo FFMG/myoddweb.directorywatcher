@@ -33,6 +33,7 @@ namespace myoddweb
         Monitor& parent,
         const unsigned long bufferLength
       ) :
+        _mustStop( false ),
         _data(nullptr),
         _parent(parent),
         _bufferLength(bufferLength)
@@ -53,6 +54,9 @@ namespace myoddweb
         // close everything
         Stop();
 
+        // we can alow things to run now
+        _mustStop = false;
+
         // start the worker thread
         // in turn it will start the reading.
         StartWorkerThread();
@@ -65,6 +69,9 @@ namespace myoddweb
        */
       void Common::Stop()
       {
+        // tell everybody to stop...
+        _mustStop = true;
+
         // stop and wait for the buffer to complete.
         // we have to wait first otherwise the next step
         // will reset the buffer and cause posible issues.
@@ -129,6 +136,16 @@ namespace myoddweb
       }
 
       /**
+       * \brief check if we have to stop the current work.
+       * ]return bool if we have to stop or not.
+       */
+      bool Common::MustStop() const
+      {
+        static const auto one = std::chrono::milliseconds(1);
+        return _mustStop || _futureObj.wait_for(one) != std::future_status::timeout;
+      }
+
+      /**
        * \brief Begin the actual work
        */
       void Common::Run()
@@ -146,10 +163,21 @@ namespace myoddweb
         Read();
 
         // now we keep on waiting.
-        while (_futureObj.wait_for(std::chrono::milliseconds(1)) == std::future_status::timeout)
+        auto sleepTime = MYODDWEB_MIN_THREAD_SLEEP;
+        while (!MustStop())
         {
-          // wait a little.
-          SleepEx(MYODDWEB_SLEEP_BETWEEN_READS, true);
+          // sleep a bit
+          SleepEx(sleepTime, true);
+
+          // wait a bit longer
+          sleepTime *= 2;
+
+          // but not too much
+          if (sleepTime > MYODDWEB_MAX_THREAD_SLEEP)
+          {
+            std::this_thread::yield();
+            sleepTime = MYODDWEB_MIN_THREAD_SLEEP;
+          }
         }
 
         // if we are here... we can release the data
@@ -261,6 +289,12 @@ namespace myoddweb
           auto pRecord = (FILE_NOTIFY_INFORMATION*)pBuffer;
           for (;;)
           {
+            // get out now if needed
+            if(MustStop())
+            {
+              break;
+            }
+
             // get the filename
             const auto wFilename = std::wstring(pRecord->FileName, pRecord->FileNameLength / sizeof(wchar_t));
             switch (pRecord->Action)
