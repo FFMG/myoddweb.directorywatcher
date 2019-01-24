@@ -211,7 +211,7 @@ namespace myoddweb
       /***
        * \brief The async callback function for ReadDirectoryChangesW
        */
-      void CALLBACK Common::FileIoCompletionRoutine(
+      void __stdcall Common::FileIoCompletionRoutine(
         const unsigned long mumberOfBytesTransfered,
         void* object,
         Data& data

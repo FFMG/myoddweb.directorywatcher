@@ -27,7 +27,7 @@ namespace myoddweb
       public:
         typedef
           void
-          ( *_COMPLETION_ROUTINE)(
+          (__stdcall *_COMPLETION_ROUTINE)(
             unsigned long mumberOfBytesTransfered,
             void* object,
             Data& data
@@ -113,13 +113,23 @@ namespace myoddweb
          */
         void PrepareMonitor(void* object, unsigned long bufferLength, _COMPLETION_ROUTINE lpCompletionRoutine);
 
+        /***
+         * \brief the completion routine the caller of Start( ... ) would like called when an event is raised.
+         */
         _COMPLETION_ROUTINE _lpCompletionRoutine;
 
+        /***
+         * \brief the object that the caller of Start(...) would like to pass back.
+         */
         void* _object;
 
+        /**
+         * \brief if we are not watching for folder deletion, we will create our own watcher here
+         *        to monitor the folder being deleted.
+         */
         Data* _folder;
 
-        static void CALLBACK FileIoCompletionRoutine(
+        static void __stdcall FileIoCompletionRoutine(
           unsigned long dwErrorCode,							  // completion code
           unsigned long dwNumberOfBytesTransfered,	// number of bytes transferred
           _OVERLAPPED* lpOverlapped                 // I/O information buffer

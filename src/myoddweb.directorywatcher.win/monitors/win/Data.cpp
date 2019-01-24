@@ -297,7 +297,7 @@ namespace myoddweb
       /***
        * \brief The async callback function for ReadDirectoryChangesW
        */
-      void CALLBACK Data::FileIoCompletionRoutine(
+      void __stdcall Data::FileIoCompletionRoutine(
         const unsigned long dwErrorCode,
         const unsigned long dwNumberOfBytesTransfered,
         _OVERLAPPED* lpOverlapped
