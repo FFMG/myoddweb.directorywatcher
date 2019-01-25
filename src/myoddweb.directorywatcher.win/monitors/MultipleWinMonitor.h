@@ -38,15 +38,26 @@ namespace myoddweb
 
     private:
       /**
-       * \brief the current monitors.
+       * \brief the non recursive parents, we will monitor new folder for those.
        */
-      std::vector<Monitor*> _monitors;
+      std::vector<Monitor*> _nonRecursiveParents;
+
+      /**
+       * \brief the child monitors that are recursive, we will not monitor new folders here.
+       */
+      std::vector<Monitor*> _recursiveChildren;
 
       /**
        * \brief get the next available id.
        * \return the next usable id.
        */
       long GetNextId() const;
+
+      /**
+       * \brief get the next available id.
+       * \return the next usable id.
+       */
+      long TotalSize() const;
 
       /**
        * \brief Create all the sub-requests for a prarent request.
@@ -58,6 +69,31 @@ namespace myoddweb
        * \brief Clear all the current data
        */
       void Delete();
+
+      /**
+       * \brief Clear the container data
+       * \param container the container we want to clear.
+       */
+      static void Delete(std::vector<Monitor*>& container);
+
+      /**
+       * \brief get the events from a given container.
+       * \param events where we will be adding the events.
+       * \param container where we will be reading the events from.
+       */
+      static long long GetEvents(std::vector<Event>& events, const std::vector<Monitor*>& container);
+
+      /**
+       * \brief Stop all the monitors
+       * \param container the vector of monitors.
+       */
+      static void Stop(const std::vector<Monitor*>& container);
+
+      /**
+       * \brief Start all the monitors
+       * \param container the vector of monitors.
+       */
+      static void Start(const std::vector<Monitor*>& container);
     };
   }
 }

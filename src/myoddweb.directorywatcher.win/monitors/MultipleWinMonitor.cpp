@@ -24,13 +24,13 @@ namespace myoddweb
       Monitor(id, request)
     {
       // use a standar monitor for non recursive items.
-      if( !request.Recursive )
+      if (!request.Recursive)
       {
         throw std::invalid_argument("The multiple monitor must be recursive.");
       }
 
       // try and create the list of monitors.
-      CreateMonitors(_request );
+      CreateMonitors(_request);
     }
 
     MultipleWinMonitor::~MultipleWinMonitor()
@@ -43,11 +43,11 @@ namespace myoddweb
      */
     void MultipleWinMonitor::OnStart()
     {
-      // and start them all.
-      for (auto it = _monitors.begin(); it != _monitors.end(); ++it)
-      {
-        (*it)->Start();
-      }
+      // start the parents
+      Start(_nonRecursiveParents);
+
+      // and the children
+      Start(_recursiveChildren);
     }
 
     /**
@@ -55,11 +55,11 @@ namespace myoddweb
      */
     void MultipleWinMonitor::OnStop()
     {
-      // and the monitors.
-      for (auto it = _monitors.begin(); it != _monitors.end(); ++it)
-      {
-        (*it)->Stop();
-      }
+      // stop the parents
+      Stop(_nonRecursiveParents);
+
+      // and the children
+      Stop(_recursiveChildren);
     }
 
     /**
@@ -70,58 +70,129 @@ namespace myoddweb
     long long MultipleWinMonitor::GetEvents(std::vector<Event>& events) const
     {
       // if we are stopped or stopping, there is nothing for us to do.
-      if( Is(Stopped) || Is(Stopping))
+      if (Is(Stopped) || Is(Stopping))
       {
         return 0;
       }
 
       long long count = 0;
-      for (auto it = _monitors.begin(); it != _monitors.end(); ++it)
-      {
-        // get this directory events
-        std::vector<Event> levents;
-        const auto lcount = (*it)->GetEvents(levents);
+      // get the children events
+      count += GetEvents(events, _recursiveChildren);
 
-        // if we got nothing we just move on.
-        if( lcount == 0 )
-        {
-          continue;
-        }
+      // then look for the parent events.
+      count += GetEvents(events, _nonRecursiveParents );
 
-        // add them to our list of events.
-        events.insert(events.end(), levents.begin(), levents.end() );
-
-        // add count.
-        count += lcount;
-      }
+      // return the total.
       return count;
     }
 
     #pragma region Private Functions
+    /**
+     * \brief Stop all the monitors
+     * \param container the vector of monitors.
+     */
+    void MultipleWinMonitor::Stop(const std::vector<Monitor*>& container)
+    {
+      // and the monitors.
+      for (auto it = container.begin(); it != container.end(); ++it)
+      {
+        (*it)->Stop();
+      }
+    }
+
+    /**
+     * \brief Start all the monitors
+     * \param container the vector of monitors.
+     */
+    void MultipleWinMonitor::Start(const std::vector<Monitor*>& container)
+    {
+      // and the monitors.
+      for (auto it = container.begin(); it != container.end(); ++it)
+      {
+        (*it)->Start();
+      }
+    }
+
+    /**
+     * \brief get the events from a given container.
+     * \param events where we will be adding the events.
+     * \param container where we will be reading the events from.
+     */
+    long long MultipleWinMonitor::GetEvents(std::vector<Event>& events, const std::vector<Monitor*>& container)
+    {
+      long long count = 0;
+      for (auto it = container.begin(); it != container.end(); ++it)
+      {
+        try
+        {
+          // get this directory events
+          std::vector<Event> levents;
+          const auto lcount = (*it)->GetEvents(levents);
+
+          // if we got nothing we just move on.
+          if (lcount == 0)
+          {
+            continue;
+          }
+
+          // add them to our list of events.
+          events.insert(events.end(), levents.begin(), levents.end());
+
+          // add count.
+          count += lcount;
+        }
+        catch( ... )
+        {
+          // @todo we need to log this somewhere.
+        }
+      }
+      return count;
+    }
+
     /**
      * \brief Clear all the current data
      */
     void MultipleWinMonitor::Delete()
     {
       // stop everything
-      Stop();
+      Monitor::Stop();
 
+      // delete the children
+      Delete(_recursiveChildren);
+
+      // and the parents
+      Delete(_nonRecursiveParents);
+    }
+
+    /**
+       * \brief Clear the container data
+       * \param container the container we want to clear.
+       */
+    void MultipleWinMonitor::Delete(std::vector<Monitor*>& container)
+    {
       try
       {
         // delete all the monitors.
-        for (auto it = _monitors.begin(); it != _monitors.end(); ++it)
+        for (auto it = container.begin(); it != container.end(); ++it)
         {
           delete *it;
         }
+
         // all done
-        _monitors.clear();
+        container.clear();
       }
       catch (...)
       {
         // we might as well clear everything now.
-        _monitors.clear();
+        container.clear();
       }
     }
+
+    /**
+     * \brief Clear all the parents data
+     */
+    void DeleteNonRecursiveParents();
+
 
     /**
      * \brief get the next available id.
@@ -131,7 +202,18 @@ namespace myoddweb
     {
       // the id does not really matter, but it will be
       // unique to our list of monitors.
-      return static_cast<long>( _monitors.size() );
+      return static_cast<long>(_recursiveChildren.size() ) + static_cast<long>(_nonRecursiveParents.size());
+    }
+
+    /**
+     * \brief The total number of items being monitored.
+     * \return the total size.
+     */
+    long MultipleWinMonitor::TotalSize() const
+    {
+      // the id does not really matter, but it will be
+      // unique to our list of monitors.
+      return static_cast<long>(_recursiveChildren.size()) + static_cast<long>(_nonRecursiveParents.size());
     }
 
     /**
@@ -153,22 +235,22 @@ namespace myoddweb
       // then we do not need to go further.
       if( !parent.Recursive )
       {
-        _monitors.push_back( new WinMonitor(id, parent) );
+        _recursiveChildren.push_back( new WinMonitor(id, parent) );
         return;
       }
 
       // look for all the sub-paths
       const auto subPaths = Io::GetAllSubFolders(parent.Path);
-      if( subPaths.empty() || (_monitors.size()+subPaths.size()) > MYODDWEB_MAX_NUMBER_OF_SUBPATH )
+      if( subPaths.empty() || TotalSize() > MYODDWEB_MAX_NUMBER_OF_SUBPATH )
       {
         // we will breach the depth
-        _monitors.push_back(new WinMonitor(id, parent));
+        _recursiveChildren.push_back(new WinMonitor(id, parent));
         return;
       }
 
       // adding all the sub-paths will not breach the limit.
       // so we can add the parent, but non-recuresive.
-      _monitors.push_back( new WinMonitor(id, { parent.Path, false }) );
+      _nonRecursiveParents.push_back( new WinMonitor(id, { parent.Path, false }) );
 
       // now try and add all the subpath
       for (const auto& path : subPaths)
