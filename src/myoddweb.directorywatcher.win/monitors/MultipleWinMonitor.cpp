@@ -88,10 +88,12 @@ namespace myoddweb
 
     #pragma region Private Functions
     /**
-     * \brief Stop all the monitors
+     * \briefFunction to call montior functions...
      * \param container the vector of monitors.
+     * \param function the function we will be calling.
      */
-    void MultipleWinMonitor::Stop(const std::vector<Monitor*>& container)
+    template <class T, class>
+    void MultipleWinMonitor::Do(const std::vector<Monitor*>& container, T&& function)
     {
       const auto numThreads = container.size();
       if (numThreads == 0)
@@ -107,7 +109,7 @@ namespace myoddweb
         {
           try
           {
-            ts[current++] = std::thread(&Monitor::Stop, *it);
+            ts[current++] = std::thread(function, *it);
           }
           catch (...)
           {
@@ -115,7 +117,7 @@ namespace myoddweb
           }
         }
 
-        for(size_t i = 0; i < numThreads; ++i )
+        for (size_t i = 0; i < numThreads; ++i)
         {
           ts[i].join();
         }
@@ -128,42 +130,21 @@ namespace myoddweb
     }
 
     /**
+     * \brief Stop all the monitors
+     * \param container the vector of monitors.
+     */
+    void MultipleWinMonitor::Stop(const std::vector<Monitor*>& container)
+    {
+      Do(container, &Monitor::Stop);
+    }
+
+    /**
      * \brief Start all the monitors
      * \param container the vector of monitors.
      */
     void MultipleWinMonitor::Start(const std::vector<Monitor*>& container)
     {
-      const auto numThreads = container.size();
-      if (numThreads == 0)
-      {
-        return;
-      }
-
-      const auto ts = new std::thread[numThreads];
-      try
-      {
-        auto current = 0;
-        for (auto it = container.begin(); it != container.end(); ++it)
-        {
-          try
-          {
-            ts[current++] = std::thread(&Monitor::Start, *it);
-          }
-          catch (...)
-          {
-            // @todo we need to log this somewhere
-          }
-        }
-        for (size_t i = 0; i < numThreads; ++i)
-        {
-          ts[i].join();
-        }
-      }
-      catch (...)
-      {
-        // @todo we need to log this somewhere.
-      }
-      delete[] ts;
+      Do(container, &Monitor::Start);
     }
 
     /**

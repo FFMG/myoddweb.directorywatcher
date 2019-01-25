@@ -94,6 +94,15 @@ namespace myoddweb
        * \param container the vector of monitors.
        */
       static void Start(const std::vector<Monitor*>& container);
+
+      /**
+       * \briefFunction to call montior functions...
+       * \param container the vector of monitors.
+       * \param function the function we will be calling.
+       */
+      template<class T,
+        class = std::enable_if_t<!std::is_same_v<std::remove_cv_t<std::remove_reference_t<T>>, std::thread>>>
+        static void Do(const std::vector<Monitor*>& container, T&& function );
     };
   }
 }
