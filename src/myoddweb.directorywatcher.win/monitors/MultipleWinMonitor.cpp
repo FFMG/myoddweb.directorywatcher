@@ -93,23 +93,38 @@ namespace myoddweb
      */
     void MultipleWinMonitor::Stop(const std::vector<Monitor*>& container)
     {
-      const auto numThreads= container.size();
-      if(numThreads == 0 )
+      const auto numThreads = container.size();
+      if (numThreads == 0)
       {
         return;
       }
 
-      for (auto it = container.begin(); it != container.end(); ++it)
+      const auto ts = new std::thread[numThreads];
+      try
       {
-        try
+        auto current = 0;
+        for (auto it = container.begin(); it != container.end(); ++it)
         {
-          (*it)->Stop();
+          try
+          {
+            ts[current++] = std::thread(&Monitor::Stop, *it);
+          }
+          catch (...)
+          {
+            // @todo we need to log this somewhere.
+          }
         }
-        catch (...)
+
+        for(size_t i = 0; i < numThreads; ++i )
         {
-          // @todo we need to log this somewhere.
+          ts[i].join();
         }
       }
+      catch (...)
+      {
+        // @todo we need to log this somewhere.
+      }
+      delete[] ts;
     }
 
     /**
@@ -118,18 +133,37 @@ namespace myoddweb
      */
     void MultipleWinMonitor::Start(const std::vector<Monitor*>& container)
     {
-      // and the monitors.
-      for (auto it = container.begin(); it != container.end(); ++it)
+      const auto numThreads = container.size();
+      if (numThreads == 0)
       {
-        try
+        return;
+      }
+
+      const auto ts = new std::thread[numThreads];
+      try
+      {
+        auto current = 0;
+        for (auto it = container.begin(); it != container.end(); ++it)
         {
-          (*it)->Start();
+          try
+          {
+            ts[current++] = std::thread(&Monitor::Start, *it);
+          }
+          catch (...)
+          {
+            // @todo we need to log this somewhere
+          }
         }
-        catch (...)
+        for (size_t i = 0; i < numThreads; ++i)
         {
-          // @todo we need to log this somewhere.
+          ts[i].join();
         }
       }
+      catch (...)
+      {
+        // @todo we need to log this somewhere.
+      }
+      delete[] ts;
     }
 
     /**
