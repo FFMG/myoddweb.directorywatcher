@@ -4,7 +4,7 @@
     <id>MyOddWeb.DirectoryWatcher</id>
     <version>0.1.1</version>
     <title>MyOddWeb.DirectoryWatcher (x86/x64)</title>
-    <licenseUrl>https://github.com/FFMG/myoddweb.directorywatcher/blob/master/LICENSE</licenseUrl>
+    <license type="file">.\LICENSE</license>
     <projectUrl>https://github.com/FFMG/myoddweb.directorywatcher</projectUrl>
     <description>A fast and reliable, (non blocking!), .NET File/Directory watcher, complete rewrite of FileSystemWatcher to ensure speed/acuracy/reliability/suppress duplicate events</description>
     <authors>Florent Guelfucci, myoddweb.com</authors>
@@ -18,6 +18,7 @@
   </metadata>
   
   <files>
+    <file src="..\..\LICENSE*" target="" />
     <file src="..\bin\release\myoddweb.directorywatcher.dll" target="lib\net452\" />
     <file src="..\bin\release\myoddweb.directorywatcher.interfaces.dll" target="lib\net452\" />
   </files>
