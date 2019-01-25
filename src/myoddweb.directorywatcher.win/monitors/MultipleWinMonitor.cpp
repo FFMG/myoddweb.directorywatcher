@@ -93,10 +93,22 @@ namespace myoddweb
      */
     void MultipleWinMonitor::Stop(const std::vector<Monitor*>& container)
     {
-      // and the monitors.
+      const auto numThreads= container.size();
+      if(numThreads == 0 )
+      {
+        return;
+      }
+
       for (auto it = container.begin(); it != container.end(); ++it)
       {
-        (*it)->Stop();
+        try
+        {
+          (*it)->Stop();
+        }
+        catch (...)
+        {
+          // @todo we need to log this somewhere.
+        }
       }
     }
 
@@ -109,7 +121,14 @@ namespace myoddweb
       // and the monitors.
       for (auto it = container.begin(); it != container.end(); ++it)
       {
-        (*it)->Start();
+        try
+        {
+          (*it)->Start();
+        }
+        catch (...)
+        {
+          // @todo we need to log this somewhere.
+        }
       }
     }
 
