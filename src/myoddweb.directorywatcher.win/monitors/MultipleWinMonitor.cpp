@@ -76,13 +76,40 @@ namespace myoddweb
       }
 
       // get the children events
-      GetEvents(events, _recursiveChildren);
+      std::vector<Event> childrentEvents;
+      ProcessChildEvents(childrentEvents);
 
       // then look for the parent events.
-      GetEvents(events, _nonRecursiveParents );
+      std::vector<Event> parentEvents;
+      ProcessParentEvents(parentEvents);
+
+      //  add the parents and the children
+      events.insert(events.end(), childrentEvents.begin(), childrentEvents.end());
+      events.insert(events.end(), parentEvents.begin(), parentEvents.end() );
+
+      // then sort everything by inserted time
+      std::sort(events.begin(), events.end(), Collector::SortByTimeMillisecondsUtc);
     }
 
     #pragma region Private Functions
+    /**
+     * \brief process the parent events
+     * \param events the events we will be adding to
+     */
+    void MultipleWinMonitor::ProcessParentEvents(std::vector<Event>& events) const
+    {
+      GetEvents(events, _nonRecursiveParents);
+    }
+
+    /**
+     * \brief process the cildren events
+     * \param events the events we will be adding to
+     */
+    void MultipleWinMonitor::ProcessChildEvents(std::vector<Event>& events) const
+    {
+      GetEvents(events, _recursiveChildren);
+    }
+
     /**
      * \briefFunction to call montior functions...
      * \param container the vector of monitors.
@@ -150,11 +177,6 @@ namespace myoddweb
      */
     void MultipleWinMonitor::GetEvents(std::vector<Event>& events, const std::vector<Monitor*>& container)
     {
-      // keep track of the number of inserts we did.
-      // if we inserted 0 or 1 time, then we do not need to sort.
-      // but if we did more than 2, then we have to sort.
-      auto insertCount = 0;
-
       // the current events.
       std::vector<Event> levents;
 
@@ -171,9 +193,6 @@ namespace myoddweb
           // add them to our list of events.
           events.insert(events.end(), levents.begin(), levents.end());
 
-          // we inserted
-          ++insertCount;
-
           // clear the list
           levents.clear();
         }
@@ -181,12 +200,6 @@ namespace myoddweb
         {
           // @todo we need to log this somewhere.
         }
-      }
-
-      // if we inserted from 2 or more events then we need to sort it
-      if(insertCount > 1 )
-      {
-        std::sort(events.begin(), events.end(), Collector::SortByTimeMillisecondsUtc );
       }
     }
 

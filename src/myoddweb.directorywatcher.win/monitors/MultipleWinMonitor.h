@@ -71,6 +71,18 @@ namespace myoddweb
       void Delete();
 
       /**
+       * \brief process the parent events
+       * \param events the events we will be adding to
+       */
+      void ProcessParentEvents(std::vector<Event>& events) const;
+
+      /**
+       * \brief process the cildren events
+       * \param events the events we will be adding to
+       */
+      void ProcessChildEvents(std::vector<Event>& events) const;
+
+      /**
        * \brief Clear the container data
        * \param container the container we want to clear.
        */
