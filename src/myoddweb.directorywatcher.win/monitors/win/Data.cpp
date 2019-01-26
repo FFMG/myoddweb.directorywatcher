@@ -224,17 +224,25 @@ namespace myoddweb
        */
       bool Data::TryReopen()
       {
-        // close if needed
-        if( IsValidHandle() )
+        try
         {
-          Close();
+          // close if needed
+          if (IsValidHandle())
+          {
+            Close();
+          }
+
+          // make sure that the handle is ready for reopen
+          _hDirectory = nullptr;
+
+          // or get out.
+          return Open();
         }
-
-        // make sure that the handle is ready for reopen
-        _hDirectory = nullptr;
-
-        // or get out.
-        return Open();
+        catch( ... )
+        {
+          // this did not work.
+          return false;
+        }
       }
 
       /**

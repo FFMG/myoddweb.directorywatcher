@@ -171,6 +171,7 @@ namespace myoddweb
         {
           if( !_data->IsValidHandle() )
           {
+            // wait a little bit longer.
             invalidHandleWait += sleepTime;
             if (invalidHandleWait >= MYODDWEB_INVALID_HANDLE_SLEEP)
             {
