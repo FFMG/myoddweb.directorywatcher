@@ -218,6 +218,29 @@ namespace myoddweb
         return pBuffer;
       }
 
+      /**
+       * \brief if there was a problem, try re-open the file.
+       * \return if success or not.
+       */
+      bool Data::TryReopen()
+      {
+        // close if needed
+        if( IsValidHandle() )
+        {
+          Close();
+        }
+
+        // make sure that the handle is ready for reopen
+        _hDirectory = nullptr;
+
+        // or get out.
+        return Open();
+      }
+
+      /**
+       * \brief set the directory handle
+       * \return if success or not.
+       */
       bool Data::Open( )
       {
         // check if this was done alread

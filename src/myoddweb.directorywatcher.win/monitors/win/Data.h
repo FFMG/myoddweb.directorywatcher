@@ -65,8 +65,15 @@ namespace myoddweb
 
         /**
          * \brief set the directory handle
+         * \return if success or not.
          */
         bool Open();
+
+        /**
+         * \brief if there was a problem, try re-open the file.
+         * \return if success or not.
+         */
+        bool TryReopen();
 
         /**
          * \brief clone up to 'ulSize' bytes into a buffer.

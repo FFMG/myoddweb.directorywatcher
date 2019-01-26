@@ -32,6 +32,13 @@ namespace myoddweb
     constexpr auto  MYODDWEB_MAX_THREAD_SLEEP = 256L;
 
     /**
+     * When a handle becomes invalid, (the watched folder was deleted)
+     * How often do we want to re-check the folder and, if valid
+     * How often do we want to try and re-open it.
+     */
+    constexpr auto  MYODDWEB_INVALID_HANDLE_SLEEP = 5000L;
+
+    /**
      * The maximum number of subpath we want to allow in multiple windows monitor.
      * If the number is too large the number of running threads will cause issues.
      */

@@ -162,10 +162,30 @@ namespace myoddweb
         // start reading.
         Read();
 
+        // invalid handle wait
+        auto invalidHandleWait = 0;
+
         // now we keep on waiting.
         auto sleepTime = MYODDWEB_MIN_THREAD_SLEEP;
         while (!MustStop())
         {
+          if( !_data->IsValidHandle() )
+          {
+            invalidHandleWait += sleepTime;
+            if (invalidHandleWait >= MYODDWEB_INVALID_HANDLE_SLEEP)
+            {
+              // reset the wait time.
+              invalidHandleWait = 0;
+
+              // try to re-open
+              if (_data->TryReopen())
+              {
+                // try to read.
+                Read();
+              }
+            }
+          }
+
           // sleep a bit
           SleepEx(sleepTime, true);
 
