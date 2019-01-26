@@ -145,6 +145,17 @@ namespace myoddweb
     }
 
     /**
+     * \brief sort events by TimeMillisecondsUtc
+     * \param lhs the lhs element we are checking.
+     * \param rhs the rhs element we are checking.
+     * \return if we need to swap the two items.
+     */
+    bool Collector::SortByTimeMillisecondsUtc(const Event& lhs, const Event& rhs)
+    {
+      return lhs.TimeMillisecondsUtc < rhs.TimeMillisecondsUtc;
+    }
+
+    /**
      * \brief fill the vector with all the values currently on record.
      * \param events the events we will be filling
      * \return the number of events we found.

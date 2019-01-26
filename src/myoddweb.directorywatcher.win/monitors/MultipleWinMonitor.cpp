@@ -150,21 +150,43 @@ namespace myoddweb
      */
     void MultipleWinMonitor::GetEvents(std::vector<Event>& events, const std::vector<Monitor*>& container)
     {
+      // keep track of the number of inserts we did.
+      // if we inserted 0 or 1 time, then we do not need to sort.
+      // but if we did more than 2, then we have to sort.
+      auto insertCount = 0;
+
+      // the current events.
+      std::vector<Event> levents;
+
       for (auto it = container.begin(); it != container.end(); ++it)
       {
         try
         {
           // get this directory events
-          std::vector<Event> levents;
-          (*it)->GetEvents(levents);
+          if( 0 == (*it)->GetEvents(levents) )
+          {
+            continue;
+          }
 
           // add them to our list of events.
           events.insert(events.end(), levents.begin(), levents.end());
+
+          // we inserted
+          ++insertCount;
+
+          // clear the list
+          levents.clear();
         }
         catch( ... )
         {
           // @todo we need to log this somewhere.
         }
+      }
+
+      // if we inserted from 2 or more events then we need to sort it
+      if(insertCount > 1 )
+      {
+        std::sort(events.begin(), events.end(), Collector::SortByTimeMillisecondsUtc );
       }
     }
 

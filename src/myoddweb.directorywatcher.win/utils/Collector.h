@@ -37,6 +37,14 @@ namespace myoddweb
       explicit Collector( short maxAgeMs );
 
     public:
+      /**
+       * \brief sort events by TimeMillisecondsUtc
+       * \param lhs the lhs element we are checking.
+       * \param rhs the rhs element we are checking.
+       * \return if we need to swap the two items.
+       */
+      static bool SortByTimeMillisecondsUtc(const Event& lhs, const Event& rhs);
+
       void Add(EventAction action, const std::wstring& path, const std::wstring& filename, bool isFile, EventError error);
       void AddRename(const std::wstring& path, const std::wstring&newFilename, const std::wstring&oldFilename, bool isFile, EventError error);
 
