@@ -125,13 +125,6 @@ namespace myoddweb
       static void Delete(std::vector<Monitor*>& container);
 
       /**
-       * \brief get the events from a given container.
-       * \param events where we will be adding the events.
-       * \param container where we will be reading the events from.
-       */
-      static void GetEvents(std::vector<Event>& events, const std::vector<Monitor*>& container);
-
-      /**
        * \brief Stop all the monitors
        * \param container the vector of monitors.
        */

@@ -80,12 +80,6 @@ namespace myoddweb
      */
     void MultipleWinMonitor::OnGetEvents(std::vector<Event>& events)
     {
-      // if we are stopped or stopping, there is nothing for us to do.
-      if (Is(Stopped) || Is(Stopping))
-      {
-        return;
-      }
-
       // get the children events
       const auto childrentEvents = GetAndProcessChildEvents();
 
@@ -194,6 +188,12 @@ namespace myoddweb
       {
         try
         {
+          // if we are stopped or stopping, there is nothing for us to do.
+          if (Is(Stopped) || Is(Stopping))
+          {
+            return events;
+          }
+
           // the monitor
           auto& monitor = *(*it);
 
@@ -257,8 +257,38 @@ namespace myoddweb
      */
     std::vector<Event> MultipleWinMonitor::GetAndProcessChildEvents() const
     {
+      // all the events.
       std::vector<Event> events;
-      GetEvents(events, _recursiveChildren);
+
+      // the current events.
+      std::vector<Event> levents;
+      for (auto it = _recursiveChildren.begin(); it != _recursiveChildren.end(); ++it)
+      {
+        try
+        {
+          // if we are stopped or stopping, there is nothing for us to do.
+          if (Is(Stopped) || Is(Stopping))
+          {
+            return events;
+          }
+
+          // get this directory events
+          if (0 == (*it)->GetEvents(levents))
+          {
+            continue;
+          }
+
+          // add them to our list of events.
+          events.insert(events.end(), levents.begin(), levents.end());
+
+          // clear the list
+          levents.clear();
+        }
+        catch (...)
+        {
+          // @todo we need to log this somewhere.
+        }
+      }
       return events;
     }
 
@@ -320,38 +350,6 @@ namespace myoddweb
     void MultipleWinMonitor::Start(const std::vector<Monitor*>& container)
     {
       Do(container, &Monitor::Start);
-    }
-
-    /**
-     * \brief get the events from a given container.
-     * \param events where we will be adding the events.
-     * \param container where we will be reading the events from.
-     */
-    void MultipleWinMonitor::GetEvents(std::vector<Event>& events, const std::vector<Monitor*>& container)
-    {
-      // the current events.
-      std::vector<Event> levents;
-      for (auto it = container.begin(); it != container.end(); ++it)
-      {
-        try
-        {
-          // get this directory events
-          if( 0 == (*it)->GetEvents(levents) )
-          {
-            continue;
-          }
-
-          // add them to our list of events.
-          events.insert(events.end(), levents.begin(), levents.end());
-
-          // clear the list
-          levents.clear();
-        }
-        catch( ... )
-        {
-          // @todo we need to log this somewhere.
-        }
-      }
     }
 
     /**
