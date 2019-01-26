@@ -184,9 +184,11 @@ namespace myoddweb
     {
 #ifdef WIN32
       const auto sep = L'\\';
+      const std::wstring ssep = L"\\\\";
       const auto badsep = L'/';
 #else
       const auto sep = L'/';
+      const std::wstring ssep = L"//";
       const auto badsep = L'\\';
 #endif
       auto llhs = lhs;
@@ -196,6 +198,15 @@ namespace myoddweb
         llhs[found] = sep;
         found = llhs.find_first_of(badsep);
       }
+
+      const auto r = std::wstring() + sep;
+      found = llhs.find( ssep, 0 );
+      while (found != std::string::npos)
+      {
+        llhs.replace( found, 2, r );
+        found = llhs.find(ssep, 0);
+      }
+
       return llhs;
     }
 

@@ -17,9 +17,8 @@ TEST(Collector, EmptyCollectorReturnsNothing) {
 
   // empty
   std::vector<Event> events;
-  EXPECT_EQ( 0, c.GetEvents(events) );
+  c.GetEvents(events);
   EXPECT_EQ( 0, events.size() );
-  EXPECT_EQ( 0, events.size());
 }
 
 TEST(Collector, PathIsValidWithTwoBackSlash) {
@@ -30,7 +29,8 @@ TEST(Collector, PathIsValidWithTwoBackSlash) {
 
   // get it.
   std::vector<Event> events;
-  EXPECT_EQ(1, c.GetEvents(events));
+  c.GetEvents(events);
+  EXPECT_EQ(1, events.size() );
 
   EXPECT_EQ( L"c:\\foo\\bar.txt", events[0].Name);
 }
@@ -43,7 +43,8 @@ TEST(Collector, PathIsValidWithOneBackSlashOnPath) {
 
   // get it.
   std::vector<Event> events;
-  EXPECT_EQ(1, c.GetEvents(events));
+  c.GetEvents(events);
+  EXPECT_EQ(1, events.size() );
 
   EXPECT_EQ(L"c:\\foo\\bar.txt", events[0].Name);
 }
@@ -56,7 +57,8 @@ TEST(Collector, PathIsValidWithOneBackSlashOnFileName) {
 
   // get it.
   std::vector<Event> events;
-  EXPECT_EQ(1, c.GetEvents(events));
+  c.GetEvents(events);
+  EXPECT_EQ(1, events.size() );
 
   EXPECT_EQ(L"c:\\foo\\bar.txt", events[0].Name);
 }

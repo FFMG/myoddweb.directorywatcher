@@ -170,3 +170,111 @@ TEST(Io, CombineWithMultipleWindowsAndNonWindowsEndingBackSlash) {
   const auto actual = ::Io::Combine(lhs, rhs);
   ASSERT_STREQ(expected, actual.c_str());
 }
+
+TEST(Io, RootFoldersAreSame) {
+  const auto lhs = L"c:\\";
+  const auto rhs = L"c:\\";
+  ASSERT_TRUE(::Io::AreSameFolders(lhs, rhs));
+}
+
+TEST(Io, RootFoldersAreSameCaseCompare) {
+  const auto lhs = L"c:\\";
+  const auto rhs = L"C:\\";
+  ASSERT_TRUE(::Io::AreSameFolders(lhs, rhs));
+}
+
+TEST(Io, FoldersAreSame) {
+  const auto lhs = L"c:\\foo";
+  const auto rhs = L"c:\\foo";
+  ASSERT_TRUE(::Io::AreSameFolders(lhs, rhs));
+}
+
+TEST(Io, FoldersAreSameCaseCompare) {
+  const auto lhs = L"c:\\foo";
+  const auto rhs = L"C:\\FOO";
+  ASSERT_TRUE(::Io::AreSameFolders(lhs, rhs));
+}
+
+TEST(Io, FoldersWithLhsHasBackSlash) {
+  const auto lhs = L"c:\\foo\\";
+  const auto rhs = L"c:\\foo";
+  ASSERT_TRUE(::Io::AreSameFolders(lhs, rhs));
+}
+
+TEST(Io, FoldersWithRhsHasBackSlash) {
+  const auto lhs = L"c:\\foo";
+  const auto rhs = L"c:\\foo\\";
+  ASSERT_TRUE(::Io::AreSameFolders(lhs, rhs));
+}
+
+TEST(Io, FoldersWithLhsHasForwardSlash) {
+  const auto lhs = L"c:/foo//";
+  const auto rhs = L"c:\\foo";
+  ASSERT_TRUE(::Io::AreSameFolders(lhs, rhs));
+}
+
+TEST(Io, FoldersWithRhsHasForwardSlash) {
+  const auto lhs = L"c:\\foo";
+  const auto rhs = L"c:/foo/";
+  ASSERT_TRUE(::Io::AreSameFolders(lhs, rhs));
+}
+
+TEST(Io, FoldersAreNotSame) {
+  const auto lhs = L"c:\\bar";
+  const auto rhs = L"c:\\foo";
+  ASSERT_FALSE(::Io::AreSameFolders(lhs, rhs));
+}
+
+TEST(Io, FoldersAreNotSameWithBackSlash) {
+  const auto lhs = L"c:\\bar";
+  const auto rhs = L"c:\\foo";
+  ASSERT_FALSE(::Io::AreSameFolders(lhs, rhs));
+}
+
+TEST(Io, FoldersWithRhsHasMultipleBackSlashAtEnd) {
+  const auto lhs = L"c:\\foo";
+  const auto rhs = L"c:\\foo\\\\\\";
+  ASSERT_TRUE(::Io::AreSameFolders(lhs, rhs));
+}
+
+TEST(Io, FoldersWithLhsHasMultipleBackSlashAtEnd) {
+  const auto lhs = L"c:\\foo\\\\\\";
+  const auto rhs = L"c:\\foo";
+  ASSERT_TRUE(::Io::AreSameFolders(lhs, rhs));
+}
+
+TEST(Io, FoldersWithRhsHasMultipleForwardSlashAtEnd) {
+  const auto lhs = L"c:\\foo";
+  const auto rhs = L"c:/foo///";
+  ASSERT_TRUE(::Io::AreSameFolders(lhs, rhs));
+}
+
+TEST(Io, FoldersWithLhsHasMultipleForwardSlashAtEnd) {
+  const auto lhs = L"c:/foo////";
+  const auto rhs = L"c:\\foo";
+  ASSERT_TRUE(::Io::AreSameFolders(lhs, rhs));
+}
+
+TEST(Io, FoldersWithRhsHasMultipleBackSlash) {
+  const auto lhs = L"c:\\foo";
+  const auto rhs = L"c:\\\\\\foo\\\\\\";
+  ASSERT_TRUE(::Io::AreSameFolders(lhs, rhs));
+}
+
+TEST(Io, FoldersWithLhsHasMultipleBackSlash) {
+  const auto lhs = L"c:\\\\\\foo\\\\\\";
+  const auto rhs = L"c:\\foo";
+  ASSERT_TRUE(::Io::AreSameFolders(lhs, rhs));
+}
+
+TEST(Io, FoldersWithRhsHasMultipleForwardSlash) {
+  const auto lhs = L"c:\\foo";
+  const auto rhs = L"c:////foo///";
+  ASSERT_TRUE(::Io::AreSameFolders(lhs, rhs));
+}
+
+TEST(Io, FoldersWithLhsHasMultipleForwardSlash) {
+  const auto lhs = L"c:/foo////";
+  const auto rhs = L"c:\\foo";
+  ASSERT_TRUE(::Io::AreSameFolders(lhs, rhs));
+}
