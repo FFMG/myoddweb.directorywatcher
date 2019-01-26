@@ -391,6 +391,8 @@ namespace myoddweb
       }
       catch (...)
       {
+        // @todo we need to log this.
+
         // we might as well clear everything now.
         container.clear();
       }
@@ -400,11 +402,10 @@ namespace myoddweb
      * \brief get the next available id.
      * \return the next usable id.
      */
-    long MultipleWinMonitor::GetNextId() const
+    long MultipleWinMonitor::GetNextId()
     {
-      // the id does not really matter, but it will be
-      // unique to our list of monitors.
-      return static_cast<long>(_recursiveChildren.size() ) + static_cast<long>(_nonRecursiveParents.size());
+      // get the next id and increase the number to make sure it is not used again.
+      return _nextId++;
     }
 
     /**

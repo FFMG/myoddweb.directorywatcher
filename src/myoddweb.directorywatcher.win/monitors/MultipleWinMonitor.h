@@ -53,10 +53,15 @@ namespace myoddweb
       std::vector<Monitor*> _recursiveChildren;
 
       /**
+       * \brief A running count of Ids
+       */
+      long _nextId{};
+
+      /**
        * \brief get the next available id.
        * \return the next usable id.
        */
-      long GetNextId() const;
+      long GetNextId();
 
       /**
        * \brief get the next available id.
