@@ -34,7 +34,7 @@ namespace myoddweb
 
       void OnStart() override;
       void OnStop() override;
-      long long GetEvents(std::vector<Event>& events) const override;
+      void OnGetEvents(std::vector<Event>& events) override;
 
     private:
       /**
@@ -81,7 +81,7 @@ namespace myoddweb
        * \param events where we will be adding the events.
        * \param container where we will be reading the events from.
        */
-      static long long GetEvents(std::vector<Event>& events, const std::vector<Monitor*>& container);
+      static void GetEvents(std::vector<Event>& events, const std::vector<Monitor*>& container);
 
       /**
        * \brief Stop all the monitors

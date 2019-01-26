@@ -107,9 +107,16 @@ namespace myoddweb
      * \param events the events we will be filling
      * \return the number of events we found.
      */
-    long long Monitor::GetEvents(std::vector<Event>& events) const
+    long long Monitor::GetEvents(std::vector<Event>& events)
     {
-      return _eventCollector->GetEvents(events);
+      // get the events we collected.
+      _eventCollector->GetEvents(events);
+
+      // allow the base class to add/remove events.
+      OnGetEvents(events);
+
+      // then return how-ever many we found.
+      return static_cast<long long>(events.size());
     }
 
     /**

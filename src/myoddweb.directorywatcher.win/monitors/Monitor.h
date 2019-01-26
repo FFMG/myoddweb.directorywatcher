@@ -45,8 +45,9 @@ namespace myoddweb
        * \param events the events we will be filling
        * \return the number of events we found.
        */
-      virtual long long GetEvents(std::vector<Event>& events) const;
+      long long GetEvents(std::vector<Event>& events);
 
+      virtual void OnGetEvents(std::vector<Event>& events) = 0;
       virtual void OnStart() = 0;
       virtual void OnStop() = 0;
 

@@ -67,23 +67,19 @@ namespace myoddweb
      * \param events the events we will be filling
      * \return the number of events we found.
      */
-    long long MultipleWinMonitor::GetEvents(std::vector<Event>& events) const
+    void MultipleWinMonitor::OnGetEvents(std::vector<Event>& events)
     {
       // if we are stopped or stopping, there is nothing for us to do.
       if (Is(Stopped) || Is(Stopping))
       {
-        return 0;
+        return;
       }
 
-      long long count = 0;
       // get the children events
-      count += GetEvents(events, _recursiveChildren);
+      GetEvents(events, _recursiveChildren);
 
       // then look for the parent events.
-      count += GetEvents(events, _nonRecursiveParents );
-
-      // return the total.
-      return count;
+      GetEvents(events, _nonRecursiveParents );
     }
 
     #pragma region Private Functions
@@ -152,35 +148,24 @@ namespace myoddweb
      * \param events where we will be adding the events.
      * \param container where we will be reading the events from.
      */
-    long long MultipleWinMonitor::GetEvents(std::vector<Event>& events, const std::vector<Monitor*>& container)
+    void MultipleWinMonitor::GetEvents(std::vector<Event>& events, const std::vector<Monitor*>& container)
     {
-      long long count = 0;
       for (auto it = container.begin(); it != container.end(); ++it)
       {
         try
         {
           // get this directory events
           std::vector<Event> levents;
-          const auto lcount = (*it)->GetEvents(levents);
-
-          // if we got nothing we just move on.
-          if (lcount == 0)
-          {
-            continue;
-          }
+          (*it)->GetEvents(levents);
 
           // add them to our list of events.
           events.insert(events.end(), levents.begin(), levents.end());
-
-          // add count.
-          count += lcount;
         }
         catch( ... )
         {
           // @todo we need to log this somewhere.
         }
       }
-      return count;
     }
 
     /**

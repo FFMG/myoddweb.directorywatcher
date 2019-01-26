@@ -55,7 +55,16 @@ namespace myoddweb
 
     WinMonitor::~WinMonitor()
     {
-      WinMonitor::Stop();
+      Stop();
+    }
+
+    /**
+     * \brief process the collected events add/remove them.
+     * \param events the collected events.
+     */
+    void WinMonitor::OnGetEvents(std::vector<Event>& events)
+    {
+      //  nothing to do
     }
 
     /**

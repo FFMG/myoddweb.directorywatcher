@@ -35,6 +35,7 @@ namespace myoddweb
 
       void OnStart() override;
       void OnStop() override;
+      void OnGetEvents(std::vector<Event>& events) override;
 
     private:
       win::Common* _directories;

@@ -149,7 +149,7 @@ namespace myoddweb
      * \param events the events we will be filling
      * \return the number of events we found.
      */
-    long long Collector::GetEvents(std::vector<Event>& events)
+    void Collector::GetEvents(std::vector<Event>& events)
     {
       // quickly make a copy of the current list
       // and erase the current contents.
@@ -193,8 +193,6 @@ namespace myoddweb
 
       // last step is to cleanup all the renames.
       ValidateRenames(events);
-
-      return events.size();
     }
 
     /**

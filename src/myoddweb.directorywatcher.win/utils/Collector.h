@@ -43,9 +43,8 @@ namespace myoddweb
       /**
        * \brief fill the vector with all the values currently on record.
        * \param events the events we will be filling
-       * \return the number of events we found.
        */
-      long long GetEvents( std::vector<Event>& events);
+      void GetEvents( std::vector<Event>& events);
 
     private:
       void Add(EventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName, bool isFile, EventError error);
