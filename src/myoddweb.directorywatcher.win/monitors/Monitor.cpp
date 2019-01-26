@@ -16,6 +16,7 @@
 #include <utility>
 #include "Monitor.h"
 #include "../utils/Lock.h"
+#include "../utils/Io.h"
 
 namespace myoddweb
 {
@@ -206,5 +207,16 @@ namespace myoddweb
         AddEventError(EventError::CannotStop);
       }
     }
+
+    /**
+     * \brief check if a given path is the same as the given one.
+     * \param maybe the path we are checking against.
+     * \return if the given path is the same as our path.
+     */
+    bool Monitor::IsPath(const std::wstring& maybe) const
+    {
+      return Io::AreSameFolders(maybe, _request.Path);
+    }
+
   }
 }

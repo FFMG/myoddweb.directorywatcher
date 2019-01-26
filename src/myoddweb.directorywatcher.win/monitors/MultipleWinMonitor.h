@@ -38,6 +38,11 @@ namespace myoddweb
 
     private:
       /**
+       * \brief the locks so we can add data.
+       */
+      std::recursive_mutex _lock;
+
+      /**
        * \brief the non recursive parents, we will monitor new folder for those.
        */
       std::vector<Monitor*> _nonRecursiveParents;
@@ -71,16 +76,42 @@ namespace myoddweb
       void Delete();
 
       /**
-       * \brief process the parent events
-       * \param events the events we will be adding to
+       * \brief a folder has been deleted, process it.
+       * \param path the event being processed
        */
-      void ProcessParentEvents(std::vector<Event>& events) const;
+      void ProcessEventDelete(const std::wstring& path );
+
+      /**
+       * \brief a folder has been added, process it.
+       * \param path the event being processed
+       */
+      void ProcessEventAdded(const std::wstring& path);
+
+      /**
+       * \brief a folder has been renamed, process it.
+       * \param path the event being processed
+       * \param oldPath the old name being renamed.
+       */
+      void ProcessEventRenamed(const std::wstring& path, const std::wstring& oldPath);
+
+      /**
+       * \brief process the parent events
+       * \return events the events we will be adding to
+       */
+      std::vector<Event> GetAndProcessParentEvents();
 
       /**
        * \brief process the cildren events
-       * \param events the events we will be adding to
+       * \rerturn events the events we will be adding to
        */
-      void ProcessChildEvents(std::vector<Event>& events) const;
+      std::vector<Event> GetAndProcessChildEvents() const;
+
+      /**
+       * \brief look for a posible child with a matching path.
+       * \param path the path we are looking for.
+       * \return if we find it, the iterator of the child monitor.
+       */
+      std::vector<Monitor*>::const_iterator FindChild(const std::wstring& path) const;
 
       /**
        * \brief Clear the container data

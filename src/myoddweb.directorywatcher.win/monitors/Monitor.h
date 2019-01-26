@@ -47,6 +47,13 @@ namespace myoddweb
        */
       long long GetEvents(std::vector<Event>& events);
 
+      /**
+       * \brief check if a given path is the same as the given one.
+       * \param maybe the path we are checking against.
+       * \return if the given path is the same as our path.
+       */
+      bool IsPath(const std::wstring& maybe) const;
+
       virtual void OnGetEvents(std::vector<Event>& events) = 0;
       virtual void OnStart() = 0;
       virtual void OnStop() = 0;
@@ -59,11 +66,24 @@ namespace myoddweb
       void Stop();
 
     protected:
+      /**
+       * \brief the unique monitor id.
+       */
       const __int64 _id;
+
+      /**
+       * \brief the request we used to create the monitor.
+       */
       const Request _request;
 
+      /**
+       * \brief the current list of collected events.
+       */
       Collector* _eventCollector;
 
+      /**
+       * The current monitor state
+       */
       enum State
       {
         Starting,

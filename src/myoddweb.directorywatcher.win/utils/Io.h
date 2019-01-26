@@ -47,6 +47,14 @@ namespace myoddweb
        * \return all the sub-folders, (if any).
        */
       static std::vector<std::wstring> GetAllSubFolders(const std::wstring& folder);
+
+      /**
+       * \brief Compare if 2 folders are the same
+       * \param lhs the first folder
+       * \param rhs the second folder
+       * \return if both folders are similar.
+       */
+      static bool AreSameFolders(const std::wstring& lhs, const std::wstring& rhs);
     };
   }
 }

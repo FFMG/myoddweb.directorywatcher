@@ -15,6 +15,11 @@
 #include "Base.h"
 #include "MultipleWinMonitor.h"
 #include "../utils/Io.h"
+#include "../utils/Lock.h"
+
+#ifdef _DEBUG
+#include <cassert>
+#endif
 
 namespace myoddweb
 {
@@ -43,6 +48,9 @@ namespace myoddweb
      */
     void MultipleWinMonitor::OnStart()
     {
+      // guard for multiple entry.
+      auto guard = Lock(_lock);
+
       // start the parents
       Start(_nonRecursiveParents);
 
@@ -55,6 +63,9 @@ namespace myoddweb
      */
     void MultipleWinMonitor::OnStop()
     {
+      // guard for multiple entry.
+      auto guard = Lock(_lock);
+
       // stop the parents
       Stop(_nonRecursiveParents);
 
@@ -76,12 +87,10 @@ namespace myoddweb
       }
 
       // get the children events
-      std::vector<Event> childrentEvents;
-      ProcessChildEvents(childrentEvents);
+      const auto childrentEvents = GetAndProcessChildEvents();
 
       // then look for the parent events.
-      std::vector<Event> parentEvents;
-      ProcessParentEvents(parentEvents);
+      const auto parentEvents = GetAndProcessParentEvents();
 
       //  add the parents and the children
       events.insert(events.end(), childrentEvents.begin(), childrentEvents.end());
@@ -93,21 +102,164 @@ namespace myoddweb
 
     #pragma region Private Functions
     /**
-     * \brief process the parent events
-     * \param events the events we will be adding to
+     * \brief look for a posible child with a matching path.
+     * \param path the path we are looking for.
+     * \return if we find it, the iterator of the child monitor.
      */
-    void MultipleWinMonitor::ProcessParentEvents(std::vector<Event>& events) const
+    std::vector<Monitor*>::const_iterator MultipleWinMonitor::FindChild(const std::wstring& path) const
     {
-      GetEvents(events, _nonRecursiveParents);
+      for (auto child = _recursiveChildren.begin();
+        child != _recursiveChildren.end();
+        ++child)
+      {
+        if ((*child)->IsPath(path))
+        {
+          return child;
+        }
+      }
+      return _recursiveChildren.end();
+    }
+
+    /**
+     * \brief a folder has been added, process it.
+     * \param path the event being processed
+     */
+    void MultipleWinMonitor::ProcessEventAdded(const std::wstring& path)
+    {
+      // guard for multiple entry.
+      auto guard = Lock(_lock);
+
+      // a folder was added to this path
+      // so we have to add this path as a child.
+      const auto id = GetNextId();
+      auto child = new WinMonitor(id, { path, true });
+      _recursiveChildren.push_back(child);
+      child->Start();
+    }
+
+    /**
+     * \brief a folder has been deleted, process it.
+     * \param path the event being processed
+     */
+    void MultipleWinMonitor::ProcessEventDelete(const std::wstring& path)
+    {
+      // guard for multiple entry.
+      auto guard = Lock(_lock);
+
+      // the 'path' folder was removed.
+      // so we have to remove it as well as all the child folders.
+      // 'cause if it was removed ... then so were the others.
+      const auto child = FindChild(path);
+      if (child == _recursiveChildren.end())
+      {
+        return;
+      }
+
+      // stop it...
+      (*child)->Stop();
+
+      // delete it
+      delete (*child);
+
+      // remove it from the list.
+      _recursiveChildren.erase(child);
+    }
+
+    /**
+     * \brief a folder has been renamed, process it.
+     * \param path the event being processed
+     * \param oldPath the old name being renamed.
+     */
+    void MultipleWinMonitor::ProcessEventRenamed(const std::wstring& path, const std::wstring& oldPath)
+    {
+      // add the new one
+      ProcessEventAdded(path);
+
+      // delete the old one
+      ProcessEventDelete(oldPath);
+    }
+
+    /**
+     * \brief process the parent events
+     * \return events the events we will be adding to
+     */
+    std::vector<Event> MultipleWinMonitor::GetAndProcessParentEvents()
+    {
+      // get the events
+      std::vector<Event> events;
+
+      // the current events.
+      std::vector<Event> levents;
+      for (auto it = _nonRecursiveParents.begin(); it != _nonRecursiveParents.end(); ++it)
+      {
+        try
+        {
+          // the monitor
+          auto& monitor = *(*it);
+
+          // get this directory events
+          if (0 == monitor.GetEvents(levents))
+          {
+            continue;
+          }
+
+          // by definiton we know that the parents are non-recursive
+#ifdef _DEBUG
+          assert(!monitor.Recursive());
+#endif
+          // we now need to look for added/deleted paths.
+          for (auto levent : levents)
+          {
+            // we don't care about file events.
+            if( levent.IsFile )
+            {
+              continue;
+            }
+
+            // we care about deleted/added folder events.
+            switch (static_cast<EventAction>(levent.Action))
+            {
+            case EventAction::Added:
+              ProcessEventAdded(levent.Name);
+              break;
+
+            case EventAction::Renamed:
+              ProcessEventRenamed(levent.Name, levent.OldName);
+              break;
+
+            case EventAction::Removed:
+              ProcessEventAdded(levent.Name);
+              break;
+
+            default:
+              // we don't care...
+              break;
+            }
+          }
+
+          // add them to our list of events.
+          events.insert(events.end(), levents.begin(), levents.end());
+
+          // clear the list
+          levents.clear();
+        }
+        catch (...)
+        {
+          // @todo we need to log this somewhere.
+        }
+      }
+      return events;
     }
 
     /**
      * \brief process the cildren events
-     * \param events the events we will be adding to
+     * \return events the events we will be adding to
      */
-    void MultipleWinMonitor::ProcessChildEvents(std::vector<Event>& events) const
+    std::vector<Event> MultipleWinMonitor::GetAndProcessChildEvents() const
     {
+      std::vector<Event> events;
       GetEvents(events, _recursiveChildren);
+      return events;
     }
 
     /**
@@ -179,7 +331,6 @@ namespace myoddweb
     {
       // the current events.
       std::vector<Event> levents;
-
       for (auto it = container.begin(); it != container.end(); ++it)
       {
         try
@@ -211,6 +362,9 @@ namespace myoddweb
       // stop everything
       Monitor::Stop();
 
+      // guard for multiple entry.
+      auto guard = Lock(_lock);
+
       // delete the children
       Delete(_recursiveChildren);
 
@@ -241,12 +395,6 @@ namespace myoddweb
         container.clear();
       }
     }
-
-    /**
-     * \brief Clear all the parents data
-     */
-    void DeleteNonRecursiveParents();
-
 
     /**
      * \brief get the next available id.
@@ -285,13 +433,12 @@ namespace myoddweb
       // get the next id.
       const auto id = GetNextId();
 
-      // if the parent was not recursive
-      // then we do not need to go further.
-      if( !parent.Recursive )
-      {
-        _recursiveChildren.push_back( new WinMonitor(id, parent) );
-        return;
-      }
+#ifdef _DEBUG
+      // this whole class expects recursive requests
+      // so we should not be able to have anything
+      // other than recursive.
+      assert(parent.Recursive);
+#endif
 
       // look for all the sub-paths
       const auto subPaths = Io::GetAllSubFolders(parent.Path);

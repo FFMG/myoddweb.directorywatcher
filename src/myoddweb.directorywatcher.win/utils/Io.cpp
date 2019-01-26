@@ -14,6 +14,7 @@
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 #include <Windows.h>
 #include "Io.h"
+#include  <cctype>
 
 namespace myoddweb
 {
@@ -24,7 +25,7 @@ namespace myoddweb
      * \param path the file we are checking.
      * \return if the string given is a file or not.
      */
-    bool Io::IsFile( const std::wstring& path)
+    bool Io::IsFile(const std::wstring& path)
     {
       try
       {
@@ -86,7 +87,7 @@ namespace myoddweb
 
       // we know that they are not both empty
       // if the right hand side is empty then the lhs cannot be
-      if( sr == 0 )
+      if (sr == 0)
       {
         const auto l = lhs[sl - 1];
         // no separator
@@ -95,7 +96,7 @@ namespace myoddweb
           return lhs + sep;
         }
         // just go back one step
-        return Combine(lhs.substr(0, sl - 1), rhs );
+        return Combine(lhs.substr(0, sl - 1), rhs);
       }
 
       // we know that they are not both empty
@@ -126,13 +127,13 @@ namespace myoddweb
       // lhs does not have a back slash but the rhs does
       if (l != sep1 && l != sep2 && (r == sep1 || r == sep2))
       {
-        return Combine( lhs, rhs.substr( 1, sr-1));
+        return Combine(lhs, rhs.substr(1, sr - 1));
       }
 
       // rhs does not have a back slash but the lhs does
       if ((l == sep1 || l == sep2) && r != sep1 && r != sep2)
       {
-        return Combine(lhs.substr(0, sl-1), rhs);
+        return Combine(lhs.substr(0, sl - 1), rhs);
       }
 
       // if we are here, they both seem to have a backslash
@@ -177,6 +178,83 @@ namespace myoddweb
         ::FindClose(hFind);
       }
       return subFolders;
+    }
+
+    std::wstring TidyFolderName(const std::wstring& lhs)
+    {
+#ifdef WIN32
+      const auto sep = L'\\';
+      const auto badsep = L'/';
+#else
+      const auto sep = L'/';
+      const auto badsep = L'\\';
+#endif
+      auto llhs = lhs;
+      auto found = llhs.find_first_of(badsep);
+      while (found != std::string::npos)
+      {
+        llhs[found] = sep;
+        found = llhs.find_first_of(badsep);
+      }
+      return llhs;
+    }
+
+
+    /**
+     * \brief Compare if 2 folders are the same
+     * \param lhs the first folder
+     * \param rhs the second folder
+     * \return if both folders are similar.
+     */
+    bool Io::AreSameFolders(const std::wstring& lhs, const std::wstring& rhs)
+    {
+#ifdef WIN32
+      const auto sep = L'\\';
+#else
+      const auto sep = L'/';
+#endif
+      auto llhs = TidyFolderName(lhs);
+      auto rrhs = TidyFolderName(rhs);
+
+      auto sl = llhs.length();
+      while( sl > 0 && (llhs[sl-1] == sep ))
+      {
+        llhs = llhs.substr(0, --sl );
+      }
+
+      auto sr = rrhs.length();
+      while (sr > 0 && (rrhs[sr - 1] == sep))
+      {
+        rrhs = rrhs.substr(0, --sr);
+      }
+
+      // if the length is both zero
+      // then I guess they are the same.
+      if (sl == 0 && sr == 0 )
+      {
+        return true;
+      }
+
+      // if they are not the same length then they are not the same
+      if (sl != sr )
+      {
+        return false;
+      }
+
+      for (auto i = 0; i < sl; ++i )
+      {
+        if (llhs[i] == rrhs[i] )
+        {
+          continue;
+        }
+        if( llhs[i] != std::tolower(rrhs[i]) )
+        {
+          return false;
+        }
+      }
+
+      // if we are here, they are the same
+      return true;
     }
   }
 }
