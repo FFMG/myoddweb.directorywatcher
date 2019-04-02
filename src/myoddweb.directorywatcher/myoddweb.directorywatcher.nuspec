@@ -1,16 +1,22 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
-  <metadata>
+  <metadata minClientVersion="2.12">
     <id>MyOddWeb.DirectoryWatcher</id>
     <version>0.1.2</version>
     <title>MyOddWeb.DirectoryWatcher (x86/x64)</title>
+    <authors>Florent Guelfucci,myoddweb.com</authors>
+    <owners>Florent Guelfucci,myoddweb.com</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="file">.\LICENSE</license>
+    <repository type="git" url="https://github.com/FFMG/myoddweb.directorywatcher"/>
     <projectUrl>https://github.com/FFMG/myoddweb.directorywatcher</projectUrl>
-    <description>A fast and reliable, (non blocking!), .NET File/Directory watcher, complete rewrite of FileSystemWatcher to ensure speed/acuracy/reliability/suppress duplicate events</description>
-    <authors>Florent Guelfucci, myoddweb.com</authors>
+    <description>A fast and reliable, (non blocking!), .NET File/Directory watcher, complete rewrite of FileSystemWatcher to ensure speed/acuracy/reliability/suppress duplicate events
+
+Supported platforms:
+- .NET Framework 4.5.2+
+    </description>
     <tags>DirectoryWatcher,FileSystemWatcher,IO,FileSystem,System.IO.FileSystemWatcher,4.5.2,Opensource</tags>
     <copyright>@copyright 2017-2019 Florent Guelfucci</copyright>
-    <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <language>en-UK</language>
     <dependencies>
       <group targetFramework="net452"/>
