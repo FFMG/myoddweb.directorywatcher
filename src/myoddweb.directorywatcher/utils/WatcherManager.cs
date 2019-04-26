@@ -170,17 +170,24 @@ namespace myoddweb.directorywatcher.utils
     /// <returns></returns>
     private string GetInteropResourceFileSystem()
     {
-      var winresource = "win32.directorywatcher.win";
-      var resource = "win32.directorywatcher.interop";
-      if (Environment.Is64BitProcess)
-      {
-        resource = "x64.directorywatcher.interop";
-        winresource = "x64.directorywatcher.win";
-      }
+      return Environment.Is64BitProcess ? GetInteropResourceFileSystemx64() : GetInteropResourceFileSystemx86();
+    }
 
-      var asmwin = GetInteropResourceFileSystem(winresource, "myoddweb.directorywatcher.win.dll");
+    private string GetInteropResourceFileSystemx86()
+    {
+      const string winresource = "win32.directorywatcher.win";
+      const string resource = "win32.directorywatcher.interop";
+      var asmwin = GetInteropResourceFileSystem(winresource, "myoddweb.directorywatcher.win.x86.dll");
+      const string actualDllFilename = "myoddweb.directorywatcher.interop.x86.dll";
+      return GetInteropResourceFileSystem(resource, actualDllFilename);
+    }
 
-      const string actualDllFilename = "myoddweb.directorywatcher.interop.dll";
+    private string GetInteropResourceFileSystemx64()
+    {
+      const string resource = "x64.directorywatcher.interop";
+      const string winresource = "x64.directorywatcher.win";
+      var asmwin = GetInteropResourceFileSystem(winresource, "myoddweb.directorywatcher.win.x64.dll");
+      const string actualDllFilename = "myoddweb.directorywatcher.interop.x64.dll";
       return GetInteropResourceFileSystem(resource, actualDllFilename);
     }
 

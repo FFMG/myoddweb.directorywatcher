@@ -125,7 +125,7 @@ bool Watcher1::CreateInstance()
   }
 
   // the core name
-  String^ core = "myoddweb.directorywatcher.win.dll";
+  String^ core = Environment::Is64BitProcess ? "myoddweb.directorywatcher.win.x64.dll" : "myoddweb.directorywatcher.win.x86.dll";
 
   // try and load from the same folder as us
   if( CreateInstanceFromLocalFolder( core ) )
