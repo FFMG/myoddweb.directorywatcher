@@ -27,15 +27,14 @@ namespace myoddweb.directorywatcher.sample
 
         // start the monitor.
         var watch = new Watcher();
-//        var drvs = System.IO.DriveInfo.GetDrives();
-//        foreach (var drv in drvs)
-//        {
-//          if (drv.DriveType == System.IO.DriveType.Fixed)
-//          {
-//            watch.Add(new Request(drv.Name, true));
-//          }
-//        }
-        watch.Add(new Request(@"H:\projects\github\myoddweb.directorywatcher\src\bin", false));
+        var drvs = System.IO.DriveInfo.GetDrives();
+        foreach (var drv in drvs)
+        {
+          if (drv.DriveType == System.IO.DriveType.Fixed)
+          {
+            watch.Add(new Request(drv.Name, true));
+          }
+        }
 
         // prepare the console watcher so we can output pretty messages.
         var _ = new ConsoleWatch(watch);
