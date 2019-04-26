@@ -13,6 +13,7 @@
 //    You should have received a copy of the GNU General Public License
 //    along with Myoddweb.Directorywatcher.  If not, see<https://www.gnu.org/licenses/gpl-3.0.en.html>.
 using System;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -254,13 +255,21 @@ namespace myoddweb.directorywatcher.utils
     /// <returns></returns>
     private static string GetInteropFromFileSystem()
     {
+      return Environment.Is64BitProcess ? GetInteropFromFileSystemx64() : GetInteropFromFileSystemx86();
+    }
+
+    private static string GetInteropFromFileSystemx86()
+    {
+      Contract.Assert(!Environment.Is64BitProcess);
       var directoryName = Directory.GetCurrentDirectory();
-      var dllInteropPath = Path.Combine(directoryName, "Win32\\myoddweb.directorywatcher.interop.dll");
-      if (Environment.Is64BitProcess)
-      {
-        dllInteropPath = Path.Combine(directoryName, "x64\\myoddweb.directorywatcher.interop.dll");
-      }
-      return dllInteropPath;
+      return Path.Combine(directoryName, "Win32\\myoddweb.directorywatcher.interop.x86.dll");
+    }
+
+    private static string GetInteropFromFileSystemx64()
+    {
+      Contract.Assert(Environment.Is64BitProcess);
+      var directoryName = Directory.GetCurrentDirectory();
+      return Path.Combine(directoryName, "x64\\myoddweb.directorywatcher.interop.x64.dll");
     }
 
     /// <summary>
