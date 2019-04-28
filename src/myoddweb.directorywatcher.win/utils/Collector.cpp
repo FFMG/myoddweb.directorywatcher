@@ -128,10 +128,16 @@ namespace myoddweb
      * \brief copy the current content of the events into a local variable.
      * Then erase the current content so we can continue receiving data.
      */
-    void Collector::CloneEventsAndEraseCurrent(Events& clone )
+    long Collector::CloneEventsAndEraseCurrent(Events& clone )
     {
       // lock
       auto guard = Lock(_lock);
+
+      // if we have nothing to do, no point in calling the extra functions.
+      if (_nextCleanupTimeCheck == 0)
+      {
+        return 0;
+      }
 
       // copy
       clone = _events;
@@ -142,6 +148,9 @@ namespace myoddweb
       // we can reset the internal counter.
       // and we erased all the data, there is nothing else to do.
       _nextCleanupTimeCheck = 0;
+
+      // return the number of items
+      return static_cast<long>(clone.size());
     }
 
     /**
@@ -167,13 +176,18 @@ namespace myoddweb
       // the lock is released as soon as posible making sure that other threads
       // can keep adding to the list.
       Events clone;
-      CloneEventsAndEraseCurrent(clone);
+      const auto numberOfClonedItems = CloneEventsAndEraseCurrent(clone);
+      if(numberOfClonedItems == 0 )
+      {
+        return;
+      }
+
       // the lock has been released, we are now working with the clone
 
       // we can now reserve some space in our return vector.
       // we know that it will be a maximum of that size.
       // but we will not be adding more to id.
-      events.reserve(clone.size());
+      events.reserve(numberOfClonedItems);
 
       // go around the data from the newest to the oldest.
       // and we will add them in reverse as well.

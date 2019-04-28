@@ -126,8 +126,9 @@ namespace myoddweb
       /**
        * \brief copy the current content of the events into a local variable.
        * Then erase the current content so we can continue receiving data.
+       * \return the number of items.
        */
-      void CloneEventsAndEraseCurrent(Events& clone);
+      long CloneEventsAndEraseCurrent(Events& clone);
     };
   }
 }
