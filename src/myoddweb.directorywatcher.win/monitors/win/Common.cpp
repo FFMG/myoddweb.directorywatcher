@@ -141,8 +141,8 @@ namespace myoddweb
        */
       bool Common::MustStop() const
       {
-        static const auto one = std::chrono::milliseconds(1);
-        return _mustStop || _futureObj.wait_for(one) != std::future_status::timeout;
+        static const auto zeroMs = std::chrono::milliseconds(0);
+        return _mustStop || _futureObj.wait_for(zeroMs) != std::future_status::timeout;
       }
 
       /**
