@@ -130,19 +130,26 @@ namespace myoddweb.directorywatcher.utils
       }
 
       _disposed = true;
-      if (_embededFolder != null)
+      if (_embededFolder == null)
       {
-        lock (Lock)
+        return;
+      }
+
+      lock (Lock)
+      {
+        if (_embededFolder == null)
         {
-          // reset the folder name
-          _embededFolder = null;
-
-          // we are done with the instance as well
-          _manager = null;
-
-          // remove the old directories if we can.
-          RemoveOldDirectories();
+          return;
         }
+
+        // reset the folder name
+        _embededFolder = null;
+
+        // we are done with the instance as well
+        _manager = null;
+
+        // remove the old directories if we can.
+        RemoveOldDirectories();
       }
     }
 
