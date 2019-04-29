@@ -87,15 +87,16 @@ namespace myoddweb
        */
       void Common::StopAndResetThread()
       {
+        // tell everybody to stop...
+        _mustStop = true;
+
+        // is the thread already finished?
         if (_th == nullptr)
         {
           return;
         }
 
-        // signal the stop
-        _exitSignal.set_value();
-
-        // wait a little
+        // wait for the thread to complete.
         if (_th->joinable())
         {
           _th->join();
@@ -114,12 +115,11 @@ namespace myoddweb
         // stop the old one... if any
         StopAndResetThread();
 
+        // we must no longer stop
+        _mustStop = false;
+
         // start the data
         _data = new Data(_parent, _bufferLength);
-
-        // we can now reset our future
-        // so we can cancel/stop the thread/
-        _futureObj = _exitSignal.get_future();
 
         // we can now looking for changes.
         _th = new std::thread(&Common::RunThread, this);
@@ -137,12 +137,11 @@ namespace myoddweb
 
       /**
        * \brief check if we have to stop the current work.
-       * ]return bool if we have to stop or not.
+       * \return bool if we have to stop or not.
        */
       bool Common::MustStop() const
       {
-        static const auto zeroMs = std::chrono::milliseconds(0);
-        return _mustStop || _futureObj.wait_for(zeroMs) != std::future_status::timeout;
+        return _mustStop;
       }
 
       /**

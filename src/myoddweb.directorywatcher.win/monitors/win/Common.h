@@ -96,15 +96,14 @@ namespace myoddweb
          */
         const unsigned long _bufferLength;
         
-        #pragma region Thread variables
         /**
-         * \brief signal to stop the thread.
+         * \brief the current thread handle, if we have one.
          */
-        std::promise<void> _exitSignal;
-        std::future<void> _futureObj;
         std::thread* _th = nullptr;
-        #pragma endregion
 
+        /**
+         * \brief start the worker thread
+         */
         void StartWorkerThread();
 
       protected:
