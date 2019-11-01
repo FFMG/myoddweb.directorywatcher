@@ -19,6 +19,7 @@
 #include "Errors.h"
 #include "Functions.h"
 #include "FunctionTypes.h"
+#include <stdexcept>
 
 using namespace msclr::interop;
 using namespace System;

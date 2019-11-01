@@ -32,6 +32,12 @@
     <ClCompile Include="..\myoddweb.directorywatcher.win\monitors\win\Files.cpp">
       <Filter>win\monitors\win</Filter>
     </ClCompile>
+    <ClCompile Include="..\packages\googletest-release-1.10.0\googletest\src\gtest_main.cc">
+      <Filter>win\google\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\packages\googletest-release-1.10.0\googletest\src\gtest-all.cc">
+      <Filter>win\google\src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -85,8 +91,17 @@
     <Filter Include="win\monitors\win">
       <UniqueIdentifier>{d7f01a23-2e7a-4522-a337-e4de149356ff}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
+    <Filter Include="win\google">
+      <UniqueIdentifier>{f96138d9-c419-4118-91ae-9e8155c5d35f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="win\google\include">
+      <UniqueIdentifier>{badf1fd6-cfb6-41bb-94d5-69c45addb380}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="win\google\src">
+      <UniqueIdentifier>{06de64de-ba19-41a8-90ab-44f92b6a9389}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="win\google\include\internal">
+      <UniqueIdentifier>{f64d7bcc-8b24-487f-a3a8-6d8fc98940a3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>
