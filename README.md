@@ -1,12 +1,13 @@
-# Myoddweb.Directorywatcher [![Release](https://img.shields.io/badge/release-v0.1.3-brightgreen.png?style=flat)](https://github.com/FFMG/myoddweb.directorywatcher/)
+# Myoddweb.Directorywatcher [![Release](https://img.shields.io/badge/release-v0.1.4-brightgreen.png?style=flat)](https://github.com/FFMG/myoddweb.directorywatcher/)
+
 A fast and reliable File/Directory watcher for c#/c++ to replace the current .NET `FileSystemWatcher` class.
 
 ## What it does
 
 - Reliable monitoring of
-	-  Renamed files/directories
-	-  Deleted files/directories
-	-  Created files/directories
+  - Renamed files/directories
+  - Deleted files/directories
+  - Created files/directories
 - All exceptions are passed back to the caller.
 - Non-blocking delegates, if one function takes a long time ... we don't all have to suffer.
 - The interface does allow for porting to other platforms.
@@ -19,19 +20,24 @@ A fast and reliable File/Directory watcher for c#/c++ to replace the current .NE
 - Bring me coffee.
 
 ## Installing
+
 ### Nuget
 
 [![NuGet Status](https://img.shields.io/nuget/v/MyOddWeb.DirectoryWatcher.svg)](https://www.nuget.org/packages/MyOddWeb.DirectoryWatcher/)
 [![NuGet Count](https://img.shields.io/nuget/dt/MyOddWeb.DirectoryWatcher.svg)](https://www.nuget.org/packages/MyOddWeb.DirectoryWatcher/)
 
 #### Package manager
+
 `Install-Package MyOddWeb.DirectoryWatcher`
 
 #### CLI
+
 ##### .NET
+
 `dotnet add package MyOddWeb.DirectoryWatcher`
 
 #### Packet
+
 `paket add MyOddWeb.DirectoryWatcher`
 
 ### Use case
@@ -49,9 +55,9 @@ The current version of [File Watcher](https://docs.microsoft.com/en-us/dotnet/ap
 - UNC/Unix files are not supported, (in fact it causes `FileSystemWatcher` to take your system down).
 - Does not handle large volumes nicely.  
 
-# Example
+## Example
 
-## Simple Watch
+### Simple Watch
 
 Add all the directories we want to 'observe' 
 
@@ -62,7 +68,7 @@ Add all the directories we want to 'observe'
     watch.Add(new Request("y:\\", true));
 ```
 
-Then start 
+Then start
 
 ```csharp
     // start watching
@@ -89,7 +95,7 @@ And when we are done stop it ...
     watch.Stop();
 ```
 
-## Watched Events
+### Watched Events
 
 When a file event is raised we send a `IFileSystemEvent` event.
 
