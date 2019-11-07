@@ -265,18 +265,28 @@ namespace myoddweb.directorywatcher.utils
       return Environment.Is64BitProcess ? GetInteropFromFileSystemx64() : GetInteropFromFileSystemx86();
     }
 
+    private static string GetInteropFromFileSystem( string subDirectory, string dll )
+    {
+      var currentDirectory = Path.Combine(Directory.GetCurrentDirectory(), subDirectory );
+      if (!Directory.Exists(currentDirectory))
+      {
+        var parentCurrentDirectory = (new DirectoryInfo(Directory.GetCurrentDirectory())).Parent.FullName;
+        currentDirectory = Path.Combine(parentCurrentDirectory, subDirectory );
+      }
+
+      return Path.Combine(currentDirectory, dll );
+    }
+
     private static string GetInteropFromFileSystemx86()
     {
       Contract.Assert(!Environment.Is64BitProcess);
-      var directoryName = Directory.GetCurrentDirectory();
-      return Path.Combine(directoryName, "Win32\\myoddweb.directorywatcher.interop.x86.dll");
+      return GetInteropFromFileSystem("Win32", "myoddweb.directorywatcher.interop.x86.dll");
     }
 
     private static string GetInteropFromFileSystemx64()
     {
       Contract.Assert(Environment.Is64BitProcess);
-      var directoryName = Directory.GetCurrentDirectory();
-      return Path.Combine(directoryName, "x64\\myoddweb.directorywatcher.interop.x64.dll");
+      return GetInteropFromFileSystem("x64", "myoddweb.directorywatcher.interop.x64.dll");
     }
 
     /// <summary>

@@ -8,32 +8,40 @@ namespace nonblocking
 {
   class Program
   {
+    private static Watcher _watcher = new Watcher();
     static void Main(string[] args)
     {
       Console.WriteLine("Press Ctrl+C to stop the monitors.");
 
       // start the monitor.
-      var watch = new Watcher();
       var drvs = System.IO.DriveInfo.GetDrives();
       foreach (var drv in drvs)
       {
         if (drv.DriveType == System.IO.DriveType.Fixed)
         {
-          watch.Add(new Request(drv.Name, true));
+          _watcher.Add(new Request(drv.Name, true));
         }
       }
 
-      watch.OnTouchedAsync += OnTouchedAsync;
+      _watcher.OnTouchedAsync += OnTouchedAsync;
 
-      watch.Start();
+      _watcher.Start();
 
       WaitForCtrlC();
 
-      watch.Stop();
+      _watcher.Stop();
     }
 
-    private static Task OnTouchedAsync(IFileSystemEvent e, CancellationToken token)
+    private static Task OnTouchedAsync(IFileSystemEvent fse, CancellationToken token)
     {
+      Console.WriteLine($"[{fse.DateTimeUtc:HH:mm:ss.ffff}]:[{fse.FileSystemInfo.FullName}" );
+
+      var rng = new Random();
+      if( rng.Next(10) == 0 )
+      {
+        Console.WriteLine("Calling STOP in loop!");
+        _watcher.Stop();
+      }
       return Task.CompletedTask;
     }
 
