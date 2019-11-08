@@ -6,12 +6,13 @@ using System.Threading.Tasks;
 
 namespace nonblocking
 {
-  class Program
+  internal class Program
   {
-    private static Watcher _watcher = new Watcher();
-    static void Main(string[] args)
+    private static readonly IWatcher3 Watcher = new Watcher();
+
+    private static void Main()
     {
-      Console.WriteLine("Press Ctrl+C to stop the monitors.");
+      Console.WriteLine("Press Ctrl+C to stop the monitors."); 
 
       // start the monitor.
       var drvs = System.IO.DriveInfo.GetDrives();
@@ -19,17 +20,17 @@ namespace nonblocking
       {
         if (drv.DriveType == System.IO.DriveType.Fixed)
         {
-          _watcher.Add(new Request(drv.Name, true));
+          Watcher.Add(new Request(drv.Name, true));
         }
       }
 
-      _watcher.OnTouchedAsync += OnTouchedAsync;
+      Watcher.OnTouchedAsync += OnTouchedAsync;
 
-      _watcher.Start();
+      Watcher.Start();
 
       WaitForCtrlC();
 
-      _watcher.Stop();
+      Watcher.Stop();
     }
 
     private static Task OnTouchedAsync(IFileSystemEvent fse, CancellationToken token)
@@ -37,10 +38,11 @@ namespace nonblocking
       Console.WriteLine($"[{fse.DateTimeUtc:HH:mm:ss.ffff}]:[{fse.FileSystemInfo.FullName}" );
 
       var rng = new Random();
-      if( rng.Next(10) == 0 )
+      if( rng.Next(100) == 0 )
       {
-        Console.WriteLine("Calling STOP in loop!");
-        _watcher.Stop();
+        Console.WriteLine("Calling STOP in loop - Start!");
+        Watcher.Stop();
+        Console.WriteLine("Calling STOP in loop - End!");
       }
       return Task.CompletedTask;
     }

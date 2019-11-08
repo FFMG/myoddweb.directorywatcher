@@ -23,19 +23,28 @@ using EventError = myoddweb.directorywatcher.interfaces.EventError;
 
 namespace myoddweb.directorywatcher
 {
-  public class Watcher : IWatcher2
+  public class Watcher : IWatcher3
   {
     #region Member variables
+    /// <summary>
+    /// Check if we disposed already.
+    /// </summary>
+    private bool _disposed;
 
     /// <summary>
-    /// To stop the running task
+    /// All the running event tasks
     /// </summary>
-    private CancellationTokenSource _source;
+    private CancellationTokenSource _eventsSource;
 
     /// <summary>
-    /// The currently running task, (if we have one).
+    /// The parent watcher source
     /// </summary>
-    private Task _task;
+    private readonly CancellationTokenSource _watcherSource = new CancellationTokenSource();
+    
+    /// <summary>
+    /// This is the task that always waits for events to run.
+    /// </summary>
+    private readonly Task _task;
 
     /// <summary>
     /// If we started work or not.
@@ -51,11 +60,9 @@ namespace myoddweb.directorywatcher
     /// The list of requests.
     /// </summary>
     private readonly IList<IRequest> _pendingRequests = new List<IRequest>();
-
     #endregion
 
     #region Events
-
     /// <inheritdoc />
     public event WatcherEvent<IFileSystemEvent> OnTouchedAsync;
 
@@ -73,11 +80,100 @@ namespace myoddweb.directorywatcher
 
     #endregion
 
-    #region IWatcher1/IWatcher2
+    public Watcher()
+    {
+      // start the task that will forever be looking for events.
+      _task = ProcessEventsAsync();
 
+      // we have not disposed
+      _disposed = false;
+    }
+
+    /// <summary>
+    /// Dispose of resources
+    /// </summary>
+    ~Watcher()
+    {
+      Dispose( false );
+    }
+
+    #region IDisposable
+    /// <summary>
+    /// Implement the dispose pattern
+    /// </summary>
+    public void Dispose()
+    {
+      Dispose(true);
+    }
+
+    /// <summary>
+    /// Call when we are disposing or resources.
+    /// </summary>
+    /// <param name="disposing"></param>
+    protected virtual void Dispose( bool disposing )
+    {
+      if (_disposed)
+      {
+        return;
+      }
+
+      try
+      {
+        // the 'finally' will set the _disposed flag to true.
+        if (!disposing)
+        {
+          return;
+        }
+
+        // stop collecting events
+        Stop();
+
+        // stop everything ekse
+        StopInternalEvents();
+
+        // and dispose...
+        _eventsSource?.Dispose();
+        _watcherSource?.Dispose();
+        _task.Dispose();
+      }
+      finally
+      {
+        _disposed = true;
+      }
+    }
+
+    /// <summary>
+    /// Check if disposed was called.
+    /// </summary>
+    internal void CheckDisposed()
+    {
+      if (_disposed)
+      {
+        throw new ObjectDisposedException(GetType().FullName);
+      }
+    }
+
+    private void StopInternalEvents()
+    {
+      // are we running?
+      _eventsSource?.Cancel();
+      _watcherSource?.Cancel();
+
+      // wait for the task to end.
+      _task.Wait();
+
+      // flag that this has stoped.
+      _started = false;
+    }
+    #endregion
+
+    #region IWatcher1/IWatcher2/IWatcher3
     /// <inheritdoc />
     public long Start(IRequest request)
     {
+      // we cannot start what has been disposed.
+      CheckDisposed();
+
       // As we have already started the work.
       // so we want to start this one now
       // and add it to our list of started ids.
@@ -97,6 +193,9 @@ namespace myoddweb.directorywatcher
     /// <inheritdoc />
     public bool Add(IRequest request)
     {
+      // we cannot add if we have disposed already
+      CheckDisposed();
+
       if (_started)
       {
         // we started already, so add this one now.
@@ -115,6 +214,9 @@ namespace myoddweb.directorywatcher
     /// <inheritdoc />
     public bool Stop(long id)
     {
+      // we cannot stop what has been disposed.
+      CheckDisposed();
+
       if (!_processedRequests.ContainsKey(id))
       {
         return false;
@@ -133,12 +235,18 @@ namespace myoddweb.directorywatcher
     /// <inheritdoc />
     public long GetEvents(long id, out IList<IEvent> events)
     {
+      // we cannot get any more events if we have disposed.
+      CheckDisposed();
+
       return WatcherManager.Get.GetEvents(id, out events);
     }
 
     /// <inheritdoc />
     public bool Start()
     {
+      // we cannot start what has been disposed.
+      CheckDisposed();
+
       try
       {
         // do we have anything to do ... or are we even able to work?
@@ -190,41 +298,44 @@ namespace myoddweb.directorywatcher
       {
         // regadless what happned we have now started
         // in case the user calls start before adding anything at all.
-        StartInternalEvents();
+
+        // flag that this has started.
+        _started = true;
+
+        // cancel the task
+        _eventsSource = new CancellationTokenSource();
       }
     }
 
     /// <inheritdoc />
     public bool Stop()
     {
-      try
-      {
-        // do we have any completed requests?
-        if (!_processedRequests.Any() || WatcherManager.Get == null)
-        {
-          return false;
-        }
+      // we cannot start what has been disposed.
+      CheckDisposed();
 
-        // we try and remove the requests here.
-        // make sure that we clone the list rather than using the actual list
-        // because Remove() will actually change _processedRequests itself.
-        foreach (var id in _processedRequests.Select(r => r.Key).ToArray())
-        {
-          Stop(id);
-        }
-
-        return true;
-      }
-      finally
+      // do we have any completed requests?
+      if (!_processedRequests.Any() || WatcherManager.Get == null)
       {
-        // we have now stopped.
-        StopInternalEvents();
+        return false;
       }
+
+      // we try and remove the requests here.
+      // make sure that we clone the list rather than using the actual list
+      // because Remove() will actually change _processedRequests itself.
+      foreach (var id in _processedRequests.Select(r => r.Key).ToArray())
+      {
+        Stop(id);
+      }
+
+      return true;
     }
 
     /// <inheritdoc />
     public long GetEvents(out IList<IEvent> events)
     {
+      // we cannot get the events if we disposed.
+      CheckDisposed();
+
       var allEvents = new List<IEvent>();
       foreach (var id in _processedRequests.Select(r => r.Key).ToArray())
       {
@@ -237,37 +348,9 @@ namespace myoddweb.directorywatcher
       events = allEvents;
       return allEvents.Count;
     }
-
     #endregion
 
     #region Private functions
-
-    private void StopInternalEvents()
-    {
-      // are we running?
-      _source?.Cancel();
-      _task?.Wait();
-
-      // flag that this has stoped.
-      _started = false;
-      _task = null;
-    }
-
-    private void StartInternalEvents()
-    {
-      // stowhatever might still be running.
-      StopInternalEvents();
-
-      // flag that this has started.
-      _started = true;
-
-      // cancel the task
-      _source = new CancellationTokenSource();
-
-      // start the next task
-      _task = ProcessEvents(_source.Token);
-    }
-
     private Task CreateProcessEvent(IEvent e, CancellationToken token)
     {
       // do we have an error.
@@ -350,9 +433,8 @@ namespace myoddweb.directorywatcher
     /// This is a long running thread that we will keep calling while we have events
     /// or until stop is called.
     /// </summary>
-    /// <param name="token"></param>
     /// <returns></returns>
-    private async Task<bool> ProcessEvents( CancellationToken token )
+    private async Task<bool> ProcessEventsAsync( )
     {
       //  how big we want to allow the list of tasks to be.
       // before we 'clean' the completed list.
@@ -363,10 +445,16 @@ namespace myoddweb.directorywatcher
       try
       {
         // loop around while we process events.
-        while (!_source.IsCancellationRequested)
+        while (!_watcherSource.IsCancellationRequested)
         {
           try
           {
+            // no point in doing anything until we are all done.
+            if ( _eventsSource?.IsCancellationRequested ?? true )
+            {
+              continue;
+            }
+
             // get all the events
             if (GetEvents(out var events) <= 0)
             {
@@ -374,7 +462,7 @@ namespace myoddweb.directorywatcher
             }
 
             // process all the events.
-            tasks.AddRange( CreateProcessEvents(events, maxNumTasks, token) );
+            tasks.AddRange( CreateProcessEvents(events, maxNumTasks, _eventsSource.Token ) );
 
             // create the tasks that are complete.
             if (tasks.Count > maxNumTasks)
@@ -382,14 +470,29 @@ namespace myoddweb.directorywatcher
               tasks.RemoveAll(t => t.IsCompleted);
             }
           }
-          catch
+          catch( Exception e )
           {
+            if (e is OperationCanceledException oc)
+            {
+              if (oc.CancellationToken == _eventsSource?.Token)
+              {
+                // we just cancelled the events token
+                continue;
+              }
+
+              if (oc.CancellationToken == _watcherSource.Token)
+              {
+                // we cancelled the entire watcher.
+                break;
+              }
+            }
+
             try
             {
               // on of the functions threw an error.
               if (OnErrorAsync != null)
               {
-                tasks.Add(Task.Run(() => OnErrorAsync(new utils.EventError(EventError.General, DateTime.UtcNow), token), token));
+                tasks.Add(Task.Run(() => OnErrorAsync(new utils.EventError(EventError.General, DateTime.UtcNow), _eventsSource.Token), _eventsSource?.Token ?? _watcherSource.Token ));
               }
             }
             catch
@@ -401,13 +504,13 @@ namespace myoddweb.directorywatcher
           finally
           {
             // wait ... a little.
-            await Task.Delay(100, token).ConfigureAwait(false);
+            await Task.Delay(100, _watcherSource.Token ).ConfigureAwait(false);
           }
         }
       }
       catch (OperationCanceledException e)
       {
-        if (e.CancellationToken != _source.Token)
+        if (e.CancellationToken != _watcherSource.Token )
         {
           //  not my token
           throw;
@@ -417,7 +520,7 @@ namespace myoddweb.directorywatcher
       {
         // wait for all the tasks to complete.
         tasks.RemoveAll(t => t.IsCompleted);
-        Task.WaitAll(tasks.ToArray());
+        Task.WaitAll( tasks.ToArray() );
       }
       return true;
     }
