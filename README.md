@@ -59,13 +59,30 @@ The current version of [File Watcher](https://docs.microsoft.com/en-us/dotnet/ap
 
 ### Simple Watch
 
-Add all the directories we want to 'observe' 
+Add all the directories we want to 'observe'
 
 ```csharp
-    var watch = new Watcher();
-    watch.Add(new Request("c:\\", true));
-    watch.Add(new Request("d:\\foo\\bar\\", true));
-    watch.Add(new Request("y:\\", true));
+    using( var watch = new Watcher() )
+    {
+      watch.Add(new Request("c:\\", true));
+      watch.Add(new Request("d:\\foo\\bar\\", true));
+      watch.Add(new Request("y:\\", true));
+
+      // do something amazing with the data
+      watch.OnAddedAsync += async (f, t) =>
+      {
+        // ..
+      };
+
+      // start watching
+      watch.Start();
+
+      // add some more
+       watch.Add(new Request("z:\\", false));
+
+      // optional stop in this case
+      watch.Stop();
+    }
 ```
 
 Then start
