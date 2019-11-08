@@ -85,11 +85,20 @@ Add all the directories we want to 'observe'
     }
 ```
 
-Then start
+You can start watching at any point
 
 ```csharp
+    // create Watcher
+    var watcher = new Watcher();
+
+    // Add a request.
+    watch.Add(new Request("y:\\", true));
+
     // start watching
     watch.Start();
+
+    // add some more
+    watch.Add(new Request("z:\\", false));
 ```
 
 Get notifications in case a file is created.
@@ -110,6 +119,23 @@ And when we are done stop it ...
 
 ```csharp
     watch.Stop();
+```
+
+Or Dispose of it
+
+```csharp
+    watch.Dispose();
+```
+
+### Your own 'Watcher' interface
+
+You can create your own watcher interface
+
+```csharp
+public class Watcher : IWatcher3
+{
+  // Implement IWatcher3
+}
 ```
 
 ### Watched Events
