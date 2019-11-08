@@ -14,7 +14,7 @@
 
 :Push
 @echo You will need to push it manually or use
-@echo .\tools\nuget\Nuget.exe push .\src\bin\Myoddweb.DirectoryWatcher.0.1.3.nupkg <API KEY>
+@echo .\tools\nuget\Nuget.exe push .\src\bin\Myoddweb.DirectoryWatcher.0.1.4.nupkg <API KEY>
 
 @GOTO End
 
