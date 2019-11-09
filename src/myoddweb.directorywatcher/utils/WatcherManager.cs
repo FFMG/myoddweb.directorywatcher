@@ -203,7 +203,7 @@ namespace myoddweb.directorywatcher.utils
     /// 'Borrowed' from https://www.codeproject.com/Articles/528178/Load-DLL-From-Embedded-Resource
     /// </summary>
     /// <returns></returns>
-    private byte[] GetEmbededResource(string resource )
+    private static byte[] GetEmbededResource(string resource )
     {
       var curAsm = Assembly.GetExecutingAssembly();
       using (var stm = curAsm.GetManifestResourceStream(resource))

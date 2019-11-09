@@ -261,7 +261,7 @@ long long Watcher1::Start(myoddweb::directorywatcher::interfaces::IRequest^ requ
  * \param The id we want to remove.
  * \returns
  */
-bool Watcher1::Stop( __int64 id )
+bool Watcher1::Stop( long long id )
 {
   try
   {

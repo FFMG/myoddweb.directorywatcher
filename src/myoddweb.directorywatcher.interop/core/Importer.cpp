@@ -23,7 +23,6 @@ extern "C" LPVOID WINAPI Importer(UINT32 id)
   {
   case IID_IWatcher1:
     return new Watcher1();
-    break;
 
   default:
     break;
