@@ -10,10 +10,19 @@ namespace myoddweb.directorywatcher.test
     }
 
     [Test]
+    public void DefaultDoesNotThrow()
+    {
+      Assert.DoesNotThrow(() =>
+      {
+        var _ = new Watcher();
+      });
+    }
+
+    [Test]
     public void StopWithoutStart()
     {
       using var watcher = new Watcher();
-      watcher.Add(new Request("%tem%", false));
+      watcher.Add(new Request("%temp%", false));
       Assert.DoesNotThrow( () => watcher.Stop() );
     }
   }

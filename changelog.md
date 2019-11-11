@@ -8,7 +8,7 @@ Notable changes
 
 ### Changed
 
-- There was a posibility for `Stop()/Start()` to hang if called at the wrong time.
+- There was a possibility for `Stop()/Start()` to hang if called at the wrong time.
 
 ### Fixed
 
