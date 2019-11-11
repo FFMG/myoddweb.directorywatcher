@@ -22,7 +22,7 @@ Notable changes
 
 ### Fixed
 
-- Small changes/fixes picked up during testing and development of [Myoddweb Desktopsearc](https://github.com/FFMG/myoddweb.desktopsearch).
+- Small changes/fixes picked up during testing and development of [Myoddweb Desktopsearch](https://github.com/FFMG/myoddweb.desktopsearch).
 
 ### Removed
 
