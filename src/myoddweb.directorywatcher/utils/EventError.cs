@@ -9,6 +9,12 @@ namespace myoddweb.directorywatcher.utils
   /// <inheritdoc />
   internal class EventError : IEventError
   {
+    /// <summary>
+    /// The on-demand created message
+    /// This is only created if the caller calls Message{get;}
+    /// </summary>
+    private string _message;
+
     /// <inheritdoc />
     public DateTime DateTimeUtc { get; }
 
@@ -16,23 +22,40 @@ namespace myoddweb.directorywatcher.utils
     public interfaces.EventError Code { get; }
 
     /// <inheritdoc />
-    public string Message { get; }
+    public string Message 
+    {
+      get
+      {
+        if (null != _message)
+        {
+          return _message;
+        }
+
+        _message = CreateMessage();
+        return _message;
+      }
+    }
 
     public EventError(interfaces.EventError error, DateTime utc )
     {
+      // the date of the event.
       DateTimeUtc = utc;
+
+      // checkthat the given enum value is valid.
+      if (!Enum.IsDefined(typeof(interfaces.EventError), error))
+      {
+        throw new ArgumentOutOfRangeException(nameof(error), error, "Unknown Event Error code.");
+      }
       Code = error;
-      Message = CreateMessage(error);
     }
 
     /// <summary>
     /// Create an error message given the code.
     /// </summary>
-    /// <param name="action"></param>
     /// <returns></returns>
-    internal static string CreateMessage(interfaces.EventError action)
+    private string CreateMessage()
     {
-      switch (action)
+      switch (Code)
       {
         case interfaces.EventError.General:
           return "General error";
@@ -62,7 +85,7 @@ namespace myoddweb.directorywatcher.utils
           return "No Error";
 
         default:
-          return $"An unknown error code was returned: {(int)action}";
+          return $"An unknown error code was returned: {(int)Code}";
       }
     }
   }
