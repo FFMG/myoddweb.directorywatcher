@@ -22,19 +22,7 @@ namespace myoddweb.directorywatcher.utils
     public interfaces.EventError Code { get; }
 
     /// <inheritdoc />
-    public string Message 
-    {
-      get
-      {
-        if (null != _message)
-        {
-          return _message;
-        }
-
-        _message = CreateMessage();
-        return _message;
-      }
-    }
+    public string Message => _message ?? (_message = CreateMessage());
 
     public EventError(interfaces.EventError error, DateTime utc )
     {
