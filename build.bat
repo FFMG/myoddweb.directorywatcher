@@ -8,6 +8,7 @@
 
 
 :Pack
+@rem remember to update .\src\myoddweb.directorywatcher\myoddweb.directorywatcher.nuspec to correct version number.
 .\tools\nuget\Nuget.exe pack ".\src\myoddweb.directorywatcher\myoddweb.directorywatcher.nuspec" -OutputDirectory ".\src\bin\."
 
 @GOTO End
