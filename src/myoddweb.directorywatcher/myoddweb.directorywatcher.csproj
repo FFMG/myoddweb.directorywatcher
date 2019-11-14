@@ -1,8 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <Description>A fast and reliable, (non blocking!), .NET File/Directory watcher, complete rewrite of FileSystemWatcher to ensure speed/acuracy/reliability/suppress duplicate events</Description>
     <VersionPrefix>0.1.5</VersionPrefix>
     <TargetFrameworks>net452;net462;netcoreapp2.0;netcoreapp3.0</TargetFrameworks>
+
+    <AssemblyName>MyOddWeb.DirectoryWatcher</AssemblyName>
+    <PackageId>MyOddWeb.DirectoryWatcher</PackageId>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">

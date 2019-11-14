@@ -18,7 +18,7 @@ Supported platforms:
 - .NET Core 2.0+
 - .NET Core 3.0+
     </description>
-    <tags>DirectoryWatcher,FileSystemWatcher,IO,FileSystem,System.IO.FileSystemWatcher,4.5.2,4.6.2,Opensource</tags>
+    <tags>DirectoryWatcher,FileSystemWatcher,IO,FileSystem,System.IO.FileSystemWatcher,4.5.2,4.6.2,Core 2.0,Core 3.0,Opensource</tags>
     <copyright>@copyright 2017-2019 Florent Guelfucci</copyright>
     <language>en-UK</language>
     <dependencies>
