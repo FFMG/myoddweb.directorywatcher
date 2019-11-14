@@ -1,71 +1,19 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{FC3A40B9-2EBF-4142-B130-011738408399}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>myoddweb.directorywatcher</RootNamespace>
-    <AssemblyName>myoddweb.directorywatcher</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <Deterministic>true</Deterministic>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>$(SolutionDir)bin\$(Configuration)\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <OutputPath>..\bin\Release\</OutputPath>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>$(SolutionDir)bin\$(Configuration)\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <PlatformTarget>AnyCPU</PlatformTarget>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <OutputPath>..\bin\Debug\</OutputPath>
   </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
+    <ProjectReference Include="..\myoddweb.directorywatcher.interfaces\myoddweb.directorywatcher.interfaces.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Request.cs" />
-    <Compile Include="utils\EventError.cs" />
-    <Compile Include="utils\FileSystemEvent.cs" />
-    <Compile Include="utils\RenamedFileSystemEvent.cs" />
-    <Compile Include="utils\TypeLoader.cs" />
-    <Compile Include="utils\WatcherManager.cs" />
-    <Compile Include="Watcher.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="$(OutputPath)Win32\myoddweb.directorywatcher.win.x86.dll">
-      <LogicalName>win32.directorywatcher.win</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="$(OutputPath)Win32\myoddweb.directorywatcher.interop.x86.dll">
-      <LogicalName>win32.directorywatcher.interop</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="$(OutputPath)x64\myoddweb.directorywatcher.win.x64.dll">
-      <LogicalName>x64.directorywatcher.win</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="$(OutputPath)x64\myoddweb.directorywatcher.interop.x64.dll">
-      <LogicalName>x64.directorywatcher.interop</LogicalName>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\myoddweb.directorywatcher.interfaces\myoddweb.directorywatcher.interfaces.csproj">
-      <Project>{3e915537-8c2e-4331-b4dc-be182e9b32f1}</Project>
-      <Name>myoddweb.directorywatcher.interfaces</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+
 </Project>
