@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <TargetFrameworks>net452;netcoreapp3.0</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -16,4 +16,47 @@
     <ProjectReference Include="..\myoddweb.directorywatcher.interfaces\myoddweb.directorywatcher.interfaces.csproj" />
   </ItemGroup>
 
+ <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
+    <Reference Include="System" />
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard1.5' Or '$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'netcoreapp3.0' ">
+    <DefineConstants>$(DefineConstants);CORECLR</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.5' ">
+    <PackageReference Include="System.Collections.Concurrent" Version="4.3.0" />
+    <PackageReference Include="System.Console" Version="4.3.0" />
+    <PackageReference Include="System.Diagnostics.Debug" Version="4.3.0" />
+    <PackageReference Include="System.Diagnostics.Tracing" Version="4.3.0" />
+    <PackageReference Include="System.IO" Version="4.3.0" />
+    <PackageReference Include="System.Linq" Version="4.3.0" />
+    <PackageReference Include="System.Net.NameResolution" Version="4.3.0" />
+    <PackageReference Include="System.Net.Security" Version="4.3.2" />
+    <PackageReference Include="System.Net.Sockets" Version="4.3.0" />
+    <PackageReference Include="System.Reflection.Extensions" Version="4.3.0" />
+    <PackageReference Include="System.Reflection.TypeExtensions" Version="4.3.0" />
+    <PackageReference Include="System.Runtime" Version="4.3.0" />
+    <PackageReference Include="System.Runtime.Extensions" Version="4.3.0" />
+    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.0" />
+    <PackageReference Include="System.Threading" Version="4.3.0" />
+    <PackageReference Include="System.Threading.Thread" Version="4.3.0" />
+    <PackageReference Include="System.Threading.Timer" Version="4.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="$(OutputPath)..\Win32\myoddweb.directorywatcher.win.x86.dll">
+      <LogicalName>win32.directorywatcher.win</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(OutputPath)..\Win32\myoddweb.directorywatcher.interop.x86.dll">
+      <LogicalName>win32.directorywatcher.interop</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(OutputPath)..\x64\myoddweb.directorywatcher.win.x64.dll">
+      <LogicalName>x64.directorywatcher.win</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(OutputPath)..\x64\myoddweb.directorywatcher.interop.x64.dll">
+      <LogicalName>x64.directorywatcher.interop</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
 </Project>

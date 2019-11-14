@@ -21,7 +21,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "myoddweb.directorywatcher.i
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "myoddweb.directorywatcher.test", "myoddweb.directorywatcher.test\myoddweb.directorywatcher.test.csproj", "{4FE8B981-FD19-4177-B4B6-DBBAAB1E608B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "myoddweb.directorywatcher", "myoddweb.directorywatcher\myoddweb.directorywatcher.csproj", "{AF343C32-C9B5-461E-94F6-9A2358758A5A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "myoddweb.directorywatcher", "myoddweb.directorywatcher\myoddweb.directorywatcher.csproj", "{AF343C32-C9B5-461E-94F6-9A2358758A5A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
