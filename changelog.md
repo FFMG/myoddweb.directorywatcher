@@ -2,7 +2,23 @@
 
 Notable changes
 
-## 0.1.4 - [Current]
+## 0.1.5 - [Current]
+
+### Added
+
+- Support for:
+    - .NET Core 2.0 
+    - .NET Core 3.0
+    - .NET Standard 2.0
+    - .NET 4.6.2
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## 0.1.4 - 13-11-2019
 
 ### Added
 
