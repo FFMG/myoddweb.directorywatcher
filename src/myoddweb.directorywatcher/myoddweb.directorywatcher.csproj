@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net452;netcoreapp2.0;netcoreapp3.0</TargetFrameworks>
+    <TargetFrameworks>net452;net462;netcoreapp2.0;netcoreapp3.0</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -16,7 +16,7 @@
     <ProjectReference Include="..\myoddweb.directorywatcher.interfaces\myoddweb.directorywatcher.interfaces.csproj" />
   </ItemGroup>
 
- <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
+ <ItemGroup Condition=" '$(TargetFramework)' == 'net452' Or '$(TargetFramework)' == 'net462'">
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
