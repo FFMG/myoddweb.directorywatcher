@@ -16,8 +16,14 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "myoddweb.directorywatcher.win.x86", "myoddweb.directorywatcher.win\myoddweb.directorywatcher.win.x86.vcxproj", "{710CCD41-3CF7-404F-A845-911256D6E02A}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "myoddweb.directorywatcher.interop.x64", "myoddweb.directorywatcher.interop\myoddweb.directorywatcher.interop.x64.vcxproj", "{EA8DB2F9-BE88-4E1A-8EAE-F7D147FCA3B8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B253C6A9-65CF-4FEB-A085-000ED93CBF00} = {B253C6A9-65CF-4FEB-A085-000ED93CBF00}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "myoddweb.directorywatcher.interop.x86", "myoddweb.directorywatcher.interop\myoddweb.directorywatcher.interop.x86.vcxproj", "{DCF604A1-234F-430B-B265-07AE4A9A6860}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B253C6A9-65CF-4FEB-A085-000ED93CBF00} = {B253C6A9-65CF-4FEB-A085-000ED93CBF00}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "myoddweb.directorywatcher.test", "myoddweb.directorywatcher.test\myoddweb.directorywatcher.test.csproj", "{4FE8B981-FD19-4177-B4B6-DBBAAB1E608B}"
 EndProject
@@ -29,7 +35,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "myoddweb.directorywatcher",
 		{EA8DB2F9-BE88-4E1A-8EAE-F7D147FCA3B8} = {EA8DB2F9-BE88-4E1A-8EAE-F7D147FCA3B8}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "myoddweb.directorywatcher.interfaces", "myoddweb.directorywatcher.interfaces\myoddweb.directorywatcher.interfaces.csproj", "{B253C6A9-65CF-4FEB-A085-000ED93CBF00}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "myoddweb.directorywatcher.interfaces", "myoddweb.directorywatcher.interfaces\myoddweb.directorywatcher.interfaces.csproj", "{B253C6A9-65CF-4FEB-A085-000ED93CBF00}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
