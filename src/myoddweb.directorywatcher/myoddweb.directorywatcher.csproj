@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <Description>A fast and reliable, (non blocking!), .NET File/Directory watcher, complete rewrite of FileSystemWatcher to ensure speed/acuracy/reliability/suppress duplicate events</Description>
@@ -10,11 +10,11 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <OutputPath>..\bin\Release\</OutputPath>
+    <OutputPath>$(SolutionDir)bin\Release\</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <OutputPath>..\bin\Debug\</OutputPath>
+    <OutputPath>$(SolutionDir)bin\Debug\</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>
