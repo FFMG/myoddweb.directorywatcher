@@ -3,12 +3,12 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29503.13
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "myoddweb.directorywatcher.interfaces", "myoddweb.directorywatcher.interfaces\myoddweb.directorywatcher.interfaces.csproj", "{3E915537-8C2E-4331-B4DC-BE182E9B32F1}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "myoddweb.directorywatcher.win.test", "myoddweb.directorywatcher.win.test\myoddweb.directorywatcher.win.test.vcxproj", "{B4626342-2237-445E-BE37-A12413B0C7AB}"
 	ProjectSection(ProjectDependencies) = postProject
 		{710CCD41-3CF7-404F-A845-911256D6E02A} = {710CCD41-3CF7-404F-A845-911256D6E02A}
+		{DCF604A1-234F-430B-B265-07AE4A9A6860} = {DCF604A1-234F-430B-B265-07AE4A9A6860}
 		{660296A1-4444-4694-B554-D65FC7037CFE} = {660296A1-4444-4694-B554-D65FC7037CFE}
+		{EA8DB2F9-BE88-4E1A-8EAE-F7D147FCA3B8} = {EA8DB2F9-BE88-4E1A-8EAE-F7D147FCA3B8}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "myoddweb.directorywatcher.win.x64", "myoddweb.directorywatcher.win\myoddweb.directorywatcher.win.x64.vcxproj", "{660296A1-4444-4694-B554-D65FC7037CFE}"
@@ -29,6 +29,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "myoddweb.directorywatcher",
 		{EA8DB2F9-BE88-4E1A-8EAE-F7D147FCA3B8} = {EA8DB2F9-BE88-4E1A-8EAE-F7D147FCA3B8}
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "myoddweb.directorywatcher.interfaces", "myoddweb.directorywatcher.interfaces\myoddweb.directorywatcher.interfaces.csproj", "{B253C6A9-65CF-4FEB-A085-000ED93CBF00}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,18 +41,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{3E915537-8C2E-4331-B4DC-BE182E9B32F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3E915537-8C2E-4331-B4DC-BE182E9B32F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3E915537-8C2E-4331-B4DC-BE182E9B32F1}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{3E915537-8C2E-4331-B4DC-BE182E9B32F1}.Debug|x64.Build.0 = Debug|Any CPU
-		{3E915537-8C2E-4331-B4DC-BE182E9B32F1}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{3E915537-8C2E-4331-B4DC-BE182E9B32F1}.Debug|x86.Build.0 = Debug|Any CPU
-		{3E915537-8C2E-4331-B4DC-BE182E9B32F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3E915537-8C2E-4331-B4DC-BE182E9B32F1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3E915537-8C2E-4331-B4DC-BE182E9B32F1}.Release|x64.ActiveCfg = Release|Any CPU
-		{3E915537-8C2E-4331-B4DC-BE182E9B32F1}.Release|x64.Build.0 = Release|Any CPU
-		{3E915537-8C2E-4331-B4DC-BE182E9B32F1}.Release|x86.ActiveCfg = Release|Any CPU
-		{3E915537-8C2E-4331-B4DC-BE182E9B32F1}.Release|x86.Build.0 = Release|Any CPU
 		{B4626342-2237-445E-BE37-A12413B0C7AB}.Debug|Any CPU.ActiveCfg = Debug|Win32
 		{B4626342-2237-445E-BE37-A12413B0C7AB}.Debug|Any CPU.Build.0 = Debug|Win32
 		{B4626342-2237-445E-BE37-A12413B0C7AB}.Debug|x64.ActiveCfg = Debug|x64
@@ -135,6 +125,18 @@ Global
 		{AF343C32-C9B5-461E-94F6-9A2358758A5A}.Release|x64.Build.0 = Release|Any CPU
 		{AF343C32-C9B5-461E-94F6-9A2358758A5A}.Release|x86.ActiveCfg = Release|Any CPU
 		{AF343C32-C9B5-461E-94F6-9A2358758A5A}.Release|x86.Build.0 = Release|Any CPU
+		{B253C6A9-65CF-4FEB-A085-000ED93CBF00}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B253C6A9-65CF-4FEB-A085-000ED93CBF00}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B253C6A9-65CF-4FEB-A085-000ED93CBF00}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B253C6A9-65CF-4FEB-A085-000ED93CBF00}.Debug|x64.Build.0 = Debug|Any CPU
+		{B253C6A9-65CF-4FEB-A085-000ED93CBF00}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B253C6A9-65CF-4FEB-A085-000ED93CBF00}.Debug|x86.Build.0 = Debug|Any CPU
+		{B253C6A9-65CF-4FEB-A085-000ED93CBF00}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B253C6A9-65CF-4FEB-A085-000ED93CBF00}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B253C6A9-65CF-4FEB-A085-000ED93CBF00}.Release|x64.ActiveCfg = Release|Any CPU
+		{B253C6A9-65CF-4FEB-A085-000ED93CBF00}.Release|x64.Build.0 = Release|Any CPU
+		{B253C6A9-65CF-4FEB-A085-000ED93CBF00}.Release|x86.ActiveCfg = Release|Any CPU
+		{B253C6A9-65CF-4FEB-A085-000ED93CBF00}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
