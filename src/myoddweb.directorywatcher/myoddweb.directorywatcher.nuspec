@@ -22,7 +22,11 @@ Supported platforms:
     <copyright>@copyright 2017-2019 Florent Guelfucci</copyright>
     <language>en-UK</language>
     <dependencies>
-      <group targetFramework="net452"/>
+      <group targetFramework=".NETFramework4.5.2"/>
+	  <group targetFramework=".NETFramework4.6.2"/>
+      <group targetFramework=".NETFramework4.5.2"/>
+	  <group targetFramework=".netstandard2.0"/>
+	  <group targetFramework=".netcoreapp3.0"/>
     </dependencies>
   </metadata>
   
