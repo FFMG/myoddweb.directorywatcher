@@ -7,10 +7,9 @@ Notable changes
 ### Added
 
 - Support for:
-    - .NET Core 2.0 
-    - .NET Core 3.0
-    - .NET Standard 2.0
-    - .NET 4.6.2
+  - .NET Core 3.0
+  - .NET Standard 2.0
+  - .NET 4.6.2
 
 ### Changed
 

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Description>A fast and reliable, (non blocking!), .NET File/Directory watcher, complete rewrite of FileSystemWatcher to ensure speed/acuracy/reliability/suppress duplicate events</Description>
     <VersionPrefix>0.1.5</VersionPrefix>
-    <TargetFrameworks>net452;net462;netstandard2.0;netcoreapp2.0;netcoreapp3.0</TargetFrameworks>
+    <TargetFrameworks>net452;net462;netstandard2.0;netcoreapp3.0</TargetFrameworks>
 
     <AssemblyName>MyOddWeb.DirectoryWatcher</AssemblyName>
     <PackageId>MyOddWeb.DirectoryWatcher</PackageId>
@@ -28,7 +28,7 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
 
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'netcoreapp2.0' Or '$(TargetFramework)' == 'netcoreapp3.0' ">
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'netcoreapp3.0' ">
     <DefineConstants>$(DefineConstants);CORECLR</DefineConstants>
   </PropertyGroup>
 
