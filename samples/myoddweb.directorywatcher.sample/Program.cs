@@ -12,6 +12,7 @@ namespace myoddweb.directorywatcher.sample
     {
       try
       {
+        Console.WriteLine(Environment.Is64BitProcess ? "x64 version" : "x86 version");
         Console.WriteLine("Press Ctrl+C to stop the monitors.");
 
         // start the monitor.
