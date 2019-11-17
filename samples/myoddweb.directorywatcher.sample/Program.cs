@@ -40,12 +40,27 @@ namespace myoddweb.directorywatcher.sample
       }
       catch (Exception ex)
       {
-        Console.WriteLine(ex.Message);
-        while (ex.InnerException != null)
+        WriteException(ex);
+      }
+    }
+
+    private static void WriteException(Exception ex)
+    {
+      if (ex is AggregateException aggex)
+      {
+        WriteException(aggex.InnerException);
+        foreach (var aggexInner in aggex.InnerExceptions)
         {
-          ex = ex.InnerException;
-          Console.WriteLine(ex.Message);
+          WriteException(aggexInner);
         }
+        return;
+      }
+
+      Console.WriteLine(ex.Message);
+      while (ex.InnerException != null)
+      {
+        ex = ex.InnerException;
+        Console.WriteLine(ex.Message);
       }
     }
 
