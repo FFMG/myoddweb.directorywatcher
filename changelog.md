@@ -2,7 +2,21 @@
 
 Notable changes
 
-## 0.1.5 - [Current]
+## 0.1.6 - [Current]
+
+### Added
+
+### Changed
+
+- Trying to fixe the loading of embedded files.
+
+### Fixed
+
+### Removed
+
+- The watcher manager used to write to console on error ... but we might not have a console.
+
+## 0.1.5 - 15-11-2019
 
 ### Added
 

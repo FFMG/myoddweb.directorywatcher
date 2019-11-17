@@ -2,6 +2,7 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Reflection;
@@ -145,9 +146,7 @@ namespace myoddweb.directorywatcher.utils
 
     private string GetInteropResourceFileSystemx86()
     {
-      const string winresource = "win32.directorywatcher.win";
       const string resource = "win32.directorywatcher.interop";
-      var asmwin = GetInteropResourceFileSystem(winresource, "myoddweb.directorywatcher.win.x86.dll");
       const string actualDllFilename = "myoddweb.directorywatcher.interop.x86.dll";
       return GetInteropResourceFileSystem(resource, actualDllFilename);
     }
@@ -155,8 +154,6 @@ namespace myoddweb.directorywatcher.utils
     private string GetInteropResourceFileSystemx64()
     {
       const string resource = "x64.directorywatcher.interop";
-      const string winresource = "x64.directorywatcher.win";
-      var asmwin = GetInteropResourceFileSystem(winresource, "myoddweb.directorywatcher.win.x64.dll");
       const string actualDllFilename = "myoddweb.directorywatcher.interop.x64.dll";
       return GetInteropResourceFileSystem(resource, actualDllFilename);
     }
@@ -257,9 +254,11 @@ namespace myoddweb.directorywatcher.utils
     /// <returns></returns>
     private IWatcher1 CreateWatcherFromFileSystem()
     {
+      // the various exceptions we might get
+      var innerExceptions = new List<Exception>();
+
       try
       {
-        Exception innerException = null;
         try
         {
           if (!_loadEmbeddedResource)
@@ -280,7 +279,7 @@ namespace myoddweb.directorywatcher.utils
           catch( Exception e )
           {
             // save the inner exception
-            innerException = e;
+            innerExceptions.Add(e);
 
             // something broke ... try and load from the embeded files.
             // we will throw again if there is a further problem...
@@ -290,18 +289,20 @@ namespace myoddweb.directorywatcher.utils
         }
         catch (Exception e)
         {
-          Console.WriteLine(e);
-          throw new AggregateException(e, innerException);
+          innerExceptions.Add( e );
         }
       }
       catch (ArgumentException ex)
       {
-        throw new Exception($"The interop file name/path does not appear to be valid. '{GetInteropFromFileSystem()}'.{Environment.NewLine}{Environment.NewLine}{ex.Message}");
+        innerExceptions.Add( new Exception($"The interop file name/path does not appear to be valid. '{GetInteropFromFileSystem()}'.{Environment.NewLine}{Environment.NewLine}{ex.Message}"));
       }
       catch (FileNotFoundException ex)
       {
-        throw new Exception($"Unable to load the interop file. '{ex.FileName}'.{Environment.NewLine}{Environment.NewLine}{ex.Message}");
+        innerExceptions.Add( new Exception($"Unable to load the interop file. '{ex.FileName}'.{Environment.NewLine}{Environment.NewLine}{ex.Message}"));
       }
+
+      // throw all our exceptions.
+      throw new AggregateException( innerExceptions );
     }
   }
 }
