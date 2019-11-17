@@ -15,12 +15,7 @@ namespace myoddweb.directorywatcher.utils
     /// <summary>
     /// The actual instance of the watcher.
     /// </summary>
-    private readonly IWatcher1 _watcher;
-
-    /// <summary>
-    /// The one and only instance of the manager.
-    /// </summary>
-    private static WatcherManager _manager;
+    public IWatcher1 Watcher { get; }
 
     /// <summary>
     /// The object we will use for the lock.
@@ -74,40 +69,21 @@ namespace myoddweb.directorywatcher.utils
     private bool _disposed;
 
     /// <summary>
-    /// Get our one and only watcher interface.
+    /// If we want to load the embeded resource or if we wish to try and load
+    /// The file from a reference.
     /// </summary>
-    public static IWatcher1 Get => Instance._watcher;
-
-    /// <summary>
-    /// The one and only instance of this class.
-    /// </summary>
-    private static WatcherManager Instance
-    {
-      get
-      {
-        // do we already have the instance?
-        if (null != _manager)
-        {
-          return _manager;
-        }
-
-        // check again using the lock
-        // otherwise just create it.
-        lock (Lock)
-        {
-          // either return what we have or simply create a new one.
-          return _manager ?? (_manager = new WatcherManager());
-        }
-      }
-    }
-
+    private readonly bool _loadEmbeddedResource;
+    
     /// <summary>
     /// Private constructor
     /// </summary>
-    private WatcherManager()
+    internal WatcherManager(bool loadEmbeddedResource)
     {
+      // load from ref or fro embeded resource
+      _loadEmbeddedResource = loadEmbeddedResource;
+
       // create the one watcher.
-      _watcher = CreateWatcherFromFileSystem();
+      Watcher = CreateWatcherFromFileSystem();
     }
 
     public void Dispose()
@@ -133,9 +109,6 @@ namespace myoddweb.directorywatcher.utils
 
         // reset the folder name
         _embededFolder = null;
-
-        // we are done with the instance as well
-        _manager = null;
 
         // remove the old directories if we can.
         RemoveOldDirectories();
@@ -204,8 +177,8 @@ namespace myoddweb.directorywatcher.utils
         }
 
         // Get byte[] from the file from embedded resource
-        var ba = new byte[(int)stm.Length];
-        stm.Read(ba, 0, (int)stm.Length);
+        var ba = new byte[stm.Length];
+        stm.Read(ba, 0, ba.Length);
         return ba;
       }
     }
@@ -288,27 +261,55 @@ namespace myoddweb.directorywatcher.utils
       {
         try
         {
-#if DEBUG
-          // while we debug the assembly we want to have access to the files
-          // so it is better to load from file system.
-          // otherwise we will load from the file system.
-          var assemblyFilePath = GetInteropFromFileSystem();
-          return TypeLoader.LoadTypeFromAssembly<IWatcher1>(assemblyFilePath);
-#else
-          try
+          if (!_loadEmbeddedResource)
           {
-            // try and get the files from the file system.
-            var assemblyFilePath = GetInteropResourceFileSystem();
-            return TypeLoader.LoadTypeFromAssembly<IWatcher1>(assemblyFilePath);
-          }
-          catch
-          {
-            // something broke ... try and load from the embeded files.
-            // we will throw again if there is a further problem...
+            // while we debug the assembly we want to have access to the files
+            // so it is better to load from file system.
+            // otherwise we will load from the file system.
             var assemblyFilePath = GetInteropFromFileSystem();
             return TypeLoader.LoadTypeFromAssembly<IWatcher1>(assemblyFilePath);
           }
-#endif
+
+          try
+          {
+            AppDomain.CurrentDomain.AssemblyResolve += CurrentDomainOnAssemblyResolve;
+
+            var assemblyFilePath = GetInteropFromFileSystem();
+            var asm1 = Assembly.LoadFrom(assemblyFilePath);
+            var ba2 = File.ReadAllBytes(assemblyFilePath);
+            var asm2 = Assembly.Load(ba2);
+
+            var resource = Environment.Is64BitProcess ? "x64.directorywatcher.interop" : "win32.directorywatcher.interop";
+            var ba = GetEmbededResource(resource);
+            var asm = AppDomain.CurrentDomain.Load(ba);
+            return TypeLoader.LoadTypeFromAssembly<IWatcher1>(asm);
+
+            //var asm = AppDomain.CurrentDomain.Load(new AssemblyName("IWatcher1"));
+            //return null;//TypeLoader.LoadTypeFromAssembly<IWatcher1>(assemblyFilePath);
+          }
+          catch (Exception e)
+          {
+            Console.WriteLine(e);
+            throw;
+          }
+          finally
+          {
+            AppDomain.CurrentDomain.AssemblyResolve -= CurrentDomainOnAssemblyResolve;
+          }
+
+//          try
+//          {
+//            // try and get the files from the file system.
+//            var assemblyFilePath = GetInteropResourceFileSystem();
+//            return TypeLoader.LoadTypeFromAssembly<IWatcher1>(assemblyFilePath);
+//          }
+//          catch
+//          {
+//            // something broke ... try and load from the embeded files.
+//            // we will throw again if there is a further problem...
+//            var assemblyFilePath = GetInteropFromFileSystem();
+//            return TypeLoader.LoadTypeFromAssembly<IWatcher1>(assemblyFilePath);
+//          }
         }
         catch (Exception e)
         {
@@ -325,5 +326,11 @@ namespace myoddweb.directorywatcher.utils
         throw new Exception($"Unable to load the interop file. '{ex.FileName}'.{Environment.NewLine}{Environment.NewLine}{ex.Message}");
       }
     }
+
+    private static Assembly CurrentDomainOnAssemblyResolve(object sender, ResolveEventArgs args)
+    {
+      throw new Exception("Not found");
+    }
+
   }
 }

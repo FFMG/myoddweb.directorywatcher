@@ -16,6 +16,11 @@ namespace myoddweb.directorywatcher
   {
     #region Member variables
     /// <summary>
+    /// The watch manager that allows us to control who loads what
+    /// </summary>
+    private readonly WatcherManager _watcherManager;
+
+    /// <summary>
     /// Check if we disposed already.
     /// </summary>
     private bool _disposed;
@@ -71,6 +76,12 @@ namespace myoddweb.directorywatcher
 
     public Watcher()
     {
+#if DEBUG
+      _watcherManager = new WatcherManager(true);
+#else
+      _watcherManager = new WatcherManager(true);
+#endif
+
       // start the task that will forever be looking for events.
       _task = ProcessEventsAsync();
 
@@ -166,7 +177,7 @@ namespace myoddweb.directorywatcher
       // As we have already started the work.
       // so we want to start this one now
       // and add it to our list of started ids.
-      var id = WatcherManager.Get.Start(request);
+      var id = _watcherManager.Watcher.Start(request);
       if (id != -1)
       {
         _processedRequests[id] = request;
@@ -211,7 +222,7 @@ namespace myoddweb.directorywatcher
         return false;
       }
 
-      if (!WatcherManager.Get.Stop(id))
+      if (!_watcherManager.Watcher.Stop(id))
       {
         return false;
       }
@@ -227,7 +238,7 @@ namespace myoddweb.directorywatcher
       // we cannot get any more events if we have disposed.
       CheckDisposed();
 
-      return WatcherManager.Get.GetEvents(id, out events);
+      return _watcherManager.Watcher.GetEvents(id, out events);
     }
 
     /// <inheritdoc />
@@ -239,7 +250,7 @@ namespace myoddweb.directorywatcher
       try
       {
         // do we have anything to do ... or are we even able to work?
-        if (!_pendingRequests.Any() || WatcherManager.Get == null)
+        if (!_pendingRequests.Any() || _watcherManager.Watcher == null)
         {
           return false;
         }
@@ -253,7 +264,7 @@ namespace myoddweb.directorywatcher
           // get the id, we do not want to call
           // our own Add( ... ) function as it checks
           // if we have started work or not.
-          var id = WatcherManager.Get.Start(request);
+          var id = _watcherManager.Watcher.Start(request);
           if (id < 0)
           {
             // negative results mean that it did not work.
@@ -303,7 +314,7 @@ namespace myoddweb.directorywatcher
       CheckDisposed();
 
       // do we have any completed requests?
-      if (!_processedRequests.Any() || WatcherManager.Get == null)
+      if (!_processedRequests.Any() || _watcherManager.Watcher == null)
       {
         return false;
       }
