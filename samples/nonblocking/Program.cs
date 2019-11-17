@@ -12,7 +12,8 @@ namespace nonblocking
 
     private static void Main()
     {
-      Console.WriteLine("Press Ctrl+C to stop the monitors."); 
+      Console.WriteLine( Environment.Is64BitProcess ? "64-bit process" : "32-bit process" );
+      Console.WriteLine( "Press Ctrl+C to stop the monitors." ); 
 
       // start the monitor.
       var drvs = System.IO.DriveInfo.GetDrives();
