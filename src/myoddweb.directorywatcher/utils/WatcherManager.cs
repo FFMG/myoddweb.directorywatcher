@@ -259,6 +259,7 @@ namespace myoddweb.directorywatcher.utils
     {
       try
       {
+        Exception innerException = null;
         try
         {
           if (!_loadEmbeddedResource)
@@ -269,52 +270,28 @@ namespace myoddweb.directorywatcher.utils
             var assemblyFilePath = GetInteropFromFileSystem();
             return TypeLoader.LoadTypeFromAssembly<IWatcher1>(assemblyFilePath);
           }
-
+          
           try
           {
-            AppDomain.CurrentDomain.AssemblyResolve += CurrentDomainOnAssemblyResolve;
+            // try and get the files from the file system.
+            var assemblyFilePath = GetInteropResourceFileSystem();
+            return TypeLoader.LoadTypeFromAssembly<IWatcher1>(assemblyFilePath);
+          }
+          catch( Exception e )
+          {
+            // save the inner exception
+            innerException = e;
 
+            // something broke ... try and load from the embeded files.
+            // we will throw again if there is a further problem...
             var assemblyFilePath = GetInteropFromFileSystem();
-            var asm1 = Assembly.LoadFrom(assemblyFilePath);
-            var ba2 = File.ReadAllBytes(assemblyFilePath);
-            var asm2 = Assembly.Load(ba2);
-
-            var resource = Environment.Is64BitProcess ? "x64.directorywatcher.interop" : "win32.directorywatcher.interop";
-            var ba = GetEmbededResource(resource);
-            var asm = AppDomain.CurrentDomain.Load(ba);
-            return TypeLoader.LoadTypeFromAssembly<IWatcher1>(asm);
-
-            //var asm = AppDomain.CurrentDomain.Load(new AssemblyName("IWatcher1"));
-            //return null;//TypeLoader.LoadTypeFromAssembly<IWatcher1>(assemblyFilePath);
+            return TypeLoader.LoadTypeFromAssembly<IWatcher1>(assemblyFilePath);
           }
-          catch (Exception e)
-          {
-            Console.WriteLine(e);
-            throw;
-          }
-          finally
-          {
-            AppDomain.CurrentDomain.AssemblyResolve -= CurrentDomainOnAssemblyResolve;
-          }
-
-//          try
-//          {
-//            // try and get the files from the file system.
-//            var assemblyFilePath = GetInteropResourceFileSystem();
-//            return TypeLoader.LoadTypeFromAssembly<IWatcher1>(assemblyFilePath);
-//          }
-//          catch
-//          {
-//            // something broke ... try and load from the embeded files.
-//            // we will throw again if there is a further problem...
-//            var assemblyFilePath = GetInteropFromFileSystem();
-//            return TypeLoader.LoadTypeFromAssembly<IWatcher1>(assemblyFilePath);
-//          }
         }
         catch (Exception e)
         {
           Console.WriteLine(e);
-          throw;
+          throw new AggregateException(e, innerException);
         }
       }
       catch (ArgumentException ex)
@@ -326,11 +303,5 @@ namespace myoddweb.directorywatcher.utils
         throw new Exception($"Unable to load the interop file. '{ex.FileName}'.{Environment.NewLine}{Environment.NewLine}{ex.Message}");
       }
     }
-
-    private static Assembly CurrentDomainOnAssemblyResolve(object sender, ResolveEventArgs args)
-    {
-      throw new Exception("Not found");
-    }
-
   }
 }

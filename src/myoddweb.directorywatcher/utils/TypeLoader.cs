@@ -31,13 +31,13 @@ namespace myoddweb.directorywatcher.utils
           }
           catch (TargetInvocationException e)
           {
-            if (e.InnerException is DllNotFoundException)
+            if (!(e.InnerException is DllNotFoundException dllNotFoundException))
             {
-              var dllNotFoundException = (DllNotFoundException)e.InnerException;
-              Debug.WriteLine("A DllNotFoundException was thrown during the attempt to create a type instance. Are you missing some DLL dependencies?");
-              throw dllNotFoundException;
+              throw;
+
             }
-            throw;
+            Debug.WriteLine("A DllNotFoundException was thrown during the attempt to create a type instance. Are you missing some DLL dependencies?");
+            throw dllNotFoundException;
           }
         }
       }
