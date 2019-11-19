@@ -7,6 +7,7 @@ using System.Diagnostics.Contracts;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
+using System.Text;
 using myoddweb.directorywatcher.interfaces;
 
 namespace myoddweb.directorywatcher.utils
@@ -47,9 +48,12 @@ namespace myoddweb.directorywatcher.utils
             return _embededFolder;
           }
 
+          // use the assembly name to create a somewhat unique path
+          var curAsm = Assembly.GetExecutingAssembly();
+
           // create the new folder.
-          var guid = Guid.NewGuid().ToString();
-          var embededFolder = Path.Combine(new[] { Path.GetTempPath(), $"wr.{guid}" });
+          var sha1 = Hash( curAsm.FullName );
+          var embededFolder = Path.Combine(new[] { Path.GetTempPath(), $"wr.{sha1}" });
           if (!Directory.Exists(embededFolder))
           {
             Directory.CreateDirectory(embededFolder);
@@ -107,6 +111,25 @@ namespace myoddweb.directorywatcher.utils
 
         // dispose our own directory if we can
         DisposeOwnDirectory();
+      }
+    }
+
+    /// <summary>
+    /// Calculate the SHA1 of the given input
+    /// </summary>
+    /// <param name="input"></param>
+    /// <returns></returns>
+    static string Hash(string input)
+    {
+      using (var sha1 = new SHA1CryptoServiceProvider())
+      {
+        var hash = sha1.ComputeHash(Encoding.UTF8.GetBytes(input));
+        var sb = new StringBuilder(hash.Length * 2);
+        foreach (byte b in hash)
+        {
+          sb.Append(b.ToString("x2"));
+        }
+        return sb.ToString();
       }
     }
 
@@ -200,31 +223,46 @@ namespace myoddweb.directorywatcher.utils
     {
       //  we throw in the function if we cannot locate the data.
       var ba = GetEmbededResource( resource);
-      var fileOk = false;
-      string tempFile;
 
+      // get the temp file we will be using.
+      var tempFile = Path.Combine(new[] { EmbededFolder, dll });
+      if (!File.Exists(tempFile))
+      {
+        // the file does not exist, create it.
+        // and return the path
+        CreateFile(tempFile, ba);
+        return tempFile;
+      }
+
+      // it already exists, do compare the current value
+      // and then try and replace the old with new value.
       using (var sha1 = new SHA1CryptoServiceProvider())
       {
+        // get the current hash
         var fileHash = BitConverter.ToString(sha1.ComputeHash(ba)).Replace("-", string.Empty);
 
-        tempFile = Path.Combine(new[] { EmbededFolder, dll });
-        if (File.Exists(tempFile))
-        {
-          var bb = File.ReadAllBytes(tempFile);
-          var fileHash2 = BitConverter.ToString(sha1.ComputeHash(bb)).Replace("-", string.Empty);
+        // then get the 'new'
+        var bb = File.ReadAllBytes(tempFile);
+        var fileHash2 = BitConverter.ToString(sha1.ComputeHash(bb)).Replace("-", string.Empty);
 
-          if (fileHash == fileHash2)
-          {
-            fileOk = true;
-          }
+        // compare the two hashes
+        if (fileHash == fileHash2)
+        {
+          // both hashes are the same, no need to replace anything
+          return tempFile;
         }
       }
 
-      if (!fileOk)
-      {
-        File.WriteAllBytes(tempFile, ba);
-      }
+      // we need to replace the current file
+      // if this throws it means that another process ... with the same name as us
+      // is using a different resource as us...
+      CreateFile(tempFile, ba);
       return tempFile;
+    }
+
+    private static void CreateFile( string path, byte[] data )
+    {
+      File.WriteAllBytes(path, data);
     }
 
     /// <summary>
