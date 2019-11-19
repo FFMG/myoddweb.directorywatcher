@@ -34,10 +34,10 @@
 
   <ItemGroup>
     <EmbeddedResource Include="$(OutputPath)..\Win32\myoddweb.directorywatcher.win.x86.dll">
-      <LogicalName>win32.directorywatcher.win</LogicalName>
+      <LogicalName>x86.directorywatcher.win</LogicalName>
     </EmbeddedResource>
     <EmbeddedResource Include="$(OutputPath)..\Win32\myoddweb.directorywatcher.interop.x86.dll">
-      <LogicalName>win32.directorywatcher.interop</LogicalName>
+      <LogicalName>x86.directorywatcher.interop</LogicalName>
     </EmbeddedResource>
     <EmbeddedResource Include="$(OutputPath)..\x64\myoddweb.directorywatcher.win.x64.dll">
       <LogicalName>x64.directorywatcher.win</LogicalName>
@@ -45,5 +45,54 @@
     <EmbeddedResource Include="$(OutputPath)..\x64\myoddweb.directorywatcher.interop.x64.dll">
       <LogicalName>x64.directorywatcher.interop</LogicalName>
     </EmbeddedResource>
+
+    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x86\concrt140.dll">
+      <LogicalName>x86.redist.concrt140</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x86\msvcp140.dll">
+      <LogicalName>x86.redist.msvcp140</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x86\msvcp140_1.dll">
+      <LogicalName>x86.redist.msvcp140_1</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x86\msvcp140_2.dll">
+      <LogicalName>x86.redist.msvcp140_2</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x86\msvcp140_codecvt_ids.dll">
+      <LogicalName>x86.redist.msvcp140_codecvt_ids</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x86\vccorlib140.dll">
+      <LogicalName>x86.redist.vccorlib140</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x86\vcruntime140.dll">
+      <LogicalName>x86.redist.vcruntime140</LogicalName>
+    </EmbeddedResource>
+
+    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x64\concrt140.dll">
+      <LogicalName>x64.redist.concrt140</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x64\msvcp140.dll">
+      <LogicalName>x64.redist.msvcp140</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x64\msvcp140_1.dll">
+      <LogicalName>x64.redist.msvcp140_1</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x64\msvcp140_2.dll">
+      <LogicalName>x64.redist.msvcp140_2</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x64\msvcp140_codecvt_ids.dll">
+      <LogicalName>x64.redist.msvcp140_codecvt_ids</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x64\vccorlib140.dll">
+      <LogicalName>x64.redist.vccorlib140</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x64\vcruntime140.dll">
+      <LogicalName>x64.redist.vcruntime140</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x64\vcruntime140_1.dll">
+      <LogicalName>x64.redist.vcruntime140_1</LogicalName>
+    </EmbeddedResource>
+
+
   </ItemGroup>
 </Project>
