@@ -47,9 +47,6 @@ namespace myoddweb.directorywatcher.utils
             return _embededFolder;
           }
 
-          // remove the old directories.
-          RemoveOldDirectories();
-
           // create the new folder.
           var guid = Guid.NewGuid().ToString();
           var embededFolder = Path.Combine(new[] { Path.GetTempPath(), $"wr.{guid}" });
@@ -108,30 +105,34 @@ namespace myoddweb.directorywatcher.utils
           return;
         }
 
-        // reset the folder name
-        _embededFolder = null;
-
-        // remove the old directories if we can.
-        RemoveOldDirectories();
+        // dispose our own directory if we can
+        DisposeOwnDirectory();
       }
     }
 
     /// <summary>
     /// Clean up old directories.
     /// </summary>
-    private static void RemoveOldDirectories()
+    private void DisposeOwnDirectory()
     {
-      var directories = Directory.GetDirectories(Path.GetTempPath(), "wr.*");
-      foreach (var directory in directories)
+      if (_embededFolder == null)
       {
-        try
-        {
-          Directory.Delete(directory, true);
-        }
-        catch
-        {
-          // we cannot do much about this here.
-        }
+        return;
+      }
+
+      try
+      {
+        Directory.Delete(_embededFolder, true);
+      }
+      catch
+      {
+        // assemblies are not unloaded by us
+        // so it is posible that the file is locked.
+      }
+      finally
+      {
+        // reset the folder name
+        _embededFolder = null;
       }
     }
 

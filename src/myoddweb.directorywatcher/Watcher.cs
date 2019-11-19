@@ -135,6 +135,7 @@ namespace myoddweb.directorywatcher
         _eventsSource?.Dispose();
         _watcherSource?.Dispose();
         _task.Dispose();
+        _watcherManager?.Dispose();
       }
       finally
       {
