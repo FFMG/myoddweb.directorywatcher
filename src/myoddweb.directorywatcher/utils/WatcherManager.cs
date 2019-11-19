@@ -147,16 +147,27 @@ namespace myoddweb.directorywatcher.utils
 
     private string GetInteropResourceFileSystemx86()
     {
-      const string resource = "win32.directorywatcher.interop";
-      const string actualDllFilename = "myoddweb.directorywatcher.interop.x86.dll";
-      return GetInteropResourceFileSystem(resource, actualDllFilename);
+      // first we try and copy the win
+      const string winResource = "win32.directorywatcher.win";
+      const string winDllFilename = "myoddweb.directorywatcher.win.x86.dll";
+      CreateResourceFile(winResource, winDllFilename);
+
+      // then copy the interop
+      const string interopResource = "win32.directorywatcher.interop";
+      const string interopDllFilename = "myoddweb.directorywatcher.interop.x86.dll";
+      return CreateResourceFile(interopResource, interopDllFilename);
     }
 
     private string GetInteropResourceFileSystemx64()
     {
-      const string resource = "x64.directorywatcher.interop";
-      const string actualDllFilename = "myoddweb.directorywatcher.interop.x64.dll";
-      return GetInteropResourceFileSystem(resource, actualDllFilename);
+      // first we try and copy the win
+      const string winResource = "x64.directorywatcher.win";
+      const string winDllFilename = "myoddweb.directorywatcher.win.x64.dll";
+      CreateResourceFile(winResource, winDllFilename);
+
+      const string interopResource = "x64.directorywatcher.interop";
+      const string interopDllFilename = "myoddweb.directorywatcher.interop.x64.dll";
+      return CreateResourceFile(interopResource, interopDllFilename);
     }
 
     /// <summary>
@@ -185,7 +196,7 @@ namespace myoddweb.directorywatcher.utils
     /// 'Borrowed' from https://www.codeproject.com/Articles/528178/Load-DLL-From-Embedded-Resource
     /// </summary>
     /// <returns></returns>
-    private string GetInteropResourceFileSystem( string resource, string dll )
+    private string CreateResourceFile( string resource, string dll )
     {
       //  we throw in the function if we cannot locate the data.
       var ba = GetEmbededResource( resource);
