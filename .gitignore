@@ -171,8 +171,6 @@ PublishScripts/
 *.nuget.props
 *.nuget.targets
 
-!**/tools/redist/x*/
-
 # Microsoft Azure Build Output
 csx/
 *.build.csdef

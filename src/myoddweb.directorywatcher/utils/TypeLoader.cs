@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 
 namespace myoddweb.directorywatcher.utils
@@ -11,8 +12,25 @@ namespace myoddweb.directorywatcher.utils
   {
     public static T LoadTypeFromAssembly<T>(string assemblyFilePath) where T : class
     {
-      var assembly = Assembly.LoadFrom(assemblyFilePath);
-      return LoadTypeFromAssembly<T>(assembly);
+      var currentDirectory = Directory.GetCurrentDirectory();
+      try
+      {
+        // set the assembly directory
+        var fi = new FileInfo(assemblyFilePath);
+        Directory.SetCurrentDirectory(fi.Directory.FullName);
+
+        // then load the assembly
+        var assembly = Assembly.LoadFrom(assemblyFilePath);
+        return LoadTypeFromAssembly<T>(assembly);
+      }
+      finally
+      {
+        if( currentDirectory != null )
+        {
+          // restore the directory
+          Directory.SetCurrentDirectory(currentDirectory);
+        }
+      }
     }
 
     private static T LoadTypeFromAssembly<T>(Assembly assembly) where T : class

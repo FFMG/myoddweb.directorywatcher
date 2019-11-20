@@ -170,27 +170,18 @@ namespace myoddweb.directorywatcher.utils
 
     private string GetInteropResourceFileSystemx86()
     {
-      // we need to load the needed windows files including the redists.
+      // we need to load the needed windows file
+      // use a dictionary in case we are going to add more files
       var winDlls = new Dictionary<string, string>
       {
         //  windows
-        { "x86.directorywatcher.win", "myoddweb.directorywatcher.win.x86.dll"},
-
-        // residst
-        { "x86.redist.concrt140", "concrt140.dll"},
-        { "x86.redist.msvcp140","msvcp140.dll"},
-        { "x86.redist.msvcp140_1", "msvcp140_1.dll"},
-        { "x86.redist.msvcp140_2","msvcp140_2.dll"},
-        { "x86.redist.msvcp140_codecvt_ids","msvcp140_codecvt_ids.dll"},
-        { "x86.redist.vccorlib140", "vccorlib140.dll"},
-        { "x86.redist.vcruntime140","vcruntime140.dll"}
+        { "x86.directorywatcher.win", "myoddweb.directorywatcher.win.x86.dll"}
       };
       foreach (var winDll in winDlls)
       {
         CreateResourceFile(winDll.Key, winDll.Value);
       }
-
-
+      
       // then copy the interop
       const string interopResource = "x86.directorywatcher.interop";
       const string interopDllFilename = "myoddweb.directorywatcher.interop.x86.dll";
@@ -199,21 +190,12 @@ namespace myoddweb.directorywatcher.utils
 
     private string GetInteropResourceFileSystemx64()
     {
-      // we need to load the needed windows files including the redists.
+      // we need to load the needed windows file
+      // use a dictionary in case we are going to add more files
       var winDlls = new Dictionary<string, string>
       {
         //  windows
-        { "x64.directorywatcher.win", "myoddweb.directorywatcher.win.x64.dll"},
-
-        // residst
-        { "x64.redist.concrt140", "concrt140.dll"},
-        { "x64.redist.msvcp140","msvcp140.dll"},
-        { "x64.redist.msvcp140_1", "msvcp140_1.dll"},
-        { "x64.redist.msvcp140_2","msvcp140_2.dll"},
-        { "x64.redist.msvcp140_codecvt_ids","msvcp140_codecvt_ids.dll"},
-        { "x64.redist.vccorlib140", "vccorlib140.dll"},
-        { "x64.redist.vcruntime140","vcruntime140.dll"},
-        { "x64.redist.vcruntime140_1","vcruntime140_1.dll"}
+        { "x64.directorywatcher.win", "myoddweb.directorywatcher.win.x64.dll"}
       };
       foreach (var winDll in winDlls)
       {
