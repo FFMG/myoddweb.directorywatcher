@@ -12,6 +12,8 @@ Notable changes
 
 ### Fixed
 
+ - Replaced /MD > /MT to insure smoother loading of embedded files.
+
 ### Removed
 
 - The watcher manager used to write to console on error ... but we might not have a console.
