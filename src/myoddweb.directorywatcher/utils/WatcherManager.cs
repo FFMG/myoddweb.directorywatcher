@@ -202,6 +202,7 @@ namespace myoddweb.directorywatcher.utils
         //  windows
         { "x64.directorywatcher.win", "myoddweb.directorywatcher.win.x64.dll"},
         { "x64.redist.vcruntime140", "vcruntime140.dll"},
+        { "x64.redist.vcruntime140_1", "vcruntime140_1.dll"},
         { "x64.redist.vccorlib140", "vccorlib140.dll"},
         { "x64.redist.msvcp140", "msvcp140.dll"},
         { "x64.redist.msvcp140_1", "msvcp140_1.dll"},

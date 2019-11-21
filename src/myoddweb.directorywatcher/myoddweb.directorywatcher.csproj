@@ -70,6 +70,9 @@
     <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x64\vcruntime140.dll">
       <LogicalName>x64.redist.vcruntime140</LogicalName>
     </EmbeddedResource>    
+    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x64\vcruntime140_1.dll">
+      <LogicalName>x64.redist.vcruntime140_1</LogicalName>
+    </EmbeddedResource>    
     <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x64\vccorlib140.dll">
       <LogicalName>x64.redist.vccorlib140</LogicalName>
     </EmbeddedResource>
@@ -82,7 +85,6 @@
     <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x64\msvcp140_2.dll">
       <LogicalName>x64.redist.msvcp140_2</LogicalName>
     </EmbeddedResource>
-
 
   </ItemGroup>
 </Project>
