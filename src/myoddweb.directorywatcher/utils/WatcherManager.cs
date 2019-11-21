@@ -175,7 +175,12 @@ namespace myoddweb.directorywatcher.utils
       var winDlls = new Dictionary<string, string>
       {
         //  windows
-        { "x86.directorywatcher.win", "myoddweb.directorywatcher.win.x86.dll"}
+        { "x86.directorywatcher.win", "myoddweb.directorywatcher.win.x86.dll"},
+        { "x86.redist.vcruntime140", "vcruntime140.dll"},
+        { "x86.redist.vccorlib140", "vccorlib140.dll"},
+        { "x86.redist.msvcp140", "msvcp140.dll"},
+        { "x86.redist.msvcp140_1", "msvcp140_1.dll"},
+        { "x86.redist.msvcp140_2", "msvcp140_2.dll"},
       };
       foreach (var winDll in winDlls)
       {
@@ -195,7 +200,12 @@ namespace myoddweb.directorywatcher.utils
       var winDlls = new Dictionary<string, string>
       {
         //  windows
-        { "x64.directorywatcher.win", "myoddweb.directorywatcher.win.x64.dll"}
+        { "x64.directorywatcher.win", "myoddweb.directorywatcher.win.x64.dll"},
+        { "x64.redist.vcruntime140", "vcruntime140.dll"},
+        { "x64.redist.vccorlib140", "vccorlib140.dll"},
+        { "x64.redist.msvcp140", "msvcp140.dll"},
+        { "x64.redist.msvcp140_1", "msvcp140_1.dll"},
+        { "x64.redist.msvcp140_2", "msvcp140_2.dll"},
       };
       foreach (var winDll in winDlls)
       {

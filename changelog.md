@@ -12,7 +12,7 @@ Notable changes
 
 ### Fixed
 
- - Replaced /MD > /MT to insure smoother loading of embedded files.
+- Replaced /MD > /MT to insure smoother loading of embedded files.
 
 ### Removed
 
