@@ -78,7 +78,8 @@ namespace myoddweb.directorywatcher
     {
 #if DEBUG
       // _watcherManager = new WatcherManagerEmbeddedInterop();
-      _watcherManager = new WatcherManagerInterop();
+      // _watcherManager = new WatcherManagerInterop();
+      _watcherManager = new WatcherManagerLoadLibrary();
 #else
       _watcherManager = new WatcherManagerEmbeddedInterop();
 #endif

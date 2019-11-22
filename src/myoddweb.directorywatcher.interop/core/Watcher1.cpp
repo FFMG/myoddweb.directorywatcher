@@ -298,8 +298,8 @@ long long Watcher1::GetEvents(long long id, IList<myoddweb::directorywatcher::in
   {
     const auto e = (*it);
     auto event = gcnew Event();
-    event->Name = gcnew System::String( e.Name.c_str());
-    event->OldName = gcnew System::String( e.OldName.c_str());
+    event->Name = gcnew System::String( e.Name);
+    event->OldName = gcnew System::String( e.OldName);
     event->Action = (myoddweb::directorywatcher::interfaces::EventAction)e.Action;
     event->Error = (myoddweb::directorywatcher::interfaces::EventError)e.Error;
     event->DateTimeUtc = dateTime1970 + System::TimeSpan::FromMilliseconds( static_cast<double>(e.TimeMillisecondsUtc));

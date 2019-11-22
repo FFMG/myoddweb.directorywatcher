@@ -20,14 +20,14 @@ namespace myoddweb
       }
 
       Request( const wchar_t* path, bool recursive) :
-        Recursive()
+        Request()
       {
         Assign(path, recursive);
       }
 
 
       Request(const Request& request ) : 
-        Recursive()
+        Request()
       {
         Assign(request);
       }

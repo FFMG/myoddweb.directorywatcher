@@ -26,9 +26,6 @@ namespace myoddweb.directorywatcher.utils
     /// <returns></returns>
     private IWatcher1 CreateWatcherFromFileSystem()
     {
-      // the various exceptions we might get
-      var innerExceptions = new List<Exception>();
-
       try
       {
         // while we debug the assembly we want to have access to the files
@@ -39,25 +36,14 @@ namespace myoddweb.directorywatcher.utils
       }
       catch (ArgumentException ex)
       {
-        innerExceptions.Add(new Exception($"The interop file name/path does not appear to be valid. '{GetInteropFromFileSystem()}'.{Environment.NewLine}{Environment.NewLine}{ex.Message}"));
+        throw new Exception($"The interop file name/path does not appear to be valid. '{GetInteropFromFileSystem()}'.{Environment.NewLine}{Environment.NewLine}{ex.Message}");
       }
       catch (FileNotFoundException ex)
       {
-        innerExceptions.Add(new Exception($"Unable to load the interop file. '{ex.FileName}'.{Environment.NewLine}{Environment.NewLine}{ex.Message}"));
-      }
-      catch (Exception e)
-      {
-        // save the inner exception
-        innerExceptions.Add(e);
-
-        // something broke ... try and load from the embeded files.
-        // we will throw again if there is a further problem...
-        var assemblyFilePath = GetInteropFromFileSystem();
-        return TypeLoader.LoadTypeFromAssembly<IWatcher1>(assemblyFilePath);
+        throw new Exception($"Unable to load the interop file. '{ex.FileName}'.{Environment.NewLine}{Environment.NewLine}{ex.Message}");
       }
 
-      // throw all our exceptions.
-      throw new AggregateException(innerExceptions);
+      // throw any other exceptions
     }
 
     /// <summary>

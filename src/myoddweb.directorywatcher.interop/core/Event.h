@@ -49,12 +49,12 @@ struct UmEvent
   /**
    * \brief the path of the folder that raised the event.
    */
-  std::wstring Name;
+  const wchar_t* Name;
 
   /**
    * \brief In the case of rename, this is the old name.
    */
-  std::wstring OldName;
+  const wchar_t* OldName;
 
   /**
    * \brief The action.
