@@ -15,7 +15,7 @@ namespace myoddweb
     class Monitor
     {
     public:
-      Monitor(__int64 id, Request request);
+      Monitor(__int64 id, const Request& request);
       virtual ~Monitor();
 
       Monitor& operator=(Monitor&& other) = delete;
@@ -25,7 +25,7 @@ namespace myoddweb
       Monitor& operator=(const Monitor&) = delete;
 
       __int64 Id() const;
-      const std::wstring& Path() const;
+      const wchar_t* Path() const;
       bool Recursive() const;
       Collector& EventsCollector() const;
 
@@ -63,7 +63,7 @@ namespace myoddweb
       /**
        * \brief the request we used to create the monitor.
        */
-      const Request _request;
+      const Request* _request;
 
       /**
        * \brief the current list of collected events.

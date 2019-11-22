@@ -49,7 +49,6 @@
     <!-- 
       Redists 
         https://docs.microsoft.com/en-us/cpp/windows/determining-which-dlls-to-redistribute?view=vs-2019
-    -->
     <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x86\vcruntime140.dll">
       <LogicalName>x86.redist.vcruntime140</LogicalName>
     </EmbeddedResource>
@@ -85,6 +84,7 @@
     <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x64\msvcp140_2.dll">
       <LogicalName>x64.redist.msvcp140_2</LogicalName>
     </EmbeddedResource>
+    -->
 
   </ItemGroup>
 </Project>

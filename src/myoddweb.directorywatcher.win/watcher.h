@@ -15,7 +15,7 @@ namespace myoddweb
      * \param request The request containing info about the item we are watching.
      * \return The id of the created request or -ve otherwise
      */
-    extern "C" { __declspec(dllexport) long long Start( Request request ); }
+    extern "C" { __declspec(dllexport) long long Start( const Request& request ); }
 
     /**
      * \brief stop watching

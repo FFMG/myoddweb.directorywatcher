@@ -10,7 +10,7 @@
  * \param the request we want to add.
  * \return -ve is error, +ve is unique identifier.
  */
-typedef long long(__stdcall *f_Start)( UmRequest );
+typedef long long(__stdcall *f_Start)( const UmRequest&  );
 
 /**
  * \brief remove a request 

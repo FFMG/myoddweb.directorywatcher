@@ -22,7 +22,7 @@ public:
    * \parm the request
    * \return the id of the request added, (or -1).
    */
-  long long Start(myoddweb::directorywatcher::interfaces::IRequest^ request );
+  long long Start(myoddweb::directorywatcher::interfaces::IRequest^% request );
 
   /*
    * \brief remove a single request by id.

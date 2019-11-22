@@ -29,7 +29,7 @@ struct UmRequest
   /**
    * \brief the path of the folder we will be monitoring
    */
-  std::wstring Path;
+  const wchar_t* Path;
 
   /**
    * \brief if we are recursively monitoring or not.

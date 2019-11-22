@@ -11,17 +11,20 @@ namespace myoddweb
 {
   namespace directorywatcher
   {
-    Monitor::Monitor(const __int64 id, Request request) :
+    Monitor::Monitor(const __int64 id, const Request& request) :
       _id(id),
-      _request(std::move(request)),
       _eventCollector(nullptr),
       _state(Stopped)
     {
       _eventCollector = new Collector();
+      _request = new Request(request);
     }
 
     Monitor::~Monitor()
     {
+      delete _request;
+      _request = nullptr;
+
       delete _eventCollector;
       _eventCollector = nullptr;
     }
@@ -47,9 +50,9 @@ namespace myoddweb
      * Get the current path.
      * @return the path being checked.
      */
-    const std::wstring& Monitor::Path() const
+    const wchar_t* Monitor::Path() const
     {
-      return _request.Path;
+      return _request->Path;
     }
 
     /**
@@ -58,7 +61,7 @@ namespace myoddweb
      */
     bool Monitor::Recursive() const
     {
-      return _request.Recursive;
+      return _request->Recursive;
     }
 
     /**
@@ -204,7 +207,7 @@ namespace myoddweb
      */
     bool Monitor::IsPath(const std::wstring& maybe) const
     {
-      return Io::AreSameFolders(maybe, _request.Path);
+      return Io::AreSameFolders(maybe, _request->Path);
     }
 
   }

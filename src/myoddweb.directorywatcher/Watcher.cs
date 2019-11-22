@@ -77,9 +77,10 @@ namespace myoddweb.directorywatcher
     public Watcher()
     {
 #if DEBUG
-      _watcherManager = new WatcherManager(true);
+      // _watcherManager = new WatcherManagerEmbeddedInterop();
+      _watcherManager = new WatcherManagerInterop();
 #else
-      _watcherManager = new WatcherManager(true);
+      _watcherManager = new WatcherManagerEmbeddedInterop();
 #endif
 
       // start the task that will forever be looking for events.
@@ -178,7 +179,7 @@ namespace myoddweb.directorywatcher
       // As we have already started the work.
       // so we want to start this one now
       // and add it to our list of started ids.
-      var id = _watcherManager.Watcher.Start(request);
+      var id = _watcherManager.Start(request);
       if (id != -1)
       {
         _processedRequests[id] = request;
@@ -223,7 +224,7 @@ namespace myoddweb.directorywatcher
         return false;
       }
 
-      if (!_watcherManager.Watcher.Stop(id))
+      if (!_watcherManager.Stop(id))
       {
         return false;
       }
@@ -239,7 +240,7 @@ namespace myoddweb.directorywatcher
       // we cannot get any more events if we have disposed.
       CheckDisposed();
 
-      return _watcherManager.Watcher.GetEvents(id, out events);
+      return _watcherManager.GetEvents(id, out events);
     }
 
     /// <inheritdoc />
@@ -251,7 +252,7 @@ namespace myoddweb.directorywatcher
       try
       {
         // do we have anything to do ... or are we even able to work?
-        if (!_pendingRequests.Any() || _watcherManager.Watcher == null)
+        if (!_pendingRequests.Any() || _watcherManager == null)
         {
           return false;
         }
@@ -265,7 +266,7 @@ namespace myoddweb.directorywatcher
           // get the id, we do not want to call
           // our own Add( ... ) function as it checks
           // if we have started work or not.
-          var id = _watcherManager.Watcher.Start(request);
+          var id = _watcherManager.Start(request);
           if (id < 0)
           {
             // negative results mean that it did not work.
@@ -315,7 +316,7 @@ namespace myoddweb.directorywatcher
       CheckDisposed();
 
       // do we have any completed requests?
-      if (!_processedRequests.Any() || _watcherManager.Watcher == null)
+      if (!_processedRequests.Any() || _watcherManager == null)
       {
         return false;
       }

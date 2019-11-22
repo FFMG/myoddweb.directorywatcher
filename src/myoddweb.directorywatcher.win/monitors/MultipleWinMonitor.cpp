@@ -24,7 +24,7 @@ namespace myoddweb
       }
 
       // try and create the list of monitors.
-      CreateMonitors(_request);
+      CreateMonitors(*_request);
     }
 
     MultipleWinMonitor::~MultipleWinMonitor()
@@ -115,9 +115,12 @@ namespace myoddweb
       // a folder was added to this path
       // so we have to add this path as a child.
       const auto id = GetNextId();
-      auto child = new WinMonitor(id, { path, true });
+      auto request = new Request(path.c_str(), true);
+      auto child = new WinMonitor(id, *request );
       _recursiveChildren.push_back(child);
       child->Start();
+
+      delete request;
     }
 
     /**
@@ -439,14 +442,20 @@ namespace myoddweb
 
       // adding all the sub-paths will not breach the limit.
       // so we can add the parent, but non-recuresive.
-      _nonRecursiveParents.push_back( new WinMonitor(id, { parent.Path, false }) );
+      auto request = new Request(parent.Path, false);
+      _nonRecursiveParents.push_back( new WinMonitor(id, *request) );
 
       // now try and add all the subpath
       for (const auto& path : subPaths)
       {
         // add one more to the list.
-        CreateMonitors( { path, true } );
+        auto request = new Request(path.c_str(), true);
+        CreateMonitors( *request );
+        delete request;
       }
+
+      // clean up the request.
+      delete request;
     }
     #pragma endregion
   }

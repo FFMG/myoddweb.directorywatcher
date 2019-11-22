@@ -217,7 +217,7 @@ const FARPROC Watcher1::GetUnmanagedFunction(FunctionTypes procType) const
  * \param The path we want to monitor.
  * \returns
  */ 
-long long Watcher1::Start(myoddweb::directorywatcher::interfaces::IRequest^ request )
+long long Watcher1::Start(myoddweb::directorywatcher::interfaces::IRequest^% request )
 {
   try
   {
@@ -231,12 +231,14 @@ long long Watcher1::Start(myoddweb::directorywatcher::interfaces::IRequest^ requ
     auto funci = (f_Start)GetUnmanagedFunction(FunctionTypes::FunctionStart);
 
     msclr::interop::marshal_context context;
+
+    auto path = context.marshal_as<std::wstring>(request->Path);
     UmRequest umRequest;
-    umRequest.Path = context.marshal_as<std::wstring>(request->Path);
+    umRequest.Path = path.c_str();
     umRequest.Recursive = request->Recursive;
 
     // otherwise just monitor
-    return funci(umRequest);
+    return funci( umRequest);
   }
   catch( ... )
   {
