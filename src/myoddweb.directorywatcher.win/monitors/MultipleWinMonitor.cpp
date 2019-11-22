@@ -107,15 +107,21 @@ namespace myoddweb
      * \brief a folder has been added, process it.
      * \param path the event being processed
      */
-    void MultipleWinMonitor::ProcessEventAdded(const std::wstring& path)
+    void MultipleWinMonitor::ProcessEventAdded(const wchar_t* path)
     {
+
+      if (path == nullptr)
+      {
+        return;
+      }
+
       // guard for multiple entry.
       auto guard = Lock(_lock);
 
       // a folder was added to this path
       // so we have to add this path as a child.
       const auto id = GetNextId();
-      auto request = new Request(path.c_str(), true);
+      auto request = new Request(path, true);
       auto child = new WinMonitor(id, *request );
       _recursiveChildren.push_back(child);
       child->Start();
@@ -127,8 +133,13 @@ namespace myoddweb
      * \brief a folder has been deleted, process it.
      * \param path the event being processed
      */
-    void MultipleWinMonitor::ProcessEventDelete(const std::wstring& path)
+    void MultipleWinMonitor::ProcessEventDelete(const wchar_t* path)
     {
+      if (nullptr == path)
+      {
+        return;
+      }
+
       // guard for multiple entry.
       auto guard = Lock(_lock);
 
@@ -156,7 +167,7 @@ namespace myoddweb
      * \param path the event being processed
      * \param oldPath the old name being renamed.
      */
-    void MultipleWinMonitor::ProcessEventRenamed(const std::wstring& path, const std::wstring& oldPath)
+    void MultipleWinMonitor::ProcessEventRenamed(const wchar_t* path, const wchar_t* oldPath)
     {
       // add the new one
       ProcessEventAdded(path);
@@ -252,8 +263,6 @@ namespace myoddweb
       // all the events.
       std::vector<Event> events;
 
-      // the current events.
-      std::vector<Event> levents;
       for (auto it = _recursiveChildren.begin(); it != _recursiveChildren.end(); ++it)
       {
         try
@@ -263,6 +272,9 @@ namespace myoddweb
           {
             return events;
           }
+
+          // the current events.
+          std::vector<Event> levents;
 
           // get this directory events
           if (0 == (*it)->GetEvents(levents))

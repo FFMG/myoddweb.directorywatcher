@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Text;
 using myoddweb.directorywatcher.interfaces;
 
 namespace myoddweb.directorywatcher.utils
@@ -134,9 +133,11 @@ namespace myoddweb.directorywatcher.utils
       {
         _start = Get<Delegates.Start>("Start");
       }
-      Delegates.Request r = new Delegates.Request();
-      r.Recursive = request.Recursive;
-      r.Path = request.Path;
+      Delegates.Request r = new Delegates.Request
+      {
+        Recursive = request.Recursive,
+        Path = request.Path
+      };
       return _start( ref r );
     }
 

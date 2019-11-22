@@ -14,7 +14,9 @@ namespace myoddweb
     class Request
     {
     public:
-      Request() :Path(nullptr), Recursive(false)
+      Request() :
+        Path(nullptr), 
+        Recursive(false)
       {
 
       }
@@ -66,7 +68,6 @@ namespace myoddweb
       {
         Recursive = recursive;
         CleanPath();
-        Path = nullptr;
         if (path != nullptr)
         {
           auto l = wcslen(path);
