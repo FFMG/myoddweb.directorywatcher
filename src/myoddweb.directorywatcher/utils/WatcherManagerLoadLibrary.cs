@@ -21,11 +21,13 @@ namespace myoddweb.directorywatcher.utils
     // Delegate with function signature for the GetVersion function
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     [return: MarshalAs(UnmanagedType.I8)]
-    public delegate Int64 Start(ref Request request );
+    public delegate Int64 Start(ref Request request, Callback callback, [In, MarshalAs(UnmanagedType.U8)] Int64 id);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     [return: MarshalAs(UnmanagedType.Bool)]
     public delegate bool Stop([In, MarshalAs(UnmanagedType.U8)] Int64 id );
+
+    public delegate int Callback([MarshalAs(UnmanagedType.LPWStr)] string text);
   }
 
   internal static class NativeLibrary
@@ -49,6 +51,8 @@ namespace myoddweb.directorywatcher.utils
     /// The handle of the windows c++ dll ... if loaded.
     /// </summary>
     private readonly IntPtr _handle;
+
+    private readonly Delegates.Callback _callback = new Delegates.Callback(Callback);
 
     public WatcherManagerLoadLibrary()
     {
@@ -119,12 +123,19 @@ namespace myoddweb.directorywatcher.utils
           typeof(T)) as T;
 
     }
+
+    private static int Callback(string text)
+    {
+      throw new NotImplementedException();
+    }
     #endregion
 
     #region Abstract methods
     public override long GetEvents(long id, out IList<IEvent> events)
     {
-      throw new System.NotImplementedException();
+      events = new List<IEvent>();
+      return 0;
+      //throw new System.NotImplementedException();
     }
 
     public override long Start(IRequest request)
@@ -138,7 +149,9 @@ namespace myoddweb.directorywatcher.utils
         Recursive = request.Recursive,
         Path = request.Path
       };
-      return _start( ref r );
+
+      // start
+      return _start( ref r, _callback, 1000 );
     }
 
     public override bool Stop(long id)

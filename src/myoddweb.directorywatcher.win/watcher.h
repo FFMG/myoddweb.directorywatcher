@@ -5,6 +5,7 @@
 #include "utils/Request.h"
 #include <vector>
 #include "utils/Event.h"
+#include "monitors/Callbacks.h"
 
 namespace myoddweb
 {
@@ -13,9 +14,11 @@ namespace myoddweb
     /**
      * \brief Start watching a folder
      * \param request The request containing info about the item we are watching.
+     * \param callback the callback we will be using
+     * \param callbackRateMs how often we want t callback
      * \return The id of the created request or -ve otherwise
      */
-    extern "C" { __declspec(dllexport) long long Start( const Request& request ); }
+    extern "C" { __declspec(dllexport) long long Start( const Request& request, EventCallback callback, long long callbackRateMs ); }
 
     /**
      * \brief stop watching
@@ -23,13 +26,5 @@ namespace myoddweb
      * \return success or not
      */
     extern "C" { __declspec(dllexport) bool Stop(long long id ); }
-
-    /**
-     * \brief Get the latest events.
-     * \param id the id of the monitor we would like the events for.
-     * \param events the events we will be getting
-     * \return the number of items or -ve in case of an error
-     */
-    extern "C" { __declspec(dllexport) long long GetEvents( long long id, std::vector<Event>& events ); }
   }
 }

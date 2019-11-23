@@ -124,7 +124,7 @@ namespace myoddweb
       auto request = new Request(path, true);
       auto child = new WinMonitor(id, *request );
       _recursiveChildren.push_back(child);
-      child->Start();
+      child->Start( nullptr, 0 );
 
       delete request;
     }
@@ -192,7 +192,7 @@ namespace myoddweb
         try
         {
           // if we are stopped or stopping, there is nothing for us to do.
-          if (Is(Stopped) || Is(Stopping))
+          if (Is(State::Stopped) || Is(State::Stopping))
           {
             return events;
           }
@@ -268,7 +268,7 @@ namespace myoddweb
         try
         {
           // if we are stopped or stopping, there is nothing for us to do.
-          if (Is(Stopped) || Is(Stopping))
+          if (Is(State::Stopped) || Is(State::Stopping))
           {
             return events;
           }
@@ -353,7 +353,11 @@ namespace myoddweb
      */
     void MultipleWinMonitor::Start(const std::vector<Monitor*>& container)
     {
-      Do(container, &Monitor::Start);
+      for (auto monitor = container.begin(); monitor != container.end(); ++monitor)
+      {
+        // the parent is in charge of the callback.
+        (*monitor)->Start(nullptr, 0);
+      }
     }
 
     /**
@@ -428,7 +432,7 @@ namespace myoddweb
     void MultipleWinMonitor::CreateMonitors(const Request& parent )
     {
       // if we are stopping, then we cannot go further.
-      if( Is( Stopping) )
+      if( Is(State::Stopping) )
       {
         return;
       }

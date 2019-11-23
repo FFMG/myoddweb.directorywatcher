@@ -24,7 +24,7 @@ namespace myoddweb
      * \param maxAgeMs the maximum amount of time we will be keeping an event for.
      */
     Collector::Collector( const short maxAgeMs) :
-      _maxCleanupAgeMillisecons( maxAgeMs )
+      _maxCleanupAgeMilliseconds( maxAgeMs )
     {
     }
 
@@ -327,7 +327,7 @@ namespace myoddweb
       {
         // when we want to check for the next cleanup
         // if the time is zero then we will use the event time + the max time.
-        _nextCleanupTimeCheck = event.TimeMillisecondsUtc + _maxCleanupAgeMillisecons;
+        _nextCleanupTimeCheck = event.TimeMillisecondsUtc + _maxCleanupAgeMilliseconds;
       }
     }
 
@@ -361,7 +361,7 @@ namespace myoddweb
       _nextCleanupTimeCheck = 0;
 
       // get the current time.
-      const auto old = now - _maxCleanupAgeMillisecons;
+      const auto old = now - _maxCleanupAgeMilliseconds;
       auto begin = _events.end();
       auto end = _events.end();
       for( auto it = _events.begin();; ++it )

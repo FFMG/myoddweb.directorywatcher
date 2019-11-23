@@ -92,11 +92,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="monitors\Base.h" />
+    <ClInclude Include="monitors\Callbacks.h" />
     <ClInclude Include="monitors\Monitor.h" />
     <ClInclude Include="monitors\MultipleWinMonitor.h" />
     <ClInclude Include="monitors\WinMonitor.h" />
-    <ClInclude Include="monitors\win\Data.h" />
     <ClInclude Include="monitors\win\Common.h" />
+    <ClInclude Include="monitors\win\Data.h" />
     <ClInclude Include="monitors\win\Directories.h" />
     <ClInclude Include="monitors\win\Files.h" />
     <ClInclude Include="stdafx.h" />
@@ -110,54 +111,26 @@
     <ClInclude Include="utils\Lock.h" />
     <ClInclude Include="utils\MonitorsManager.h" />
     <ClInclude Include="utils\Request.h" />
+    <ClInclude Include="utils\Timer.h" />
     <ClInclude Include="watcher.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="monitors\Monitor.cpp" />
     <ClCompile Include="monitors\MultipleWinMonitor.cpp" />
-    <ClCompile Include="monitors\WinMonitor.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="monitors\Monitor.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="monitors\win\Data.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="monitors\win\Common.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="monitors\win\Directories.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="monitors\win\Files.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="monitors\WinMonitor.cpp" />
+    <ClCompile Include="monitors\win\Common.cpp" />
+    <ClCompile Include="monitors\win\Data.cpp" />
+    <ClCompile Include="monitors\win\Directories.cpp" />
+    <ClCompile Include="monitors\win\Files.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="utils\Collector.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="utils\Io.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="utils\Lock.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="utils\MonitorsManager.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="utils\Collector.cpp" />
+    <ClCompile Include="utils\Io.cpp" />
+    <ClCompile Include="utils\Lock.cpp" />
+    <ClCompile Include="utils\MonitorsManager.cpp" />
+    <ClCompile Include="utils\Timer.cpp" />
     <ClCompile Include="watcher.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

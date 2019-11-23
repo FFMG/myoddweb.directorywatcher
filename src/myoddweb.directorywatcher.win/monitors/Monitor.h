@@ -7,6 +7,7 @@
 #include "../utils/EventError.h"
 #include "../utils/Collector.h"
 #include "../utils/Request.h"
+#include "Callbacks.h"
 
 namespace myoddweb
 {
@@ -24,7 +25,7 @@ namespace myoddweb
       Monitor(const Monitor&) = delete;
       Monitor& operator=(const Monitor&) = delete;
 
-      __int64 Id() const;
+      long long Id() const;
       const wchar_t* Path() const;
       bool Recursive() const;
       Collector& EventsCollector() const;
@@ -51,14 +52,14 @@ namespace myoddweb
       void AddRenameEvent(const std::wstring& newFileName, const std::wstring& oldFilename, bool isFile) const;
       void AddEventError(EventError error) const;
 
-      bool Start();
+      bool Start(EventCallback callback, long long callbackRateMs );
       void Stop();
 
     protected:
       /**
        * \brief the unique monitor id.
        */
-      const __int64 _id;
+      const long long _id;
 
       /**
        * \brief the request we used to create the monitor.
@@ -71,9 +72,19 @@ namespace myoddweb
       Collector* _eventCollector;
 
       /**
+       * \brief the callback we will call when we have events.
+       */
+      EventCallback _callback;
+
+      /**
+       * \brief how often we want to check for new events.
+       */
+      long long _callbackIntervalMs;
+
+      /**
        * The current monitor state
        */
-      enum State
+      enum class State
       {
         Starting,
         Started,
@@ -86,6 +97,14 @@ namespace myoddweb
        * \param state the state we are checking against.
        */
       bool Is(State state) const;
+
+      /**
+       * \brief set the callback and how often we want to check for event, (and callback if we have any).
+       * \param the callback we want to call
+       * \param hw often we want to check for events.
+       * \return
+       */
+      void SetCallBack(EventCallback callback, long long callbackIntervalMs );
 
     private:
       /**
