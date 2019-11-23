@@ -5,87 +5,30 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using myoddweb.directorywatcher.interfaces;
+using myoddweb.directorywatcher.utils.Helper;
 
 namespace myoddweb.directorywatcher.utils
 {
-  internal class Event : IEvent
-  {
-    public bool IsFile { get; }
-
-    public string Name { get; }
-
-    public string OldName { get; }
-
-    public EventAction Action { get; }
-
-    public interfaces.EventError Error { get; }
-
-    public DateTime DateTimeUtc { get; }
-
-    public Event(bool isFile,
-      string name,
-      string oldName,
-      EventAction action,
-      interfaces.EventError error,
-      DateTime dateTimeUtc
-    )
-    {
-      IsFile = isFile;
-      Name = name;
-      OldName = oldName;
-      Action = action;
-      Error = error;
-      DateTimeUtc = dateTimeUtc;
-    }
-  }
-
-  internal static class Delegates
-  {
-    public struct Request
-    {
-      [MarshalAs(UnmanagedType.LPWStr)] 
-      public string Path;
-
-      [MarshalAs(UnmanagedType.I1)]
-      public bool Recursive;
-    }
-
-    // Delegate with function signature for the GetVersion function
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    [return: MarshalAs(UnmanagedType.I8)]
-    public delegate Int64 Start(ref Request request, Callback callback, [In, MarshalAs(UnmanagedType.U8)] Int64 id);
-
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    public delegate bool Stop([In, MarshalAs(UnmanagedType.U8)] Int64 id );
-
-    public delegate int Callback(
-      [MarshalAs(UnmanagedType.I8)] long id,
-      [MarshalAs(UnmanagedType.Bool)] bool isFile,
-      [MarshalAs(UnmanagedType.LPWStr)] string name,
-      [MarshalAs(UnmanagedType.LPWStr)] string oldName,
-      [MarshalAs(UnmanagedType.I4)] int action,
-      [MarshalAs(UnmanagedType.I4)] int error,
-      [MarshalAs(UnmanagedType.I8)] long dateTimeUtc );
-  }
-
-  internal static class NativeLibrary
-  {
-    [DllImport("kernel32.dll")]
-    public static extern IntPtr LoadLibrary(string dllToLoad);
-
-    [DllImport("kernel32.dll")]
-    public static extern IntPtr GetProcAddress(IntPtr hModule, string procedureName);
-
-    [DllImport("kernel32.dll")]
-    public static extern bool FreeLibrary(IntPtr hModule);
-  }
-
   internal class WatcherManagerLoadLibrary : WatcherManager
   {
+    /// <summary>
+    /// The delegate to start a request.
+    /// </summary>
     private Delegates.Start _start;
+
+    /// <summary>
+    /// Delegate to stop a certain request
+    /// </summary>
     private Delegates.Stop _stop;
 
+    /// <summary>
+    /// The callback function called from time to time when Events happen.
+    /// </summary>
+    private readonly Delegates.Callback _callback = new Delegates.Callback(Callback);
+
+    /// <summary>
+    /// The dictionary with all the events.
+    /// </summary>
     private static Dictionary<long, IList<IEvent>> _idAndEvents = new Dictionary<long, IList<IEvent>>();
 
     /// <summary>
@@ -93,10 +36,10 @@ namespace myoddweb.directorywatcher.utils
     /// </summary>
     private readonly IntPtr _handle;
 
-    private readonly Delegates.Callback _callback = new Delegates.Callback(Callback);
-
     public WatcherManagerLoadLibrary()
     {
+      // Create the file handle. 
+      // we will throw if this does not exist.
       _handle = CreateWatcherFromFileSystem();
     }
 
