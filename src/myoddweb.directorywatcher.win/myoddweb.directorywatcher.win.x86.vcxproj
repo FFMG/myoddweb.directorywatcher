@@ -130,7 +130,6 @@
     <ClCompile Include="utils\Io.cpp" />
     <ClCompile Include="utils\Lock.cpp" />
     <ClCompile Include="utils\MonitorsManager.cpp" />
-    <ClCompile Include="utils\Timer.cpp" />
     <ClCompile Include="watcher.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

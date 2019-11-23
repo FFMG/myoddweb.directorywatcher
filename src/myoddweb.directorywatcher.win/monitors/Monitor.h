@@ -7,6 +7,7 @@
 #include "../utils/EventError.h"
 #include "../utils/Collector.h"
 #include "../utils/Request.h"
+#include "../utils/Timer.h"
 #include "Callbacks.h"
 
 namespace myoddweb
@@ -25,17 +26,10 @@ namespace myoddweb
       Monitor(const Monitor&) = delete;
       Monitor& operator=(const Monitor&) = delete;
 
-      long long Id() const;
+      const long long& Id() const;
       const wchar_t* Path() const;
       bool Recursive() const;
       Collector& EventsCollector() const;
-
-      /**
-       * \brief fill the vector with all the values currently on record.
-       * \param events the events we will be filling
-       * \return the number of events we found.
-       */
-      long long GetEvents(std::vector<Event>& events);
 
       /**
        * \brief check if a given path is the same as the given one.
@@ -43,6 +37,13 @@ namespace myoddweb
        * \return if the given path is the same as our path.
        */
       bool IsPath(const std::wstring& maybe) const;
+
+      /**
+       * \brief fill the vector with all the values currently on record.
+       * \param events the events we will be filling
+       * \return the number of events we found.
+       */
+      long long GetEvents(std::vector<Event>& events);
 
       virtual void OnGetEvents(std::vector<Event>& events) = 0;
       virtual void OnStart() = 0;
@@ -79,7 +80,7 @@ namespace myoddweb
       /**
        * \brief how often we want to check for new events.
        */
-      long long _callbackIntervalMs;
+      Timer* _callbackTimer;
 
       /**
        * The current monitor state
@@ -97,6 +98,11 @@ namespace myoddweb
        * \param state the state we are checking against.
        */
       bool Is(State state) const;
+
+      /**
+       * \brief get all the events and send them over to the callback.
+       */
+      void PublishEvents();
 
       /**
        * \brief set the callback and how often we want to check for event, (and callback if we have any).

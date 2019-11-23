@@ -3,9 +3,6 @@
   <ItemGroup>
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="watcher.cpp" />
-    <ClCompile Include="utils\Timer.cpp">
-      <Filter>utilities</Filter>
-    </ClCompile>
     <ClCompile Include="utils\Collector.cpp">
       <Filter>utilities</Filter>
     </ClCompile>

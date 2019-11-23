@@ -15,6 +15,7 @@ namespace myoddweb
       _id(id),
       _eventCollector(nullptr),
       _callback(nullptr),
+      _callbackTimer(nullptr),
       _state(State::Stopped)
     {
       _eventCollector = new Collector();
@@ -28,6 +29,9 @@ namespace myoddweb
 
       delete _eventCollector;
       _eventCollector = nullptr;
+
+      delete _callbackTimer;
+      _callbackTimer = nullptr;
     }
 
     /**
@@ -42,7 +46,7 @@ namespace myoddweb
      * Get the id of the monitor
      * @return __int64 the id
      */
-    __int64 Monitor::Id() const
+    const long long& Monitor::Id() const
     {
       return _id;
     }
@@ -185,7 +189,49 @@ namespace myoddweb
         _callback = callback;
       }
 
+      if (_callbackTimer != nullptr)
+      {
+        _callbackTimer->Stop();
+        delete _callbackTimer;
+        _callbackTimer = nullptr;
+      }
+
       // zero are allowed.
+      if (callbackIntervalMs != 0)
+      {
+        _callbackTimer = new Timer();
+        _callbackTimer->Start([&]() {
+          PublishEvents();
+          }, callbackIntervalMs);
+      }
+    }
+
+    /**
+     * \brief get all the events and send them over to the callback.
+     */
+    void Monitor::PublishEvents()
+    {
+      // guard for multiple entry.
+      auto guard = Lock(_lock);
+
+      auto events = std::vector<Event>();
+      if (0 == GetEvents(events))
+      {
+        return;
+      }
+
+      for (auto it = events.begin(); it != events.end(); ++it)
+      {
+        _callback(
+          Id(),
+          (*it).IsFile,
+          (*it).Name,
+          (*it).OldName,
+          (*it).Action,
+          (*it).Error,
+          (*it).TimeMillisecondsUtc
+          );
+      }
     }
 
     /**

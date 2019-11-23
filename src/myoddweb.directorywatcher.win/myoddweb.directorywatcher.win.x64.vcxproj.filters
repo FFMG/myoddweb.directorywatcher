@@ -36,9 +36,6 @@
     <ClCompile Include="utils\MonitorsManager.cpp">
       <Filter>utils</Filter>
     </ClCompile>
-    <ClCompile Include="utils\Timer.cpp">
-      <Filter>utils</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />

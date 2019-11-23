@@ -2,11 +2,43 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using myoddweb.directorywatcher.interfaces;
 
 namespace myoddweb.directorywatcher.utils
 {
+  internal class Event : IEvent
+  {
+    public bool IsFile { get; }
+
+    public string Name { get; }
+
+    public string OldName { get; }
+
+    public EventAction Action { get; }
+
+    public interfaces.EventError Error { get; }
+
+    public DateTime DateTimeUtc { get; }
+
+    public Event(bool isFile,
+      string name,
+      string oldName,
+      EventAction action,
+      interfaces.EventError error,
+      DateTime dateTimeUtc
+    )
+    {
+      IsFile = isFile;
+      Name = name;
+      OldName = oldName;
+      Action = action;
+      Error = error;
+      DateTimeUtc = dateTimeUtc;
+    }
+  }
+
   internal static class Delegates
   {
     public struct Request
@@ -27,7 +59,14 @@ namespace myoddweb.directorywatcher.utils
     [return: MarshalAs(UnmanagedType.Bool)]
     public delegate bool Stop([In, MarshalAs(UnmanagedType.U8)] Int64 id );
 
-    public delegate int Callback([MarshalAs(UnmanagedType.LPWStr)] string text);
+    public delegate int Callback(
+      [MarshalAs(UnmanagedType.I8)] long id,
+      [MarshalAs(UnmanagedType.Bool)] bool isFile,
+      [MarshalAs(UnmanagedType.LPWStr)] string name,
+      [MarshalAs(UnmanagedType.LPWStr)] string oldName,
+      [MarshalAs(UnmanagedType.I4)] int action,
+      [MarshalAs(UnmanagedType.I4)] int error,
+      [MarshalAs(UnmanagedType.I8)] long dateTimeUtc );
   }
 
   internal static class NativeLibrary
@@ -46,6 +85,8 @@ namespace myoddweb.directorywatcher.utils
   {
     private Delegates.Start _start;
     private Delegates.Stop _stop;
+
+    private static Dictionary<long, IList<IEvent>> _idAndEvents = new Dictionary<long, IList<IEvent>>();
 
     /// <summary>
     /// The handle of the windows c++ dll ... if loaded.
@@ -124,18 +165,55 @@ namespace myoddweb.directorywatcher.utils
 
     }
 
-    private static int Callback(string text)
+    private static int Callback(
+      long id,
+      bool isFile,
+      string name,
+      string oldName,
+      int action,
+      int error,
+      long dateTimeUtc)
     {
-      throw new NotImplementedException();
+      lock(_idAndEvents)
+      {
+        if( !_idAndEvents.ContainsKey(id))
+        {
+          _idAndEvents[id] = new List<IEvent>();
+        }
+        _idAndEvents[id].Add(new Event(
+          isFile,
+          name,
+          oldName,
+          (EventAction)action,
+          (interfaces.EventError)error,
+          DateTime.FromFileTimeUtc(dateTimeUtc)
+          ));
+      }
+      return 0;
     }
     #endregion
 
     #region Abstract methods
     public override long GetEvents(long id, out IList<IEvent> events)
     {
-      events = new List<IEvent>();
-      return 0;
-      //throw new System.NotImplementedException();
+      lock (_idAndEvents)
+      {
+        if (!_idAndEvents.ContainsKey(id))
+        {
+          events = new List<IEvent>();
+          return 0;
+        }
+
+        events = _idAndEvents[id].Select(e => new Event(
+         e.IsFile,
+         e.Name,
+         e.OldName,
+         e.Action,
+         e.Error,
+         e.DateTimeUtc )).ToArray();
+        _idAndEvents[id].Clear();
+        return events.Count;
+      }
     }
 
     public override long Start(IRequest request)
