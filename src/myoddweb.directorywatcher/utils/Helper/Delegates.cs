@@ -1,4 +1,7 @@
-﻿namespace myoddweb.directorywatcher.utils.Helper
+﻿using System;
+using System.Runtime.InteropServices;
+
+namespace myoddweb.directorywatcher.utils.Helper
 {
   internal static class Delegates
   {

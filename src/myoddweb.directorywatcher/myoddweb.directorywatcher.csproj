@@ -33,18 +33,21 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="$(OutputPath)..\Win32\myoddweb.directorywatcher.win.x86.dll">
-      <LogicalName>x86.directorywatcher.win</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="$(OutputPath)..\Win32\myoddweb.directorywatcher.interop.x86.dll">
-      <LogicalName>x86.directorywatcher.interop</LogicalName>
-    </EmbeddedResource>
     <EmbeddedResource Include="$(OutputPath)..\x64\myoddweb.directorywatcher.win.x64.dll">
       <LogicalName>x64.directorywatcher.win</LogicalName>
     </EmbeddedResource>
     <EmbeddedResource Include="$(OutputPath)..\x64\myoddweb.directorywatcher.interop.x64.dll">
       <LogicalName>x64.directorywatcher.interop</LogicalName>
     </EmbeddedResource>
+
+    <!--
+    <EmbeddedResource Include="$(OutputPath)..\Win32\myoddweb.directorywatcher.win.x86.dll">
+      <LogicalName>x86.directorywatcher.win</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(OutputPath)..\Win32\myoddweb.directorywatcher.interop.x86.dll">
+      <LogicalName>x86.directorywatcher.interop</LogicalName>
+    </EmbeddedResource>
+    //-->
 
     <!-- 
       Redists 
