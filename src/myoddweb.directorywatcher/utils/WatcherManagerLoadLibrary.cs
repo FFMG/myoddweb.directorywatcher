@@ -47,7 +47,11 @@ namespace myoddweb.directorywatcher.utils
     {
       if (_handle != IntPtr.Zero)
       {
-        NativeLibrary.FreeLibrary(_handle);
+#if MYODDWEB_NETCOREAPP
+        System.Runtime.InteropServices.NativeLibrary.Free(_handle);
+#else
+        _ = NativeLibrary.FreeLibrary(_handle);
+#endif
       }
     }
 
@@ -55,7 +59,11 @@ namespace myoddweb.directorywatcher.utils
     private IntPtr CreateWatcherFromFileSystem()
     {
       var library = GetFromFileSystem();
+#if MYODDWEB_NETCOREAPP
+      return System.Runtime.InteropServices.NativeLibrary.Load(library);
+#else
       return NativeLibrary.LoadLibrary(library);
+#endif
     }
 
     /// <summary>
@@ -97,7 +105,11 @@ namespace myoddweb.directorywatcher.utils
       {
         throw new NotImplementedException();
       }
+#if MYODDWEB_NETCOREAPP
+      var start_handle = System.Runtime.InteropServices.NativeLibrary.GetExport(_handle, name);
+#else
       var start_handle = NativeLibrary.GetProcAddress(_handle, name);
+#endif
       if (start_handle == IntPtr.Zero)
       {
         throw new NotImplementedException();
