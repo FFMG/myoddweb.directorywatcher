@@ -35,14 +35,6 @@ namespace myoddweb
        * \return if we managed to remove it or not.
        */
       static bool Stop(long long id);
-
-      /**
-       * \brief Get the latest events.
-       * \param id the id of the monitor we would like the events for.
-       * \param events the events we will be getting
-       * \return the number of items or -ve in case of an error
-       */
-      static long long GetEvents(long long id, std::vector<Event>& events);
       
     protected:
       /**
