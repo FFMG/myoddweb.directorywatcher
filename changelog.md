@@ -2,13 +2,13 @@
 
 Notable changes
 
-## 0.1.6 - [24-11-2019]
+## 0.1.6 - 24-11-2019
 
 ### Added
 
 ### Changed
 
-- Trying to fixe the loading of embedded files.
+- Trying to fix the loading of embedded files.
 
 ### Fixed
 
