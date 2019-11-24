@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <Description>A fast and reliable, (non blocking!), .NET File/Directory watcher, complete rewrite of FileSystemWatcher to ensure speed/acuracy/reliability/suppress duplicate events</Description>
-    <VersionPrefix>0.1.6</VersionPrefix>
+    <VersionPrefix>0.1.7</VersionPrefix>
     <TargetFrameworks>net452;net462;netstandard2.0;netcoreapp3.0</TargetFrameworks>
 
     <AssemblyName>MyOddWeb.DirectoryWatcher</AssemblyName>
@@ -43,57 +43,6 @@
     <EmbeddedResource Include="$(OutputPath)..\x64\myoddweb.directorywatcher.win.x64.dll">
       <LogicalName>x64.directorywatcher.win</LogicalName>
     </EmbeddedResource>
-    
-    <!--
-      Interop
-        For those to work, you need to include the redists as well as make sure the correct code is called
-    <EmbeddedResource Include="$(OutputPath)..\Win32\myoddweb.directorywatcher.interop.x86.dll">
-      <LogicalName>x86.directorywatcher.interop</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="$(OutputPath)..\x64\myoddweb.directorywatcher.interop.x64.dll">
-      <LogicalName>x64.directorywatcher.interop</LogicalName>
-    </EmbeddedResource>
-    //-->
-
-    <!-- 
-      Redists 
-        https://docs.microsoft.com/en-us/cpp/windows/determining-which-dlls-to-redistribute?view=vs-2019
-    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x86\vcruntime140.dll">
-      <LogicalName>x86.redist.vcruntime140</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x86\vccorlib140.dll">
-      <LogicalName>x86.redist.vccorlib140</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x86\msvcp140.dll">
-      <LogicalName>x86.redist.msvcp140</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x86\msvcp140_1.dll">
-      <LogicalName>x86.redist.msvcp140_1</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x86\msvcp140_2.dll">
-      <LogicalName>x86.redist.msvcp140_2</LogicalName>
-    </EmbeddedResource>
-
-
-    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x64\vcruntime140.dll">
-      <LogicalName>x64.redist.vcruntime140</LogicalName>
-    </EmbeddedResource>    
-    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x64\vcruntime140_1.dll">
-      <LogicalName>x64.redist.vcruntime140_1</LogicalName>
-    </EmbeddedResource>    
-    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x64\vccorlib140.dll">
-      <LogicalName>x64.redist.vccorlib140</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x64\msvcp140.dll">
-      <LogicalName>x64.redist.msvcp140</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x64\msvcp140_1.dll">
-      <LogicalName>x64.redist.msvcp140_1</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="$(SolutionDir)..\tools\redist\x64\msvcp140_2.dll">
-      <LogicalName>x64.redist.msvcp140_2</LogicalName>
-    </EmbeddedResource>
-    -->
 
   </ItemGroup>
 </Project>
