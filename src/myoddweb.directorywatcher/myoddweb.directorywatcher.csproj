@@ -43,7 +43,7 @@
     <EmbeddedResource Include="$(OutputPath)..\x64\myoddweb.directorywatcher.win.x64.dll">
       <LogicalName>x64.directorywatcher.win</LogicalName>
     </EmbeddedResource>
-
+    
     <!--
       Interop
         For those to work, you need to include the redists as well as make sure the correct code is called

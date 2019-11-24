@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using myoddweb.directorywatcher.interfaces;
 using myoddweb.directorywatcher.utils.Helper;
 
@@ -12,60 +11,22 @@ namespace myoddweb.directorywatcher.utils
   internal class WatcherManagerLoadLibrary : WatcherManager
   {
     /// <summary>
-    /// The delegate to start a request.
-    /// </summary>
-    private Delegates.Start _start;
-
-    /// <summary>
-    /// Delegate to stop a certain request
-    /// </summary>
-    private Delegates.Stop _stop;
-
-    /// <summary>
-    /// The callback function called from time to time when Events happen.
-    /// </summary>
-    private readonly Delegates.Callback _callback = new Delegates.Callback(Callback);
-
-    /// <summary>
     /// The dictionary with all the events.
     /// </summary>
-    private static Dictionary<long, IList<IEvent>> _idAndEvents = new Dictionary<long, IList<IEvent>>();
+    private Dictionary<long, IList<IEvent>> _idAndEvents = new Dictionary<long, IList<IEvent>>();
 
     /// <summary>
-    /// The handle of the windows c++ dll ... if loaded.
-    /// </summary>
-    private readonly IntPtr _handle;
+    /// The Native dll helper
+    /// </summary>    
+    private readonly WatcherManagerNativeLibrary _helper;
 
     public WatcherManagerLoadLibrary()
     {
-      // Create the file handle. 
-      // we will throw if this does not exist.
-      _handle = CreateWatcherFromFileSystem();
-    }
-
-    ~WatcherManagerLoadLibrary()
-    {
-      if (_handle != IntPtr.Zero)
-      {
-#if MYODDWEB_NETCOREAPP
-        System.Runtime.InteropServices.NativeLibrary.Free(_handle);
-#else
-        _ = NativeLibrary.FreeLibrary(_handle);
-#endif
-      }
+      // Create helper we will throw if the file does not exist.
+      _helper = new WatcherManagerNativeLibrary(GetFromFileSystem(), Callback );
     }
 
     #region Private Methods
-    private IntPtr CreateWatcherFromFileSystem()
-    {
-      var library = GetFromFileSystem();
-#if MYODDWEB_NETCOREAPP
-      return System.Runtime.InteropServices.NativeLibrary.Load(library);
-#else
-      return NativeLibrary.LoadLibrary(library);
-#endif
-    }
-
     /// <summary>
     /// Get the windows c++ path on file.
     /// </summary>
@@ -78,16 +39,33 @@ namespace myoddweb.directorywatcher.utils
     private static string GetFromFileSystemx86()
     {
       Contract.Assert(!Environment.Is64BitProcess);
-      return GetInteropFromFileSystem("Win32", "myoddweb.directorywatcher.win.x86.dll");
+      return GetFromFileSystem("Win32", "myoddweb.directorywatcher.win.x86.dll");
     }
 
     private static string GetFromFileSystemx64()
     {
       Contract.Assert(Environment.Is64BitProcess);
-      return GetInteropFromFileSystem("x64", "myoddweb.directorywatcher.win.x64.dll");
+      return GetFromFileSystem("x64", "myoddweb.directorywatcher.win.x64.dll");
     }
 
-    private static string GetInteropFromFileSystem(string subDirectory, string dll)
+    /// <summary>
+    /// Get a dll from a given directory, we try and look for the file in sub directories first
+    /// Then we look in the parent/sub directory
+    /// As this is mostly used for debug, the format is either
+    ///         /x64/my.dll
+    ///         /Win32/my.dll
+    ///      or
+    ///         /NetCoreApp3.0/
+    ///         /x64/my.dll
+    ///         /Win32/my.dll
+    ///         
+    ///      In the first case we are alreadt at the parent level
+    ///      In the second care we have to go back one step and then look for the dll.
+    /// </summary>
+    /// <param name="subDirectory"></param>
+    /// <param name="dll"></param>
+    /// <returns></returns>
+    private static string GetFromFileSystem(string subDirectory, string dll)
     {
       var currentDirectory = Path.Combine(Directory.GetCurrentDirectory(), subDirectory);
       if (!Directory.Exists(currentDirectory))
@@ -95,32 +73,22 @@ namespace myoddweb.directorywatcher.utils
         var parentCurrentDirectory = (new DirectoryInfo(Directory.GetCurrentDirectory())).Parent.FullName;
         currentDirectory = Path.Combine(parentCurrentDirectory, subDirectory);
       }
-
       return Path.Combine(currentDirectory, dll);
     }
 
-    private T Get<T>(string name ) where T: class
-    {
-      if (_handle == IntPtr.Zero)
-      {
-        throw new NotImplementedException();
-      }
-#if MYODDWEB_NETCOREAPP
-      var start_handle = System.Runtime.InteropServices.NativeLibrary.GetExport(_handle, name);
-#else
-      var start_handle = NativeLibrary.GetProcAddress(_handle, name);
-#endif
-      if (start_handle == IntPtr.Zero)
-      {
-        throw new NotImplementedException();
-      }
-      return Marshal.GetDelegateForFunctionPointer(
-          start_handle,
-          typeof(T)) as T;
-
-    }
-
-    private static int Callback(
+    /// <summary>
+    /// Function called at regular intervals when file events are detected.
+    /// The intervals are controled in the 'start' function
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="isFile"></param>
+    /// <param name="name"></param>
+    /// <param name="oldName"></param>
+    /// <param name="action"></param>
+    /// <param name="error"></param>
+    /// <param name="dateTimeUtc"></param>
+    /// <returns></returns>
+    private int Callback(
       long id,
       bool isFile,
       string name,
@@ -173,29 +141,13 @@ namespace myoddweb.directorywatcher.utils
 
     public override long Start(IRequest request)
     {
-      if (_start == null)
-      {
-        _start = Get<Delegates.Start>("Start");
-      }
-      Delegates.Request r = new Delegates.Request
-      {
-        Recursive = request.Recursive,
-        Path = request.Path
-      };
-
-      // start
-      return _start( ref r, _callback, 1000 );
+      return _helper.Start( request );
     }
 
     public override bool Stop(long id)
     {
-      if (_stop == null)
-      {
-        _stop = Get<Delegates.Stop>("Stop");
-      }
-      return _stop( id );
+      return _helper.Stop( id );
     }
     #endregion
   }
-
 }

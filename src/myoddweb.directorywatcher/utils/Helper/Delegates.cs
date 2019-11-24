@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace myoddweb.directorywatcher.utils.Helper
 {
-  internal static class Delegates
+  internal class Delegates
   {
     public struct Request
     {
@@ -23,6 +23,7 @@ namespace myoddweb.directorywatcher.utils.Helper
     [return: MarshalAs(UnmanagedType.Bool)]
     public delegate bool Stop([In, MarshalAs(UnmanagedType.U8)] Int64 id);
 
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     public delegate int Callback(
       [MarshalAs(UnmanagedType.I8)] long id,
       [MarshalAs(UnmanagedType.Bool)] bool isFile,
