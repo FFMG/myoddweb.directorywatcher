@@ -3,35 +3,21 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29424.173
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "myoddweb.directorywatcher", "..\src\myoddweb.directorywatcher\myoddweb.directorywatcher.csproj", "{FC3A40B9-2EBF-4142-B130-011738408399}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "myoddweb.directorywatcher", "..\src\myoddweb.directorywatcher\myoddweb.directorywatcher.csproj", "{FC3A40B9-2EBF-4142-B130-011738408399}"
 	ProjectSection(ProjectDependencies) = postProject
 		{710CCD41-3CF7-404F-A845-911256D6E02A} = {710CCD41-3CF7-404F-A845-911256D6E02A}
-		{DCF604A1-234F-430B-B265-07AE4A9A6860} = {DCF604A1-234F-430B-B265-07AE4A9A6860}
 		{660296A1-4444-4694-B554-D65FC7037CFE} = {660296A1-4444-4694-B554-D65FC7037CFE}
-		{EA8DB2F9-BE88-4E1A-8EAE-F7D147FCA3B8} = {EA8DB2F9-BE88-4E1A-8EAE-F7D147FCA3B8}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "myoddweb.directorywatcher.interfaces", "..\src\myoddweb.directorywatcher.interfaces\myoddweb.directorywatcher.interfaces.csproj", "{3E915537-8C2E-4331-B4DC-BE182E9B32F1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "myoddweb.directorywatcher.interfaces", "..\src\myoddweb.directorywatcher.interfaces\myoddweb.directorywatcher.interfaces.csproj", "{3E915537-8C2E-4331-B4DC-BE182E9B32F1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "myoddweb.directorywatcher.sample.ref", "myoddweb.directorywatcher.sample\myoddweb.directorywatcher.sample.ref.csproj", "{32A5EF58-410B-41C2-9BDE-E709F2105C2B}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "myoddweb.directorywatcher.interop.x64", "..\src\myoddweb.directorywatcher.interop\myoddweb.directorywatcher.interop.x64.vcxproj", "{EA8DB2F9-BE88-4E1A-8EAE-F7D147FCA3B8}"
-	ProjectSection(ProjectDependencies) = postProject
-		{710CCD41-3CF7-404F-A845-911256D6E02A} = {710CCD41-3CF7-404F-A845-911256D6E02A}
-		{660296A1-4444-4694-B554-D65FC7037CFE} = {660296A1-4444-4694-B554-D65FC7037CFE}
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "myoddweb.directorywatcher.interop.x86", "..\src\myoddweb.directorywatcher.interop\myoddweb.directorywatcher.interop.x86.vcxproj", "{DCF604A1-234F-430B-B265-07AE4A9A6860}"
-	ProjectSection(ProjectDependencies) = postProject
-		{710CCD41-3CF7-404F-A845-911256D6E02A} = {710CCD41-3CF7-404F-A845-911256D6E02A}
-		{660296A1-4444-4694-B554-D65FC7037CFE} = {660296A1-4444-4694-B554-D65FC7037CFE}
-	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "myoddweb.directorywatcher.win.x64", "..\src\myoddweb.directorywatcher.win\myoddweb.directorywatcher.win.x64.vcxproj", "{660296A1-4444-4694-B554-D65FC7037CFE}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "myoddweb.directorywatcher.win.x86", "..\src\myoddweb.directorywatcher.win\myoddweb.directorywatcher.win.x86.vcxproj", "{710CCD41-3CF7-404F-A845-911256D6E02A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nonblocking", "nonblocking\nonblocking.csproj", "{988F8732-690C-428A-B2B6-83CEED63859C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nonblocking", "nonblocking\nonblocking.csproj", "{988F8732-690C-428A-B2B6-83CEED63859C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -79,30 +65,6 @@ Global
 		{32A5EF58-410B-41C2-9BDE-E709F2105C2B}.Release|x64.Build.0 = Release|Any CPU
 		{32A5EF58-410B-41C2-9BDE-E709F2105C2B}.Release|x86.ActiveCfg = Release|Any CPU
 		{32A5EF58-410B-41C2-9BDE-E709F2105C2B}.Release|x86.Build.0 = Release|Any CPU
-		{EA8DB2F9-BE88-4E1A-8EAE-F7D147FCA3B8}.Debug|Any CPU.ActiveCfg = Debug|x64
-		{EA8DB2F9-BE88-4E1A-8EAE-F7D147FCA3B8}.Debug|Any CPU.Build.0 = Debug|x64
-		{EA8DB2F9-BE88-4E1A-8EAE-F7D147FCA3B8}.Debug|x64.ActiveCfg = Debug|x64
-		{EA8DB2F9-BE88-4E1A-8EAE-F7D147FCA3B8}.Debug|x64.Build.0 = Debug|x64
-		{EA8DB2F9-BE88-4E1A-8EAE-F7D147FCA3B8}.Debug|x86.ActiveCfg = Debug|x64
-		{EA8DB2F9-BE88-4E1A-8EAE-F7D147FCA3B8}.Debug|x86.Build.0 = Debug|x64
-		{EA8DB2F9-BE88-4E1A-8EAE-F7D147FCA3B8}.Release|Any CPU.ActiveCfg = Release|x64
-		{EA8DB2F9-BE88-4E1A-8EAE-F7D147FCA3B8}.Release|Any CPU.Build.0 = Release|x64
-		{EA8DB2F9-BE88-4E1A-8EAE-F7D147FCA3B8}.Release|x64.ActiveCfg = Release|x64
-		{EA8DB2F9-BE88-4E1A-8EAE-F7D147FCA3B8}.Release|x64.Build.0 = Release|x64
-		{EA8DB2F9-BE88-4E1A-8EAE-F7D147FCA3B8}.Release|x86.ActiveCfg = Release|x64
-		{EA8DB2F9-BE88-4E1A-8EAE-F7D147FCA3B8}.Release|x86.Build.0 = Release|x64
-		{DCF604A1-234F-430B-B265-07AE4A9A6860}.Debug|Any CPU.ActiveCfg = Debug|Win32
-		{DCF604A1-234F-430B-B265-07AE4A9A6860}.Debug|Any CPU.Build.0 = Debug|Win32
-		{DCF604A1-234F-430B-B265-07AE4A9A6860}.Debug|x64.ActiveCfg = Debug|Win32
-		{DCF604A1-234F-430B-B265-07AE4A9A6860}.Debug|x64.Build.0 = Debug|Win32
-		{DCF604A1-234F-430B-B265-07AE4A9A6860}.Debug|x86.ActiveCfg = Debug|Win32
-		{DCF604A1-234F-430B-B265-07AE4A9A6860}.Debug|x86.Build.0 = Debug|Win32
-		{DCF604A1-234F-430B-B265-07AE4A9A6860}.Release|Any CPU.ActiveCfg = Release|Win32
-		{DCF604A1-234F-430B-B265-07AE4A9A6860}.Release|Any CPU.Build.0 = Release|Win32
-		{DCF604A1-234F-430B-B265-07AE4A9A6860}.Release|x64.ActiveCfg = Release|Win32
-		{DCF604A1-234F-430B-B265-07AE4A9A6860}.Release|x64.Build.0 = Release|Win32
-		{DCF604A1-234F-430B-B265-07AE4A9A6860}.Release|x86.ActiveCfg = Release|Win32
-		{DCF604A1-234F-430B-B265-07AE4A9A6860}.Release|x86.Build.0 = Release|Win32
 		{660296A1-4444-4694-B554-D65FC7037CFE}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{660296A1-4444-4694-B554-D65FC7037CFE}.Debug|Any CPU.Build.0 = Debug|x64
 		{660296A1-4444-4694-B554-D65FC7037CFE}.Debug|x64.ActiveCfg = Debug|x64

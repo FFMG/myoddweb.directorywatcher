@@ -81,8 +81,7 @@ namespace myoddweb.directorywatcher
       // _watcherManager = new WatcherManagerInterop();
 
       // The debug version does not use the embedded version.
-      //_watcherManager = new WatcherManagerLoadLibrary();
-      _watcherManager = new WatcherManagerEmbeddedLoadLibrary();
+      _watcherManager = new WatcherManagerLoadLibrary();
 #else
       // The release function must use the embedded version.
       _watcherManager = new WatcherManagerEmbeddedLoadLibrary();
