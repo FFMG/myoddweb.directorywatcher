@@ -2,7 +2,7 @@
 
 Notable changes
 
-## 0.1.6 - [Current]
+## 0.1.6 - [24-11-2019]
 
 ### Added
 
