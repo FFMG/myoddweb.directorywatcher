@@ -5,6 +5,7 @@
 #include "Lock.h"
 #include "../monitors/WinMonitor.h"
 #include "../monitors/MultipleWinMonitor.h"
+#include "Instrumentor.h"
 
 namespace myoddweb
 {
@@ -45,6 +46,9 @@ namespace myoddweb
         return _instance;
       }
 
+      // Start the global profiling session.
+      MYODDWEB_PROFILE_BEGIN_SESSION( "Monitor Global", "Profile-Global.json" );
+
       try
       {
         // create a new instance
@@ -68,6 +72,7 @@ namespace myoddweb
      */
     long long MonitorsManager::Start(const Request& request, EventCallback callback, long long callbackRateMs)
     {
+      MYODDWEB_PROFILE_FUNCTION();
       const auto monitor = Instance()->CreateAndStart(request, callback, callbackRateMs);
       return monitor->Id();
     }
@@ -79,6 +84,7 @@ namespace myoddweb
      */
     bool MonitorsManager::Stop(const long long id)
     {
+      MYODDWEB_PROFILE_FUNCTION();
       auto guard = Lock(_lock);
 
       // if we do not have an instance... then we have nothing.
@@ -97,6 +103,7 @@ namespace myoddweb
         {
           delete _instance;
           _instance = nullptr;
+          MYODDWEB_PROFILE_END_SESSION();
         }
         return result;
       }
@@ -114,6 +121,7 @@ namespace myoddweb
      */
     long long MonitorsManager::GetEvents(const long long id, std::vector<Event>& events)
     {
+      MYODDWEB_PROFILE_FUNCTION();
       auto guard = Lock(_lock);
 
       // if we do not have an instance... then we have nothing.
@@ -146,8 +154,9 @@ namespace myoddweb
      * \brief Try and get an usued id
      * \return a random id number
      */
-    __int64 MonitorsManager::GetId()
+    long long MonitorsManager::GetId()
     {
+      MYODDWEB_PROFILE_FUNCTION();
       return (static_cast<__int64>(rand()) << (sizeof(int) * 8)) | rand();
     }
 
@@ -158,6 +167,8 @@ namespace myoddweb
      */
     Monitor* MonitorsManager::CreateAndddToList(const Request& request)
     {
+      MYODDWEB_PROFILE_FUNCTION();
+
       auto guard = Lock(_lock);
       try
       {
@@ -205,6 +216,8 @@ namespace myoddweb
      */
     Monitor* MonitorsManager::CreateAndStart(const Request& request, EventCallback callback, long long callbackRateMs)
     {
+      MYODDWEB_PROFILE_FUNCTION();
+
       Monitor* monitor = nullptr;
       try
       {
@@ -246,6 +259,8 @@ namespace myoddweb
      */
     bool MonitorsManager::StopAndDelete(const long long id)
     {
+      MYODDWEB_PROFILE_FUNCTION();
+
       try
       {
         auto guard = Lock(_lock);

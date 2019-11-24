@@ -108,6 +108,7 @@
     <ClInclude Include="utils\EventAction.h" />
     <ClInclude Include="utils\EventError.h" />
     <ClInclude Include="utils\EventInformation.h" />
+    <ClInclude Include="utils\Instrumentor.h" />
     <ClInclude Include="utils\Io.h" />
     <ClInclude Include="utils\Lock.h" />
     <ClInclude Include="utils\MonitorsManager.h" />

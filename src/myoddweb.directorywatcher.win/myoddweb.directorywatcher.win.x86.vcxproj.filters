@@ -99,6 +99,9 @@
       <Filter>monitors</Filter>
     </ClInclude>
     <ClInclude Include="resource.h" />
+    <ClInclude Include="utils\Instrumentor.h">
+      <Filter>utilities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="utilities">
