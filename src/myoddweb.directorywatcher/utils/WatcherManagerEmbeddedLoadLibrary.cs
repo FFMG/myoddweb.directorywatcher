@@ -3,124 +3,49 @@ using myoddweb.directorywatcher.utils.Helper;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 
 namespace myoddweb.directorywatcher.utils
 {
   internal class WatcherManagerEmbeddedLoadLibrary : WatcherManager
   {
-    /// <summary>
-    /// The delegate to start a request.
-    /// </summary>
-    private Delegates.Start _start;
-
-    /// <summary>
-    /// Delegate to stop a certain request
-    /// </summary>
-    private Delegates.Stop _stop;
-
-    /// <summary>
-    /// The callback function called from time to time when Events happen.
-    /// </summary>
-    private readonly Delegates.Callback _callback = new Delegates.Callback(Callback);
-
+    #region Member variables
     /// <summary>
     /// The dictionary with all the events.
     /// </summary>
-    private static Dictionary<long, IList<IEvent>> _idAndEvents = new Dictionary<long, IList<IEvent>>();
+    private readonly Dictionary<long, IList<IEvent>> _idAndEvents = new Dictionary<long, IList<IEvent>>();
 
     /// <summary>
-    /// The handle of the windows c++ dll ... if loaded.
-    /// </summary>
-    private readonly IntPtr _handle;
+    /// The Native dll helper
+    /// </summary>    
+    private readonly WatcherManagerNativeLibrary _helper;
+    #endregion
 
     public WatcherManagerEmbeddedLoadLibrary()
     {
-      // Create the file handle. 
-      // we will throw if this does not exist.
-      _handle = CreateWatcherFromFileSystem();
-    }
-
-    ~WatcherManagerEmbeddedLoadLibrary()
-    {
-      if (_handle != IntPtr.Zero)
-      {
-#if MYODDWEB_NETCOREAPP
-        System.Runtime.InteropServices.NativeLibrary.Free(_handle);
-#else
-        _ = NativeLibrary.FreeLibrary(_handle);
-#endif
-      }
+      // Create helper we will throw if the file does not exist.
+      _helper = new WatcherManagerNativeLibrary(GetFromEmbedded(), Callback);
     }
 
     #region Private Methods
-    private IntPtr CreateWatcherFromFileSystem()
+    private string GetFromEmbedded()
     {
-      var library = GetFromFileSystem();
-#if MYODDWEB_NETCOREAPP
-      return System.Runtime.InteropServices.NativeLibrary.Load(library);
-#else
-      return NativeLibrary.LoadLibrary(library);
-#endif
+      return Environment.Is64BitProcess ? GetFromEmbeddedx64() : GetFromEmbeddedx86();
     }
 
-    /// <summary>
-    /// Get the windows c++ path on file.
-    /// </summary>
-    /// <returns></returns>
-    private static string GetFromFileSystem()
-    {
-      return Environment.Is64BitProcess ? GetFromFileSystemx64() : GetFromFileSystemx86();
-    }
-
-    private static string GetFromFileSystemx86()
+    private string GetFromEmbeddedx86()
     {
       Contract.Assert(!Environment.Is64BitProcess);
-      return GetInteropFromFileSystem("Win32", "myoddweb.directorywatcher.win.x86.dll");
+      return CreateResourceFile("x86.directorywatcher.win", "myoddweb.directorywatcher.win.x86.dll");
     }
 
-    private static string GetFromFileSystemx64()
+    private string GetFromEmbeddedx64()
     {
       Contract.Assert(Environment.Is64BitProcess);
-      return GetInteropFromFileSystem("x64", "myoddweb.directorywatcher.win.x64.dll");
+      return CreateResourceFile("x64.directorywatcher.win", "myoddweb.directorywatcher.win.x64.dll");
     }
 
-    private static string GetInteropFromFileSystem(string subDirectory, string dll)
-    {
-      var currentDirectory = Path.Combine(Directory.GetCurrentDirectory(), subDirectory);
-      if (!Directory.Exists(currentDirectory))
-      {
-        var parentCurrentDirectory = (new DirectoryInfo(Directory.GetCurrentDirectory())).Parent.FullName;
-        currentDirectory = Path.Combine(parentCurrentDirectory, subDirectory);
-      }
-
-      return Path.Combine(currentDirectory, dll);
-    }
-
-    private T Get<T>(string name) where T : class
-    {
-      if (_handle == IntPtr.Zero)
-      {
-        throw new NotImplementedException();
-      }
-#if MYODDWEB_NETCOREAPP
-      var start_handle = System.Runtime.InteropServices.NativeLibrary.GetExport(_handle, name);
-#else
-      var start_handle = NativeLibrary.GetProcAddress(_handle, name);
-#endif
-      if (start_handle == IntPtr.Zero)
-      {
-        throw new NotImplementedException();
-      }
-      return Marshal.GetDelegateForFunctionPointer(
-          start_handle,
-          typeof(T)) as T;
-
-    }
-
-    private static int Callback(
+    private int Callback(
       long id,
       bool isFile,
       string name,
@@ -173,27 +98,12 @@ namespace myoddweb.directorywatcher.utils
 
     public override long Start(IRequest request)
     {
-      if (_start == null)
-      {
-        _start = Get<Delegates.Start>("Start");
-      }
-      Delegates.Request r = new Delegates.Request
-      {
-        Recursive = request.Recursive,
-        Path = request.Path
-      };
-
-      // start
-      return _start(ref r, _callback, 1000);
+      return _helper.Start(request);
     }
 
     public override bool Stop(long id)
     {
-      if (_stop == null)
-      {
-        _stop = Get<Delegates.Stop>("Stop");
-      }
-      return _stop(id);
+      return _helper.Stop(id);
     }
     #endregion
   }

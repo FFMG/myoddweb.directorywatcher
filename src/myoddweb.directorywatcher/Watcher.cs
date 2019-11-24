@@ -79,10 +79,13 @@ namespace myoddweb.directorywatcher
 #if DEBUG
       // _watcherManager = new WatcherManagerEmbeddedInterop();
       // _watcherManager = new WatcherManagerInterop();
-      _watcherManager = new WatcherManagerLoadLibrary();
-      //_watcherManager = new WatcherManagerEmbeddedLoadLibrary();
+
+      // The debug version does not use the embedded version.
+      //_watcherManager = new WatcherManagerLoadLibrary();
+      _watcherManager = new WatcherManagerEmbeddedLoadLibrary();
 #else
-      _watcherManager = new WatcherManagerEmbeddedInterop();
+      // The release function must use the embedded version.
+      _watcherManager = new WatcherManagerEmbeddedLoadLibrary();
 #endif
 
       // start the task that will forever be looking for events.
@@ -100,7 +103,7 @@ namespace myoddweb.directorywatcher
       Dispose( false );
     }
 
-    #region IDisposable
+#region IDisposable
     /// <summary>
     /// Implement the dispose pattern
     /// </summary>
@@ -169,9 +172,9 @@ namespace myoddweb.directorywatcher
       // flag that this has stoped.
       _started = false;
     }
-    #endregion
+#endregion
 
-    #region IWatcher1/IWatcher2/IWatcher3
+#region IWatcher1/IWatcher2/IWatcher3
     /// <inheritdoc />
     public long Start(IRequest request)
     {
@@ -352,9 +355,9 @@ namespace myoddweb.directorywatcher
       events = allEvents;
       return allEvents.Count;
     }
-    #endregion
+#endregion
 
-    #region Private functions
+#region Private functions
     private Task CreateProcessEvent(IEvent e, CancellationToken token)
     {
       // do we have an error.
@@ -528,6 +531,6 @@ namespace myoddweb.directorywatcher
       }
       return true;
     }
-    #endregion
+#endregion
   }
 }

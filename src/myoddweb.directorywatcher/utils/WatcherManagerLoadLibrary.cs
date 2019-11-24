@@ -10,15 +10,17 @@ namespace myoddweb.directorywatcher.utils
 {
   internal class WatcherManagerLoadLibrary : WatcherManager
   {
+    #region Member variables
     /// <summary>
     /// The dictionary with all the events.
     /// </summary>
-    private Dictionary<long, IList<IEvent>> _idAndEvents = new Dictionary<long, IList<IEvent>>();
+    private readonly Dictionary<long, IList<IEvent>> _idAndEvents = new Dictionary<long, IList<IEvent>>();
 
     /// <summary>
     /// The Native dll helper
     /// </summary>    
     private readonly WatcherManagerNativeLibrary _helper;
+    #endregion
 
     public WatcherManagerLoadLibrary()
     {
