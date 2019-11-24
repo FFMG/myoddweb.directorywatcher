@@ -6,7 +6,8 @@ Notable changes
 
 ### Added
 
-- Added instrumentation, [Thanks to The Cherno / Hazel project)](https://github.com/TheCherno/Hazel/)
+- Instrumentation, [Thanks to The Cherno / Hazel project)](https://github.com/TheCherno/Hazel/)
+- Version number fo unmanaged `myoddweb.directorywatcher` helper.
 
 ### Changed
 

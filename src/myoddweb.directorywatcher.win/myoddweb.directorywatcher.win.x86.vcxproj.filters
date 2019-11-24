@@ -98,6 +98,7 @@
     <ClInclude Include="monitors\Callbacks.h">
       <Filter>monitors</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="utilities">
@@ -109,5 +110,8 @@
     <Filter Include="monitors\win">
       <UniqueIdentifier>{57c2f15e-9829-4bc7-a4f7-e7ae912ac9a7}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="myoddweb.directorywatcher.win.rc" />
   </ItemGroup>
 </Project>
