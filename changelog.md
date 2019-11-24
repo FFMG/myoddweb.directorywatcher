@@ -17,6 +17,7 @@ Notable changes
 ### Removed
 
 - The watcher manager used to write to console on error ... but we might not have a console.
+- Removed the no longer needed 'interop' project.
 
 ## 0.1.5 - 15-11-2019
 
