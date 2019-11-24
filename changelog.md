@@ -2,6 +2,18 @@
 
 Notable changes
 
+## 0.1.7 - [Current]
+
+### Added
+
+- Added instrumentation, [Thanks to The Cherno / Hazel project)](https://github.com/TheCherno/Hazel/)
+
+### Changed
+
+### Fixed
+
+### Removed
+
 ## 0.1.6 - 24-11-2019
 
 ### Added
