@@ -16,6 +16,11 @@ namespace myoddweb.directorywatcher
   {
     #region Member variables
     /// <summary>
+    /// The watch manager that allows us to control who loads what
+    /// </summary>
+    private readonly WatcherManager _watcherManager;
+
+    /// <summary>
     /// Check if we disposed already.
     /// </summary>
     private bool _disposed;
@@ -71,6 +76,17 @@ namespace myoddweb.directorywatcher
 
     public Watcher()
     {
+#if DEBUG
+      // _watcherManager = new WatcherManagerEmbeddedInterop();
+      // _watcherManager = new WatcherManagerInterop();
+
+      // The debug version does not use the embedded version.
+      _watcherManager = new WatcherManagerLoadLibrary();
+#else
+      // The release function must use the embedded version.
+      _watcherManager = new WatcherManagerEmbeddedLoadLibrary();
+#endif
+
       // start the task that will forever be looking for events.
       _task = ProcessEventsAsync();
 
@@ -86,7 +102,7 @@ namespace myoddweb.directorywatcher
       Dispose( false );
     }
 
-    #region IDisposable
+#region IDisposable
     /// <summary>
     /// Implement the dispose pattern
     /// </summary>
@@ -124,6 +140,7 @@ namespace myoddweb.directorywatcher
         _eventsSource?.Dispose();
         _watcherSource?.Dispose();
         _task.Dispose();
+        _watcherManager?.Dispose();
       }
       finally
       {
@@ -154,9 +171,9 @@ namespace myoddweb.directorywatcher
       // flag that this has stoped.
       _started = false;
     }
-    #endregion
+#endregion
 
-    #region IWatcher1/IWatcher2/IWatcher3
+#region IWatcher1/IWatcher2/IWatcher3
     /// <inheritdoc />
     public long Start(IRequest request)
     {
@@ -166,7 +183,7 @@ namespace myoddweb.directorywatcher
       // As we have already started the work.
       // so we want to start this one now
       // and add it to our list of started ids.
-      var id = WatcherManager.Get.Start(request);
+      var id = _watcherManager.Start(request);
       if (id != -1)
       {
         _processedRequests[id] = request;
@@ -211,7 +228,7 @@ namespace myoddweb.directorywatcher
         return false;
       }
 
-      if (!WatcherManager.Get.Stop(id))
+      if (!_watcherManager.Stop(id))
       {
         return false;
       }
@@ -227,7 +244,7 @@ namespace myoddweb.directorywatcher
       // we cannot get any more events if we have disposed.
       CheckDisposed();
 
-      return WatcherManager.Get.GetEvents(id, out events);
+      return _watcherManager.GetEvents(id, out events);
     }
 
     /// <inheritdoc />
@@ -239,7 +256,7 @@ namespace myoddweb.directorywatcher
       try
       {
         // do we have anything to do ... or are we even able to work?
-        if (!_pendingRequests.Any() || WatcherManager.Get == null)
+        if (!_pendingRequests.Any() || _watcherManager == null)
         {
           return false;
         }
@@ -253,7 +270,7 @@ namespace myoddweb.directorywatcher
           // get the id, we do not want to call
           // our own Add( ... ) function as it checks
           // if we have started work or not.
-          var id = WatcherManager.Get.Start(request);
+          var id = _watcherManager.Start(request);
           if (id < 0)
           {
             // negative results mean that it did not work.
@@ -303,7 +320,7 @@ namespace myoddweb.directorywatcher
       CheckDisposed();
 
       // do we have any completed requests?
-      if (!_processedRequests.Any() || WatcherManager.Get == null)
+      if (!_processedRequests.Any() || _watcherManager == null)
       {
         return false;
       }
@@ -337,9 +354,9 @@ namespace myoddweb.directorywatcher
       events = allEvents;
       return allEvents.Count;
     }
-    #endregion
+#endregion
 
-    #region Private functions
+#region Private functions
     private Task CreateProcessEvent(IEvent e, CancellationToken token)
     {
       // do we have an error.
@@ -513,6 +530,6 @@ namespace myoddweb.directorywatcher
       }
       return true;
     }
-    #endregion
+#endregion
   }
 }

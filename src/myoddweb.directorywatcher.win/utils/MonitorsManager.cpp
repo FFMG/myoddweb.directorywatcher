@@ -62,11 +62,13 @@ namespace myoddweb
     /**
      * \brief Start a monitor
      * \param request the request being added.
+     * \param callback the callback we will be using
+     * \param callbackRateMs how often we want t callback
      * \return the id of the monitor we started
      */
-    __int64 MonitorsManager::Start(const Request& request)
+    long long MonitorsManager::Start(const Request& request, EventCallback callback, long long callbackRateMs)
     {
-      const auto monitor = Instance()->CreateAndStart(request);
+      const auto monitor = Instance()->CreateAndStart(request, callback, callbackRateMs);
       return monitor->Id();
     }
 
@@ -75,7 +77,7 @@ namespace myoddweb
      * \param id the id of the monitor we want to stop
      * \return if we managed to remove it or not.
      */
-    bool MonitorsManager::Stop(const __int64 id)
+    bool MonitorsManager::Stop(const long long id)
     {
       auto guard = Lock(_lock);
 
@@ -197,9 +199,11 @@ namespace myoddweb
     /***
      * \brief Create a monitor instance and add it to the list.
      * \param request the request we are creating
+     * \param callback the callback when we have events.
+     * \param callbackRateMs how often we want t callback
      * \return the value.
      */
-    Monitor* MonitorsManager::CreateAndStart(const Request& request)
+    Monitor* MonitorsManager::CreateAndStart(const Request& request, EventCallback callback, long long callbackRateMs)
     {
       Monitor* monitor = nullptr;
       try
@@ -215,7 +219,7 @@ namespace myoddweb
         }
 
         // and start monitoring for changes.
-        monitor->Start();
+        monitor->Start( callback, callbackRateMs );
 
         // and return the monitor we created.
         return monitor;
@@ -240,7 +244,7 @@ namespace myoddweb
      * \param id the item we want to delete
      * \return success or not.
      */
-    bool MonitorsManager::StopAndDelete(const __int64 id)
+    bool MonitorsManager::StopAndDelete(const long long id)
     {
       try
       {

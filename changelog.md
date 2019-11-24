@@ -2,7 +2,24 @@
 
 Notable changes
 
-## 0.1.5 - [Current]
+## 0.1.6 - [24-11-2019]
+
+### Added
+
+### Changed
+
+- Trying to fixe the loading of embedded files.
+
+### Fixed
+
+- Replaced /MD > /MT to insure smoother loading of embedded files.
+
+### Removed
+
+- The watcher manager used to write to console on error ... but we might not have a console.
+- Removed the no longer needed 'interop' project.
+
+## 0.1.5 - 15-11-2019
 
 ### Added
 

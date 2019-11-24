@@ -7,6 +7,7 @@
 #include "Request.h"
 #include "Event.h"
 #include "../monitors/Monitor.h"
+#include "../monitors/Callbacks.h"
 
 namespace myoddweb
 {
@@ -22,16 +23,18 @@ namespace myoddweb
       /**
        * \brief Start a monitor
        * \param request the request being added.
+       * \param callback the callback we will be using
+       * \param callbackRateMs how often we want t callback
        * \return the id of the monitor we started
        */
-      static __int64 Start(const Request& request);
+      static long long Start(const Request& request, EventCallback callback, long long callbackRateMs);
 
       /**
        * \brief Try and remove a monitror by id
        * \param id the id of the monitor we want to stop
        * \return if we managed to remove it or not.
        */
-      static bool Stop(__int64 id);
+      static bool Stop(long long id);
 
       /**
        * \brief Get the latest events.
@@ -40,14 +43,16 @@ namespace myoddweb
        * \return the number of items or -ve in case of an error
        */
       static long long GetEvents(long long id, std::vector<Event>& events);
-
+      
     protected:
       /**
        * \brief Create a monitor and start monitoring, (given the request).
        * \param request contains the information we need to start the monitoring
+       * \param callback the callback when we have events.
+       * \param callbackRateMs how often we want t callback
        * \return the class item we created.
        */
-      Monitor* CreateAndStart(const Request& request);
+      Monitor* CreateAndStart(const Request& request, EventCallback callback, long long callbackRateMs);
 
       /**
        * \brief Create a monitor and add it to our list.
@@ -61,14 +66,14 @@ namespace myoddweb
        * \paramn id the id we want to delete.
        * \return false if there was a problem or if it does not exist.
        */
-      bool StopAndDelete(__int64 id);
+      bool StopAndDelete(long long id);
 
       /**
        * \brief Get a random id
        * We do not check for colisions, it is up to the caller.
        * \return a random id number.
        */
-      static __int64 GetId();
+      static long long GetId();
 
       // The file lock
       static std::recursive_mutex _lock;
@@ -77,7 +82,7 @@ namespace myoddweb
       static MonitorsManager* _instance;
       static MonitorsManager* Instance();
 
-      typedef std::unordered_map<__int64, Monitor*> MonitorMap;
+      typedef std::unordered_map<long long, Monitor*> MonitorMap;
       MonitorMap _monitors;
     };
   }

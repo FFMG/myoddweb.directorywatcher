@@ -252,7 +252,7 @@ namespace myoddweb
         const auto fileAttr = FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED;
 
         _hDirectory = CreateFileW(
-          _monitor.Path().c_str(),		// the path we are watching
+          _monitor.Path(),		        // the path we are watching
           FILE_LIST_DIRECTORY,        // required for ReadDirectoryChangesW( ... )
           shareMode,
           nullptr,                    // security descriptor

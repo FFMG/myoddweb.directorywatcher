@@ -11,19 +11,27 @@ namespace myoddweb
 {
   namespace directorywatcher
   {
-    Monitor::Monitor(const __int64 id, Request request) :
+    Monitor::Monitor(const __int64 id, const Request& request) :
       _id(id),
-      _request(std::move(request)),
       _eventCollector(nullptr),
-      _state(Stopped)
+      _callback(nullptr),
+      _callbackTimer(nullptr),
+      _state(State::Stopped)
     {
       _eventCollector = new Collector();
+      _request = new Request(request);
     }
 
     Monitor::~Monitor()
     {
+      delete _request;
+      _request = nullptr;
+
       delete _eventCollector;
       _eventCollector = nullptr;
+
+      delete _callbackTimer;
+      _callbackTimer = nullptr;
     }
 
     /**
@@ -38,7 +46,7 @@ namespace myoddweb
      * Get the id of the monitor
      * @return __int64 the id
      */
-    __int64 Monitor::Id() const
+    const long long& Monitor::Id() const
     {
       return _id;
     }
@@ -47,9 +55,9 @@ namespace myoddweb
      * Get the current path.
      * @return the path being checked.
      */
-    const std::wstring& Monitor::Path() const
+    const wchar_t* Monitor::Path() const
     {
-      return _request.Path;
+      return _request->Path;
     }
 
     /**
@@ -58,7 +66,7 @@ namespace myoddweb
      */
     bool Monitor::Recursive() const
     {
-      return _request.Recursive;
+      return _request->Recursive;
     }
 
     /**
@@ -105,7 +113,7 @@ namespace myoddweb
       // allow the base class to add/remove events.
       OnGetEvents(events);
 
-      // then return how-ever many we found.
+      // then return how-ever many we found.  
       return static_cast<long long>(events.size());
     }
 
@@ -122,9 +130,13 @@ namespace myoddweb
      * \brief Start the monitoring, if needed.
      * \return success or not.
      */
-    bool Monitor::Start()
+    bool Monitor::Start(EventCallback callback, long long callbackRateMs)
     {
-      if (Is(Started))
+      // set the callback in case we are updating it.
+      // this uses the lock, so we should be fine.
+      SetCallBack(callback, callbackRateMs );
+
+      if (Is(State::Started))
       {
         return true;
       }
@@ -133,13 +145,13 @@ namespace myoddweb
       auto guard = Lock(_lock);
 
       // are we already started?
-      if( Is(Started))
+      if( Is(State::Started))
       {
         return true;
       }
 
       // we are starting
-      _state = Starting;
+      _state = State::Starting;
 
       try
       {
@@ -147,16 +159,78 @@ namespace myoddweb
         OnStart();
 
         // all good
-        _state = Started;
+        _state = State::Started;
 
         // done.
         return true;
       }
       catch (...)
       {
-        _state = Stopped;
+        _state = State::Stopped;
         AddEventError(EventError::CannotStart);
         return false;
+      }
+    }
+
+    /**
+     * \brief set the callback and how often we want to check for event, (and callback if we have any).
+     * \param the callback we want to call
+     * \param hw often we want to check for events.
+     * \return
+     */
+    void Monitor::SetCallBack(EventCallback callback, const  long long callbackIntervalMs )
+    {
+      // guard for multiple entry.
+      auto guard = Lock(_lock);
+
+      // null is allowed.
+      if (_callback != callback)
+      {
+        _callback = callback;
+      }
+
+      if (_callbackTimer != nullptr)
+      {
+        _callbackTimer->Stop();
+        delete _callbackTimer;
+        _callbackTimer = nullptr;
+      }
+
+      // zero are allowed.
+      if (callbackIntervalMs != 0)
+      {
+        _callbackTimer = new Timer();
+        _callbackTimer->Start([&]() {
+          PublishEvents();
+          }, callbackIntervalMs);
+      }
+    }
+
+    /**
+     * \brief get all the events and send them over to the callback.
+     */
+    void Monitor::PublishEvents()
+    {
+      // guard for multiple entry.
+      auto guard = Lock(_lock);
+
+      auto events = std::vector<Event>();
+      if (0 == GetEvents(events))
+      {
+        return;
+      }
+
+      for (auto it = events.begin(); it != events.end(); ++it)
+      {
+        _callback(
+          Id(),
+          (*it).IsFile,
+          (*it).Name,
+          (*it).OldName,
+          (*it).Action,
+          (*it).Error,
+          (*it).TimeMillisecondsUtc
+          );
       }
     }
 
@@ -165,7 +239,7 @@ namespace myoddweb
      */
     void Monitor::Stop()
     {
-      if (Is(Stopped))
+      if (Is(State::Stopped))
       {
         return;
       }
@@ -174,13 +248,13 @@ namespace myoddweb
       auto guard = Lock(_lock);
 
       // are we stopped already?
-      if( Is(Stopped))
+      if( Is(State::Stopped))
       {
         return;
       }
 
       // we are stopping
-      _state = Stopping;
+      _state = State::Stopping;
 
       try
       {
@@ -188,11 +262,11 @@ namespace myoddweb
         OnStop();
 
         // we are now done
-        _state = Stopped;
+        _state = State::Stopped;
       }
       catch(... )
       {
-        _state = Stopped;
+        _state = State::Stopped;
         AddEventError(EventError::CannotStop);
       }
     }
@@ -204,8 +278,7 @@ namespace myoddweb
      */
     bool Monitor::IsPath(const std::wstring& maybe) const
     {
-      return Io::AreSameFolders(maybe, _request.Path);
+      return Io::AreSameFolders(maybe, _request->Path);
     }
-
   }
 }

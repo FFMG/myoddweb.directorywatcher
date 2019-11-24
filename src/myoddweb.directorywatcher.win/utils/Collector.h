@@ -50,7 +50,7 @@ namespace myoddweb
        * \brief This is the oldest number of ms we want something to be.
        * It is *only* removed if _maxInternalCounter is reached.
        */
-      const short _maxCleanupAgeMillisecons;
+      const short _maxCleanupAgeMilliseconds;
 
       /**
        * The next time we want to check for cleanup

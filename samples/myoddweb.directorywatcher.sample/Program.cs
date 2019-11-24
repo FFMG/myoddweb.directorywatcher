@@ -12,39 +12,57 @@ namespace myoddweb.directorywatcher.sample
     {
       try
       {
+        Console.WriteLine(Environment.Is64BitProcess ? "x64 version" : "x86 version");
         Console.WriteLine("Press Ctrl+C to stop the monitors.");
 
         // start the monitor.
-        var watch = new Watcher();
-        var drvs = System.IO.DriveInfo.GetDrives();
-        foreach (var drv in drvs)
+        using (var watch = new Watcher())
         {
-          if (drv.DriveType == System.IO.DriveType.Fixed)
+          var drvs = System.IO.DriveInfo.GetDrives();
+          foreach (var drv in drvs)
           {
-            watch.Add(new Request(drv.Name, true));
+            if (drv.DriveType == System.IO.DriveType.Fixed)
+            {
+              watch.Add(new Request(drv.Name, true));
+            }
           }
+
+          // prepare the console watcher so we can output pretty messages.
+          var _ = new ConsoleWatch(watch);
+
+          // start watching
+          watch.Start();
+
+          // listen for the Ctrl+C 
+          WaitForCtrlC();
+
+          // stop everything.
+          watch.Stop();
         }
-
-        // prepare the console watcher so we can output pretty messages.
-        var _ = new ConsoleWatch(watch);
-
-        // start watching
-        watch.Start();
-
-        // listen for the Ctrl+C 
-        WaitForCtrlC();
-
-        // stop everything.
-        watch.Stop();
       }
       catch (Exception ex)
       {
-        Console.WriteLine(ex.Message);
-        while (ex.InnerException != null)
+        WriteException(ex);
+      }
+    }
+
+    private static void WriteException(Exception ex)
+    {
+      if (ex is AggregateException aggex)
+      {
+        WriteException(aggex.InnerException);
+        foreach (var aggexInner in aggex.InnerExceptions)
         {
-          ex = ex.InnerException;
-          Console.WriteLine(ex.Message);
+          WriteException(aggexInner);
         }
+        return;
+      }
+
+      Console.WriteLine(ex.Message);
+      while (ex.InnerException != null)
+      {
+        ex = ex.InnerException;
+        Console.WriteLine(ex.Message);
       }
     }
 

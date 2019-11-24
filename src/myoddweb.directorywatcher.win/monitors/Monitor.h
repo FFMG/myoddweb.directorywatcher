@@ -7,6 +7,8 @@
 #include "../utils/EventError.h"
 #include "../utils/Collector.h"
 #include "../utils/Request.h"
+#include "../utils/Timer.h"
+#include "Callbacks.h"
 
 namespace myoddweb
 {
@@ -15,7 +17,7 @@ namespace myoddweb
     class Monitor
     {
     public:
-      Monitor(__int64 id, Request request);
+      Monitor(__int64 id, const Request& request);
       virtual ~Monitor();
 
       Monitor& operator=(Monitor&& other) = delete;
@@ -24,17 +26,10 @@ namespace myoddweb
       Monitor(const Monitor&) = delete;
       Monitor& operator=(const Monitor&) = delete;
 
-      __int64 Id() const;
-      const std::wstring& Path() const;
+      const long long& Id() const;
+      const wchar_t* Path() const;
       bool Recursive() const;
       Collector& EventsCollector() const;
-
-      /**
-       * \brief fill the vector with all the values currently on record.
-       * \param events the events we will be filling
-       * \return the number of events we found.
-       */
-      long long GetEvents(std::vector<Event>& events);
 
       /**
        * \brief check if a given path is the same as the given one.
@@ -42,6 +37,13 @@ namespace myoddweb
        * \return if the given path is the same as our path.
        */
       bool IsPath(const std::wstring& maybe) const;
+
+      /**
+       * \brief fill the vector with all the values currently on record.
+       * \param events the events we will be filling
+       * \return the number of events we found.
+       */
+      long long GetEvents(std::vector<Event>& events);
 
       virtual void OnGetEvents(std::vector<Event>& events) = 0;
       virtual void OnStart() = 0;
@@ -51,19 +53,19 @@ namespace myoddweb
       void AddRenameEvent(const std::wstring& newFileName, const std::wstring& oldFilename, bool isFile) const;
       void AddEventError(EventError error) const;
 
-      bool Start();
+      bool Start(EventCallback callback, long long callbackRateMs );
       void Stop();
 
     protected:
       /**
        * \brief the unique monitor id.
        */
-      const __int64 _id;
+      const long long _id;
 
       /**
        * \brief the request we used to create the monitor.
        */
-      const Request _request;
+      const Request* _request;
 
       /**
        * \brief the current list of collected events.
@@ -71,9 +73,19 @@ namespace myoddweb
       Collector* _eventCollector;
 
       /**
+       * \brief the callback we will call when we have events.
+       */
+      EventCallback _callback;
+
+      /**
+       * \brief how often we want to check for new events.
+       */
+      Timer* _callbackTimer;
+
+      /**
        * The current monitor state
        */
-      enum State
+      enum class State
       {
         Starting,
         Started,
@@ -86,6 +98,19 @@ namespace myoddweb
        * \param state the state we are checking against.
        */
       bool Is(State state) const;
+
+      /**
+       * \brief get all the events and send them over to the callback.
+       */
+      void PublishEvents();
+
+      /**
+       * \brief set the callback and how often we want to check for event, (and callback if we have any).
+       * \param the callback we want to call
+       * \param hw often we want to check for events.
+       * \return
+       */
+      void SetCallBack(EventCallback callback, long long callbackIntervalMs );
 
     private:
       /**

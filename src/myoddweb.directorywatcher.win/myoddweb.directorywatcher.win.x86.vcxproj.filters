@@ -1,0 +1,113 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="watcher.cpp" />
+    <ClCompile Include="utils\Collector.cpp">
+      <Filter>utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\Io.cpp">
+      <Filter>utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\Lock.cpp">
+      <Filter>utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\MonitorsManager.cpp">
+      <Filter>utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="monitors\win\Common.cpp">
+      <Filter>monitors\win</Filter>
+    </ClCompile>
+    <ClCompile Include="monitors\win\Data.cpp">
+      <Filter>monitors\win</Filter>
+    </ClCompile>
+    <ClCompile Include="monitors\win\Directories.cpp">
+      <Filter>monitors\win</Filter>
+    </ClCompile>
+    <ClCompile Include="monitors\win\Files.cpp">
+      <Filter>monitors\win</Filter>
+    </ClCompile>
+    <ClCompile Include="monitors\Monitor.cpp">
+      <Filter>monitors</Filter>
+    </ClCompile>
+    <ClCompile Include="monitors\MultipleWinMonitor.cpp">
+      <Filter>monitors</Filter>
+    </ClCompile>
+    <ClCompile Include="monitors\WinMonitor.cpp">
+      <Filter>monitors</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="watcher.h" />
+    <ClInclude Include="utils\Timer.h">
+      <Filter>utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\Collector.h">
+      <Filter>utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\Event.h">
+      <Filter>utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\EventAction.h">
+      <Filter>utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\EventError.h">
+      <Filter>utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\EventInformation.h">
+      <Filter>utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\Io.h">
+      <Filter>utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\Lock.h">
+      <Filter>utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\MonitorsManager.h">
+      <Filter>utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\Request.h">
+      <Filter>utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\win\Common.h">
+      <Filter>monitors\win</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\win\Data.h">
+      <Filter>monitors\win</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\win\Directories.h">
+      <Filter>monitors\win</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\win\Files.h">
+      <Filter>monitors\win</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\Base.h">
+      <Filter>monitors</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\Monitor.h">
+      <Filter>monitors</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\MultipleWinMonitor.h">
+      <Filter>monitors</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\WinMonitor.h">
+      <Filter>monitors</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\Callbacks.h">
+      <Filter>monitors</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="utilities">
+      <UniqueIdentifier>{a7a2edf6-9b22-4329-bd7f-8985541b1e95}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="monitors">
+      <UniqueIdentifier>{95653abb-8bdc-4991-af63-92ec22085651}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="monitors\win">
+      <UniqueIdentifier>{57c2f15e-9829-4bc7-a4f7-e7ae912ac9a7}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -24,7 +24,7 @@ namespace myoddweb
       }
 
       // try and create the list of monitors.
-      CreateMonitors(_request);
+      CreateMonitors(*_request);
     }
 
     MultipleWinMonitor::~MultipleWinMonitor()
@@ -107,25 +107,39 @@ namespace myoddweb
      * \brief a folder has been added, process it.
      * \param path the event being processed
      */
-    void MultipleWinMonitor::ProcessEventAdded(const std::wstring& path)
+    void MultipleWinMonitor::ProcessEventAdded(const wchar_t* path)
     {
+
+      if (path == nullptr)
+      {
+        return;
+      }
+
       // guard for multiple entry.
       auto guard = Lock(_lock);
 
       // a folder was added to this path
       // so we have to add this path as a child.
       const auto id = GetNextId();
-      auto child = new WinMonitor(id, { path, true });
+      auto request = new Request(path, true);
+      auto child = new WinMonitor(id, *request );
       _recursiveChildren.push_back(child);
-      child->Start();
+      child->Start( nullptr, 0 );
+
+      delete request;
     }
 
     /**
      * \brief a folder has been deleted, process it.
      * \param path the event being processed
      */
-    void MultipleWinMonitor::ProcessEventDelete(const std::wstring& path)
+    void MultipleWinMonitor::ProcessEventDelete(const wchar_t* path)
     {
+      if (nullptr == path)
+      {
+        return;
+      }
+
       // guard for multiple entry.
       auto guard = Lock(_lock);
 
@@ -153,7 +167,7 @@ namespace myoddweb
      * \param path the event being processed
      * \param oldPath the old name being renamed.
      */
-    void MultipleWinMonitor::ProcessEventRenamed(const std::wstring& path, const std::wstring& oldPath)
+    void MultipleWinMonitor::ProcessEventRenamed(const wchar_t* path, const wchar_t* oldPath)
     {
       // add the new one
       ProcessEventAdded(path);
@@ -178,7 +192,7 @@ namespace myoddweb
         try
         {
           // if we are stopped or stopping, there is nothing for us to do.
-          if (Is(Stopped) || Is(Stopping))
+          if (Is(State::Stopped) || Is(State::Stopping))
           {
             return events;
           }
@@ -249,17 +263,18 @@ namespace myoddweb
       // all the events.
       std::vector<Event> events;
 
-      // the current events.
-      std::vector<Event> levents;
       for (auto it = _recursiveChildren.begin(); it != _recursiveChildren.end(); ++it)
       {
         try
         {
           // if we are stopped or stopping, there is nothing for us to do.
-          if (Is(Stopped) || Is(Stopping))
+          if (Is(State::Stopped) || Is(State::Stopping))
           {
             return events;
           }
+
+          // the current events.
+          std::vector<Event> levents;
 
           // get this directory events
           if (0 == (*it)->GetEvents(levents))
@@ -338,7 +353,11 @@ namespace myoddweb
      */
     void MultipleWinMonitor::Start(const std::vector<Monitor*>& container)
     {
-      Do(container, &Monitor::Start);
+      for (auto monitor = container.begin(); monitor != container.end(); ++monitor)
+      {
+        // the parent is in charge of the callback.
+        (*monitor)->Start(nullptr, 0);
+      }
     }
 
     /**
@@ -413,7 +432,7 @@ namespace myoddweb
     void MultipleWinMonitor::CreateMonitors(const Request& parent )
     {
       // if we are stopping, then we cannot go further.
-      if( Is( Stopping) )
+      if( Is(State::Stopping) )
       {
         return;
       }
@@ -439,14 +458,20 @@ namespace myoddweb
 
       // adding all the sub-paths will not breach the limit.
       // so we can add the parent, but non-recuresive.
-      _nonRecursiveParents.push_back( new WinMonitor(id, { parent.Path, false }) );
+      auto request = new Request(parent.Path, false);
+      _nonRecursiveParents.push_back( new WinMonitor(id, *request) );
 
       // now try and add all the subpath
       for (const auto& path : subPaths)
       {
         // add one more to the list.
-        CreateMonitors( { path, true } );
+        auto request = new Request(path.c_str(), true);
+        CreateMonitors( *request );
+        delete request;
       }
+
+      // clean up the request.
+      delete request;
     }
     #pragma endregion
   }

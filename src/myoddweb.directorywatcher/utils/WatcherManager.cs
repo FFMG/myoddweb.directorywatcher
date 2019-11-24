@@ -1,27 +1,19 @@
 ﻿// Licensed to Florent Guelfucci under one or more agreements.
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+using myoddweb.directorywatcher.interfaces;
 using System;
-using System.Diagnostics.Contracts;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
-using myoddweb.directorywatcher.interfaces;
+using System.Text;
 
 namespace myoddweb.directorywatcher.utils
 {
-  internal class WatcherManager : IDisposable
+  internal abstract class WatcherManager : IDisposable
   {
-    /// <summary>
-    /// The actual instance of the watcher.
-    /// </summary>
-    private readonly IWatcher1 _watcher;
-
-    /// <summary>
-    /// The one and only instance of the manager.
-    /// </summary>
-    private static WatcherManager _manager;
-
+    #region Member variables
     /// <summary>
     /// The object we will use for the lock.
     /// </summary>
@@ -35,7 +27,7 @@ namespace myoddweb.directorywatcher.utils
     /// <summary>
     /// Get the current embeded folder.
     /// </summary>
-    private string EmbededFolder
+    protected string EmbededFolder
     {
       get
       {
@@ -51,12 +43,12 @@ namespace myoddweb.directorywatcher.utils
             return _embededFolder;
           }
 
-          // remove the old directories.
-          RemoveOldDirectories();
+          // use the assembly name to create a somewhat unique path
+          var curAsm = Assembly.GetExecutingAssembly();
 
           // create the new folder.
-          var guid = Guid.NewGuid().ToString();
-          var embededFolder = Path.Combine(new[] { Path.GetTempPath(), $"wr.{guid}" });
+          var sha1 = Hash( curAsm.FullName );
+          var embededFolder = Path.Combine(new[] { Path.GetTempPath(), $"wr.{sha1}" });
           if (!Directory.Exists(embededFolder))
           {
             Directory.CreateDirectory(embededFolder);
@@ -72,44 +64,73 @@ namespace myoddweb.directorywatcher.utils
     /// Check if we have disposed of the instance or not.
     /// </summary>
     private bool _disposed;
-
-    /// <summary>
-    /// Get our one and only watcher interface.
-    /// </summary>
-    public static IWatcher1 Get => Instance._watcher;
-
-    /// <summary>
-    /// The one and only instance of this class.
-    /// </summary>
-    private static WatcherManager Instance
-    {
-      get
-      {
-        // do we already have the instance?
-        if (null != _manager)
-        {
-          return _manager;
-        }
-
-        // check again using the lock
-        // otherwise just create it.
-        lock (Lock)
-        {
-          // either return what we have or simply create a new one.
-          return _manager ?? (_manager = new WatcherManager());
-        }
-      }
-    }
+    #endregion
 
     /// <summary>
     /// Private constructor
     /// </summary>
-    private WatcherManager()
+    protected internal WatcherManager()
     {
-      // create the one watcher.
-      _watcher = CreateWatcherFromFileSystem();
     }
 
+    #region Static helpers
+    /// <summary>
+    /// Load an embeded file and return the raw data.
+    /// 'Borrowed' from https://www.codeproject.com/Articles/528178/Load-DLL-From-Embedded-Resource
+    /// </summary>
+    /// <returns></returns>
+    private static byte[] GetEmbededResource(string resource)
+    {
+      var curAsm = Assembly.GetExecutingAssembly();
+      using (var stm = curAsm.GetManifestResourceStream(resource))
+      {
+        // Either the file is not existed or it is not mark as embedded resource
+        if (stm == null)
+        {
+          throw new Exception(resource + " is not found in Embedded Resources.");
+        }
+
+        // Get byte[] from the file from embedded resource
+        var ba = new byte[stm.Length];
+        stm.Read(ba, 0, ba.Length);
+        return ba;
+      }
+    }
+
+    /// <summary>
+    /// Calculate the SHA1 of the given input
+    /// </summary>
+    /// <param name="input"></param>
+    /// <returns></returns>
+    static private string Hash(string input)
+    {
+      using (var sha1 = new SHA1CryptoServiceProvider())
+      {
+        var hash = sha1.ComputeHash(Encoding.UTF8.GetBytes(input));
+        var sb = new StringBuilder(hash.Length * 2);
+        foreach (byte b in hash)
+        {
+          sb.Append(b.ToString("x2"));
+        }
+        return sb.ToString();
+      }
+    }
+
+    /// <summary>
+    /// Create a file in the given path with the given data.
+    /// </summary>
+    /// <param name="path"></param>
+    /// <param name="data"></param>
+    private static void CreateFile(string path, byte[] data)
+    {
+      File.WriteAllBytes(path, data);
+    }
+    #endregion
+
+    #region Private/Protected Methods
+    /// <summary>
+    /// Clean up resources
+    /// </summary>
     public void Dispose()
     {
       // done already?
@@ -131,33 +152,34 @@ namespace myoddweb.directorywatcher.utils
           return;
         }
 
-        // reset the folder name
-        _embededFolder = null;
-
-        // we are done with the instance as well
-        _manager = null;
-
-        // remove the old directories if we can.
-        RemoveOldDirectories();
+        // dispose our own directory if we can
+        DisposeOwnDirectory();
       }
     }
 
     /// <summary>
     /// Clean up old directories.
     /// </summary>
-    private static void RemoveOldDirectories()
+    private void DisposeOwnDirectory()
     {
-      var directories = Directory.GetDirectories(Path.GetTempPath(), "wr.*");
-      foreach (var directory in directories)
+      if (_embededFolder == null)
       {
-        try
-        {
-          Directory.Delete(directory, true);
-        }
-        catch
-        {
-          // we cannot do much about this here.
-        }
+        return;
+      }
+
+      try
+      {
+        Directory.Delete(_embededFolder, true);
+      }
+      catch
+      {
+        // assemblies are not unloaded by us
+        // so it is posible that the file is locked.
+      }
+      finally
+      {
+        // reset the folder name
+        _embededFolder = null;
       }
     }
 
@@ -165,165 +187,54 @@ namespace myoddweb.directorywatcher.utils
     /// 'Borrowed' from https://www.codeproject.com/Articles/528178/Load-DLL-From-Embedded-Resource
     /// </summary>
     /// <returns></returns>
-    private string GetInteropResourceFileSystem()
-    {
-      return Environment.Is64BitProcess ? GetInteropResourceFileSystemx64() : GetInteropResourceFileSystemx86();
-    }
-
-    private string GetInteropResourceFileSystemx86()
-    {
-      const string winresource = "win32.directorywatcher.win";
-      const string resource = "win32.directorywatcher.interop";
-      var asmwin = GetInteropResourceFileSystem(winresource, "myoddweb.directorywatcher.win.x86.dll");
-      const string actualDllFilename = "myoddweb.directorywatcher.interop.x86.dll";
-      return GetInteropResourceFileSystem(resource, actualDllFilename);
-    }
-
-    private string GetInteropResourceFileSystemx64()
-    {
-      const string resource = "x64.directorywatcher.interop";
-      const string winresource = "x64.directorywatcher.win";
-      var asmwin = GetInteropResourceFileSystem(winresource, "myoddweb.directorywatcher.win.x64.dll");
-      const string actualDllFilename = "myoddweb.directorywatcher.interop.x64.dll";
-      return GetInteropResourceFileSystem(resource, actualDllFilename);
-    }
-
-    /// <summary>
-    /// 'Borrowed' from https://www.codeproject.com/Articles/528178/Load-DLL-From-Embedded-Resource
-    /// </summary>
-    /// <returns></returns>
-    private static byte[] GetEmbededResource(string resource )
-    {
-      var curAsm = Assembly.GetExecutingAssembly();
-      using (var stm = curAsm.GetManifestResourceStream(resource))
-      {
-        // Either the file is not existed or it is not mark as embedded resource
-        if (stm == null)
-        {
-          throw new Exception(resource + " is not found in Embedded Resources.");
-        }
-
-        // Get byte[] from the file from embedded resource
-        var ba = new byte[(int)stm.Length];
-        stm.Read(ba, 0, (int)stm.Length);
-        return ba;
-      }
-    }
-
-    /// <summary>
-    /// 'Borrowed' from https://www.codeproject.com/Articles/528178/Load-DLL-From-Embedded-Resource
-    /// </summary>
-    /// <returns></returns>
-    private string GetInteropResourceFileSystem( string resource, string dll )
+    protected string CreateResourceFile( string resource, string dll )
     {
       //  we throw in the function if we cannot locate the data.
       var ba = GetEmbededResource( resource);
-      var fileOk = false;
-      string tempFile;
 
+      // get the temp file we will be using.
+      var tempFile = Path.Combine(new[] { EmbededFolder, dll });
+      if (!File.Exists(tempFile))
+      {
+        // the file does not exist, create it.
+        // and return the path
+        CreateFile(tempFile, ba);
+        return tempFile;
+      }
+
+      // it already exists, do compare the current value
+      // and then try and replace the old with new value.
       using (var sha1 = new SHA1CryptoServiceProvider())
       {
+        // get the current hash
         var fileHash = BitConverter.ToString(sha1.ComputeHash(ba)).Replace("-", string.Empty);
 
-        tempFile = Path.Combine(new[] { EmbededFolder, dll });
-        if (File.Exists(tempFile))
-        {
-          var bb = File.ReadAllBytes(tempFile);
-          var fileHash2 = BitConverter.ToString(sha1.ComputeHash(bb)).Replace("-", string.Empty);
+        // then get the 'new'
+        var bb = File.ReadAllBytes(tempFile);
+        var fileHash2 = BitConverter.ToString(sha1.ComputeHash(bb)).Replace("-", string.Empty);
 
-          if (fileHash == fileHash2)
-          {
-            fileOk = true;
-          }
+        // compare the two hashes
+        if (fileHash == fileHash2)
+        {
+          // both hashes are the same, no need to replace anything
+          return tempFile;
         }
       }
 
-      if (!fileOk)
-      {
-        File.WriteAllBytes(tempFile, ba);
-      }
+      // we need to replace the current file
+      // if this throws it means that another process ... with the same name as us
+      // is using a different resource as us...
+      CreateFile(tempFile, ba);
       return tempFile;
     }
+    #endregion
 
-    /// <summary>
-    /// Get the interop path on file.
-    /// </summary>
-    /// <returns></returns>
-    private static string GetInteropFromFileSystem()
-    {
-      return Environment.Is64BitProcess ? GetInteropFromFileSystemx64() : GetInteropFromFileSystemx86();
-    }
+    #region Abstract Methods
+    abstract public long Start(IRequest request);
 
-    private static string GetInteropFromFileSystem( string subDirectory, string dll )
-    {
-      var currentDirectory = Path.Combine(Directory.GetCurrentDirectory(), subDirectory );
-      if (!Directory.Exists(currentDirectory))
-      {
-        var parentCurrentDirectory = (new DirectoryInfo(Directory.GetCurrentDirectory())).Parent.FullName;
-        currentDirectory = Path.Combine(parentCurrentDirectory, subDirectory );
-      }
+    abstract public bool Stop(long id);
 
-      return Path.Combine(currentDirectory, dll );
-    }
-
-    private static string GetInteropFromFileSystemx86()
-    {
-      Contract.Assert(!Environment.Is64BitProcess);
-      return GetInteropFromFileSystem("Win32", "myoddweb.directorywatcher.interop.x86.dll");
-    }
-
-    private static string GetInteropFromFileSystemx64()
-    {
-      Contract.Assert(Environment.Is64BitProcess);
-      return GetInteropFromFileSystem("x64", "myoddweb.directorywatcher.interop.x64.dll");
-    }
-
-    /// <summary>
-    /// Create the watcher from the file system, throw if we are unable to do it.
-    /// </summary>
-    /// <returns></returns>
-    private IWatcher1 CreateWatcherFromFileSystem()
-    {
-      try
-      {
-        try
-        {
-#if DEBUG
-          // while we debug the assembly we want to have access to the files
-          // so it is better to load from file system.
-          // otherwise we will load from the file system.
-          var assemblyFilePath = GetInteropFromFileSystem();
-          return TypeLoader.LoadTypeFromAssembly<IWatcher1>(assemblyFilePath);
-#else
-          try
-          {
-            // try and get the files from the file system.
-            var assemblyFilePath = GetInteropResourceFileSystem();
-            return TypeLoader.LoadTypeFromAssembly<IWatcher1>(assemblyFilePath);
-          }
-          catch
-          {
-            // something broke ... try and load from the embeded files.
-            // we will throw again if there is a further problem...
-            var assemblyFilePath = GetInteropFromFileSystem();
-            return TypeLoader.LoadTypeFromAssembly<IWatcher1>(assemblyFilePath);
-          }
-#endif
-        }
-        catch (Exception e)
-        {
-          Console.WriteLine(e);
-          throw;
-        }
-      }
-      catch (ArgumentException ex)
-      {
-        throw new Exception($"The interop file name/path does not appear to be valid. '{GetInteropFromFileSystem()}'.{Environment.NewLine}{Environment.NewLine}{ex.Message}");
-      }
-      catch (FileNotFoundException ex)
-      {
-        throw new Exception($"Unable to load the interop file. '{ex.FileName}'.{Environment.NewLine}{Environment.NewLine}{ex.Message}");
-      }
-    }
+    abstract public long GetEvents(long id, out IList<IEvent> events);
+    #endregion
   }
 }

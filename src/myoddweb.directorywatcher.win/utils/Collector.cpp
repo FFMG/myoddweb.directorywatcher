@@ -24,7 +24,7 @@ namespace myoddweb
      * \param maxAgeMs the maximum amount of time we will be keeping an event for.
      */
     Collector::Collector( const short maxAgeMs) :
-      _maxCleanupAgeMillisecons( maxAgeMs )
+      _maxCleanupAgeMilliseconds( maxAgeMs )
     {
     }
 
@@ -185,24 +185,25 @@ namespace myoddweb
       {
         const auto& eventInformation = (*it);
 
-        Event e = {};
-        e.TimeMillisecondsUtc = eventInformation.TimeMillisecondsUtc;
-        e.Name = eventInformation.Name;
-        e.OldName = eventInformation.OldName;
-        e.Action = ConvertEventAction(eventInformation.Action);
-        e.Error = ConvertEventError(eventInformation.Error);
-        e.IsFile = eventInformation.IsFile;
-        if (IsOlderDuplicate(events, e))
+        auto e = new Event(eventInformation.Name.c_str(),
+          eventInformation.OldName.c_str(),
+          ConvertEventAction(eventInformation.Action),
+          ConvertEventError(eventInformation.Error),
+          eventInformation.TimeMillisecondsUtc,
+          eventInformation.IsFile);
+        if (IsOlderDuplicate(events, *e))
         {
           // it is an older duplicate
           // so we do not want to add it,
+          delete e;
           continue;
         }
 
         // it is not a duplicate, so we can add it.
         // because we are getting the data in reverse we will add the data
         // in the front, it is older than the previous one.
-        events.insert( events.begin(), e);
+        events.insert( events.begin(), *e);
+        delete e;
       }
 
       // last step is to cleanup all the renames.
@@ -224,23 +225,27 @@ namespace myoddweb
           continue;
         }
 
-        // no new old path
-        if (e.OldName.empty() && !e.Name.empty())
+        // get the file sizes.
+        const auto oldNameLen = e.OldName == nullptr ? 0 : wcslen(e.OldName);
+        const auto nameLen = e.Name == nullptr ? 0 : wcslen(e.Name);
+
+        // old name is empty, but not new name
+        if (oldNameLen == 0 && nameLen > 0)
         {
           // so we have a new name, but no old name
           e.Action = static_cast<int>(EventAction::Added);
         }
 
         // no new path
-        if (e.Name.empty() && !e.OldName.empty() )
+        if (nameLen == 0 && oldNameLen > 0)
         {
           // so we have an old name, but no new name
-          e.Name.swap( e.OldName );
+          e.MoveOldNameToName();
           e.Action = static_cast<int>(EventAction::Removed );
         }
 
         // both empty
-        if (e.Name.empty() && !e.OldName.empty())
+        if (nameLen == 0 && oldNameLen == 0)
         {
           // not sure this is posible
           // so we will turn the event action into an error.
@@ -274,7 +279,7 @@ namespace myoddweb
           continue;
         }
 
-        if (e.Name == duplicate.Name)
+        if (e.Name != nullptr && duplicate.Name != nullptr && wcscmp(duplicate.Name, e.Name) == 0 )
         {
           // they are the same!
           return true;
@@ -322,7 +327,7 @@ namespace myoddweb
       {
         // when we want to check for the next cleanup
         // if the time is zero then we will use the event time + the max time.
-        _nextCleanupTimeCheck = event.TimeMillisecondsUtc + _maxCleanupAgeMillisecons;
+        _nextCleanupTimeCheck = event.TimeMillisecondsUtc + _maxCleanupAgeMilliseconds;
       }
     }
 
@@ -356,7 +361,7 @@ namespace myoddweb
       _nextCleanupTimeCheck = 0;
 
       // get the current time.
-      const auto old = now - _maxCleanupAgeMillisecons;
+      const auto old = now - _maxCleanupAgeMilliseconds;
       auto begin = _events.end();
       auto end = _events.end();
       for( auto it = _events.begin();; ++it )
