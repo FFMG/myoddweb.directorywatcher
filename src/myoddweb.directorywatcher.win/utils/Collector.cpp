@@ -5,6 +5,7 @@
 #include "Collector.h"
 #include "Lock.h"
 #include "Io.h"
+#include "Instrumentor.h"
 
 namespace myoddweb
 {
@@ -56,6 +57,8 @@ namespace myoddweb
      */
     void Collector::Add(const EventAction action, const std::wstring& path, const std::wstring& filename, bool isFile, EventError error)
     {
+      MYODDWEB_PROFILE_FUNCTION();
+
       // just add the action without an old filename.
       Add(action, path, filename, L"", isFile, error );
     }
@@ -70,6 +73,8 @@ namespace myoddweb
      */
     void Collector::AddRename(const std::wstring& path, const std::wstring& newFilename, const std::wstring& oldFilename, bool isFile, EventError error)
     {
+      MYODDWEB_PROFILE_FUNCTION();
+
       // just add the action without an old filename.
       Add(EventAction::Renamed, path, newFilename, oldFilename, isFile, error );
     }
@@ -85,6 +90,8 @@ namespace myoddweb
      */
     void Collector::Add( const EventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName, const bool isFile, EventError error)
     {
+      MYODDWEB_PROFILE_FUNCTION();
+
       try
       {
         // get the combined path.
@@ -119,6 +126,8 @@ namespace myoddweb
      */
     long Collector::CloneEventsAndEraseCurrent(Events& clone )
     {
+      MYODDWEB_PROFILE_FUNCTION();
+
       // lock
       auto guard = Lock(_lock);
 
@@ -160,6 +169,8 @@ namespace myoddweb
      */
     void Collector::GetEvents(std::vector<Event>& events)
     {
+      MYODDWEB_PROFILE_FUNCTION();
+
       // quickly make a copy of the current list
       // and erase the current contents.
       // the lock is released as soon as posible making sure that other threads
@@ -217,6 +228,8 @@ namespace myoddweb
      */
     void Collector::ValidateRenames(std::vector<Event>& source)
     {
+      MYODDWEB_PROFILE_FUNCTION();
+
       for (auto it = source.rbegin(); it != source.rend(); ++it)
       {
         auto& e = (*it);
@@ -263,6 +276,8 @@ namespace myoddweb
      */
     bool Collector::IsOlderDuplicate(const std::vector<Event>& source, const Event& duplicate)
     {
+      MYODDWEB_PROFILE_FUNCTION();
+
       for( auto it = source.begin(); it != source.end(); ++it )
       {
         const auto& e = (*it);
@@ -315,6 +330,8 @@ namespace myoddweb
      */
     void Collector::AddEventInformation(const EventInformation& event)
     {
+      MYODDWEB_PROFILE_FUNCTION();
+
       // we can now get the lock so we can add data.
       // the lock is released automatically.
       auto guard = Lock(_lock);
@@ -337,6 +354,8 @@ namespace myoddweb
      */
     void Collector::CleanupEvents()
     {
+      MYODDWEB_PROFILE_FUNCTION();
+
       // get the current time
       const auto now = GetMillisecondsNowUtc();
 
