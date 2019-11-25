@@ -6,6 +6,7 @@
 #include "Monitor.h"
 #include "../utils/Lock.h"
 #include "../utils/Io.h"
+#include "../utils/Instrumentor.h"
 
 namespace myoddweb
 {
@@ -77,6 +78,7 @@ namespace myoddweb
      */
     void Monitor::AddEvent(const EventAction action, const std::wstring& fileName, const bool isFile) const
     {
+      MYODDWEB_PROFILE_FUNCTION();
       _eventCollector->Add(action, Path(), fileName, isFile, EventError::None);
     }
 
@@ -88,6 +90,7 @@ namespace myoddweb
      */
     void Monitor::AddRenameEvent(const std::wstring& newFileName, const std::wstring& oldFilename, const bool isFile) const
     {
+      MYODDWEB_PROFILE_FUNCTION();
       _eventCollector->AddRename(Path(), newFileName, oldFilename, isFile, EventError::None );
     }
 
@@ -97,6 +100,7 @@ namespace myoddweb
      */
     void Monitor::AddEventError(const EventError error) const
     {
+      MYODDWEB_PROFILE_FUNCTION();
       _eventCollector->Add(EventAction::Unknown, Path(), L"", false, error );
     }
 
@@ -107,6 +111,8 @@ namespace myoddweb
      */
     long long Monitor::GetEvents(std::vector<Event>& events)
     {
+      MYODDWEB_PROFILE_FUNCTION();
+
       // get the events we collected.
       _eventCollector->GetEvents(events);
 
@@ -132,6 +138,8 @@ namespace myoddweb
      */
     bool Monitor::Start(EventCallback callback, long long callbackRateMs)
     {
+      MYODDWEB_PROFILE_FUNCTION();
+
       // set the callback in case we are updating it.
       // this uses the lock, so we should be fine.
       SetCallBack(callback, callbackRateMs );
@@ -180,6 +188,8 @@ namespace myoddweb
      */
     void Monitor::SetCallBack(EventCallback callback, const  long long callbackIntervalMs )
     {
+      MYODDWEB_PROFILE_FUNCTION();
+
       // guard for multiple entry.
       auto guard = Lock(_lock);
 
@@ -211,6 +221,8 @@ namespace myoddweb
      */
     void Monitor::PublishEvents()
     {
+      MYODDWEB_PROFILE_FUNCTION();
+
       // guard for multiple entry.
       auto guard = Lock(_lock);
 
@@ -239,6 +251,8 @@ namespace myoddweb
      */
     void Monitor::Stop()
     {
+      MYODDWEB_PROFILE_FUNCTION();
+
       if (Is(State::Stopped))
       {
         return;

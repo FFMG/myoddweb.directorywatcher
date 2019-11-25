@@ -3,11 +3,15 @@
 // See the LICENSE file in the project root for more information.
 #pragma once
 #include <string>
+#include <sstream>
 #include <chrono>
 #include <algorithm>
 #include <fstream>
 
+#include <mutex>
 #include <thread>
+
+#define MYODDWEB_PROFILE_BUFFER 100
 
 // from https://github.com/TheCherno/Hazel
 namespace myoddweb
@@ -32,9 +36,15 @@ namespace myoddweb
       InstrumentationSession* m_CurrentSession;
       std::ofstream m_OutputStream;
       int m_ProfileCount;
+      std::recursive_mutex _lock;
+      std::vector<std::string> _msgs;
+      const int _maxPacketSize;
     public:
       Instrumentor()
-        : m_CurrentSession(nullptr), m_ProfileCount(0)
+        : 
+        m_CurrentSession(nullptr), 
+        m_ProfileCount(0),
+        _maxPacketSize(MYODDWEB_PROFILE_BUFFER)
       {
       }
 
@@ -47,6 +57,7 @@ namespace myoddweb
 
       void EndSession()
       {
+        Flush();
         WriteFooter();
         m_OutputStream.close();
         delete m_CurrentSession;
@@ -56,23 +67,63 @@ namespace myoddweb
 
       void WriteProfile(const ProfileResult& result)
       {
-        if (m_ProfileCount++ > 0)
-          m_OutputStream << ",";
-
         std::string name = result.Name;
         std::replace(name.begin(), name.end(), '"', '\'');
 
-        m_OutputStream << "{";
-        m_OutputStream << "\"cat\":\"function\",";
-        m_OutputStream << "\"dur\":" << (result.End - result.Start) << ',';
-        m_OutputStream << "\"name\":\"" << name << "\",";
-        m_OutputStream << "\"ph\":\"X\",";
-        m_OutputStream << "\"pid\":0,";
-        m_OutputStream << "\"tid\":" << result.ThreadID << ",";
-        m_OutputStream << "\"ts\":" << result.Start;
-        m_OutputStream << "}";
+        std::stringstream ss;
 
+        ss << "{";
+        ss << "\"cat\":\"function\",";
+        ss << "\"dur\":" << (result.End - result.Start) << ',';
+        ss << "\"name\":\"" << name << "\",";
+        ss << "\"ph\":\"X\",";
+        ss << "\"pid\":0,";
+        ss << "\"tid\":" << result.ThreadID << ',';
+        ss << "\"ts\":" << result.Start;
+        ss << "}";
+
+        _lock.lock();
+        try
+        {
+          _msgs.push_back(ss.str() );
+          if (_msgs.size() > _maxPacketSize)
+          {
+            FlushInLock();
+          }
+        }
+        catch (...)
+        {
+        }
+        _lock.unlock();
+      }
+
+      void Flush()
+      {
+        _lock.lock();
+        try
+        {
+          FlushInLock();
+        }
+        catch (...)
+        {
+        }
+        _lock.unlock();
+      }
+
+      void FlushInLock()
+      {
+        if (_msgs.size() == 0)
+        {
+          return;
+        }
+        for (auto it = _msgs.begin(); it != _msgs.end(); ++it)
+        {
+          if (m_ProfileCount++ > 0)
+            m_OutputStream << ",";
+          m_OutputStream << *it;
+        }
         m_OutputStream.flush();
+        _msgs.clear();
       }
 
       void WriteHeader()
