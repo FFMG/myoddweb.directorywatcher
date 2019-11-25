@@ -97,7 +97,7 @@ namespace myoddweb.directorywatcher.utils.Helper
       };
 
       // start
-      return _start(ref r, _callback, 1000);
+      return _start(ref r, _callback, 50);
     }
 
     public bool Stop(long id)

@@ -138,8 +138,6 @@ namespace myoddweb
      */
     bool Monitor::Start(EventCallback callback, long long callbackRateMs)
     {
-      MYODDWEB_PROFILE_FUNCTION();
-
       // set the callback in case we are updating it.
       // this uses the lock, so we should be fine.
       SetCallBack(callback, callbackRateMs );

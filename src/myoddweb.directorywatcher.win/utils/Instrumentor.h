@@ -38,7 +38,7 @@ namespace myoddweb
       int m_ProfileCount;
       std::recursive_mutex _lock;
       std::vector<std::string> _msgs;
-      const int _maxPacketSize;
+      const uint32_t _maxPacketSize;
     public:
       Instrumentor()
         : 
@@ -86,7 +86,7 @@ namespace myoddweb
         try
         {
           _msgs.push_back(ss.str() );
-          if (_msgs.size() > _maxPacketSize)
+          if ((uint32_t)_msgs.size() > _maxPacketSize)
           {
             FlushInLock();
           }
@@ -147,9 +147,15 @@ namespace myoddweb
 
     class InstrumentationTimer
     {
+    private:
+      const uint32_t _threadId;
+
     public:
-      InstrumentationTimer(const char* name)
-        : m_Name(name), m_Stopped(false)
+      InstrumentationTimer(const char* name, uint32_t threadid)
+        : 
+        m_Name(name), 
+        m_Stopped(false),
+        _threadId( threadid )
       {
         m_StartTimepoint = std::chrono::high_resolution_clock::now();
       }
@@ -157,7 +163,9 @@ namespace myoddweb
       ~InstrumentationTimer()
       {
         if (!m_Stopped)
+        {
           Stop();
+        }
       }
 
       void Stop()
@@ -167,8 +175,7 @@ namespace myoddweb
         long long start = std::chrono::time_point_cast<std::chrono::microseconds>(m_StartTimepoint).time_since_epoch().count();
         long long end = std::chrono::time_point_cast<std::chrono::microseconds>(endTimepoint).time_since_epoch().count();
 
-        uint32_t threadID = std::hash<std::thread::id>{}(std::this_thread::get_id());
-        Instrumentor::Get().WriteProfile({ m_Name, start, end, threadID });
+        Instrumentor::Get().WriteProfile({ m_Name, start, end, _threadId });
 
         m_Stopped = true;
       }
@@ -187,13 +194,15 @@ namespace myoddweb
 #endif // DEBUG
 
 #if MYODDWEB_PROFILE
-#define MYODDWEB_PROFILE_BEGIN_SESSION(name, filepath) ::myoddweb::directorywatcher::Instrumentor::Get().BeginSession(name, filepath)
-#define MYODDWEB_PROFILE_END_SESSION() ::myoddweb::directorywatcher::Instrumentor::Get().EndSession()
-#define MYODDWEB_PROFILE_SCOPE(name) ::myoddweb::directorywatcher::InstrumentationTimer timer##__LINE__(name);
-#define MYODDWEB_PROFILE_FUNCTION() MYODDWEB_PROFILE_SCOPE(__FUNCSIG__)
+  #define MYODDWEB_PROFILE_BEGIN_SESSION(name, filepath) ::myoddweb::directorywatcher::Instrumentor::Get().BeginSession(name, filepath)
+  #define MYODDWEB_PROFILE_END_SESSION() ::myoddweb::directorywatcher::Instrumentor::Get().EndSession()
+  #define MYODDWEB_PROFILE_SCOPE(name, threadId) ::myoddweb::directorywatcher::InstrumentationTimer timer##__LINE__(name, threadId);
+  #define MYODDWEB_PROFILE_FUNCTION_WITHTHREADID() MYODDWEB_PROFILE_SCOPE(__FUNCSIG__, static_cast<uint32_t>(std::hash<std::thread::id>{}(std::this_thread::get_id())))
+  #define MYODDWEB_PROFILE_FUNCTION() MYODDWEB_PROFILE_SCOPE(__FUNCSIG__, 0)
 #else
-#define MYODDWEB_PROFILE_BEGIN_SESSION(name, filepath)
-#define MYODDWEB_PROFILE_END_SESSION()
-#define MYODDWEB_PROFILE_SCOPE(name)
-#define MYODDWEB_PROFILE_FUNCTION()
+  #define MYODDWEB_PROFILE_BEGIN_SESSION(name, filepath)
+  #define MYODDWEB_PROFILE_END_SESSION()
+  #define MYODDWEB_PROFILE_SCOPE(name)
+  #define MYODDWEB_PROFILE_FUNCTION()
+  #define MYODDWEB_PROFILE_FUNCTION_WITHTHREADID()
 #endif 
