@@ -9,9 +9,13 @@
 #include <fstream>
 
 #include <mutex>
-#include <thread>
 
-#define MYODDWEB_PROFILE_BUFFER 100
+/**
+ * \brief how often we want to flush log data to disk.
+ *        the bigger the size, the more memory will be used.
+ *        it is all lost when we crash ... but then again the json doc is corrupted by then.
+ */
+#define MYODDWEB_PROFILE_BUFFER 1000
 
 // from https://github.com/TheCherno/Hazel
 namespace myoddweb
@@ -32,42 +36,70 @@ namespace myoddweb
 
     class Instrumentor
     {
-    private:
-      InstrumentationSession* m_CurrentSession;
-      std::ofstream m_OutputStream;
-      int m_ProfileCount;
+      InstrumentationSession* _currentSession;
+      std::ofstream _outputStream;
+      uint32_t _profileCount;
       std::recursive_mutex _lock;
-      std::vector<std::string> _msgs;
+      std::vector<ProfileResult> _msgs;
       const uint32_t _maxPacketSize;
     public:
       Instrumentor()
         : 
-        m_CurrentSession(nullptr), 
-        m_ProfileCount(0),
+        _currentSession(nullptr), 
+        _profileCount(0),
         _maxPacketSize(MYODDWEB_PROFILE_BUFFER)
       {
       }
 
       void BeginSession(const std::string& name, const std::string& filepath = "results.json")
       {
-        m_OutputStream.open(filepath);
+        _outputStream.open(filepath);
         WriteHeader();
-        m_CurrentSession = new InstrumentationSession{ name };
+        _currentSession = new InstrumentationSession{ name };
       }
 
       void EndSession()
       {
         Flush();
         WriteFooter();
-        m_OutputStream.close();
-        delete m_CurrentSession;
-        m_CurrentSession = nullptr;
-        m_ProfileCount = 0;
+        _outputStream.close();
+        delete _currentSession;
+        _currentSession = nullptr;
+        _profileCount = 0;
       }
 
       void WriteProfile(const ProfileResult& result)
       {
-        std::string name = result.Name;
+        _lock.lock();
+        try
+        {
+          _msgs.push_back(result);
+          if (static_cast<uint32_t>(_msgs.size()) > _maxPacketSize)
+          {
+            FlushInLock();
+          }
+        }
+        catch (...)
+        {
+        }
+        _lock.unlock();
+      }
+
+      static Instrumentor& Get()
+      {
+        static Instrumentor instance;
+        return instance;
+      }
+
+    private:
+      /**
+       * \brief given the profile result create the json string to add.
+       * \param result the data we want to build the string with
+       * \return the created string.
+       */
+      static std::string BuildMessage(const ProfileResult& result)
+      {
+        auto name = result.Name;
         std::replace(name.begin(), name.end(), '"', '\'');
 
         std::stringstream ss;
@@ -81,20 +113,7 @@ namespace myoddweb
         ss << "\"tid\":" << result.ThreadID << ',';
         ss << "\"ts\":" << result.Start;
         ss << "}";
-
-        _lock.lock();
-        try
-        {
-          _msgs.push_back(ss.str() );
-          if ((uint32_t)_msgs.size() > _maxPacketSize)
-          {
-            FlushInLock();
-          }
-        }
-        catch (...)
-        {
-        }
-        _lock.unlock();
+        return ss.str();
       }
 
       void Flush()
@@ -112,57 +131,55 @@ namespace myoddweb
 
       void FlushInLock()
       {
-        if (_msgs.size() == 0)
+        if (_msgs.empty())
         {
           return;
         }
         for (auto it = _msgs.begin(); it != _msgs.end(); ++it)
         {
-          if (m_ProfileCount++ > 0)
-            m_OutputStream << ",";
-          m_OutputStream << *it;
+          if (_profileCount++ > 0)
+          {
+            _outputStream << ",";
+          }
+          _outputStream << BuildMessage( *it );
         }
-        m_OutputStream.flush();
+        _outputStream.flush();
         _msgs.clear();
       }
 
       void WriteHeader()
       {
-        m_OutputStream << "{\"otherData\": {},\"traceEvents\":[";
-        m_OutputStream.flush();
+        _outputStream << "{\"otherData\": {},\"traceEvents\":[";
+        _outputStream.flush();
       }
 
       void WriteFooter()
       {
-        m_OutputStream << "]}";
-        m_OutputStream.flush();
-      }
-
-      static Instrumentor& Get()
-      {
-        static Instrumentor instance;
-        return instance;
+        _outputStream << "]}";
+        _outputStream.flush();
       }
     };
 
     class InstrumentationTimer
     {
-    private:
+      const char* _name;
+      std::chrono::time_point<std::chrono::high_resolution_clock> _startTimepoint;
+      bool _stopped;
       const uint32_t _threadId;
 
     public:
-      InstrumentationTimer(const char* name, uint32_t threadId)
+      InstrumentationTimer(const char* name, const uint32_t threadId)
         : 
-        m_Name(name), 
-        m_Stopped(false),
+        _name(name), 
+        _stopped(false),
         _threadId( threadId )
       {
-        m_StartTimepoint = std::chrono::high_resolution_clock::now();
+        _startTimepoint = std::chrono::high_resolution_clock::now();
       }
 
       ~InstrumentationTimer()
       {
-        if (!m_Stopped)
+        if (!_stopped)
         {
           Stop();
         }
@@ -170,24 +187,23 @@ namespace myoddweb
 
       void Stop()
       {
-        auto endTimepoint = std::chrono::high_resolution_clock::now();
+        const auto endTimepoint = std::chrono::high_resolution_clock::now();
 
-        long long start = std::chrono::time_point_cast<std::chrono::microseconds>(m_StartTimepoint).time_since_epoch().count();
-        long long end = std::chrono::time_point_cast<std::chrono::microseconds>(endTimepoint).time_since_epoch().count();
+        const auto start = std::chrono::time_point_cast<std::chrono::microseconds>(_startTimepoint).time_since_epoch().count();
+        const auto end = std::chrono::time_point_cast<std::chrono::microseconds>(endTimepoint).time_since_epoch().count();
 
-        Instrumentor::Get().WriteProfile({ m_Name, start, end, _threadId });
+        Instrumentor::Get().WriteProfile({ _name, start, end, _threadId });
 
-        m_Stopped = true;
+        _stopped = true;
       }
-    private:
-      const char* m_Name;
-      std::chrono::time_point<std::chrono::high_resolution_clock> m_StartTimepoint;
-      bool m_Stopped;
     };
   }
 }
 
 #ifdef _DEBUG
+ /**
+   * \brief turn profiling on/off, uses a _lot_ of disc space!
+   */
   #define MYODDWEB_PROFILE 1
 #else
   #define MYODDWEB_PROFILE 0
