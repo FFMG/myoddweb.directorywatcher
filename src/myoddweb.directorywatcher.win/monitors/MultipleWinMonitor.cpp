@@ -14,7 +14,7 @@ namespace myoddweb
 {
   namespace directorywatcher
   {
-    MultipleWinMonitor::MultipleWinMonitor(const __int64 id, const Request& request) :
+    MultipleWinMonitor::MultipleWinMonitor(const long long id, const Request& request) :
       Monitor(id, request)
     {
       // use a standar monitor for non recursive items.
@@ -69,11 +69,26 @@ namespace myoddweb
      */
     void MultipleWinMonitor::OnGetEvents(std::vector<Event*>& events)
     {
+      // guard for multiple (re)entry.
+      auto guard = Lock(_lock);
+
+      // now that we have the lock ... check if we have stopped.
+      if (Is(State::Stopped) || Is(State::Stopping))
+      {
+        return;
+      }
+
       // get the children events
-      const auto childrentEvents = GetAndProcessChildEvents();
+      const auto childrentEvents = GetAndProcessChildEventsInLock();
 
       // then look for the parent events.
-      const auto parentEvents = GetAndProcessParentEvents();
+      const auto parentEvents = GetAndProcessParentEventsInLock();
+
+      // the events above us threads... so we need to check again
+      if (Is(State::Stopped) || Is(State::Stopping))
+      {
+        return;
+      }
 
       //  add the parents and the children
       events.insert(events.end(), childrentEvents.begin(), childrentEvents.end());
@@ -180,7 +195,7 @@ namespace myoddweb
      * \brief process the parent events
      * \return events the events we will be adding to
      */
-    std::vector<Event*> MultipleWinMonitor::GetAndProcessParentEvents()
+    std::vector<Event*> MultipleWinMonitor::GetAndProcessParentEventsInLock()
     {
       // get the events
       std::vector<Event*> events;
@@ -258,47 +273,60 @@ namespace myoddweb
      * \brief process the cildren events
      * \return events the events we will be adding to
      */
-    std::vector<Event*> MultipleWinMonitor::GetAndProcessChildEvents() const
+    std::vector<Event*> MultipleWinMonitor::GetAndProcessChildEventsInLock() const
     {
       // all the events.
       std::vector<Event*> events;
+      std::vector<std::future<std::vector<Event*>>> fevents;
 
       for (auto it = _recursiveChildren.begin(); it != _recursiveChildren.end(); ++it)
       {
-        try
-        {
-          // if we are stopped or stopping, there is nothing for us to do.
-          if (Is(State::Stopped) || Is(State::Stopping))
-          {
-            return events;
-          }
+        // the monitor, we need to copy to variable to prevent closure...
+        const auto monitor = *it;
+        fevents.push_back(std::async(std::launch::async, [&] { return GetEvents(monitor); }) );
+      }
 
-          // the monitor
-          auto& monitor = *(*it);
+      for (auto it = fevents.begin(); it != fevents.end(); ++it)
+      {
+        const auto levents = (*it).get();
 
-          // the current events.
-          std::vector<Event*> levents;
-
-          // get this directory events
-          if (0 == monitor.GetEvents(levents))
-          {
-            continue;
-          }
-
-          // add them to our list of events.
-          events.insert(events.end(), levents.begin(), levents.end());
-
-          // clear the list
-          levents.clear();
-        }
-        catch (...)
-        {
-          // @todo we need to log this somewhere.
-        }
+        // add them to our list of events.
+        events.insert(events.end(), levents.begin(), levents.end());
       }
       return events;
     }
 
+    /**
+     * \brief process the children events
+     * \param monitor the monitor we are getting the events for.
+     * \rerturn events the events we will be adding to
+     */
+    std::vector<Event*> MultipleWinMonitor::GetEvents(Monitor* monitor) const
+    {
+      try
+      {
+        // if we are stopped or stopping, there is nothing for us to do.
+        if ( Is(State::Stopped) || Is(State::Stopping))
+        {
+          return {};
+        }
+
+        // the current events.
+        std::vector<Event*> events;
+
+        // get this directory events
+        monitor->GetEvents(events);
+
+        // add them to our list of events.
+        return events;
+      }
+      catch (...)
+      {
+        // @todo we need to log this somewhere.
+      }
+      return {};
+    }
+    
     /**
      * \briefFunction to call montior functions...
      * \param container the vector of monitors.

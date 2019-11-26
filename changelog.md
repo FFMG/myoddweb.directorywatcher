@@ -12,6 +12,8 @@ Notable changes
 
 ### Changed
 
+- Some code now running is parallel to speed-up the processing of folders/files that have changed.
+
 ### Fixed
 
 - If a callback throws an error ... or misbehaves, it no longer kills the entire process.
