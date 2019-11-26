@@ -43,11 +43,7 @@ namespace myoddweb
        * \param events the events we will be filling
        * \return the number of events we found.
        */
-      long long GetEvents(std::vector<Event>& events);
-
-      virtual void OnGetEvents(std::vector<Event>& events) = 0;
-      virtual void OnStart() = 0;
-      virtual void OnStop() = 0;
+      long long GetEvents(std::vector<Event*>& events);
 
       void AddEvent(EventAction action, const std::wstring& fileName, bool isFile ) const;
       void AddRenameEvent(const std::wstring& newFileName, const std::wstring& oldFilename, bool isFile) const;
@@ -106,11 +102,16 @@ namespace myoddweb
 
       /**
        * \brief set the callback and how often we want to check for event, (and callback if we have any).
-       * \param the callback we want to call
-       * \param hw often we want to check for events.
+       * \param callback the callback we want to call
+       * \param callbackIntervalMs how often we want to check for events.
        * \return
        */
       void SetCallBack(EventCallback callback, long long callbackIntervalMs );
+
+      virtual void OnGetEvents(std::vector<Event*>& events) = 0;
+      virtual void OnStart() = 0;
+      virtual void OnStop() = 0;
+
 
     private:
       /**

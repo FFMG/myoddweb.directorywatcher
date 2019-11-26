@@ -157,9 +157,9 @@ namespace myoddweb
      * \param rhs the rhs element we are checking.
      * \return if we need to swap the two items.
      */
-    bool Collector::SortByTimeMillisecondsUtc(const Event& lhs, const Event& rhs)
+    bool Collector::SortByTimeMillisecondsUtc(const Event* lhs, const Event* rhs)
     {
-      return lhs.TimeMillisecondsUtc < rhs.TimeMillisecondsUtc;
+      return lhs->TimeMillisecondsUtc < rhs->TimeMillisecondsUtc;
     }
 
     /**
@@ -167,7 +167,7 @@ namespace myoddweb
      * \param events the events we will be filling
      * \return the number of events we found.
      */
-    void Collector::GetEvents(std::vector<Event>& events)
+    void Collector::GetEvents( std::vector<Event*>& events )
     {
       MYODDWEB_PROFILE_FUNCTION();
 
@@ -196,7 +196,7 @@ namespace myoddweb
       {
         const auto& eventInformation = (*it);
 
-        auto e = new Event(eventInformation.Name.c_str(),
+        const auto e = new Event(eventInformation.Name.c_str(),
           eventInformation.OldName.c_str(),
           ConvertEventAction(eventInformation.Action),
           ConvertEventError(eventInformation.Error),
@@ -213,8 +213,8 @@ namespace myoddweb
         // it is not a duplicate, so we can add it.
         // because we are getting the data in reverse we will add the data
         // in the front, it is older than the previous one.
-        events.insert( events.begin(), *e);
-        delete e;
+        // the caller will now be in charge of cleanning up the memory
+        events.insert( events.begin(), e);
       }
 
       // last step is to cleanup all the renames.
@@ -226,35 +226,35 @@ namespace myoddweb
      * The ones that do not have a new/old name.
      * \param source the collection of events we will be looking in
      */
-    void Collector::ValidateRenames(std::vector<Event>& source)
+    void Collector::ValidateRenames(std::vector<Event*>& source)
     {
       MYODDWEB_PROFILE_FUNCTION();
 
       for (auto it = source.rbegin(); it != source.rend(); ++it)
       {
         auto& e = (*it);
-        if (e.Action != static_cast<int>(EventAction::Renamed))
+        if (e->Action != static_cast<int>(EventAction::Renamed))
         {
           continue;
         }
 
         // get the file sizes.
-        const auto oldNameLen = e.OldName == nullptr ? 0 : wcslen(e.OldName);
-        const auto nameLen = e.Name == nullptr ? 0 : wcslen(e.Name);
+        const auto oldNameLen = e->OldName == nullptr ? 0 : wcslen(e->OldName);
+        const auto nameLen = e->Name == nullptr ? 0 : wcslen(e->Name);
 
         // old name is empty, but not new name
         if (oldNameLen == 0 && nameLen > 0)
         {
           // so we have a new name, but no old name
-          e.Action = static_cast<int>(EventAction::Added);
+          e->Action = static_cast<int>(EventAction::Added);
         }
 
         // no new path
         if (nameLen == 0 && oldNameLen > 0)
         {
           // so we have an old name, but no new name
-          e.MoveOldNameToName();
-          e.Action = static_cast<int>(EventAction::Removed );
+          e->MoveOldNameToName();
+          e->Action = static_cast<int>(EventAction::Removed );
         }
 
         // both empty
@@ -262,8 +262,8 @@ namespace myoddweb
         {
           // not sure this is posible
           // so we will turn the event action into an error.
-          e.Action = static_cast<int>(EventAction::Unknown);
-          e.Error = static_cast<int>(EventError::NoFileData);
+          e->Action = static_cast<int>(EventAction::Unknown);
+          e->Error = static_cast<int>(EventError::NoFileData);
         }
       }
     }
@@ -274,7 +274,7 @@ namespace myoddweb
      * \param duplicate the event information we want to add.
      * \return if the event information is already in the 'source'
      */
-    bool Collector::IsOlderDuplicate(const std::vector<Event>& source, const Event& duplicate)
+    bool Collector::IsOlderDuplicate(const std::vector<Event*>& source, const Event& duplicate)
     {
       MYODDWEB_PROFILE_FUNCTION();
 
@@ -283,18 +283,18 @@ namespace myoddweb
         const auto& e = (*it);
 
         // they must both be of the same type.
-        if (e.IsFile != duplicate.IsFile)
+        if (e->IsFile != duplicate.IsFile)
         {
           continue;
         }
 
         // if the actions are not the same, then it is not an older duplicate.
-        if( e.Action != duplicate.Action)
+        if(e->Action != duplicate.Action)
         {
           continue;
         }
 
-        if (e.Name != nullptr && duplicate.Name != nullptr && wcscmp(duplicate.Name, e.Name) == 0 )
+        if (e->Name != nullptr && duplicate.Name != nullptr && wcscmp(duplicate.Name, e->Name) == 0 )
         {
           // they are the same!
           return true;

@@ -109,7 +109,7 @@ namespace myoddweb
      * \param events the events we will be filling
      * \return the number of events we found.
      */
-    long long Monitor::GetEvents(std::vector<Event>& events)
+    long long Monitor::GetEvents(std::vector<Event*>& events)
     {
       MYODDWEB_PROFILE_FUNCTION();
 
@@ -180,8 +180,8 @@ namespace myoddweb
 
     /**
      * \brief set the callback and how often we want to check for event, (and callback if we have any).
-     * \param the callback we want to call
-     * \param hw often we want to check for events.
+     * \param callback the callback we want to call
+     * \param callbackIntervalMs hw often we want to check for events.
      * \return
      */
     void Monitor::SetCallBack(EventCallback callback, const  long long callbackIntervalMs )
@@ -224,7 +224,7 @@ namespace myoddweb
       // guard for multiple entry.
       auto guard = Lock(_lock);
 
-      auto events = std::vector<Event>();
+      auto events = std::vector<Event*>();
       if (0 == GetEvents(events))
       {
         return;
@@ -232,15 +232,28 @@ namespace myoddweb
 
       for (auto it = events.begin(); it != events.end(); ++it)
       {
-        _callback(
-          Id(),
-          (*it).IsFile,
-          (*it).Name,
-          (*it).OldName,
-          (*it).Action,
-          (*it).Error,
-          (*it).TimeMillisecondsUtc
+        const auto& event = (*it);
+        try
+        {
+          _callback(
+            Id(),
+            event->IsFile,
+            event->Name,
+            event->OldName,
+            event->Action,
+            event->Error,
+            event->TimeMillisecondsUtc
           );
+        }
+        catch( ... )
+        {
+          // the callback did something wrong!
+          // we should log it somewhere.
+        }
+
+        // we are done with the event
+        // so we can get rid of it.
+        delete event;
       }
     }
 

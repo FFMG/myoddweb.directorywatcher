@@ -23,7 +23,7 @@ namespace myoddweb
 
       void OnStart() override;
       void OnStop() override;
-      void OnGetEvents(std::vector<Event>& events) override;
+      void OnGetEvents(std::vector<Event*>& events) override;
 
     private:
       /**
@@ -92,13 +92,13 @@ namespace myoddweb
        * \brief process the parent events
        * \return events the events we will be adding to
        */
-      std::vector<Event> GetAndProcessParentEvents();
+      std::vector<Event*> GetAndProcessParentEvents();
 
       /**
        * \brief process the cildren events
        * \rerturn events the events we will be adding to
        */
-      std::vector<Event> GetAndProcessChildEvents() const;
+      std::vector<Event*> GetAndProcessChildEvents() const;
 
       /**
        * \brief look for a posible child with a matching path.

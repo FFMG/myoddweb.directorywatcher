@@ -204,7 +204,7 @@ namespace myoddweb
  /**
    * \brief turn profiling on/off, uses a _lot_ of disc space!
    */
-  #define MYODDWEB_PROFILE 1
+  #define MYODDWEB_PROFILE 0
 #else
   #define MYODDWEB_PROFILE 0
 #endif // DEBUG

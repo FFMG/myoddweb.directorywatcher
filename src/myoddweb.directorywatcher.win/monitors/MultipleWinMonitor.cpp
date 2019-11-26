@@ -67,7 +67,7 @@ namespace myoddweb
      * \param events the events we will be filling
      * \return the number of events we found.
      */
-    void MultipleWinMonitor::OnGetEvents(std::vector<Event>& events)
+    void MultipleWinMonitor::OnGetEvents(std::vector<Event*>& events)
     {
       // get the children events
       const auto childrentEvents = GetAndProcessChildEvents();
@@ -85,7 +85,7 @@ namespace myoddweb
 
     #pragma region Private Functions
     /**
-     * \brief look for a posible child with a matching path.
+     * \brief look for a possible child with a matching path.
      * \param path the path we are looking for.
      * \return if we find it, the iterator of the child monitor.
      */
@@ -121,7 +121,7 @@ namespace myoddweb
       // a folder was added to this path
       // so we have to add this path as a child.
       const auto id = GetNextId();
-      auto request = new Request(path, true);
+      const auto request = new Request(path, true);
       auto child = new WinMonitor(id, *request );
       _recursiveChildren.push_back(child);
       child->Start( nullptr, 0 );
@@ -180,13 +180,13 @@ namespace myoddweb
      * \brief process the parent events
      * \return events the events we will be adding to
      */
-    std::vector<Event> MultipleWinMonitor::GetAndProcessParentEvents()
+    std::vector<Event*> MultipleWinMonitor::GetAndProcessParentEvents()
     {
       // get the events
-      std::vector<Event> events;
+      std::vector<Event*> events;
 
       // the current events.
-      std::vector<Event> levents;
+      std::vector<Event*> levents;
       for (auto it = _nonRecursiveParents.begin(); it != _nonRecursiveParents.end(); ++it)
       {
         try
@@ -214,24 +214,24 @@ namespace myoddweb
           for (auto levent : levents)
           {
             // we don't care about file events.
-            if( levent.IsFile )
+            if( levent->IsFile )
             {
               continue;
             }
 
             // we care about deleted/added folder events.
-            switch (static_cast<EventAction>(levent.Action))
+            switch (static_cast<EventAction>(levent->Action))
             {
             case EventAction::Added:
-              ProcessEventAdded(levent.Name);
+              ProcessEventAdded(levent->Name);
               break;
 
             case EventAction::Renamed:
-              ProcessEventRenamed(levent.Name, levent.OldName);
+              ProcessEventRenamed(levent->Name, levent->OldName);
               break;
 
             case EventAction::Removed:
-              ProcessEventAdded(levent.Name);
+              ProcessEventAdded(levent->Name);
               break;
 
             default:
@@ -258,10 +258,10 @@ namespace myoddweb
      * \brief process the cildren events
      * \return events the events we will be adding to
      */
-    std::vector<Event> MultipleWinMonitor::GetAndProcessChildEvents() const
+    std::vector<Event*> MultipleWinMonitor::GetAndProcessChildEvents() const
     {
       // all the events.
-      std::vector<Event> events;
+      std::vector<Event*> events;
 
       for (auto it = _recursiveChildren.begin(); it != _recursiveChildren.end(); ++it)
       {
@@ -273,11 +273,14 @@ namespace myoddweb
             return events;
           }
 
+          // the monitor
+          auto& monitor = *(*it);
+
           // the current events.
-          std::vector<Event> levents;
+          std::vector<Event*> levents;
 
           // get this directory events
-          if (0 == (*it)->GetEvents(levents))
+          if (0 == monitor.GetEvents(levents))
           {
             continue;
           }

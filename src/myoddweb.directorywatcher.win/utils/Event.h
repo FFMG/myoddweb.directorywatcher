@@ -25,34 +25,21 @@ namespace myoddweb
 
       }
 
-      Event(const wchar_t* name, const wchar_t* oldName, int action, int error, long long timeMillisecondsUtc, bool isFile) :
+      Event(const wchar_t* name, const wchar_t* oldName, const int action, const int error, const long long timeMillisecondsUtc, const bool isFile) :
         Event()
       {
         Assign(name, oldName, action, error, timeMillisecondsUtc, isFile);
       }
 
-      Event(const Event& src) : 
-        Event()
-      {
-        Assign(src);
-      }
-
-      const Event& operator=(const Event& src)
-      {
-        Assign(src);
-        return *this;
-      }
-
       ~Event()
       {
-        ClearName();
-        ClearOldName();
+        Clear();
       }
 
-      bool operator==(const Event& rhs) const
-      {
-        return false;
-      }
+      // prevent copy
+      Event(const Event& src) = delete;
+      const Event& operator=(const Event& src) = delete;
+
     private:
       void Assign(const Event& src)
       {
@@ -63,33 +50,46 @@ namespace myoddweb
         Assign( src.Name, src.OldName, src.Action, src.Error, src.TimeMillisecondsUtc, src.IsFile );
       }
 
-      void Assign(const wchar_t* name, const wchar_t* oldName, int action, int error, long long timeMillisecondsUtc, bool isFile)
+      void Assign(const wchar_t* name, const wchar_t* oldName, const int action, const int error, const long long timeMillisecondsUtc, const bool isFile)
       {
+        // clear the old values.
+        Clear();
+
+        // and set the values.
         Action = action;
         Error = error;
         TimeMillisecondsUtc = timeMillisecondsUtc;
         IsFile = isFile;
 
-        ClearName();
-        ClearOldName();
-
         if (name != nullptr)
         {
-          auto l = wcslen(name);
-          Name = new wchar_t[l + 1];
-          wmemset(Name, L'\0', l + 1);
-          wcscpy_s(Name, l + 1, name);
+          const auto len = wcslen(name);
+          Name = new wchar_t[len + 1];
+          wmemset(Name, L'\0', len + 1);
+          wcscpy_s(Name, len + 1, name);
         }
 
         if (oldName != nullptr)
         {
-          auto l = wcslen(oldName);
-          OldName = new wchar_t[l + 1];
-          wmemset(OldName, L'\0', l + 1);
-          wcscpy_s(OldName, l + 1, oldName);
+          const auto len = wcslen(oldName);
+          OldName = new wchar_t[len + 1];
+          wmemset(OldName, L'\0', len + 1);
+          wcscpy_s(OldName, len + 1, oldName);
         }
       }
 
+      /**
+       * \brief free all the memory
+       */
+      void Clear()
+      {
+        ClearName();
+        ClearOldName();
+      }
+
+      /**
+       * \brief free the name memory
+       */
       void ClearName()
       {
         if (Name == nullptr)
@@ -100,6 +100,9 @@ namespace myoddweb
         Name = nullptr;
       }
 
+      /**
+       * \brief free the old name memory
+       */
       void ClearOldName()
       {
         if (OldName == nullptr)

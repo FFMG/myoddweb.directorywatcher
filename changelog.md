@@ -7,11 +7,14 @@ Notable changes
 ### Added
 
 - Instrumentation, [Thanks to The Cherno / Hazel project)](https://github.com/TheCherno/Hazel/)
+  The flag `MYODDWEB_PROFILE` needs to be set to 1.
 - Version number fo unmanaged `myoddweb.directorywatcher` helper.
 
 ### Changed
 
 ### Fixed
+
+- If a callback throws an error ... or misbehaves, it no longer kills the entire process.
 
 ### Removed
 
