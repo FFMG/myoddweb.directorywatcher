@@ -113,6 +113,11 @@ namespace myoddweb
     {
       MYODDWEB_PROFILE_FUNCTION();
 
+      if (!Is(State::Started))
+      {
+        return 0;
+      }
+
       // get the events we collected.
       _eventCollector->GetEvents(events);
 
@@ -134,9 +139,11 @@ namespace myoddweb
 
     /**
      * \brief Start the monitoring, if needed.
+     * \param callback
+     * \param callbackRateMs how often we want to callback
      * \return success or not.
      */
-    bool Monitor::Start(EventCallback callback, long long callbackRateMs)
+    bool Monitor::Start( EventCallback callback, const long long callbackRateMs)
     {
       // set the callback in case we are updating it.
       // this uses the lock, so we should be fine.

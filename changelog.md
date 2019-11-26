@@ -12,7 +12,8 @@ Notable changes
 
 ### Changed
 
-- Some code now running is parallel to speed-up the processing of folders/files that have changed.
+- Various performance / memory fixes
+  - Some code now running is parallel to speed-up the processing of folders/files that have changed.
 
 ### Fixed
 

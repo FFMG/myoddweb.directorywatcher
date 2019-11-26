@@ -73,7 +73,7 @@ namespace myoddweb
       auto guard = Lock(_lock);
 
       // now that we have the lock ... check if we have stopped.
-      if (Is(State::Stopped) || Is(State::Stopping))
+      if (!Is(State::Started))
       {
         return;
       }
@@ -85,7 +85,7 @@ namespace myoddweb
       const auto parentEvents = GetAndProcessParentEventsInLock();
 
       // the events above us threads... so we need to check again
-      if (Is(State::Stopped) || Is(State::Stopping))
+      if(!Is(State::Started))
       {
         return;
       }
