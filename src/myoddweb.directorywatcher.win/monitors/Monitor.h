@@ -96,10 +96,14 @@ namespace myoddweb
       void PublishEvents();
 
       /**
-       * \brief set the callback and how often we want to check for event, (and callback if we have any).
-       * \return
+       * \brief Start the callback timer so we can publish events.
        */
       void StartCallBack();
+
+      /**
+       * \brief Stop the callback timer to we can stop publishing.
+       */
+      void StopCallBack();
 
       virtual void OnGetEvents(std::vector<Event*>& events) = 0;
       virtual void OnStart() = 0;

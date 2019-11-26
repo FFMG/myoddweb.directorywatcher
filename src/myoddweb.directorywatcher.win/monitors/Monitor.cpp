@@ -144,9 +144,6 @@ namespace myoddweb
      */
     bool Monitor::Start()
     {
-      // we might as well start the callback now.
-      StartCallBack( );
-
       if (Is(State::Started))
       {
         return true;
@@ -166,6 +163,9 @@ namespace myoddweb
 
       try
       {
+        // start the callback
+        StartCallBack();
+
         // derived class to start
         OnStart();
 
@@ -184,23 +184,35 @@ namespace myoddweb
     }
 
     /**
-     * \brief set the callback and how often we want to check for event, (and callback if we have any).
-     * \return
+     * \brief Stop the callback timer to we can stop publishing.
      */
-    void Monitor::StartCallBack()
+    void Monitor::StopCallBack()
     {
       MYODDWEB_PROFILE_FUNCTION();
 
       // guard for multiple entry.
       auto guard = Lock(_lock);
 
-      // clear the old timer.
-      if (_callbackTimer != nullptr)
+      // do we have a callback to stop?
+      if (_callbackTimer == nullptr)
       {
-        _callbackTimer->Stop();
-        delete _callbackTimer;
-        _callbackTimer = nullptr;
+        return;
       }
+
+      _callbackTimer->Stop();
+      delete _callbackTimer;
+      _callbackTimer = nullptr;
+    }
+
+    /**
+      * \brief Start the callback timer so we can publish events.
+      */
+    void Monitor::StartCallBack()
+    {
+      MYODDWEB_PROFILE_FUNCTION();
+
+      // whatever we are doing, we need to kill the current timer.
+      StopCallBack();
 
       // null is allowed
       if (nullptr == _request->Callback)
@@ -215,10 +227,12 @@ namespace myoddweb
       }
 
       _callbackTimer = new Timer();
-      _callbackTimer->Start([&]() {
+      _callbackTimer->Start([&]() 
+        {
           PublishEvents();
         }, 
-        _request->CallbackRateMs);
+        _request->CallbackRateMs
+      );
     }
 
     /**
@@ -301,6 +315,9 @@ namespace myoddweb
 
       try
       {
+        // we have to kill the callback timer
+        StopCallBack();
+
         // then do the stop
         OnStop();
 
