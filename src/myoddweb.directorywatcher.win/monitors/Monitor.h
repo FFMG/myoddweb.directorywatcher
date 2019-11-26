@@ -49,7 +49,7 @@ namespace myoddweb
       void AddRenameEvent(const std::wstring& newFileName, const std::wstring& oldFilename, bool isFile) const;
       void AddEventError(EventError error) const;
 
-      bool Start(EventCallback callback, long long callbackRateMs );
+      bool Start();
       void Stop();
 
     protected:
@@ -67,11 +67,6 @@ namespace myoddweb
        * \brief the current list of collected events.
        */
       Collector* _eventCollector;
-
-      /**
-       * \brief the callback we will call when we have events.
-       */
-      EventCallback _callback;
 
       /**
        * \brief how often we want to check for new events.
@@ -102,16 +97,13 @@ namespace myoddweb
 
       /**
        * \brief set the callback and how often we want to check for event, (and callback if we have any).
-       * \param callback the callback we want to call
-       * \param callbackIntervalMs how often we want to check for events.
        * \return
        */
-      void SetCallBack(EventCallback callback, long long callbackIntervalMs );
+      void StartCallBack();
 
       virtual void OnGetEvents(std::vector<Event*>& events) = 0;
       virtual void OnStart() = 0;
       virtual void OnStop() = 0;
-
 
     private:
       /**

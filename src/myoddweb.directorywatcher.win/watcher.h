@@ -14,11 +14,9 @@ namespace myoddweb
     /**
      * \brief Start watching a folder
      * \param request The request containing info about the item we are watching.
-     * \param callback the callback we will be using
-     * \param callbackRateMs how often we want t callback
      * \return The id of the created request or -ve otherwise
      */
-    extern "C" { __declspec(dllexport) long long Start( const Request& request, EventCallback callback, long long callbackRateMs ); }
+    extern "C" { __declspec(dllexport) long long Start( const Request& request ); }
 
     /**
      * \brief stop watching

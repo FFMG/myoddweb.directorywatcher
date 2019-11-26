@@ -7,7 +7,6 @@
 #include "Request.h"
 #include "Event.h"
 #include "../monitors/Monitor.h"
-#include "../monitors/Callbacks.h"
 
 namespace myoddweb
 {
@@ -23,11 +22,9 @@ namespace myoddweb
       /**
        * \brief Start a monitor
        * \param request the request being added.
-       * \param callback the callback we will be using
-       * \param callbackRateMs how often we want t callback
        * \return the id of the monitor we started
        */
-      static long long Start(const Request& request, EventCallback callback, long long callbackRateMs);
+      static long long Start(const Request& request);
 
       /**
        * \brief Try and remove a monitror by id
@@ -40,11 +37,9 @@ namespace myoddweb
       /**
        * \brief Create a monitor and start monitoring, (given the request).
        * \param request contains the information we need to start the monitoring
-       * \param callback the callback when we have events.
-       * \param callbackRateMs how often we want t callback
        * \return the class item we created.
        */
-      Monitor* CreateAndStart(const Request& request, EventCallback callback, long long callbackRateMs);
+      Monitor* CreateAndStart(const Request& request);
 
       /**
        * \brief Create a monitor and add it to our list.

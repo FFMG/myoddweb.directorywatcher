@@ -12,12 +12,17 @@ namespace myoddweb.directorywatcher.utils.Helper
 
       [MarshalAs(UnmanagedType.I1)]
       public bool Recursive;
+
+      public Callback Callback;
+
+      [MarshalAs(UnmanagedType.I8)]
+      public Int64 CallbackIntervalMs;
     }
 
     // Delegate with function signature for the GetVersion function
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     [return: MarshalAs(UnmanagedType.I8)]
-    public delegate Int64 Start(ref Request request, Callback callback, [In, MarshalAs(UnmanagedType.U8)] Int64 id);
+    public delegate Int64 Start(ref Request request);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     [return: MarshalAs(UnmanagedType.Bool)]

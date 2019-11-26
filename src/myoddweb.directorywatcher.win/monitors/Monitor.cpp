@@ -15,7 +15,6 @@ namespace myoddweb
     Monitor::Monitor(const __int64 id, const Request& request) :
       _id(id),
       _eventCollector(nullptr),
-      _callback(nullptr),
       _callbackTimer(nullptr),
       _state(State::Stopped)
     {
@@ -143,11 +142,10 @@ namespace myoddweb
      * \param callbackRateMs how often we want to callback
      * \return success or not.
      */
-    bool Monitor::Start( EventCallback callback, const long long callbackRateMs)
+    bool Monitor::Start()
     {
-      // set the callback in case we are updating it.
-      // this uses the lock, so we should be fine.
-      SetCallBack(callback, callbackRateMs );
+      // we might as well start the callback now.
+      StartCallBack( );
 
       if (Is(State::Started))
       {
@@ -187,23 +185,16 @@ namespace myoddweb
 
     /**
      * \brief set the callback and how often we want to check for event, (and callback if we have any).
-     * \param callback the callback we want to call
-     * \param callbackIntervalMs hw often we want to check for events.
      * \return
      */
-    void Monitor::SetCallBack(EventCallback callback, const  long long callbackIntervalMs )
+    void Monitor::StartCallBack()
     {
       MYODDWEB_PROFILE_FUNCTION();
 
       // guard for multiple entry.
       auto guard = Lock(_lock);
 
-      // null is allowed.
-      if (_callback != callback)
-      {
-        _callback = callback;
-      }
-
+      // clear the old timer.
       if (_callbackTimer != nullptr)
       {
         _callbackTimer->Stop();
@@ -211,14 +202,23 @@ namespace myoddweb
         _callbackTimer = nullptr;
       }
 
-      // zero are allowed.
-      if (callbackIntervalMs != 0)
+      // null is allowed
+      if (nullptr == _request->Callback)
       {
-        _callbackTimer = new Timer();
-        _callbackTimer->Start([&]() {
-          PublishEvents();
-          }, callbackIntervalMs);
+        return;
       }
+
+      // zero are allowed.
+      if (0 == _request->CallbackRateMs)
+      {
+        return;
+      }
+
+      _callbackTimer = new Timer();
+      _callbackTimer->Start([&]() {
+          PublishEvents();
+        }, 
+        _request->CallbackRateMs);
     }
 
     /**
@@ -231,26 +231,37 @@ namespace myoddweb
       // guard for multiple entry.
       auto guard = Lock(_lock);
 
+      // check that we are ready
+      if (!Is(State::Started))
+      {
+        return;
+      }
+
+      // get the events.
       auto events = std::vector<Event*>();
       if (0 == GetEvents(events))
       {
         return;
       }
 
+      // then call the callback
       for (auto it = events.begin(); it != events.end(); ++it)
       {
         const auto& event = (*it);
         try
         {
-          _callback(
-            Id(),
-            event->IsFile,
-            event->Name,
-            event->OldName,
-            event->Action,
-            event->Error,
-            event->TimeMillisecondsUtc
-          );
+          if (nullptr != _request->Callback)
+          {
+            _request->Callback(
+              Id(),
+              event->IsFile,
+              event->Name,
+              event->OldName,
+              event->Action,
+              event->Error,
+              event->TimeMillisecondsUtc
+            );
+          }
         }
         catch( ... )
         {

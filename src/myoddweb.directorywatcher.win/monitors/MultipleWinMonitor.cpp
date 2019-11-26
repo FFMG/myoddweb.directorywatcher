@@ -136,10 +136,10 @@ namespace myoddweb
       // a folder was added to this path
       // so we have to add this path as a child.
       const auto id = GetNextId();
-      const auto request = new Request(path, true);
+      const auto request = new Request(path, true, nullptr, 0 );
       auto child = new WinMonitor(id, *request );
       _recursiveChildren.push_back(child);
-      child->Start( nullptr, 0 );
+      child->Start();
 
       delete request;
     }
@@ -387,7 +387,7 @@ namespace myoddweb
       for (auto monitor = container.begin(); monitor != container.end(); ++monitor)
       {
         // the parent is in charge of the callback.
-        (*monitor)->Start(nullptr, 0);
+        (*monitor)->Start();
       }
     }
 
@@ -489,14 +489,14 @@ namespace myoddweb
 
       // adding all the sub-paths will not breach the limit.
       // so we can add the parent, but non-recuresive.
-      auto request = new Request(parent.Path, false);
+      auto request = new Request(parent.Path, false, nullptr, 0 );
       _nonRecursiveParents.push_back( new WinMonitor(id, *request) );
 
       // now try and add all the subpath
       for (const auto& path : subPaths)
       {
         // add one more to the list.
-        auto request = new Request(path.c_str(), true);
+        auto request = new Request(path.c_str(), true, nullptr, 0 );
         CreateMonitors( *request );
         delete request;
       }

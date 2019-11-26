@@ -66,14 +66,12 @@ namespace myoddweb
     /**
      * \brief Start a monitor
      * \param request the request being added.
-     * \param callback the callback we will be using
-     * \param callbackRateMs how often we want t callback
      * \return the id of the monitor we started
      */
-    long long MonitorsManager::Start(const Request& request, EventCallback callback, long long callbackRateMs)
+    long long MonitorsManager::Start(const Request& request)
     {
       MYODDWEB_PROFILE_FUNCTION();
-      const auto monitor = Instance()->CreateAndStart(request, callback, callbackRateMs);
+      const auto monitor = Instance()->CreateAndStart(request);
       return monitor->Id();
     }
 
@@ -173,11 +171,9 @@ namespace myoddweb
     /***
      * \brief Create a monitor instance and add it to the list.
      * \param request the request we are creating
-     * \param callback the callback when we have events.
-     * \param callbackRateMs how often we want t callback
      * \return the value.
      */
-    Monitor* MonitorsManager::CreateAndStart(const Request& request, EventCallback callback, long long callbackRateMs)
+    Monitor* MonitorsManager::CreateAndStart(const Request& request)
     {
       MYODDWEB_PROFILE_FUNCTION();
 
@@ -195,7 +191,7 @@ namespace myoddweb
         }
 
         // and start monitoring for changes.
-        monitor->Start( callback, callbackRateMs );
+        monitor->Start();
 
         // and return the monitor we created.
         return monitor;
