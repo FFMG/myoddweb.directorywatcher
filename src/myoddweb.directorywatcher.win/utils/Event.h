@@ -41,15 +41,6 @@ namespace myoddweb
       const Event& operator=(const Event& src) = delete;
 
     private:
-      void Assign(const Event& src)
-      {
-        if (this == &src)
-        {
-          return;
-        }
-        Assign( src.Name, src.OldName, src.Action, src.Error, src.TimeMillisecondsUtc, src.IsFile );
-      }
-
       void Assign(const wchar_t* name, const wchar_t* oldName, const int action, const int error, const long long timeMillisecondsUtc, const bool isFile)
       {
         // clear the old values.
@@ -116,16 +107,16 @@ namespace myoddweb
     public:
       void MoveOldNameToName()
       {
-        // get rid of the name
+        // get rid of the current name
         ClearName();
 
         // copy one over the other
         if (OldName != nullptr)
         {
-          auto l = wcslen(OldName);
-          Name = new wchar_t[l + 1];
-          wmemset(Name, L'\0', l + 1);
-          wcscpy_s(Name, l + 1, OldName );
+          const auto len = wcslen(OldName);
+          Name = new wchar_t[len + 1];
+          wmemset(Name, L'\0', len + 1);
+          wcscpy_s(Name, len + 1, OldName );
         }
 
         // we can get rid of the old name

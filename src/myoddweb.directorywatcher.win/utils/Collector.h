@@ -66,7 +66,7 @@ namespace myoddweb
        * \brief Add an event to the vector and remove older events.
        * \param event
        */
-      void AddEventInformation(const EventInformation& event);
+      void AddEventInformation(const EventInformation* event);
 
       /**
        * \brief the locks so we can add data.
@@ -76,8 +76,18 @@ namespace myoddweb
       /**
        * \brief the events list
        */
-      typedef std::vector<EventInformation> Events;
-      Events _events;
+      typedef std::vector<const EventInformation*> EventsInformation;
+
+      /**
+       * \brief this is the event that we are _currently adding data to.
+       */
+      EventsInformation* _currentEvents;
+
+      /**
+       * \brief clear all the events information and delete all the data.
+       * \param events the data we want to clear.
+       */
+      static void ClearEvents(EventsInformation* events);
 
       /**
        * \brief Get the time now in milliseconds since 1970
@@ -117,7 +127,7 @@ namespace myoddweb
        * Then erase the current content so we can continue receiving data.
        * \return the number of items.
        */
-      long CloneEventsAndEraseCurrent(Events& clone);
+      EventsInformation* CloneEventsAndEraseCurrent();
     };
   }
 }

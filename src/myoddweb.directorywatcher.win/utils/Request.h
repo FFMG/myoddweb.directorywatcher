@@ -27,23 +27,19 @@ namespace myoddweb
         Assign(path, recursive);
       }
 
-
-      Request(const Request& request ) : 
+      Request(const Request& request) :
         Request()
       {
         Assign(request);
-      }
-
-      const Request& operator=(const Request& request)
-      {
-        Assign(request);
-        return *this;
       }
 
       ~Request()
       {
         CleanPath();
       }
+
+      // prevent assignment
+      const Request& operator=(const Request& request) = delete;
 
     private :
       void CleanPath()
