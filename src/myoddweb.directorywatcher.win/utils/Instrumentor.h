@@ -151,11 +151,11 @@ namespace myoddweb
       const uint32_t _threadId;
 
     public:
-      InstrumentationTimer(const char* name, uint32_t threadid)
+      InstrumentationTimer(const char* name, uint32_t threadId)
         : 
         m_Name(name), 
         m_Stopped(false),
-        _threadId( threadid )
+        _threadId( threadId )
       {
         m_StartTimepoint = std::chrono::high_resolution_clock::now();
       }
@@ -198,7 +198,7 @@ namespace myoddweb
   #define MYODDWEB_PROFILE_END_SESSION() ::myoddweb::directorywatcher::Instrumentor::Get().EndSession()
   #define MYODDWEB_PROFILE_SCOPE(name, threadId) ::myoddweb::directorywatcher::InstrumentationTimer timer##__LINE__(name, threadId);
   #define MYODDWEB_PROFILE_FUNCTION_WITHTHREADID() MYODDWEB_PROFILE_SCOPE(__FUNCSIG__, static_cast<uint32_t>(std::hash<std::thread::id>{}(std::this_thread::get_id())))
-  #define MYODDWEB_PROFILE_FUNCTION() MYODDWEB_PROFILE_SCOPE(__FUNCSIG__, 0)
+  #define MYODDWEB_PROFILE_FUNCTION() MYODDWEB_PROFILE_SCOPE(__FUNCSIG__, (uint32_t)0)
 #else
   #define MYODDWEB_PROFILE_BEGIN_SESSION(name, filepath)
   #define MYODDWEB_PROFILE_END_SESSION()
