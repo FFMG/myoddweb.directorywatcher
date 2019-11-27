@@ -2,6 +2,7 @@ using NUnit.Framework;
 
 namespace myoddweb.directorywatcher.test
 {
+  [TestFixture]
   internal class WatcherTests
   {
     [SetUp]

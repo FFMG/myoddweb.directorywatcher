@@ -102,14 +102,11 @@ namespace myoddweb.directorywatcher
       Dispose( false );
     }
 
-#region IDisposable
+    #region IDisposable
     /// <summary>
     /// Implement the dispose pattern
     /// </summary>
-    public void Dispose()
-    {
-      Dispose(true);
-    }
+    public void Dispose() => Dispose(true);
 
     /// <summary>
     /// Call when we are disposing or resources.
@@ -510,7 +507,7 @@ namespace myoddweb.directorywatcher
           finally
           {
             // wait ... a little.
-            await Task.Delay(100, _watcherSource.Token ).ConfigureAwait(false);
+            await Task.Delay(10, _watcherSource.Token ).ConfigureAwait(false);
           }
         }
       }
