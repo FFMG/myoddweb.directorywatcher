@@ -16,7 +16,7 @@ namespace myoddweb
     /**
      * \brief Class that contains and manages all the events.
      */
-    class Collector
+    class Collector final
     {
     public:
       Collector();
@@ -32,7 +32,7 @@ namespace myoddweb
        * \param rhs the rhs element we are checking.
        * \return if we need to swap the two items.
        */
-      static bool SortByTimeMillisecondsUtc(const Event& lhs, const Event& rhs);
+      static bool SortByTimeMillisecondsUtc(const Event* lhs, const Event* rhs);
 
       void Add(EventAction action, const std::wstring& path, const std::wstring& filename, bool isFile, EventError error);
       void AddRename(const std::wstring& path, const std::wstring&newFilename, const std::wstring&oldFilename, bool isFile, EventError error);
@@ -41,7 +41,7 @@ namespace myoddweb
        * \brief fill the vector with all the values currently on record.
        * \param events the events we will be filling
        */
-      void GetEvents( std::vector<Event>& events);
+      void GetEvents( std::vector<Event*>& events);
 
     private:
       void Add(EventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName, bool isFile, EventError error);
@@ -66,7 +66,7 @@ namespace myoddweb
        * \brief Add an event to the vector and remove older events.
        * \param event
        */
-      void AddEventInformation(const EventInformation& event);
+      void AddEventInformation(const EventInformation* event);
 
       /**
        * \brief the locks so we can add data.
@@ -76,8 +76,18 @@ namespace myoddweb
       /**
        * \brief the events list
        */
-      typedef std::vector<EventInformation> Events;
-      Events _events;
+      typedef std::vector<const EventInformation*> EventsInformation;
+
+      /**
+       * \brief this is the event that we are _currently adding data to.
+       */
+      EventsInformation* _currentEvents;
+
+      /**
+       * \brief clear all the events information and delete all the data.
+       * \param events the data we want to clear.
+       */
+      static void ClearEvents(EventsInformation* events);
 
       /**
        * \brief Get the time now in milliseconds since 1970
@@ -103,21 +113,21 @@ namespace myoddweb
        * \param duplicate the event information we want to add.
        * \return if the event information is already in the 'source'
        */
-      static bool IsOlderDuplicate(const std::vector<Event>& source, const Event& duplicate);
+      static bool IsOlderDuplicate(const std::vector<Event*>& source, const Event& duplicate);
 
       /**
        * \brief go around all the renamed events and look the the ones that are 'invalid'
        * The ones that do not have a new/old name.
        * \param source the collection of events we will be looking in
        */
-      static void ValidateRenames(std::vector<Event>& source );
+      static void ValidateRenames(std::vector<Event*>& source );
 
       /**
        * \brief copy the current content of the events into a local variable.
        * Then erase the current content so we can continue receiving data.
        * \return the number of items.
        */
-      long CloneEventsAndEraseCurrent(Events& clone);
+      EventsInformation* CloneEventsAndEraseCurrent();
     };
   }
 }

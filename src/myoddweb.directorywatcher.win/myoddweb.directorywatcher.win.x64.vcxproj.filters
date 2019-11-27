@@ -98,6 +98,10 @@
     <ClInclude Include="utils\Timer.h">
       <Filter>utils</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="utils\Instrumentor.h">
+      <Filter>utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="monitors">
@@ -109,5 +113,8 @@
     <Filter Include="utils">
       <UniqueIdentifier>{de21a89a-20d6-4763-95a5-86a36cd16d6f}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="myoddweb.directorywatcher.win.rc" />
   </ItemGroup>
 </Project>

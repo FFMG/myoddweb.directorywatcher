@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 #pragma once
 #include <string>
+#include "../monitors/Callbacks.h"
 
 namespace myoddweb
 {
@@ -16,34 +17,32 @@ namespace myoddweb
     public:
       Request() :
         Path(nullptr), 
-        Recursive(false)
+        Recursive(false),
+        Callback(nullptr),
+        CallbackRateMs(0)
       {
 
       }
 
-      Request( const wchar_t* path, bool recursive) :
+      Request( const wchar_t* path, bool recursive, EventCallback callback, const long long callbackRateMs) :
         Request()
       {
-        Assign(path, recursive);
+        Assign(path, recursive, callback, CallbackRateMs );
       }
 
-
-      Request(const Request& request ) : 
+      Request(const Request& request) :
         Request()
       {
         Assign(request);
-      }
-
-      const Request& operator=(const Request& request)
-      {
-        Assign(request);
-        return *this;
       }
 
       ~Request()
       {
         CleanPath();
       }
+
+      // prevent assignment
+      const Request& operator=(const Request& request) = delete;
 
     private :
       void CleanPath()
@@ -61,13 +60,18 @@ namespace myoddweb
         {
           return;
         }
-        Assign(request.Path, request.Recursive);
+        Assign( request.Path, request.Recursive, request.Callback, request.CallbackRateMs );
       }
 
-      void Assign(const wchar_t* path, bool recursive)
+      void Assign(const wchar_t* path, bool recursive, EventCallback callback, const long long callbackRateMs)
       {
-        Recursive = recursive;
+        // clean up
         CleanPath();
+
+        Callback = callback;
+        CallbackRateMs = callbackRateMs;
+        Recursive = recursive;
+
         if (path != nullptr)
         {
           auto l = wcslen(path);
@@ -87,6 +91,16 @@ namespace myoddweb
        * \brief if we are recursively monitoring or not.
        */
       bool Recursive;
+
+      /**
+       * \brief the callback even we want to call from time to time.
+       */
+      EventCallback Callback; 
+      
+      /**
+       * How often we wish to callback
+       */
+      long long CallbackRateMs;
     };
   }
 }

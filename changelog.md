@@ -2,6 +2,25 @@
 
 Notable changes
 
+## 0.1.7 - [Current]
+
+### Added
+
+- Instrumentation, [Thanks to The Cherno / Hazel project)](https://github.com/TheCherno/Hazel/)
+  The flag `MYODDWEB_PROFILE` needs to be set to 1.
+- Version number fo unmanaged `myoddweb.directorywatcher` helper.
+
+### Changed
+
+- Various performance / memory fixes
+  - Some code now running is parallel to speed-up the processing of folders/files that have changed.
+
+### Fixed
+
+- If a callback throws an error ... or misbehaves, it no longer kills the entire process.
+
+### Removed
+
 ## 0.1.6 - 24-11-2019
 
 ### Added

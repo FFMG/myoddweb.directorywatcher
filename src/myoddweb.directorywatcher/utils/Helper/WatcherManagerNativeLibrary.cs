@@ -93,11 +93,13 @@ namespace myoddweb.directorywatcher.utils.Helper
       Delegates.Request r = new Delegates.Request
       {
         Recursive = request.Recursive,
-        Path = request.Path
+        Path = request.Path,
+        Callback = _callback,
+        CallbackIntervalMs = 50
       };
 
       // start
-      return _start(ref r, _callback, 1000);
+      return _start(ref r );
     }
 
     public bool Stop(long id)

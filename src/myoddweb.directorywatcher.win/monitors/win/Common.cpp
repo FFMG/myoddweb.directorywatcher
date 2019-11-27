@@ -8,6 +8,7 @@
 #include "../../utils/EventError.h"
 #include "../../utils/MonitorsManager.h"
 #include "../Base.h"
+#include "../../utils/Instrumentor.h"
 
 namespace myoddweb
 {
@@ -198,6 +199,8 @@ namespace myoddweb
        */
       void Common::Read()
       {
+        MYODDWEB_PROFILE_FUNCTION();
+
         if (!_data->IsValidHandle() )
         {
           return;
@@ -226,6 +229,8 @@ namespace myoddweb
         Data& data
       )
       {
+        MYODDWEB_PROFILE_FUNCTION();
+
         // get the object we are working with
         auto obj = static_cast<Common*>(object);
 
@@ -281,6 +286,8 @@ namespace myoddweb
        */
       void Common::ProcessNotificationFromBackup(const unsigned char* pBuffer) const
       {
+        MYODDWEB_PROFILE_FUNCTION();
+
         try
         {
           // overflow

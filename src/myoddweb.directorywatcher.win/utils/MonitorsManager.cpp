@@ -5,6 +5,7 @@
 #include "Lock.h"
 #include "../monitors/WinMonitor.h"
 #include "../monitors/MultipleWinMonitor.h"
+#include "Instrumentor.h"
 
 namespace myoddweb
 {
@@ -45,6 +46,9 @@ namespace myoddweb
         return _instance;
       }
 
+      // Start the global profiling session.
+      MYODDWEB_PROFILE_BEGIN_SESSION( "Monitor Global", "Profile-Global.json" );
+
       try
       {
         // create a new instance
@@ -62,13 +66,12 @@ namespace myoddweb
     /**
      * \brief Start a monitor
      * \param request the request being added.
-     * \param callback the callback we will be using
-     * \param callbackRateMs how often we want t callback
      * \return the id of the monitor we started
      */
-    long long MonitorsManager::Start(const Request& request, EventCallback callback, long long callbackRateMs)
+    long long MonitorsManager::Start(const Request& request)
     {
-      const auto monitor = Instance()->CreateAndStart(request, callback, callbackRateMs);
+      MYODDWEB_PROFILE_FUNCTION();
+      const auto monitor = Instance()->CreateAndStart(request);
       return monitor->Id();
     }
 
@@ -79,6 +82,7 @@ namespace myoddweb
      */
     bool MonitorsManager::Stop(const long long id)
     {
+      MYODDWEB_PROFILE_FUNCTION();
       auto guard = Lock(_lock);
 
       // if we do not have an instance... then we have nothing.
@@ -97,6 +101,7 @@ namespace myoddweb
         {
           delete _instance;
           _instance = nullptr;
+          MYODDWEB_PROFILE_END_SESSION();
         }
         return result;
       }
@@ -107,47 +112,12 @@ namespace myoddweb
     }
 
     /**
-     * \brief Get the latest events.
-     * \param id the id of the monitor we would like the events for.
-     * \param events the events we will be getting
-     * \return the number of items or -ve in case of an error
-     */
-    long long MonitorsManager::GetEvents(const long long id, std::vector<Event>& events)
-    {
-      auto guard = Lock(_lock);
-
-      // if we do not have an instance... then we have nothing.
-      if (_instance == nullptr)
-      {
-        return -1;
-      }
-
-      try
-      {
-        // Look for that monitor.
-        const auto monitor = Instance()->_monitors.find(id);
-        if (monitor == Instance()->_monitors.end())
-        {
-          // does not exist.
-          return -1;
-        }
-
-        // the monitor seems to exist
-        // so we can now go and get the values from the collector.
-        return monitor->second->GetEvents(events);
-      }
-      catch (...)
-      {
-        return -1;
-      }
-    }
-
-    /**
      * \brief Try and get an usued id
      * \return a random id number
      */
-    __int64 MonitorsManager::GetId()
+    long long MonitorsManager::GetId()
     {
+      MYODDWEB_PROFILE_FUNCTION();
       return (static_cast<__int64>(rand()) << (sizeof(int) * 8)) | rand();
     }
 
@@ -158,6 +128,8 @@ namespace myoddweb
      */
     Monitor* MonitorsManager::CreateAndddToList(const Request& request)
     {
+      MYODDWEB_PROFILE_FUNCTION();
+
       auto guard = Lock(_lock);
       try
       {
@@ -199,12 +171,12 @@ namespace myoddweb
     /***
      * \brief Create a monitor instance and add it to the list.
      * \param request the request we are creating
-     * \param callback the callback when we have events.
-     * \param callbackRateMs how often we want t callback
      * \return the value.
      */
-    Monitor* MonitorsManager::CreateAndStart(const Request& request, EventCallback callback, long long callbackRateMs)
+    Monitor* MonitorsManager::CreateAndStart(const Request& request)
     {
+      MYODDWEB_PROFILE_FUNCTION();
+
       Monitor* monitor = nullptr;
       try
       {
@@ -219,7 +191,7 @@ namespace myoddweb
         }
 
         // and start monitoring for changes.
-        monitor->Start( callback, callbackRateMs );
+        monitor->Start();
 
         // and return the monitor we created.
         return monitor;
@@ -246,6 +218,8 @@ namespace myoddweb
      */
     bool MonitorsManager::StopAndDelete(const long long id)
     {
+      MYODDWEB_PROFILE_FUNCTION();
+
       try
       {
         auto guard = Lock(_lock);

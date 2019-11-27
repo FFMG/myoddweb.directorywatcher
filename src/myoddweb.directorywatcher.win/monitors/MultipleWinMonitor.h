@@ -12,7 +12,7 @@ namespace myoddweb
     class MultipleWinMonitor : public Monitor
     {
     public:
-      MultipleWinMonitor(__int64 id, const Request& request);
+      MultipleWinMonitor(long long id, const Request& request);
       virtual ~MultipleWinMonitor();
 
       MultipleWinMonitor& operator=(MultipleWinMonitor&& other) = delete;
@@ -23,7 +23,7 @@ namespace myoddweb
 
       void OnStart() override;
       void OnStop() override;
-      void OnGetEvents(std::vector<Event>& events) override;
+      void OnGetEvents(std::vector<Event*>& events) override;
 
     private:
       /**
@@ -92,13 +92,20 @@ namespace myoddweb
        * \brief process the parent events
        * \return events the events we will be adding to
        */
-      std::vector<Event> GetAndProcessParentEvents();
+      std::vector<Event*> GetAndProcessParentEventsInLock();
 
       /**
-       * \brief process the cildren events
+       * \brief process the children events
        * \rerturn events the events we will be adding to
        */
-      std::vector<Event> GetAndProcessChildEvents() const;
+      std::vector<Event*> GetAndProcessChildEventsInLock() const;
+
+      /**
+       * \brief process the children events
+       * \param monitor the monitor we are getting the events for.
+       * \rerturn events the events we will be adding to
+       */
+      std::vector<Event*> GetEvents( Monitor* monitor ) const;
 
       /**
        * \brief look for a posible child with a matching path.
