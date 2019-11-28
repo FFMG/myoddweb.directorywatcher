@@ -5,14 +5,13 @@
 #include <mutex>
 #include <unordered_map>
 #include "Request.h"
-#include "Event.h"
 #include "../monitors/Monitor.h"
 
 namespace myoddweb
 {
   namespace directorywatcher
   {
-    class MonitorsManager
+    class MonitorsManager final
     {
     protected:
       MonitorsManager();

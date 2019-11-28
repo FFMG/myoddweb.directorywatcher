@@ -10,7 +10,7 @@ namespace myoddweb
   namespace directorywatcher
   {
     /**
-     * \brief unmanaged implementation of IRequest
+     * \brief unmannaged implementation of IRequest
      */
     class Request
     {
@@ -24,7 +24,7 @@ namespace myoddweb
 
       }
 
-      Request( const wchar_t* path, bool recursive, EventCallback callback, const long long callbackRateMs) :
+      Request( const wchar_t* path, const bool recursive, const EventCallback& callback, const long long callbackRateMs) :
         Request()
       {
         Assign(path, recursive, callback, CallbackRateMs );
@@ -47,10 +47,11 @@ namespace myoddweb
     private :
       void CleanPath()
       {
-        if (Path != nullptr)
+        if (Path == nullptr)
         {
-          delete[] Path;
+          return;
         }
+        delete[] Path;
         Path = nullptr;
       }
 
@@ -63,7 +64,7 @@ namespace myoddweb
         Assign( request.Path, request.Recursive, request.Callback, request.CallbackRateMs );
       }
 
-      void Assign(const wchar_t* path, bool recursive, EventCallback callback, const long long callbackRateMs)
+      void Assign(const wchar_t* path, const bool recursive, const EventCallback& callback, const long long callbackRateMs)
       {
         // clean up
         CleanPath();

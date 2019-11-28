@@ -46,7 +46,6 @@ namespace myoddweb.directorywatcher.test
     {
       // the number of files we will be adding
       var numberAdded = 0;
-      var obj = new object();
 
       // first we need to create the watcher
       using ( var watcher = new Watcher())
@@ -54,10 +53,7 @@ namespace myoddweb.directorywatcher.test
         watcher.Add(new Request(_tempDirectory, true));
         watcher.OnAddedAsync += ( fse,  token) =>
           {
-            lock (obj)
-            {
-              ++numberAdded;
-            }
+            ++numberAdded;
             return Task.CompletedTask;
           };
         watcher.Start();

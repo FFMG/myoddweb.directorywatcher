@@ -1,6 +1,6 @@
 ﻿#include "pch.h"
 
-#include "..\myoddweb.directorywatcher.win\utils\Io.h"
+#include "../myoddweb.directorywatcher.win/utils/Io.h"
 using myoddweb::directorywatcher::Io;
 
 TEST(Io, CombineEmptyStrings) {
