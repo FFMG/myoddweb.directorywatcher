@@ -38,6 +38,12 @@
     <ClCompile Include="..\packages\googletest-release-1.10.0\googletest\src\gtest-all.cc">
       <Filter>win\google\src</Filter>
     </ClCompile>
+    <ClCompile Include="..\myoddweb.directorywatcher.win\utils\MonitorsManager.cpp">
+      <Filter>win\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\myoddweb.directorywatcher.win\monitors\MultipleWinMonitor.cpp">
+      <Filter>win\monitors</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -76,6 +82,30 @@
     </ClInclude>
     <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\win\Files.h">
       <Filter>win\monitors\win</Filter>
+    </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\EventAction.h">
+      <Filter>win\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\EventError.h">
+      <Filter>win\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\EventInformation.h">
+      <Filter>win\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Instrumentor.h">
+      <Filter>win\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\MonitorsManager.h">
+      <Filter>win\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Timer.h">
+      <Filter>win\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\Callbacks.h">
+      <Filter>win\monitors</Filter>
+    </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\MultipleWinMonitor.h">
+      <Filter>win\monitors</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

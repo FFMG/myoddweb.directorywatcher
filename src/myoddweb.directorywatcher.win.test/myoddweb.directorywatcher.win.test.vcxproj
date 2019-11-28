@@ -51,7 +51,9 @@
   </PropertyGroup>
   <ItemGroup>
     <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\Base.h" />
+    <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\Callbacks.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\Monitor.h" />
+    <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\MultipleWinMonitor.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\WinMonitor.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\win\Common.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\win\Data.h" />
@@ -59,18 +61,26 @@
     <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\win\Files.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Collector.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Event.h" />
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\EventAction.h" />
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\EventError.h" />
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\EventInformation.h" />
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Instrumentor.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Io.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Lock.h" />
     <ClCompile Include="..\myoddweb.directorywatcher.win\monitors\Monitor.cpp" />
+    <ClCompile Include="..\myoddweb.directorywatcher.win\monitors\MultipleWinMonitor.cpp" />
     <ClCompile Include="..\myoddweb.directorywatcher.win\monitors\WinMonitor.cpp" />
     <ClCompile Include="..\myoddweb.directorywatcher.win\monitors\win\Common.cpp" />
     <ClCompile Include="..\myoddweb.directorywatcher.win\monitors\win\Data.cpp" />
     <ClCompile Include="..\myoddweb.directorywatcher.win\monitors\win\Directories.cpp" />
     <ClCompile Include="..\myoddweb.directorywatcher.win\monitors\win\Files.cpp" />
+    <ClCompile Include="..\myoddweb.directorywatcher.win\utils\MonitorsManager.cpp" />
     <ClCompile Include="..\packages\googletest-release-1.10.0\googletest\src\gtest-all.cc" />
     <ClCompile Include="..\packages\googletest-release-1.10.0\googletest\src\gtest_main.cc" />
     <ClCompile Include="MonitorDataTests.cpp" />
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\MonitorsManager.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Request.h" />
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Timer.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>

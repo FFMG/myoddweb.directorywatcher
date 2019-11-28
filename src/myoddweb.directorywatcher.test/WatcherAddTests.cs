@@ -61,17 +61,16 @@ namespace myoddweb.directorywatcher.test
             return Task.CompletedTask;
           };
         watcher.Start();
-        await Task.Delay(10000);
         for (var i = 0; i < numberToAdd; ++i)
         {
           // create an empty file
           var filename = Path.Combine(_tempDirectory, Path.GetRandomFileName());
-          using (File.Create(filename)) { }
+          await using (File.Create(filename)) { }
           await Task.Yield();
         }
 
         // give a bit of time
-        SpinWait.SpinUntil( () => numberAdded >= numberToAdd, 60000);
+        SpinWait.SpinUntil( () => numberAdded >= numberToAdd, 10000);
       }
       Assert.AreEqual(numberToAdd, numberAdded);
     }

@@ -3,9 +3,6 @@
 // See the LICENSE file in the project root for more information.
 #pragma once
 #include "utils/Request.h"
-#include <vector>
-#include "utils/Event.h"
-#include "monitors/Callbacks.h"
 
 namespace myoddweb
 {
