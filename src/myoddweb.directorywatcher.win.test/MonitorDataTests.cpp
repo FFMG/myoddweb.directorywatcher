@@ -8,21 +8,21 @@ using myoddweb::directorywatcher::WinMonitor;
 using myoddweb::directorywatcher::Request;
 
 TEST(Data, BufferLenghValueIsSaved) {
-  const Request r = { L"c:\\", true };
+  auto r = Request( L"c:\\", true, nullptr, 0);
   WinMonitor wm( 1, r );
   Data md(wm, 100);
   ASSERT_EQ(100, md.BufferLength() );
 }
 
 TEST(Data, BufferIsNullByDefault) {
-  const Request r = { L"c:\\", true };
+  auto r = Request(L"c:\\", true, nullptr, 0);
   WinMonitor wm(1, r);
   Data md(wm, 100);
   ASSERT_EQ(nullptr, md.Buffer());
 }
 
 TEST(Data, DirectoryHandleIsNullByDefault) {
-  const Request r = { L"c:\\", true };
+  auto r = Request(L"c:\\", true, nullptr, 0);
   WinMonitor wm(1, r);
   Data md(wm, 100);
   ASSERT_EQ(nullptr, md.DirectoryHandle());
