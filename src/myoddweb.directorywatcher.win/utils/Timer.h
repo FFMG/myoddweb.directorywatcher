@@ -62,7 +62,7 @@ namespace myoddweb
           // we asked for it to stop and we are hoping that it
           // will indeed stop, but we cannot control if it is locked 
           // inside a calling function.
-          _thread->detach();
+          _thread->join();
         }
 
         delete _thread;

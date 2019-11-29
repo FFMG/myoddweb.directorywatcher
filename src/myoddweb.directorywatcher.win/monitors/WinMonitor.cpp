@@ -22,22 +22,35 @@ namespace myoddweb
       * \param id the unique id of this monitor
       * \param request details of the request.
       */
-    WinMonitor::WinMonitor(const __int64 id, const Request& request) :
-      WinMonitor(id, request, MAX_BUFFER_SIZE)
+    WinMonitor::WinMonitor(const long long id, long long parentId, const Request& request) :
+      WinMonitor(id, parentId, request, MAX_BUFFER_SIZE)
+    {
+    }
+
+    /**
+     * \brief Create the Monitor that uses ReadDirectoryChanges
+     *        This is the case where the id is the parent id.
+     * \param id the unique id of this monitor
+     * \param request details of the request.
+     */
+    WinMonitor::WinMonitor(const long long id, const Request& request) :
+      WinMonitor(id, id, request, MAX_BUFFER_SIZE)
     {
     }
 
     /**
      * \brief Create the Monitor that uses ReadDirectoryChanges
      * \param id the unique id of this monitor
+     * \param parentId the id of the owner of this monitor, (top level)
      * \param request details of the request.
      * \param bufferLength the size of the buffer
      */
-    WinMonitor::WinMonitor(const __int64 id, const Request& request, const unsigned long bufferLength) :
+    WinMonitor::WinMonitor(const long long id, const long long parentId, const Request& request, const unsigned long bufferLength) :
       Monitor(id, request),
       _directories(nullptr),
       _files(nullptr),
-      _bufferLength(bufferLength)
+      _bufferLength(bufferLength),
+      _parentId( parentId )
     {
     }
 
@@ -87,6 +100,15 @@ namespace myoddweb
         delete _files;
       }
       _files = nullptr;
+    }
+
+    /**
+     * \brief get the id of the parent, the owner of all the monitors.
+     * \return the parent id.
+     */
+    const long long& WinMonitor::ParentId() const
+    {
+      return _parentId;
     }
   }
 }

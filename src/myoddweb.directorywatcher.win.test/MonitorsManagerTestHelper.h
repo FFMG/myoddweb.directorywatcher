@@ -36,9 +36,8 @@ public:
 
   int Removed() const;
 
-  bool RemoveFile(const std::wstring& filename) const;
-
-  std::wstring AddFile() const;
+  bool RemoveFile(const std::wstring& filename);
+  std::wstring AddFile();
 
 protected:
   static std::wstring RandomString(const size_t length);

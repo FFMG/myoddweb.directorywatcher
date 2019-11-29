@@ -14,10 +14,11 @@ namespace myoddweb
     class WinMonitor : public Monitor
     {
     public:
-      WinMonitor(__int64 id, const Request& request);
+      WinMonitor(long long id, long long parentId, const Request& request);
+      WinMonitor(long long id, const Request& request);
 
     protected:
-      WinMonitor(__int64 id, const Request& request, unsigned long bufferLength);
+      WinMonitor(long long id, long long parentId, const Request& request, unsigned long bufferLength);
 
     public:
       virtual ~WinMonitor();
@@ -26,11 +27,15 @@ namespace myoddweb
       void OnStop() override;
       void OnGetEvents(std::vector<Event*>& events) override;
 
+      const long long& ParentId() const override;
+
     private:
       win::Common* _directories;
       win::Common* _files;
 
       const unsigned long _bufferLength;
+
+      const long long _parentId;
     };
   }
 }

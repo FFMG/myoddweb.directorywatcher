@@ -70,7 +70,8 @@ MonitorsManagerTestHelper::MonitorsManagerTestHelper() :
     throw std::exception("Could not get temp folder.");
   }
   _tmpFolder = lpTempPathBuffer;
-  _folder = ::Io::Combine(lpTempPathBuffer, RandomString(4));
+  auto subDirectory = L"test." + RandomString(4);
+  _folder = ::Io::Combine( lpTempPathBuffer, subDirectory );
 
   CreateDirectoryW(Folder(), nullptr);
 }
@@ -124,7 +125,7 @@ int MonitorsManagerTestHelper::Removed() const
   return _removed;
 }
 
-bool MonitorsManagerTestHelper::RemoveFile(const std::wstring& filename) const
+bool MonitorsManagerTestHelper::RemoveFile(const std::wstring& filename)
 {
   if (0 == DeleteFileW(filename.c_str()))
   {
@@ -133,7 +134,7 @@ bool MonitorsManagerTestHelper::RemoveFile(const std::wstring& filename) const
   return true;
 }
 
-std::wstring MonitorsManagerTestHelper::AddFile() const
+std::wstring MonitorsManagerTestHelper::AddFile()
 {
   for (;;)
   {
@@ -149,6 +150,8 @@ std::wstring MonitorsManagerTestHelper::AddFile() const
     std::ofstream outfile(filename.c_str());
     outfile << L"my text here!" << std::endl;
     outfile.close();
+
+    _files.push_back(filename);
     return filename;
   }
 }

@@ -267,7 +267,7 @@ namespace myoddweb
           if (nullptr != _request->Callback())
           {
             _request->Callback()(
-              Id(),
+              ParentId(),
               event->IsFile,
               event->Name,
               event->OldName,

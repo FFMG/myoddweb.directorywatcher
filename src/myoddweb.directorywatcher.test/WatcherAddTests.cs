@@ -38,11 +38,15 @@ namespace myoddweb.directorywatcher.test
       }
     }
 
-    [TestCase(0)] // if nothing is added, we don't see anything
-    [TestCase(1)]
-    [TestCase(5)]
-    [TestCase(42)] //  we have to...
-    public async Task TestSimpleAddFileNotification( int numberToAdd)
+    [TestCase(0, true)] // if nothing is added, we don't see anything
+    [TestCase(1, true)]
+    [TestCase(5, true)]
+    [TestCase(42, true)] //  we have to...
+    [TestCase(0, false)] // if nothing is added, we don't see anything
+    [TestCase(1, false)]
+    [TestCase(5, false)]
+    [TestCase(42, false)] //  we have to...
+    public async Task TestSimpleAddFileNotification(int numberToAdd, bool recursive)
     {
       // the number of files we will be adding
       var numberAdded = 0;
@@ -50,9 +54,10 @@ namespace myoddweb.directorywatcher.test
       // first we need to create the watcher
       using ( var watcher = new Watcher())
       {
-        watcher.Add(new Request(_tempDirectory, true));
+        watcher.Add(new Request(_tempDirectory, recursive));
         watcher.OnAddedAsync += ( fse,  token) =>
           {
+            TestContext.Out.WriteLine("Message to write to log");
             ++numberAdded;
             return Task.CompletedTask;
           };

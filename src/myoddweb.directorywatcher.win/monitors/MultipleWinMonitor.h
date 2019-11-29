@@ -24,6 +24,8 @@ namespace myoddweb
       void OnStart() override;
       void OnStop() override;
       void OnGetEvents(std::vector<Event*>& events) override;
+      
+      const long long& ParentId() const override;
 
     private:
       /**

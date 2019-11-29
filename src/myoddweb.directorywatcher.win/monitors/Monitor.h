@@ -109,6 +109,8 @@ namespace myoddweb
       virtual void OnStart() = 0;
       virtual void OnStop() = 0;
 
+      virtual const long long& ParentId() const = 0;
+
     private:
       /**
        * \brief this is the current state.

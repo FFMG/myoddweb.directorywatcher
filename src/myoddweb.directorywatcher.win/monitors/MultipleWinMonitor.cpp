@@ -63,6 +63,15 @@ namespace myoddweb
     }
 
     /**
+     * \brief get the id of the parent, the owner of all the monitors.
+     * \return the parent id.
+     */
+    const long long& MultipleWinMonitor::ParentId() const
+    {
+      return Id();
+    }
+
+    /**
      * \brief fill the vector with all the values currently on record.
      * \param events the events we will be filling
      * \return the number of events we found.
@@ -137,7 +146,7 @@ namespace myoddweb
       // so we have to add this path as a child.
       const auto id = GetNextId();
       const auto request = new Request(path, true, nullptr, 0 );
-      auto child = new WinMonitor(id, *request );
+      auto child = new WinMonitor(id, ParentId(), *request );
       _recursiveChildren.push_back(child);
       child->Start();
 
@@ -483,14 +492,14 @@ namespace myoddweb
       if( subPaths.empty() || TotalSize() > MYODDWEB_MAX_NUMBER_OF_SUBPATH )
       {
         // we will breach the depth
-        _recursiveChildren.push_back(new WinMonitor(id, parent));
+        _recursiveChildren.push_back(new WinMonitor(id, ParentId(), parent));
         return;
       }
 
       // adding all the sub-paths will not breach the limit.
       // so we can add the parent, but non-recuresive.
       auto request = new Request(parent.Path(), false, nullptr, 0 );
-      _nonRecursiveParents.push_back( new WinMonitor(id, *request) );
+      _nonRecursiveParents.push_back( new WinMonitor(id, ParentId(), *request) );
 
       // now try and add all the subpath
       for (const auto& path : subPaths)
