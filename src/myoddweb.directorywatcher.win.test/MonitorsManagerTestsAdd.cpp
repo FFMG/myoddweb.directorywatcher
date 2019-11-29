@@ -12,10 +12,8 @@ using myoddweb::directorywatcher::MonitorsManager;
 using myoddweb::directorywatcher::Request;
 using myoddweb::directorywatcher::EventCallback;
 
-class ValidateNumberOfFilesAdded :public ::testing::TestWithParam<int> {
-protected:
-  int numberOfFiles;
-};
+typedef std::tuple<int, bool> IdentifierParams;
+class ValidateNumberOfFilesAdded :public ::testing::TestWithParam<IdentifierParams> {};
 
 TEST(MonitorsManagerAdd, SimpleStartAndStop) {
 
@@ -67,11 +65,12 @@ TEST_P(ValidateNumberOfFilesAdded, CallbackWhenFileIsAdded) {
 
   auto count = 0;
   // monitor that folder.
-  const auto request = ::Request(helper->Folder(), false, function, timeout);
+  const auto number = std::get<0>(GetParam());
+  const auto recursive = std::get<1>(GetParam());
+  const auto request = ::Request(helper->Folder(), recursive, function, timeout);
   const auto id = ::MonitorsManager::Start(request);
   Add(id, helper);
-
-  const auto number = GetParam();
+    
   for (auto i = 0; i < number; ++i)
   {
     // add a single file to it.
@@ -92,6 +91,7 @@ TEST_P(ValidateNumberOfFilesAdded, CallbackWhenFileIsAdded) {
 INSTANTIATE_TEST_SUITE_P(
   MonitorsManagerAdd,
   ValidateNumberOfFilesAdded,
-  ::testing::Values(
-    0, 1, 42, 100
+  testing::Combine(
+    ::testing::Values( 0, 1, 17, 42 ),
+    ::testing::Values( true ,false )
   ));

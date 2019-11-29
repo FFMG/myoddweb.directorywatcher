@@ -12,11 +12,8 @@ using myoddweb::directorywatcher::MonitorsManager;
 using myoddweb::directorywatcher::Request;
 using myoddweb::directorywatcher::EventCallback;
 
-class ValidateNumberOfFilesDeleted :public ::testing::TestWithParam<int> {
-protected:
-  int numberOfFiles;
-};
-
+typedef std::tuple<int, bool> IdentifierParams;
+class ValidateNumberOfFilesDeleted :public ::testing::TestWithParam<IdentifierParams> {};
 TEST(MonitorsManagerDelete, IfTimeoutIsZeroCallbackIsNeverCalled) {
   // create the helper.
   auto helper = new MonitorsManagerTestHelper();
@@ -49,13 +46,15 @@ TEST_P(ValidateNumberOfFilesDeleted, CallbackWhenFileIsAdded) {
   // create the helper.
   auto helper = new MonitorsManagerTestHelper();
 
+  const auto number = std::get<0>(GetParam());
+  const auto recursive = std::get<1>(GetParam());
+
   auto count = 0;
   // monitor that folder.
-  const auto request = ::Request(helper->Folder(), false, function, timeout);
+  const auto request = ::Request(helper->Folder(), recursive, function, timeout);
   const auto id = ::MonitorsManager::Start(request);
   Add(id, helper);
 
-  const auto number = GetParam();
   auto files = std::vector<std::wstring>();
   for (auto i = 0; i < number; ++i)
   {
@@ -83,6 +82,7 @@ TEST_P(ValidateNumberOfFilesDeleted, CallbackWhenFileIsAdded) {
 INSTANTIATE_TEST_SUITE_P(
   MonitorsManagerDelete,
   ValidateNumberOfFilesDeleted,
-  ::testing::Values(
-    0, 1, 42, 100
+  testing::Combine(
+    ::testing::Values(0, 1, 20, 42),
+    ::testing::Values(true, false)
   ));
