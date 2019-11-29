@@ -14,16 +14,16 @@ namespace myoddweb
      */
     class Request
     {
-    public:
+    protected:
       Request() :
         _path(nullptr),
         _recursive(false),
         _callback(nullptr),
         _callbackRateMs(0)
       {
-
       }
 
+    public:
       Request(const wchar_t* path, const bool recursive, const EventCallback& callback, const long long callbackRateMs) :
         Request()
       {

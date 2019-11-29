@@ -45,6 +45,7 @@
       <Filter>win\monitors</Filter>
     </ClCompile>
     <ClCompile Include="MonitorsManagerTests.cpp" />
+    <ClCompile Include="RequestTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -128,8 +129,5 @@
     <Filter Include="win\google\src">
       <UniqueIdentifier>{06de64de-ba19-41a8-90ab-44f92b6a9389}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
   </ItemGroup>
 </Project>
