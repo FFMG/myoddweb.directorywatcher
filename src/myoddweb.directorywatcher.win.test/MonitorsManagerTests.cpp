@@ -27,23 +27,20 @@ public:
     //_folder = ::Io::Combine(RandomString(4), lpTempPathBuffer);
   }
 
-  EventCallback _callback;
-
   const wchar_t* Folder() const {
     return _folder.c_str();
   }
-
-
+    
 protected:
   std::wstring RandomString( const size_t length)
   {
-    const auto randchar = []() -> char
+    const auto randchar = []() -> wchar_t
     {
       const wchar_t charset[] =
         L"0123456789"
         L"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         L"abcdefghijklmnopqrstuvwxyz";
-      const auto maxIndex = (sizeof(charset) - 1);
+      const auto maxIndex = (wcslen(charset) - 1);
       return charset[rand() % maxIndex];
     };
     std::wstring str(length, 0);
@@ -72,31 +69,32 @@ TEST(MonitorsManager, InvalidPathDoesNOtThrow) {
   EXPECT_NO_THROW(::MonitorsManager::Stop(id));
 }
 
-int Callback(
-  const long long id,
-  const bool isFile,
-  const wchar_t* name,
-  const wchar_t* oldName,
-  const int action,
-  const int error,
-  const long long dateTimeUtc
-)
-{
-  return 0;
-}
-
 TEST(MonitorsManager, CallbackWhenFileIsAdded) {
+
+  auto z = 20;
 
   // create the helper.
   const auto helper = MonitorsManagerTestHelper();
 
   auto count = 0;
   // monitor that folder.
-  const auto request = ::Request(helper.Folder(), false, &Callback, 0);
-  const auto id = ::MonitorsManager::Start(request);
+  auto f = [](
+    const long long id,
+    const bool isFile,
+    const wchar_t* name,
+    const wchar_t* oldName,
+    const int action,
+    const int error,
+    const long long dateTimeUtc
+    ) -> int
+  {
+    return 0;
+  };
+  const auto request = ::Request(helper.Folder(), false, f, 0);
+  //const auto id = ::MonitorsManager::Start(request);
 
   // add a single file to it.
   //helper.AddFile();
 
-  EXPECT_NO_THROW(::MonitorsManager::Stop(id));
+  //EXPECT_NO_THROW(::MonitorsManager::Stop(id));
 }

@@ -16,20 +16,20 @@ namespace myoddweb
     {
     public:
       Request() :
-        Path(nullptr), 
-        Recursive(false),
-        Callback(nullptr),
-        CallbackRateMs(0)
+        _path(nullptr),
+        _recursive(false),
+        _callback(nullptr),
+        _callbackRateMs(0)
       {
 
       }
 
-      Request( const wchar_t* path, const bool recursive, const EventCallback& callback, const long long callbackRateMs) :
+      Request(const wchar_t* path, const bool recursive, const EventCallback& callback, const long long callbackRateMs) :
         Request()
       {
-        Assign(path, recursive, callback, CallbackRateMs );
+        Assign(path, recursive, callback, callbackRateMs);
       }
-
+      
       Request(const Request& request) :
         Request()
       {
@@ -47,12 +47,12 @@ namespace myoddweb
     private :
       void CleanPath()
       {
-        if (Path == nullptr)
+        if (_path == nullptr)
         {
           return;
         }
-        delete[] Path;
-        Path = nullptr;
+        delete[] _path;
+        _path = nullptr;
       }
 
       void Assign(const Request& request )
@@ -61,7 +61,7 @@ namespace myoddweb
         {
           return;
         }
-        Assign( request.Path, request.Recursive, request.Callback, request.CallbackRateMs );
+        Assign( request._path, request._recursive, request._callback, request._callbackRateMs );
       }
 
       void Assign(const wchar_t* path, const bool recursive, const EventCallback& callback, const long long callbackRateMs)
@@ -69,39 +69,56 @@ namespace myoddweb
         // clean up
         CleanPath();
 
-        Callback = callback;
-        CallbackRateMs = callbackRateMs;
-        Recursive = recursive;
+        _callback = callback;
+        _callbackRateMs = callbackRateMs;
+        _recursive = recursive;
 
         if (path != nullptr)
         {
           auto l = wcslen(path);
-          Path = new wchar_t[ l+1];
-          wmemset(Path, L'\0', l+1);
-          wcscpy_s(Path, l+1, path );
+          _path = new wchar_t[ l+1];
+          wmemset(_path, L'\0', l+1);
+          wcscpy_s(_path, l+1, path );
         }        
       }
 
     public:
+      const wchar_t* Path() const {
+        return _path;
+      }
+
+      const bool Recursive() const {
+        return _recursive;
+      }
+
+      const EventCallback& Callback() const {
+        return _callback;
+      }
+
+      long long CallbackRateMs() const {
+        return _callbackRateMs;
+      }
+
+    private:
       /**
        * \brief the path of the folder we will be monitoring
        */
-      wchar_t* Path;
+      wchar_t* _path;
 
       /**
        * \brief if we are recursively monitoring or not.
        */
-      bool Recursive;
+      bool _recursive;
 
       /**
        * \brief the callback even we want to call from time to time.
        */
-      EventCallback Callback; 
+      EventCallback _callback;
       
       /**
        * How often we wish to callback
        */
-      long long CallbackRateMs;
+      long long _callbackRateMs;
     };
   }
 }

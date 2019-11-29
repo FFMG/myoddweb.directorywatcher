@@ -145,7 +145,7 @@ namespace myoddweb
 
           // create the new monitor
           Monitor* monitor;
-          if (request.Recursive)
+          if (request.Recursive())
           {
             monitor = new MultipleWinMonitor(id, request);
           }

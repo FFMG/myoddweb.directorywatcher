@@ -57,7 +57,7 @@ namespace myoddweb
      */
     const wchar_t* Monitor::Path() const
     {
-      return _request->Path;
+      return _request->Path();
     }
 
     /**
@@ -66,7 +66,7 @@ namespace myoddweb
      */
     bool Monitor::Recursive() const
     {
-      return _request->Recursive;
+      return _request->Recursive();
     }
 
     /**
@@ -215,13 +215,13 @@ namespace myoddweb
       StopCallBack();
 
       // null is allowed
-      if (nullptr == _request->Callback)
+      if (nullptr == _request->Callback())
       {
         return;
       }
 
       // zero are allowed.
-      if (0 == _request->CallbackRateMs)
+      if (0 == _request->CallbackRateMs())
       {
         return;
       }
@@ -231,7 +231,7 @@ namespace myoddweb
         {
           PublishEvents();
         }, 
-        _request->CallbackRateMs
+        _request->CallbackRateMs()
       );
     }
 
@@ -264,9 +264,9 @@ namespace myoddweb
         const auto& event = (*it);
         try
         {
-          if (nullptr != _request->Callback)
+          if (nullptr != _request->Callback())
           {
-            _request->Callback(
+            _request->Callback()(
               Id(),
               event->IsFile,
               event->Name,
@@ -338,7 +338,7 @@ namespace myoddweb
      */
     bool Monitor::IsPath(const std::wstring& maybe) const
     {
-      return Io::AreSameFolders(maybe, _request->Path);
+      return Io::AreSameFolders(maybe, _request->Path());
     }
   }
 }

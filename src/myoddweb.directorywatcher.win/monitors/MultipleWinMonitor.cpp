@@ -18,7 +18,7 @@ namespace myoddweb
       Monitor(id, request)
     {
       // use a standar monitor for non recursive items.
-      if (!request.Recursive)
+      if (!request.Recursive())
       {
         throw std::invalid_argument("The multiple monitor must be recursive.");
       }
@@ -475,11 +475,11 @@ namespace myoddweb
       // this whole class expects recursive requests
       // so we should not be able to have anything
       // other than recursive.
-      assert(parent.Recursive);
+      assert(parent.Recursive());
 #endif
 
       // look for all the sub-paths
-      const auto subPaths = Io::GetAllSubFolders(parent.Path);
+      const auto subPaths = Io::GetAllSubFolders(parent.Path());
       if( subPaths.empty() || TotalSize() > MYODDWEB_MAX_NUMBER_OF_SUBPATH )
       {
         // we will breach the depth
@@ -489,7 +489,7 @@ namespace myoddweb
 
       // adding all the sub-paths will not breach the limit.
       // so we can add the parent, but non-recuresive.
-      auto request = new Request(parent.Path, false, nullptr, 0 );
+      auto request = new Request(parent.Path(), false, nullptr, 0 );
       _nonRecursiveParents.push_back( new WinMonitor(id, *request) );
 
       // now try and add all the subpath
