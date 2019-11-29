@@ -49,6 +49,8 @@
     <IntDir>$(SolutionDir)intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <ItemGroup>
+    <ClCompile Include="MonitorsManagerTestHelper.cpp" />
+    <ClCompile Include="MonitorsManagerTestsDelete.cpp" />
     <ClCompile Include="RequestTest.cpp" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\Base.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\Callbacks.h" />
@@ -81,6 +83,7 @@
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\MonitorsManager.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Request.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Timer.h" />
+    <ClInclude Include="MonitorsManagerTestHelper.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
@@ -109,7 +112,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="CollectorTests.cpp" />
-    <ClCompile Include="MonitorsManagerTests.cpp" />
+    <ClCompile Include="MonitorsManagerTestsAdd.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
