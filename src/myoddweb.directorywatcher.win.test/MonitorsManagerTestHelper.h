@@ -19,8 +19,11 @@ private:
   std::wstring _folder;
   std::wstring _tmpFolder;
   std::vector<std::wstring> _files;
-  int _added;
-  int _removed;
+  std::vector<std::wstring> _folders;
+  int _addedFiles;
+  int _addedFolders;
+  int _removedFiles;
+  int _removedFolders;
 
 public:
   MonitorsManagerTestHelper();
@@ -30,14 +33,15 @@ public:
 
   const wchar_t* Folder() const;
 
-  void EventAction(EventAction action);
+  void EventAction(EventAction action, bool isFile);
 
-  int Added() const;
-
-  int Removed() const;
+  int Added( bool isFile ) const;
+  int Removed( bool isFile ) const;
 
   bool RemoveFile(const std::wstring& filename);
+  bool RemoveFolder(const std::wstring& folder);
   std::wstring AddFile();
+  std::wstring AddFolder();
 
 protected:
   static std::wstring RandomString(const size_t length);
@@ -54,6 +58,6 @@ auto function = []
   const long long dateTimeUtc
 ) -> int
 {
-  Get(id)->EventAction((EventAction)action);
+  Get(id)->EventAction((EventAction)action, isFile);
   return 0;
 };

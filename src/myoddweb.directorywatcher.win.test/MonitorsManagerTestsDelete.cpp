@@ -13,7 +13,15 @@ using myoddweb::directorywatcher::Request;
 using myoddweb::directorywatcher::EventCallback;
 
 typedef std::tuple<int, bool> IdentifierParams;
-class ValidateNumberOfFilesDeleted :public ::testing::TestWithParam<IdentifierParams> {};
+class ValidateNumberOfItemDeleted :public ::testing::TestWithParam<IdentifierParams> {};
+
+INSTANTIATE_TEST_SUITE_P(
+  MonitorsManagerDelete,
+  ValidateNumberOfItemDeleted,
+  testing::Combine(
+    ::testing::Values(0, 1, 20, 42),
+    ::testing::Values(true, false)
+  ));
 TEST(MonitorsManagerDelete, IfTimeoutIsZeroCallbackIsNeverCalled) {
   // create the helper.
   auto helper = new MonitorsManagerTestHelper();
@@ -32,8 +40,8 @@ TEST(MonitorsManagerDelete, IfTimeoutIsZeroCallbackIsNeverCalled) {
 
   helper->Wait(100);
 
-  ASSERT_EQ(0, helper->Added());
-  ASSERT_EQ(0, helper->Removed());
+  ASSERT_EQ(0, helper->Added(true));
+  ASSERT_EQ(0, helper->Removed(true));
 
   ASSERT_NO_THROW(::MonitorsManager::Stop(id));
 
@@ -41,7 +49,7 @@ TEST(MonitorsManagerDelete, IfTimeoutIsZeroCallbackIsNeverCalled) {
   delete helper;
 }
 
-TEST_P(ValidateNumberOfFilesDeleted, CallbackWhenFileIsAdded) {
+TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFileIsDeleted) {
   const auto timeout = 50;
   // create the helper.
   auto helper = new MonitorsManagerTestHelper();
@@ -71,7 +79,7 @@ TEST_P(ValidateNumberOfFilesDeleted, CallbackWhenFileIsAdded) {
   // give a little more than the timeout
   helper->Wait(static_cast<long long>(timeout * 2));
 
-  ASSERT_EQ(number, helper->Removed());
+  ASSERT_EQ(number, helper->Removed(true));
 
   ASSERT_NO_THROW(::MonitorsManager::Stop(id));
 
@@ -79,10 +87,40 @@ TEST_P(ValidateNumberOfFilesDeleted, CallbackWhenFileIsAdded) {
   delete helper;
 }
 
-INSTANTIATE_TEST_SUITE_P(
-  MonitorsManagerDelete,
-  ValidateNumberOfFilesDeleted,
-  testing::Combine(
-    ::testing::Values(0, 1, 20, 42),
-    ::testing::Values(true, false)
-  ));
+TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFolderIsDeleted) {
+  const auto timeout = 50;
+  // create the helper.
+  auto helper = new MonitorsManagerTestHelper();
+
+  const auto number = std::get<0>(GetParam());
+  const auto recursive = std::get<1>(GetParam());
+
+  auto count = 0;
+  // monitor that folder.
+  const auto request = ::Request(helper->Folder(), recursive, function, timeout);
+  const auto id = ::MonitorsManager::Start(request);
+  Add(id, helper);
+
+  auto folders = std::vector<std::wstring>();
+  for (auto i = 0; i < number; ++i)
+  {
+    // add a single file to it.
+    folders.push_back(helper->AddFolder());
+  }
+
+  // delete them all
+  for each (auto folder in folders)
+  {
+    ASSERT_TRUE(helper->RemoveFolder(folder));
+  }
+
+  // give a little more than the timeout
+  helper->Wait(static_cast<long long>(timeout * 2));
+
+  ASSERT_EQ(number, helper->Removed(false));
+
+  ASSERT_NO_THROW(::MonitorsManager::Stop(id));
+
+  ASSERT_TRUE(Remove(id));
+  delete helper;
+}

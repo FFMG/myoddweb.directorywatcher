@@ -8,6 +8,8 @@
 #include <chrono>
 #include <map>
 #include <algorithm>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "../myoddweb.directorywatcher.win/utils/Io.h"
 #include "../myoddweb.directorywatcher.win/utils/EventAction.h"
@@ -58,10 +60,11 @@ bool Add(long long id, MonitorsManagerTestHelper* mng)
   return true;
 }
 
-
 MonitorsManagerTestHelper::MonitorsManagerTestHelper() :
-    _added(0),
-    _removed(0)
+  _addedFiles(0),
+  _addedFolders(0),
+  _removedFiles(0),
+  _removedFolders(0)
 {
   wchar_t lpTempPathBuffer[MAX_PATH];
   const auto ret = GetTempPathW(MAX_PATH, lpTempPathBuffer);
@@ -83,6 +86,11 @@ MonitorsManagerTestHelper::~MonitorsManagerTestHelper()
     RemoveFile(file);
   }
 
+  for each (auto folder in _folders)
+  {
+    RemoveDirectoryW(folder.c_str());
+  }
+
   // and the directory
   RemoveDirectoryW(Folder());
 }
@@ -98,16 +106,26 @@ const wchar_t* MonitorsManagerTestHelper::Folder() const
   return _folder.c_str();
 }
 
-void MonitorsManagerTestHelper::EventAction(const ::EventAction action)
+void MonitorsManagerTestHelper::EventAction(const ::EventAction action, bool isFile)
 {
   switch (action)
   {
   case EventAction::Added:
-    ++_added;
+    if (isFile) {
+      ++_addedFiles;
+    }
+    else {
+      ++_addedFolders;
+    }
     break;
 
   case EventAction::Removed:
-    ++_removed;
+    if (isFile) {
+      ++_removedFiles;
+    }
+    else {
+      ++_removedFolders;
+    }
     return;
 
   default:
@@ -115,14 +133,23 @@ void MonitorsManagerTestHelper::EventAction(const ::EventAction action)
   }
 }
 
-int MonitorsManagerTestHelper::Added() const
+int MonitorsManagerTestHelper::Added( bool isFile ) const
 {
-  return _added;
+  return isFile ? _addedFiles: _addedFolders;
 }
 
-int MonitorsManagerTestHelper::Removed() const
+int MonitorsManagerTestHelper::Removed( bool isFile ) const
 {
-  return _removed;
+  return isFile ? _removedFiles : _removedFolders;
+}
+
+bool MonitorsManagerTestHelper::RemoveFolder(const std::wstring& folder)
+{
+  if (0 == RemoveDirectoryW(folder.c_str()))
+  {
+    return false;
+  }
+  return true;
 }
 
 bool MonitorsManagerTestHelper::RemoveFile(const std::wstring& filename)
@@ -153,6 +180,28 @@ std::wstring MonitorsManagerTestHelper::AddFile()
 
     _files.push_back(filename);
     return filename;
+  }
+}
+
+std::wstring MonitorsManagerTestHelper::AddFolder()
+{
+  for (;;)
+  {
+    auto folder = ::Io::Combine(Folder(), RandomString(6));
+
+    struct _stati64 info = { 0 };
+
+    if (_wstat64(folder.c_str(), &info) == 0)
+    {
+      if (info.st_mode & S_IFDIR)
+      {
+        continue;
+      }
+    }
+    CreateDirectoryW(folder.c_str(), nullptr);
+
+    _folders.push_back(folder);
+    return folder;
   }
 }
 
