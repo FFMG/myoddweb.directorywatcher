@@ -38,7 +38,8 @@ TEST(MonitorsManagerDelete, IfTimeoutIsZeroCallbackIsNeverCalled) {
   // delete it
   ASSERT_TRUE( helper->RemoveFile(file) );
 
-  helper->Wait(100);
+  // give a little more than the timeout
+  helper->Wait(static_cast<long long>(TEST_TIMEOUT * TEST_TIMEOUT_WAIT_MULTIPLIER));
 
   ASSERT_EQ(0, helper->Added(true));
   ASSERT_EQ(0, helper->Removed(true));
@@ -50,7 +51,7 @@ TEST(MonitorsManagerDelete, IfTimeoutIsZeroCallbackIsNeverCalled) {
 }
 
 TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFileIsDeleted) {
-  const auto timeout = 50;
+  
   // create the helper.
   auto helper = new MonitorsManagerTestHelper();
 
@@ -59,7 +60,7 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFileIsDeleted) {
 
   auto count = 0;
   // monitor that folder.
-  const auto request = ::Request(helper->Folder(), recursive, function, timeout);
+  const auto request = ::Request(helper->Folder(), recursive, function, TEST_TIMEOUT);
   const auto id = ::MonitorsManager::Start(request);
   Add(id, helper);
 
@@ -77,7 +78,7 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFileIsDeleted) {
   }
 
   // give a little more than the timeout
-  helper->Wait(static_cast<long long>(timeout * 2));
+  helper->Wait(static_cast<long long>(TEST_TIMEOUT * TEST_TIMEOUT_WAIT_MULTIPLIER));
 
   ASSERT_EQ(number, helper->Removed(true));
 
@@ -88,7 +89,7 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFileIsDeleted) {
 }
 
 TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFolderIsDeleted) {
-  const auto timeout = 50;
+  
   // create the helper.
   auto helper = new MonitorsManagerTestHelper();
 
@@ -97,7 +98,7 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFolderIsDeleted) {
 
   auto count = 0;
   // monitor that folder.
-  const auto request = ::Request(helper->Folder(), recursive, function, timeout);
+  const auto request = ::Request(helper->Folder(), recursive, function, TEST_TIMEOUT);
   const auto id = ::MonitorsManager::Start(request);
   Add(id, helper);
 
@@ -115,7 +116,7 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFolderIsDeleted) {
   }
 
   // give a little more than the timeout
-  helper->Wait(static_cast<long long>(timeout * 2));
+  helper->Wait(static_cast<long long>(TEST_TIMEOUT * TEST_TIMEOUT_WAIT_MULTIPLIER));
 
   ASSERT_EQ(number, helper->Removed(false));
 

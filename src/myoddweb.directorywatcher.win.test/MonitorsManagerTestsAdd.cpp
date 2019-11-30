@@ -56,7 +56,7 @@ TEST(MonitorsManagerAdd, IfTimeoutIsZeroCallbackIsNeverCalled) {
   // add a single file to it.
   helper->AddFile();
 
-  helper->Wait(1000);
+  helper->Wait(static_cast<long long>(TEST_TIMEOUT * TEST_TIMEOUT_WAIT_MULTIPLIER));
 
   EXPECT_EQ(0, helper->Added(true));
 
@@ -67,7 +67,7 @@ TEST(MonitorsManagerAdd, IfTimeoutIsZeroCallbackIsNeverCalled) {
 }
 
 TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFileIsAdded) {
-  const auto timeout = 50;
+  
   // create the helper.
   auto helper = new MonitorsManagerTestHelper();
 
@@ -75,7 +75,7 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFileIsAdded) {
   // monitor that folder.
   const auto number = std::get<0>(GetParam());
   const auto recursive = std::get<1>(GetParam());
-  const auto request = ::Request(helper->Folder(), recursive, function, timeout);
+  const auto request = ::Request(helper->Folder(), recursive, function, TEST_TIMEOUT);
   const auto id = ::MonitorsManager::Start(request);
   Add(id, helper);
     
@@ -86,7 +86,7 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFileIsAdded) {
   }
 
   // give a little more than the timeout
-  helper->Wait( static_cast<long long>(timeout * 2) );
+  helper->Wait(static_cast<long long>(TEST_TIMEOUT * TEST_TIMEOUT_WAIT_MULTIPLIER));
 
   EXPECT_EQ(number, helper->Added(true));
 
@@ -97,7 +97,7 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFileIsAdded) {
 }
 
 TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFolderIsAdded) {
-  const auto timeout = 50;
+  
   // create the helper.
   auto helper = new MonitorsManagerTestHelper();
 
@@ -105,7 +105,7 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFolderIsAdded) {
   // monitor that folder.
   const auto number = std::get<0>(GetParam());
   const auto recursive = std::get<1>(GetParam());
-  const auto request = ::Request(helper->Folder(), recursive, function, timeout);
+  const auto request = ::Request(helper->Folder(), recursive, function, TEST_TIMEOUT);
   const auto id = ::MonitorsManager::Start(request);
   Add(id, helper);
 
@@ -116,7 +116,7 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFolderIsAdded) {
   }
 
   // give a little more than the timeout
-  helper->Wait(static_cast<long long>(timeout * 2));
+  helper->Wait(static_cast<long long>(TEST_TIMEOUT * TEST_TIMEOUT_WAIT_MULTIPLIER));
 
   EXPECT_EQ(number, helper->Added(false));
 

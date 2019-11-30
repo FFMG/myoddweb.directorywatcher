@@ -5,6 +5,9 @@
 #include "../myoddweb.directorywatcher.win/utils/EventAction.h"
 using myoddweb::directorywatcher::EventAction;
 
+constexpr auto TEST_TIMEOUT = 50;
+constexpr auto  TEST_TIMEOUT_WAIT_MULTIPLIER = 3;
+
 void _wait(long long ms);
 
 class MonitorsManagerTestHelper;
@@ -58,6 +61,6 @@ auto function = []
   const long long dateTimeUtc
 ) -> int
 {
-  Get(id)->EventAction((EventAction)action, isFile);
+  Get(id)->EventAction((::EventAction)action, isFile);
   return 0;
 };
