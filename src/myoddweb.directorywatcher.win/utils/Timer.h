@@ -4,6 +4,7 @@
 #pragma once
 #include <chrono>
 #include <thread>
+#include "Wait.h"
 
 namespace myoddweb
 {
@@ -13,12 +14,11 @@ namespace myoddweb
     {
     private:
       bool _mustStop;
-      std::thread* _thread;
+      std::future<void> _future;
 
     public:
       Timer() : 
-        _mustStop( false ),
-        _thread(nullptr)
+        _mustStop( false )
       {
       }
             
@@ -32,7 +32,8 @@ namespace myoddweb
       {
         Stop();
         _mustStop = false;
-        _thread = new std::thread([=]()
+        const auto sleep = std::chrono::milliseconds(delay);
+        _future = std::async(std::launch::async, [=]()
           {
             for (;;)
             {
@@ -40,9 +41,7 @@ namespace myoddweb
               {
                 return;
               }
-              std::this_thread::sleep_for(
-                std::chrono::milliseconds( delay )
-              );
+              std::this_thread::sleep_for( sleep );
               if (_mustStop)
               {
                 return;
@@ -56,17 +55,17 @@ namespace myoddweb
       void Stop() 
       {
         _mustStop = true;
-        if (_thread != nullptr && _thread->joinable() )
-        {
-          // we can detach ourselves from the timer
-          // we asked for it to stop and we are hoping that it
-          // will indeed stop, but we cannot control if it is locked 
-          // inside a calling function.
-          _thread->join();
-        }
 
-        delete _thread;
-        _thread = nullptr;
+        // zero ms 
+        const auto zeroMilliseconds = std::chrono::milliseconds(0);
+
+        // wait for a could of ms
+        Wait::SpinUntil([=] 
+          {
+            const auto status = _future.wait_for(zeroMilliseconds);
+            return (status == std::future_status::ready);
+          }, 10000);
+
       }
     };
   }

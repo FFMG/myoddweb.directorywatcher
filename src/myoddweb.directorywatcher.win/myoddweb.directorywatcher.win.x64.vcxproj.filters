@@ -36,6 +36,9 @@
     <ClCompile Include="utils\MonitorsManager.cpp">
       <Filter>utils</Filter>
     </ClCompile>
+    <ClCompile Include="utils\Wait.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -100,6 +103,9 @@
     </ClInclude>
     <ClInclude Include="resource.h" />
     <ClInclude Include="utils\Instrumentor.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\Wait.h">
       <Filter>utils</Filter>
     </ClInclude>
   </ItemGroup>

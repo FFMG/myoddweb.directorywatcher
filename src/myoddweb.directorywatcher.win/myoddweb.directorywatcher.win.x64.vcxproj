@@ -114,6 +114,7 @@
     <ClInclude Include="utils\MonitorsManager.h" />
     <ClInclude Include="utils\Request.h" />
     <ClInclude Include="utils\Timer.h" />
+    <ClInclude Include="utils\Wait.h" />
     <ClInclude Include="watcher.h" />
   </ItemGroup>
   <ItemGroup>
@@ -132,6 +133,7 @@
     <ClCompile Include="utils\Io.cpp" />
     <ClCompile Include="utils\Lock.cpp" />
     <ClCompile Include="utils\MonitorsManager.cpp" />
+    <ClCompile Include="utils\Wait.cpp" />
     <ClCompile Include="watcher.cpp" />
   </ItemGroup>
   <ItemGroup>
