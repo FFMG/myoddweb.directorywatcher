@@ -13,9 +13,11 @@
 
 #include "../myoddweb.directorywatcher.win/utils/Io.h"
 #include "../myoddweb.directorywatcher.win/utils/EventAction.h"
+#include "../myoddweb.directorywatcher.win/utils/Wait.h"
 
 using myoddweb::directorywatcher::EventAction;
 using myoddweb::directorywatcher::Io;
+using myoddweb::directorywatcher::Wait;
 
 std::mutex _cv_m;
 
@@ -97,8 +99,7 @@ MonitorsManagerTestHelper::~MonitorsManagerTestHelper()
 
 void MonitorsManagerTestHelper::Wait(long long ms)
 {
-  std::thread t(_wait, ms);
-  t.join();
+  Wait::Delay( ms );
 }
 
 const wchar_t* MonitorsManagerTestHelper::Folder() const 

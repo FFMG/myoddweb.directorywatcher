@@ -48,6 +48,9 @@
     <ClCompile Include="MonitorsManagerTestsAdd.cpp" />
     <ClCompile Include="MonitorsManagerTestsDelete.cpp" />
     <ClCompile Include="MonitorsManagerTestHelper.cpp" />
+    <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Wait.cpp">
+      <Filter>win\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -112,6 +115,9 @@
       <Filter>win\monitors</Filter>
     </ClInclude>
     <ClInclude Include="MonitorsManagerTestHelper.h" />
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Wait.h">
+      <Filter>win\utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="win">

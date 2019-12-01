@@ -49,6 +49,7 @@
     <IntDir>$(SolutionDir)intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <ItemGroup>
+    <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Wait.cpp" />
     <ClCompile Include="MonitorsManagerTestHelper.cpp" />
     <ClCompile Include="MonitorsManagerTestsDelete.cpp" />
     <ClCompile Include="RequestTest.cpp" />
@@ -83,6 +84,7 @@
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\MonitorsManager.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Request.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Timer.h" />
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Wait.h" />
     <ClInclude Include="MonitorsManagerTestHelper.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>

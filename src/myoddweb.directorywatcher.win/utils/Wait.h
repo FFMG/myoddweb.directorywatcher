@@ -12,13 +12,6 @@ namespace myoddweb
   {
     class Wait final
     {
-      struct Helper
-      {
-        Wait* parent;
-        long long ms;
-        std::function<bool()> predicate;
-      };
-
       /**
        * \brief the conditional locl
        */
@@ -74,9 +67,18 @@ namespace myoddweb
        */
       static bool SpinUntilFutureComplete(const long long milliseconds, std::future<void>& future);
 
-      bool Awaiter(const long long milliseconds, std::function<bool()>& condition);
-
-      static void _Awaiter(Helper&& helper, std::promise<bool>&& callResult);
+      /**
+       * \brief the main function that does all the waiting.
+       *        the promise will contain the result of the waiting
+       *          - false = we timedout 
+       *          - true = the condition returned true and we stopped waiting.
+       * \param condition the condition we wan to run to return out of the function
+       *        if empty/null then we will never check the condition
+       * \param milliseconds the maximum amount of time we want to wait
+       *        if the condition is not set then we will always return false and wait for that number of ms.
+       * \param promise the promise that we will use to set the result.
+       */
+      void Awaiter( std::function<bool()>&& condition, const long long milliseconds, std::promise<bool>&& promise);
     };
   }
 }
