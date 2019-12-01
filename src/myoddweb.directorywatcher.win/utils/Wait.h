@@ -1,10 +1,7 @@
 #pragma once
-#include <chrono>
-#include <thread>
 #include <condition_variable>
 #include <functional>
 #include <future>
-#include <limits> 
 
 namespace myoddweb
 {

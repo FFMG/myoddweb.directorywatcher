@@ -4,9 +4,11 @@
 
 #include "../myoddweb.directorywatcher.win/utils/MonitorsManager.h"
 #include "../myoddweb.directorywatcher.win/utils/EventAction.h"
+#include "../myoddweb.directorywatcher.win/utils/Wait.h"
 
 #include "MonitorsManagerTestHelper.h"
 
+using myoddweb::directorywatcher::Wait;
 using myoddweb::directorywatcher::EventAction;
 using myoddweb::directorywatcher::MonitorsManager;
 using myoddweb::directorywatcher::Request;
@@ -56,7 +58,8 @@ TEST(MonitorsManagerAdd, IfTimeoutIsZeroCallbackIsNeverCalled) {
   // add a single file to it.
   helper->AddFile();
 
-  helper->Wait(static_cast<long long>(TEST_TIMEOUT * TEST_TIMEOUT_WAIT_MULTIPLIER));
+  // wait a bit to give a chance for invalid files to be reported.
+  Wait::Delay(TEST_TIMEOUT_WAIT);
 
   EXPECT_EQ(0, helper->Added(true));
 
@@ -86,7 +89,10 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFileIsAdded) {
   }
 
   // give a little more than the timeout
-  helper->Wait(static_cast<long long>(TEST_TIMEOUT * TEST_TIMEOUT_WAIT_MULTIPLIER));
+  Wait::SpinUntil(
+    [&] {
+      return number == helper->Added(true);
+    }, TEST_TIMEOUT_WAIT);
 
   EXPECT_EQ(number, helper->Added(true));
 
@@ -116,7 +122,10 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFolderIsAdded) {
   }
 
   // give a little more than the timeout
-  helper->Wait(static_cast<long long>(TEST_TIMEOUT * TEST_TIMEOUT_WAIT_MULTIPLIER));
+  Wait::SpinUntil(
+    [&] {
+      return number == helper->Added(false);
+    }, TEST_TIMEOUT_WAIT);
 
   EXPECT_EQ(number, helper->Added(false));
 

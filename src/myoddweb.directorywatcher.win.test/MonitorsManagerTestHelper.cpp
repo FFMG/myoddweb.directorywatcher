@@ -97,11 +97,6 @@ MonitorsManagerTestHelper::~MonitorsManagerTestHelper()
   RemoveDirectoryW(Folder());
 }
 
-void MonitorsManagerTestHelper::Wait(long long ms)
-{
-  Wait::Delay( ms );
-}
-
 const wchar_t* MonitorsManagerTestHelper::Folder() const 
 {
   return _folder.c_str();

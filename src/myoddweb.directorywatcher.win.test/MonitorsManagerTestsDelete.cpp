@@ -4,9 +4,11 @@
 
 #include "../myoddweb.directorywatcher.win/utils/MonitorsManager.h"
 #include "../myoddweb.directorywatcher.win/utils/EventAction.h"
+#include "../myoddweb.directorywatcher.win/utils/Wait.h"
 
 #include "MonitorsManagerTestHelper.h"
 
+using myoddweb::directorywatcher::Wait;
 using myoddweb::directorywatcher::EventAction;
 using myoddweb::directorywatcher::MonitorsManager;
 using myoddweb::directorywatcher::Request;
@@ -38,8 +40,8 @@ TEST(MonitorsManagerDelete, IfTimeoutIsZeroCallbackIsNeverCalled) {
   // delete it
   ASSERT_TRUE( helper->RemoveFile(file) );
 
-  // give a little more than the timeout
-  helper->Wait(static_cast<long long>(TEST_TIMEOUT * TEST_TIMEOUT_WAIT_MULTIPLIER));
+  // wait a bit to give a chance for invalid files to be reported.
+  Wait::Delay(TEST_TIMEOUT_WAIT);
 
   ASSERT_EQ(0, helper->Added(true));
   ASSERT_EQ(0, helper->Removed(true));
@@ -78,7 +80,10 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFileIsDeleted) {
   }
 
   // give a little more than the timeout
-  helper->Wait(static_cast<long long>(TEST_TIMEOUT * TEST_TIMEOUT_WAIT_MULTIPLIER));
+  Wait::SpinUntil(
+    [&] {
+      return number == helper->Removed(true);
+    }, TEST_TIMEOUT_WAIT);
 
   ASSERT_EQ(number, helper->Removed(true));
 
@@ -116,7 +121,10 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFolderIsDeleted) {
   }
 
   // give a little more than the timeout
-  helper->Wait(static_cast<long long>(TEST_TIMEOUT * TEST_TIMEOUT_WAIT_MULTIPLIER));
+  Wait::SpinUntil(
+    [&] {
+      return number == helper->Removed(false);
+    }, TEST_TIMEOUT_WAIT);
 
   ASSERT_EQ(number, helper->Removed(false));
 

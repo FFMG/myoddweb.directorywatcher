@@ -62,6 +62,11 @@ namespace myoddweb
         // wait for a could of ms
         Wait::SpinUntil([=] 
           {
+            if (!_future.valid())
+            {
+              // the value is not even set.
+              return true;
+            }
             const auto status = _future.wait_for(zeroMilliseconds);
             return (status == std::future_status::ready);
           }, 10000);

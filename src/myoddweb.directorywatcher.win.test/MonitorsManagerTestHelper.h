@@ -6,7 +6,7 @@
 using myoddweb::directorywatcher::EventAction;
 
 constexpr auto TEST_TIMEOUT = 50;
-constexpr auto  TEST_TIMEOUT_WAIT_MULTIPLIER = 3;
+constexpr auto  TEST_TIMEOUT_WAIT = 10000;
 
 void _wait(long long ms);
 
@@ -31,8 +31,6 @@ private:
 public:
   MonitorsManagerTestHelper();
   ~MonitorsManagerTestHelper();
-
-  void Wait(long long ms);
 
   const wchar_t* Folder() const;
 
