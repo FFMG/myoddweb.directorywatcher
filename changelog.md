@@ -18,6 +18,7 @@ Notable changes
 ### Fixed
 
 - If a callback throws an error ... or misbehaves, it no longer kills the entire process.
+- There was a bug in 0.1.6 where multiple (sub)folders watcher are created.
 
 ### Removed
 
