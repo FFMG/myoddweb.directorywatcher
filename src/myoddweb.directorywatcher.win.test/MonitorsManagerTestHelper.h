@@ -35,7 +35,7 @@ public:
   MonitorsManagerTestHelper( const MonitorsManagerTestHelper& ) = delete;
   const MonitorsManagerTestHelper&  operator=(const MonitorsManagerTestHelper&) = delete;
 
-  auto Folder() const -> const wchar_t*;
+  [[nodiscard]] auto Folder() const -> const wchar_t*;
 
   void EventAction(EventAction action, bool isFile);
 
