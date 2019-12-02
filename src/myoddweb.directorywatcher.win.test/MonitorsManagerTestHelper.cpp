@@ -1,15 +1,11 @@
 #include "MonitorsManagerTestHelper.h"
 
-#include "windows.h"
-#include <iostream>
+#include <filesystem>
 #include <fstream>  
 #include <condition_variable>
-#include <thread>
 #include <chrono>
 #include <map>
 #include <algorithm>
-#include <sys/types.h>
-#include <sys/stat.h>
 
 #include "../myoddweb.directorywatcher.win/utils/Io.h"
 #include "../myoddweb.directorywatcher.win/utils/EventAction.h"
@@ -68,19 +64,17 @@ MonitorsManagerTestHelper::MonitorsManagerTestHelper() :
   _removedFiles(0),
   _removedFolders(0)
 {
-  wchar_t lpTempPathBuffer[MAX_PATH];
-  const auto ret = GetTempPathW(MAX_PATH, lpTempPathBuffer);
-  if (ret > MAX_PATH || (ret == 0))
-  {
-    throw std::exception("Could not get temp folder.");
-  }
-  _tmpFolder = lpTempPathBuffer;
+  _tmpFolder = std::filesystem::temp_directory_path();
+  
   auto subDirectory = L"test." + RandomString(4);
-  _folder = ::Io::Combine( lpTempPathBuffer, subDirectory );
+  _folder = ::Io::Combine(_tmpFolder, subDirectory );
 
-  CreateDirectoryW(Folder(), nullptr);
+  std::filesystem::create_directory(Folder());
 }
 
+/**
+ * \brief 
+ */
 MonitorsManagerTestHelper::~MonitorsManagerTestHelper()
 {
   for each (auto file in _files)
@@ -90,11 +84,11 @@ MonitorsManagerTestHelper::~MonitorsManagerTestHelper()
 
   for each (auto folder in _folders)
   {
-    RemoveDirectoryW(folder.c_str());
+    std::filesystem::remove(folder);
   }
 
   // and the directory
-  RemoveDirectoryW(Folder());
+  std::filesystem::remove( Folder() );
 }
 
 const wchar_t* MonitorsManagerTestHelper::Folder() const 
@@ -129,32 +123,24 @@ void MonitorsManagerTestHelper::EventAction(const ::EventAction action, bool isF
   }
 }
 
-int MonitorsManagerTestHelper::Added( bool isFile ) const
+int MonitorsManagerTestHelper::Added( const bool isFile ) const
 {
   return isFile ? _addedFiles: _addedFolders;
 }
 
-int MonitorsManagerTestHelper::Removed( bool isFile ) const
+int MonitorsManagerTestHelper::Removed( const bool isFile ) const
 {
   return isFile ? _removedFiles : _removedFolders;
 }
 
-bool MonitorsManagerTestHelper::RemoveFolder(const std::wstring& folder)
+bool MonitorsManagerTestHelper::RemoveFolder(const std::wstring& folder) const
 {
-  if (0 == RemoveDirectoryW(folder.c_str()))
-  {
-    return false;
-  }
-  return true;
+  return std::filesystem::remove(folder);
 }
 
-bool MonitorsManagerTestHelper::RemoveFile(const std::wstring& filename)
+bool MonitorsManagerTestHelper::RemoveFile( const std::wstring& filename) const
 {
-  if (0 == DeleteFileW(filename.c_str()))
-  {
-    return false;
-  }
-  return true;
+  return std::filesystem::remove( filename );
 }
 
 std::wstring MonitorsManagerTestHelper::AddFile()
@@ -164,8 +150,8 @@ std::wstring MonitorsManagerTestHelper::AddFile()
     auto filename = ::Io::Combine(Folder(), RandomString(8));
     filename += L".txt";
 
-    std::ifstream f(filename.c_str());
-    if (f.good())
+    // does it exist already?
+    if (std::filesystem::exists(filename))
     {
       continue;
     }
@@ -173,6 +159,12 @@ std::wstring MonitorsManagerTestHelper::AddFile()
     std::ofstream outfile(filename.c_str());
     outfile << L"my text here!" << std::endl;
     outfile.close();
+
+    // was it created properly?
+    if( !std::filesystem::exists( filename ))
+    {
+      continue;
+    }
 
     _files.push_back(filename);
     return filename;
@@ -185,16 +177,17 @@ std::wstring MonitorsManagerTestHelper::AddFolder()
   {
     auto folder = ::Io::Combine(Folder(), RandomString(6));
 
-    struct _stati64 info = { 0 };
-
-    if (_wstat64(folder.c_str(), &info) == 0)
+    if (std::filesystem::exists(folder))
     {
-      if (info.st_mode & S_IFDIR)
-      {
-        continue;
-      }
+      continue;
     }
-    CreateDirectoryW(folder.c_str(), nullptr);
+
+
+    std::filesystem::create_directory( folder );
+    if (!std::filesystem::exists(folder))
+    {
+      continue;
+    }
 
     _folders.push_back(folder);
     return folder;
