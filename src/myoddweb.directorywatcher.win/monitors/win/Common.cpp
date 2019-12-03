@@ -26,8 +26,7 @@ namespace myoddweb
         _mustStop(false),
         _data(nullptr),
         _parent(parent),
-        _bufferLength(bufferLength),
-        _future(nullptr)
+        _bufferLength(bufferLength)
       {
       }
 
@@ -81,16 +80,21 @@ namespace myoddweb
         // tell everybody to stop...
         _mustStop = true;
 
-        // wait for the future to complete.
-        if (_future != nullptr)
+        // is the thread already finished?
+        if (_th == nullptr)
         {
-          if( !Wait::SpinUntil(*_future, 10000))
-          {
-            _future->wait();
-          }
-          delete _future;
-          _future = nullptr;
+          return;
         }
+
+        // wait for the thread to complete.
+        if (_th->joinable())
+        {
+          _th->join();
+        }
+
+        // cleanup
+        delete _th;
+        _th = nullptr;
       }
 
       /**
@@ -108,10 +112,19 @@ namespace myoddweb
         _data = new Data(_parent, _bufferLength);
 
         // we can now looking for changes.
-        _future = new std::future<void>();
-        *_future = std::async( std::launch::async, &Common::Run, this);
+        _th = new std::thread(&Common::RunThread, this);
       }
-      
+
+      /**
+       * \brief the worker thread that runs the code itself.
+       * \param obj pointer to this instance of the class.
+       */
+      void Common::RunThread(Common* obj)
+      {
+        // Run the thread.
+        obj->Run();
+      }
+
       /**
        * \brief check if we have to stop the current work.
        * \return bool if we have to stop or not.
@@ -128,7 +141,7 @@ namespace myoddweb
       {
         // try and open the directory
         // if it is open already then nothing should happen here.
-        if (!_data->Open() )
+        if (!_data->Open())
         {
           // we could not access this
           _parent.AddEventError(EventError::Access);
@@ -145,7 +158,7 @@ namespace myoddweb
         auto sleepTime = MYODDWEB_MIN_THREAD_SLEEP;
         while (!MustStop())
         {
-          if( !_data->IsValidHandle() )
+          if (!_data->IsValidHandle())
           {
             // wait a little bit longer.
             invalidHandleWait += sleepTime;
@@ -188,7 +201,7 @@ namespace myoddweb
       {
         MYODDWEB_PROFILE_FUNCTION();
 
-        if (!_data->IsValidHandle() )
+        if (!_data->IsValidHandle())
         {
           return;
         }
@@ -198,7 +211,7 @@ namespace myoddweb
         // https://docs.microsoft.com/en-gb/windows/desktop/api/WinBase/nf-winbase-readdirectorychangesw
         const auto notifyFilter = GetNotifyFilter();
 
-        if( !_data->Start( this, notifyFilter, _parent.Recursive(), &FileIoCompletionRoutine))
+        if (!_data->Start(this, notifyFilter, _parent.Recursive(), &FileIoCompletionRoutine))
         {
           // we could not create the monitoring
           // so we might as well get out now.
@@ -261,42 +274,24 @@ namespace myoddweb
 
           // we cloned the data and restarted the read
           // so we can now process the data
-          obj->ProcessNotificationFromBackup((FILE_NOTIFY_INFORMATION*)pBufferBk);
+          // @todo this should be moved to a thread.
+          obj->ProcessNotificationFromBackup(pBufferBk);
         }
-      }
-
-      void Common::AddFileNotifyInfomration(FILE_NOTIFY_INFORMATION* fnInformation)
-      {
-        _futures_mutex.lock();
-        try
-        {
-          _futures.push_back(std::async(
-            std::launch::async,
-            &Common::ProcessNotificationFromBackup,
-            this,
-            fnInformation));
-        }
-        catch (...)
-        {
-          // 
-        }
-        _futures_mutex.unlock();
-
       }
 
       /**
        * \brief this function is called _after_ we received a folder change request
        *        we own this buffer and we mus delete it at the end.
-       * \param fnInformation
+       * \param pBuffer
        */
-      void Common::ProcessNotificationFromBackup(FILE_NOTIFY_INFORMATION* fnInformation) const
+      void Common::ProcessNotificationFromBackup(const unsigned char* pBuffer) const
       {
         MYODDWEB_PROFILE_FUNCTION();
 
         try
         {
           // overflow
-          if (nullptr == fnInformation)
+          if (nullptr == pBuffer)
           {
             _parent.AddEventError(EventError::Overflow);
             return;
@@ -307,17 +302,18 @@ namespace myoddweb
           std::wstring oldFilename;
 
           // get the file information
+          auto pRecord = (FILE_NOTIFY_INFORMATION*)pBuffer;
           for (;;)
           {
             // get out now if needed
-            if(MustStop())
+            if (MustStop())
             {
               break;
             }
 
             // get the filename
-            const auto wFilename = std::wstring(fnInformation->FileName, fnInformation->FileNameLength / sizeof(wchar_t));
-            switch (fnInformation->Action)
+            const auto wFilename = std::wstring(pRecord->FileName, pRecord->FileNameLength / sizeof(wchar_t));
+            switch (pRecord->Action)
             {
             case FILE_ACTION_ADDED:
               _parent.AddEvent(EventAction::Added, wFilename, IsFile(EventAction::Added, wFilename));
@@ -359,11 +355,11 @@ namespace myoddweb
             }
 
             // more files?
-            if (0 == fnInformation->NextEntryOffset)
+            if (0 == pRecord->NextEntryOffset)
             {
               break;
             }
-            fnInformation = reinterpret_cast<FILE_NOTIFY_INFORMATION *>(&reinterpret_cast<unsigned char*>(fnInformation)[fnInformation->NextEntryOffset]);
+            pRecord = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(&reinterpret_cast<unsigned char*>(pRecord)[pRecord->NextEntryOffset]);
           }
 
           // check for orphan renames...
@@ -384,7 +380,7 @@ namespace myoddweb
         }
 
         // we are done with this buffer.
-        delete[] fnInformation;
+        delete[] pBuffer;
       }
 
       /**

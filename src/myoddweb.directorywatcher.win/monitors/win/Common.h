@@ -17,7 +17,7 @@ namespace myoddweb
       class Common
       {
       protected:
-        Common( Monitor& parent, unsigned long bufferLength);
+        Common(Monitor& parent, unsigned long bufferLength);
 
       public:
         /**
@@ -46,12 +46,14 @@ namespace myoddweb
           unsigned long mumberOfBytesTransfered,
           void* object,
           Data& data
-          );
-        
+        );
+
+        static void RunThread(Common* obj);
+
       private:
         void StopAndResetThread();
 
-        void ProcessNotificationFromBackup(FILE_NOTIFY_INFORMATION* fnInformation) const;
+        void ProcessNotificationFromBackup(const unsigned char* pBuffer) const;
 
         void Read();
         void Run();
@@ -82,21 +84,16 @@ namespace myoddweb
          * \brief the max length of the buffers.
          */
         const unsigned long _bufferLength;
-        
+
         /**
          * \brief the current thread handle, if we have one.
          */
-        std::future<void>* _future;
+        std::thread* _th = nullptr;
 
         /**
          * \brief start the worker thread
          */
         void StartWorkerThread();
-
-        void AddFileNotifyInfomration(FILE_NOTIFY_INFORMATION* fnInformation);
-
-        std::mutex _futures_mutex;
-        std::vector<std::future<void>> _futures;
 
       protected:
         /**
