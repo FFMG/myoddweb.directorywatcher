@@ -3,7 +3,7 @@
 // See the LICENSE file in the project root for more information.
 #pragma once
 #include <chrono>
-#include <thread>
+#include <future>
 #include "Wait.h"
 
 namespace myoddweb

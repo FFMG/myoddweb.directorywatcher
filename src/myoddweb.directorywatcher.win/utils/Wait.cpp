@@ -53,9 +53,13 @@ namespace myoddweb
         std::move(callResult)
       );
 
+      // how long we will allow it to run for
+      // note that we are adding a little bit of padding.
+      const auto padding = 10;
+
       // wait for the future to complete ... or timeout.
       // if we return false, we gave up waiting.
-      if (!SpinUntilFutureComplete(milliseconds, future))
+      if (!SpinUntilFutureComplete( future, milliseconds + padding ))
       {
         // we timed out, so something failed...
         return false;
@@ -72,12 +76,11 @@ namespace myoddweb
       * \param future the future we will be waiting for.
       * \return true if the future completed or false if we timed out.
       */
-    bool Wait::SpinUntilFutureComplete(const long long milliseconds, std::future<void>& future)
+    template <typename T>
+    bool Wait::SpinUntilFutureComplete(std::future<T>& future, const long long milliseconds)
     {
-      // how long we will allow it to run for
-      // note that we are adding a little bit of padding.
-      const int padding = 10;
-      const auto until = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds + padding);
+      // when we consider this timed-out
+      const auto until = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds);
 
       const auto oneMillisecond = std::chrono::milliseconds(1);
       for (auto count = 0; count < std::numeric_limits<int>::max(); ++count)
@@ -92,6 +95,8 @@ namespace myoddweb
           // the thread is finished
           return true;
         }
+
+        std::this_thread::yield();
 
         // are we done?
         if (std::chrono::high_resolution_clock::now() >= until)
@@ -109,7 +114,7 @@ namespace myoddweb
     /**
      * \brief the main function that does all the waiting.
      *        the promise will contain the result of the waiting
-     *          - false = we timedout
+     *          - false = we timed-out
      *          - true = the condition returned true and we stopped waiting.
      * \param condition the condition we wan to run to return out of the function
      *        if empty/null then we will never check the condition
@@ -121,10 +126,10 @@ namespace myoddweb
     (
       std::function<bool()>&& condition, 
       const long long milliseconds, 
-      std::promise<bool>&& callResult
+      std::promise<bool>&& promise
     )
     {
-      bool result = false;
+      auto result = false;
       std::unique_lock<std::mutex> lock(_mutex);
       try
       {
@@ -195,7 +200,7 @@ namespace myoddweb
       _conditionVariable.notify_one();
 
       // all done
-      callResult.set_value( result );
+      promise.set_value( result );
     }
   }
 }

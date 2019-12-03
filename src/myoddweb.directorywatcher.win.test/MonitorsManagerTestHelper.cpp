@@ -2,8 +2,6 @@
 
 #include <filesystem>
 #include <fstream>  
-#include <condition_variable>
-#include <chrono>
 #include <map>
 #include <algorithm>
 
@@ -16,14 +14,6 @@ using myoddweb::directorywatcher::Io;
 using myoddweb::directorywatcher::Wait;
 
 std::mutex _cv_m;
-
-void _wait(long long ms)
-{
-  static std::condition_variable cv;
-  std::unique_lock<std::mutex> lk(_cv_m);
-  auto now = std::chrono::system_clock::now();
-  cv.wait_until(lk, now + std::chrono::milliseconds(ms), []() {return false; });
-}
 
 class MonitorsManagerTestHelper;
 std::map<long long, MonitorsManagerTestHelper*> _managers;

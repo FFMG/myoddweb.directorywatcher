@@ -47,13 +47,11 @@ namespace myoddweb
           void* object,
           Data& data
           );
-
-        static void RunThread(Common* obj);
-
+        
       private:
         void StopAndResetThread();
 
-        void ProcessNotificationFromBackup(const unsigned char* pBuffer) const;
+        void ProcessNotificationFromBackup(FILE_NOTIFY_INFORMATION* fnInformation) const;
 
         void Read();
         void Run();
@@ -88,12 +86,17 @@ namespace myoddweb
         /**
          * \brief the current thread handle, if we have one.
          */
-        std::thread* _th = nullptr;
+        std::future<void>* _future;
 
         /**
          * \brief start the worker thread
          */
         void StartWorkerThread();
+
+        void AddFileNotifyInfomration(FILE_NOTIFY_INFORMATION* fnInformation);
+
+        std::mutex _futures_mutex;
+        std::vector<std::future<void>> _futures;
 
       protected:
         /**

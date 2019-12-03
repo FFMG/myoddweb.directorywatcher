@@ -10,7 +10,7 @@ namespace myoddweb
     class Wait final
     {
       /**
-       * \brief the conditional locl
+       * \brief the conditional lock
        */
       std::mutex _mutex;
 
@@ -44,6 +44,12 @@ namespace myoddweb
       */
       static bool SpinUntil(std::function<bool()> condition, const long long milliseconds);
 
+      template <typename T>
+      static bool SpinUntil( std::future<T>& future, long long milliseconds)
+      {
+        return SpinUntilFutureComplete(future, milliseconds);
+      }
+
     private:
       /**
        * \brief the number of ms we want to wait for and/or check for a condition
@@ -53,7 +59,7 @@ namespace myoddweb
        *        if the timeout is reached, we will simply get out.
        * \return true if the condition fired, false if we timeout
        */
-      static bool SpinUntilInternal(std::function<bool()> condition, const long long milliseconds);
+      static bool SpinUntilInternal(std::function<bool()> condition, long long milliseconds);
 
       /**
        * \brief wait for the future to complete, if it does not complete in time we will get out.
@@ -62,7 +68,8 @@ namespace myoddweb
        * \param future the future we will be waiting for.
        * \return true if the future completed or false if we timed out.
        */
-      static bool SpinUntilFutureComplete(const long long milliseconds, std::future<void>& future);
+      template <typename T>
+      static bool SpinUntilFutureComplete(std::future<T>& future, long long milliseconds );
 
       /**
        * \brief the main function that does all the waiting.

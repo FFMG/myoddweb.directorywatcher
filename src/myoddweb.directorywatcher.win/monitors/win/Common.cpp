@@ -23,10 +23,11 @@ namespace myoddweb
         Monitor& parent,
         const unsigned long bufferLength
       ) :
-        _mustStop( false ),
+        _mustStop(false),
         _data(nullptr),
         _parent(parent),
-        _bufferLength(bufferLength)
+        _bufferLength(bufferLength),
+        _future(nullptr)
       {
       }
 
@@ -80,21 +81,16 @@ namespace myoddweb
         // tell everybody to stop...
         _mustStop = true;
 
-        // is the thread already finished?
-        if (_th == nullptr)
+        // wait for the future to complete.
+        if (_future != nullptr)
         {
-          return;
+          if( !Wait::SpinUntil(*_future, 10000))
+          {
+            _future->wait();
+          }
+          delete _future;
+          _future = nullptr;
         }
-
-        // wait for the thread to complete.
-        if (_th->joinable())
-        {
-          _th->join();
-        }
-
-        // cleanup
-        delete _th;
-        _th = nullptr;
       }
 
       /**
@@ -112,19 +108,10 @@ namespace myoddweb
         _data = new Data(_parent, _bufferLength);
 
         // we can now looking for changes.
-        _th = new std::thread(&Common::RunThread, this);
+        _future = new std::future<void>();
+        *_future = std::async( std::launch::async, &Common::Run, this);
       }
-
-      /**
-       * \brief the worker thread that runs the code itself.
-       * \param obj pointer to this instance of the class.
-       */
-      void Common::RunThread(Common* obj)
-      {
-        // Run the thread.
-        obj->Run();
-      }
-
+      
       /**
        * \brief check if we have to stop the current work.
        * \return bool if we have to stop or not.
@@ -274,24 +261,42 @@ namespace myoddweb
 
           // we cloned the data and restarted the read
           // so we can now process the data
-          // @todo this should be moved to a thread.
-          obj->ProcessNotificationFromBackup(pBufferBk);
+          obj->ProcessNotificationFromBackup((FILE_NOTIFY_INFORMATION*)pBufferBk);
         }
+      }
+
+      void Common::AddFileNotifyInfomration(FILE_NOTIFY_INFORMATION* fnInformation)
+      {
+        _futures_mutex.lock();
+        try
+        {
+          _futures.push_back(std::async(
+            std::launch::async,
+            &Common::ProcessNotificationFromBackup,
+            this,
+            fnInformation));
+        }
+        catch (...)
+        {
+          // 
+        }
+        _futures_mutex.unlock();
+
       }
 
       /**
        * \brief this function is called _after_ we received a folder change request
        *        we own this buffer and we mus delete it at the end.
-       * \param pBuffer
+       * \param fnInformation
        */
-      void Common::ProcessNotificationFromBackup(const unsigned char* pBuffer) const
+      void Common::ProcessNotificationFromBackup(FILE_NOTIFY_INFORMATION* fnInformation) const
       {
         MYODDWEB_PROFILE_FUNCTION();
 
         try
         {
           // overflow
-          if (nullptr == pBuffer)
+          if (nullptr == fnInformation)
           {
             _parent.AddEventError(EventError::Overflow);
             return;
@@ -302,7 +307,6 @@ namespace myoddweb
           std::wstring oldFilename;
 
           // get the file information
-          auto pRecord = (FILE_NOTIFY_INFORMATION*)pBuffer;
           for (;;)
           {
             // get out now if needed
@@ -312,8 +316,8 @@ namespace myoddweb
             }
 
             // get the filename
-            const auto wFilename = std::wstring(pRecord->FileName, pRecord->FileNameLength / sizeof(wchar_t));
-            switch (pRecord->Action)
+            const auto wFilename = std::wstring(fnInformation->FileName, fnInformation->FileNameLength / sizeof(wchar_t));
+            switch (fnInformation->Action)
             {
             case FILE_ACTION_ADDED:
               _parent.AddEvent(EventAction::Added, wFilename, IsFile(EventAction::Added, wFilename));
@@ -355,11 +359,11 @@ namespace myoddweb
             }
 
             // more files?
-            if (0 == pRecord->NextEntryOffset)
+            if (0 == fnInformation->NextEntryOffset)
             {
               break;
             }
-            pRecord = reinterpret_cast<FILE_NOTIFY_INFORMATION *>(&reinterpret_cast<unsigned char*>(pRecord)[pRecord->NextEntryOffset]);
+            fnInformation = reinterpret_cast<FILE_NOTIFY_INFORMATION *>(&reinterpret_cast<unsigned char*>(fnInformation)[fnInformation->NextEntryOffset]);
           }
 
           // check for orphan renames...
@@ -380,7 +384,7 @@ namespace myoddweb
         }
 
         // we are done with this buffer.
-        delete[] pBuffer;
+        delete[] fnInformation;
       }
 
       /**
