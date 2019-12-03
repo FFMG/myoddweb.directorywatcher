@@ -1,7 +1,7 @@
-#pragma once
 #include "Wait.h"
 #include <chrono>
 #include <limits> 
+#include <utility>
 
 namespace myoddweb
 {
@@ -15,7 +15,7 @@ namespace myoddweb
     {
       // call the internal spin without any callback
       // so we _will_ timeout, no need for the return value.
-      SpinUntilInternal(nullptr, milliseconds);
+      SpinUntilInternal(milliseconds);
     }
 
     /**
@@ -25,9 +25,9 @@ namespace myoddweb
      *        if the timeout is reached, we will simply get out.
      * \return true if the condition fired, false if we timeout
      */
-    bool Wait::SpinUntil(std::function<bool()> condition, const long long milliseconds)
+    bool Wait::SpinUntil( std::function<bool()> condition, const long long milliseconds)
     {
-      return SpinUntilInternal(condition, milliseconds);
+      return SpinUntilInternal( condition, milliseconds);
     }
 
     /**
@@ -38,7 +38,7 @@ namespace myoddweb
       *        if the timeout is reached, we will simply get out.
       * \return true if the condition fired, false if we timeout
       */
-    bool Wait::SpinUntilInternal(std::function<bool()> condition, const long long milliseconds)
+    bool Wait::SpinUntilInternal( std::function<bool()>& condition, const long long milliseconds)
     {
       Wait waiter;
       std::promise<bool> callResult;
@@ -70,6 +70,44 @@ namespace myoddweb
     }
 
     /**
+     * \brief the number of ms we want to spin for
+     *        this function does not do validations.
+     * \param milliseconds the number of milliseconds we want to wait for
+     *        if the timeout is reached, we will simply get out.
+     * \return if the code ran successfully or if there was an issue/error
+     */
+    bool Wait::SpinUntilInternal(const long long milliseconds)
+    {
+      Wait waiter;
+      std::promise<bool> callResult;
+      auto callFuture = callResult.get_future();
+
+      // start the thread with the arguments we have
+      auto future = std::async(std::launch::async,
+        &Awaiter,
+        &waiter,
+        nullptr,
+        milliseconds,
+        std::move(callResult)
+      );
+
+      // how long we will allow it to run for
+      // note that we are adding a little bit of padding.
+      const auto padding = 10;
+
+      // wait for the future to complete ... or timeout.
+      // if we return false, we gave up waiting.
+      if (!SpinUntilFutureComplete(future, milliseconds + padding))
+      {
+        // we timed out, so something failed...
+        return false;
+      }
+
+      // our thread competed, get out.
+      return callFuture.get();
+    }
+
+    /**
       * \brief wait for the future to complete, if it does not complete in time we will get out.
       *        note that even if the timeout if very large, we will not spin for ever.
       * \param milliseconds the max amount of time we are prepared to wait for.
@@ -89,14 +127,14 @@ namespace myoddweb
         // it could hang forever as well
         // but we tried to make sure that it never does.
         // but it is posible that the condition() will hang.
-        auto status = future.wait_for(zeroMillisecond);
+        const auto status = future.wait_for(zeroMillisecond);
         if (status == std::future_status::ready)
         {
           // the thread is finished
           return true;
         }
 
-        std::this_thread::yield();
+        std::this_thread::sleep_for(zeroMillisecond);
 
         // are we done?
         if (std::chrono::high_resolution_clock::now() >= until)

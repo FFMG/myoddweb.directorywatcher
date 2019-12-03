@@ -10,17 +10,6 @@ namespace myoddweb
     class Wait final
     {
       /**
-       * \brief the conditional lock
-       */
-      std::mutex _mutex;
-
-      /**
-       * \brief the thread wait
-       */
-      std::condition_variable _conditionVariable;
-
-    private:
-      /**
        * \brief constructor, prevent direct construction
        */
       Wait() = default;
@@ -33,7 +22,7 @@ namespace myoddweb
       /**
        * \brief the number of ms we want to wait for.
        */
-      static void Delay(const long long milliseconds);
+      static void Delay( long long milliseconds );
 
       /**
       * \brief the number of ms we want to wait for.
@@ -42,7 +31,7 @@ namespace myoddweb
       *        if the timeout is reached, we will simply get out.
       * \return true if the condition fired, false if we timeout
       */
-      static bool SpinUntil(std::function<bool()> condition, const long long milliseconds);
+      static bool SpinUntil(std::function<bool()> condition, long long milliseconds);
 
       template <typename T>
       static bool SpinUntil( std::future<T>& future, long long milliseconds)
@@ -52,6 +41,16 @@ namespace myoddweb
 
     private:
       /**
+       * \brief the conditional lock
+       */
+      std::mutex _mutex;
+
+      /**
+       * \brief the thread wait
+       */
+      std::condition_variable _conditionVariable;
+
+      /**
        * \brief the number of ms we want to wait for and/or check for a condition
        *        this function does not do validations.
        * \param condition if this returns true we will return.
@@ -59,7 +58,16 @@ namespace myoddweb
        *        if the timeout is reached, we will simply get out.
        * \return true if the condition fired, false if we timeout
        */
-      static bool SpinUntilInternal(std::function<bool()> condition, long long milliseconds);
+      static bool SpinUntilInternal(std::function<bool()>& condition, long long milliseconds);
+
+      /**
+       * \brief the number of ms we want to spin for
+       *        this function does not do validations.
+       * \param milliseconds the number of milliseconds we want to wait for
+       *        if the timeout is reached, we will simply get out.
+       * \return if the code ran successfully or if there was an issue/error
+       */
+      static bool SpinUntilInternal( long long milliseconds);
 
       /**
        * \brief wait for the future to complete, if it does not complete in time we will get out.
