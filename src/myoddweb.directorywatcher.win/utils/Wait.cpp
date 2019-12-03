@@ -82,14 +82,14 @@ namespace myoddweb
       // when we consider this timed-out
       const auto until = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds);
 
-      const auto oneMillisecond = std::chrono::milliseconds(1);
+      const auto zeroMillisecond = std::chrono::milliseconds(0);
       for (auto count = 0; count < std::numeric_limits<int>::max(); ++count)
       {
         // wait for that thread to complete.
         // it could hang forever as well
         // but we tried to make sure that it never does.
         // but it is posible that the condition() will hang.
-        auto status = future.wait_for(oneMillisecond);
+        auto status = future.wait_for(zeroMillisecond);
         if (status == std::future_status::ready)
         {
           // the thread is finished
