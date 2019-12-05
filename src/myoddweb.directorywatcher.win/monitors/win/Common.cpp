@@ -4,10 +4,10 @@
 #include <process.h>
 #include <Windows.h>
 #include "Common.h"
+#include "../Base.h"
 #include "../../utils/Io.h"
 #include "../../utils/EventError.h"
 #include "../../utils/MonitorsManager.h"
-#include "../Base.h"
 #include "../../utils/Instrumentor.h"
 
 namespace myoddweb
@@ -80,21 +80,11 @@ namespace myoddweb
         // tell everybody to stop...
         _mustStop = true;
 
-        // is the thread already finished?
-        if (_th == nullptr)
-        {
-          return;
-        }
-
         // wait for the thread to complete.
-        if (_th->joinable())
+        if (_future.valid()) 
         {
-          _th->join();
+          _future.get();
         }
-
-        // cleanup
-        delete _th;
-        _th = nullptr;
       }
 
       /**
@@ -112,17 +102,7 @@ namespace myoddweb
         _data = new Data(_parent, _bufferLength);
 
         // we can now looking for changes.
-        _th = new std::thread(&Common::RunThread, this);
-      }
-
-      /**
-       * \brief the worker thread that runs the code itself.
-       * \param obj pointer to this instance of the class.
-       */
-      void Common::RunThread(Common* obj)
-      {
-        // Run the thread.
-        obj->Run();
+        _future = std::async( std::launch::async, &Common::Run, this);
       }
 
       /**
@@ -189,7 +169,7 @@ namespace myoddweb
             sleepTime = MYODDWEB_MIN_THREAD_SLEEP;
           }
         }
-
+        
         // if we are here... we can release the data
         _data->Close();
       }

@@ -15,11 +15,11 @@ using myoddweb::directorywatcher::Request;
 using myoddweb::directorywatcher::EventCallback;
 
 typedef std::tuple<int, bool> IdentifierParams;
-class ValidateNumberOfItemDeleted :public ::testing::TestWithParam<IdentifierParams> {};
+class ValidateNumberOfItemAdded :public ::testing::TestWithParam<IdentifierParams> {};
 
 INSTANTIATE_TEST_SUITE_P(
   MonitorsManagerAdd,
-  ValidateNumberOfItemDeleted,
+  ValidateNumberOfItemAdded,
   testing::Combine(
     ::testing::Values(0, 1, 17, 42),
     ::testing::Values(true, false)
@@ -59,7 +59,7 @@ TEST(MonitorsManagerAdd, IfTimeoutIsZeroCallbackIsNeverCalled) {
   helper->AddFile();
 
   // wait a bit to give a chance for invalid files to be reported.
-  Wait::Delay(TEST_TIMEOUT_WAIT);
+  Wait::Delay(1000);
 
   EXPECT_EQ(0, helper->Added(true));
 
@@ -69,7 +69,7 @@ TEST(MonitorsManagerAdd, IfTimeoutIsZeroCallbackIsNeverCalled) {
   delete helper;
 }
 
-TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFileIsAdded) {
+TEST_P(ValidateNumberOfItemAdded, CallbackWhenFileIsAdded) {
   
   // create the helper.
   auto helper = new MonitorsManagerTestHelper();
@@ -102,7 +102,7 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFileIsAdded) {
   delete helper;
 }
 
-TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFolderIsAdded) {
+TEST_P(ValidateNumberOfItemAdded, CallbackWhenFolderIsAdded) {
   
   // create the helper.
   auto helper = new MonitorsManagerTestHelper();

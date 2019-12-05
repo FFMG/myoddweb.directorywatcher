@@ -41,7 +41,7 @@ TEST(MonitorsManagerDelete, IfTimeoutIsZeroCallbackIsNeverCalled) {
   ASSERT_TRUE( helper->RemoveFile(file) );
 
   // wait a bit to give a chance for invalid files to be reported.
-  Wait::Delay(TEST_TIMEOUT_WAIT);
+  Wait::Delay(1000);
 
   ASSERT_EQ(0, helper->Added(true));
   ASSERT_EQ(0, helper->Removed(true));

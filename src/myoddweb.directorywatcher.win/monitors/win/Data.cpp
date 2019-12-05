@@ -39,7 +39,7 @@ namespace myoddweb
        * \param bufferLength the lenght of the buffer.
        * \param lpCompletionRoutine the routine we will be calling when we get a valid notification
        */
-      void Data::PrepareMonitor(void* object, const unsigned long bufferLength, const _COMPLETION_ROUTINE lpCompletionRoutine)
+      void Data::PrepareMonitor(void* object, const unsigned long bufferLength, const _COMPLETION_ROUTINE& lpCompletionRoutine)
       {
         // make sure that the buffer is clear
         ClearBuffer();
@@ -83,13 +83,16 @@ namespace myoddweb
       /**
        * \brief if we opened the folder data, close it now.
        */
-      void Data::CloseFolder() const
+      void Data::CloseFolder()
       {
         if( nullptr == _folder )
         {
           return;
         }
         _folder->Close();
+
+        delete _folder;
+        _folder = nullptr;
       }
 
 
@@ -103,7 +106,9 @@ namespace myoddweb
         {
           try
           {
-            CloseHandle(_hDirectory);
+            // CancelIoEx(_data->DirectoryHandle(), _data->Overlapped());
+            ::CancelIo(_hDirectory);
+            ::CloseHandle(_hDirectory);
           }
           catch(...)
           {
@@ -251,7 +256,7 @@ namespace myoddweb
         const auto shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
         const auto fileAttr = FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED;
 
-        _hDirectory = CreateFileW(
+        auto handle = CreateFileW(
           _monitor.Path(),		        // the path we are watching
           FILE_LIST_DIRECTORY,        // required for ReadDirectoryChangesW( ... )
           shareMode,
@@ -260,6 +265,14 @@ namespace myoddweb
           fileAttr,
           nullptr                     // file with attributes to copy
         );
+
+        if (handle == INVALID_HANDLE_VALUE)
+        {
+          return false;
+        }
+
+        // set the handle.
+        _hDirectory = handle;
 
         // check if it all worked.
         return IsValidHandle();
@@ -273,7 +286,7 @@ namespace myoddweb
        * \param lpCompletionRoutine the completion routine we will call.
        * \return success or not
        */
-      bool Data::Start(void* object, const unsigned long notifyFilter, const bool recursive, const _COMPLETION_ROUTINE lpCompletionRoutine)
+      bool Data::Start(void* object, const unsigned long notifyFilter, const bool recursive, const _COMPLETION_ROUTINE& lpCompletionRoutine)
       {
         // prepare all the values
         PrepareMonitor(object, _bufferLength, lpCompletionRoutine);
@@ -332,31 +345,35 @@ namespace myoddweb
           break;
 
         case ERROR_OPERATION_ABORTED:
-          if (obj != nullptr)
+          if (obj != nullptr && dwNumberOfBytesTransfered != 0 )
           {
             obj->_monitor.AddEventError(EventError::Aborted);
           }
           return;
 
         case ERROR_ACCESS_DENIED:
-          obj->Close();
-          if (obj != nullptr)
+          if (obj != nullptr && dwNumberOfBytesTransfered != 0)
           {
+            obj->Close();
             obj->_monitor.AddEventError(EventError::Access);
           }
           return;
 
         default:
-          // https://msdn.microsoft.com/en-gb/574eccda-03eb-4e8a-9d74-cfaecc7312ce?f=255&MSPPError=-2147217396
-          OVERLAPPED stOverlapped;
-          DWORD dwBytesRead = 0;
-          if (!GetOverlappedResult(obj->DirectoryHandle(),
-              &stOverlapped,
-              &dwBytesRead,
-              FALSE))
+MY_TRACE("Error %d!\n", dwNumberOfBytesTransfered);
+          if (obj != nullptr && dwNumberOfBytesTransfered != 0)
           {
-            const auto dwError = GetLastError();
-            obj->_monitor.AddEventError(EventError::Overflow);
+            // https://msdn.microsoft.com/en-gb/574eccda-03eb-4e8a-9d74-cfaecc7312ce?f=255&MSPPError=-2147217396
+            OVERLAPPED stOverlapped = {};
+            DWORD dwBytesRead = 0;
+            if (!GetOverlappedResult(obj->DirectoryHandle(),
+                &stOverlapped,
+                &dwBytesRead,
+                FALSE))
+            {
+              const auto dwError = GetLastError();
+              obj->_monitor.AddEventError(EventError::Overflow);
+            }
           }
           return;
         }

@@ -48,8 +48,6 @@ namespace myoddweb
           Data& data
         );
 
-        static void RunThread(Common* obj);
-
       private:
         void StopAndResetThread();
 
@@ -88,7 +86,7 @@ namespace myoddweb
         /**
          * \brief the current thread handle, if we have one.
          */
-        std::thread* _th = nullptr;
+        std::future<void> _future;
 
         /**
          * \brief start the worker thread

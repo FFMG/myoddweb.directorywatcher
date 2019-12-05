@@ -5,6 +5,23 @@
 #include <Windows.h>
 #include "../Monitor.h"
 
+#define MY_TRACE(msg, ...) MyTraceImpl(__LINE__, __FILE__, msg, __VA_ARGS__)
+
+// implementation us
+static void MyTraceImpl(int line, const char* fileName, const char* msg, ...)
+{
+  va_list args;
+  char buffer[256] = { 0 };
+//  sprintf_s(buffer, "%s(%d) : ", fileName, line);
+//  OutputDebugStringA(buffer);
+
+  // retrieve the variable arguments
+  va_start(args, msg);
+  vsprintf_s(buffer, msg, args);
+  OutputDebugStringA(buffer);
+  va_end(args);
+}
+
 namespace myoddweb
 {
   namespace directorywatcher
@@ -98,7 +115,7 @@ namespace myoddweb
          * \param lpCompletionRoutine the completion routine we will call.
          * \return success or not
          */
-        bool Start(void* object, unsigned long notifyFilter, bool recursive, _COMPLETION_ROUTINE lpCompletionRoutine);
+        bool Start(void* object, unsigned long notifyFilter, bool recursive, const _COMPLETION_ROUTINE& lpCompletionRoutine);
 
       private:
         /**
@@ -107,7 +124,7 @@ namespace myoddweb
          * \param bufferLength the lenght of the buffer.
          * \param lpCompletionRoutine the routine we will be calling when we get a valid notification
          */
-        void PrepareMonitor(void* object, unsigned long bufferLength, _COMPLETION_ROUTINE lpCompletionRoutine);
+        void PrepareMonitor(void* object, unsigned long bufferLength, const _COMPLETION_ROUTINE& lpCompletionRoutine);
 
         /***
          * \brief the completion routine the caller of Start( ... ) would like called when an event is raised.
@@ -170,7 +187,7 @@ namespace myoddweb
         /**
          * \brief if we opened the folder data, close it now.
          */
-        void CloseFolder() const;
+        void CloseFolder();
 
         /**
          * \brief clear the overlapped structure.
