@@ -30,15 +30,7 @@ namespace myoddweb
     {
       class Data
       {
-      public:
-        typedef
-          void
-          (__stdcall *_COMPLETION_ROUTINE)(
-            unsigned long mumberOfBytesTransfered,
-            void* object,
-            Data& data
-            );
-
+        typedef std::function<void(unsigned char*)> DataCallbackFunction;
       public:
         explicit Data(const Monitor& monitor, unsigned long bufferLength);
         ~Data();
@@ -52,7 +44,6 @@ namespace myoddweb
         Data& operator=(Data&& other) = delete;
         Data() = delete;
 
-      public:
         /**
          * \brief Clear all the data
          */
@@ -61,13 +52,13 @@ namespace myoddweb
         /**
          * \brief Check if the handle is valid
          */
-        bool IsValidHandle() const;
+        [[nodiscard]] bool IsValidHandle() const;
 
         /**
          * \brief get the directory handle, if we have one.
          * \return the handle
          */
-        void* DirectoryHandle() const;
+        [[nodiscard]] void* DirectoryHandle() const;
 
         /**
          * \brief set the directory handle
@@ -82,24 +73,16 @@ namespace myoddweb
         bool TryReopen();
 
         /**
-         * \brief clone up to 'ulSize' bytes into a buffer.
-         *        it is up to the caller to clear/delete the buffer.
-         * \param ulSize the max numberof bytes we want to copy
-         * \return the cloned data.
-         */
-        unsigned char* Clone(unsigned long ulSize) const;
-
-        /**
          * \brief get the current buffer
          * \return the void* buffer.
          */
-        void* Buffer() const;
+        [[nodiscard]] void* Buffer() const;
 
         /**
          * \brief get the buffer length
-         * \return the buffer lenght
+         * \return the buffer length
          */
-        unsigned long BufferLength() const;
+        [[nodiscard]] unsigned long BufferLength() const;
 
         /**
          * \brief Get pointer to our overlapped data.
@@ -109,32 +92,33 @@ namespace myoddweb
 
         /**
          * \brief start monitoring a given folder.
-         * \param object the object we will be passed by the overlapped param
          * \param notifyFilter the notification filter, (what we are watching the folder for)
          * \param recursive recursively check the given folder or not.
          * \param lpCompletionRoutine the completion routine we will call.
          * \return success or not
          */
-        bool Start(void* object, unsigned long notifyFilter, bool recursive, const _COMPLETION_ROUTINE& lpCompletionRoutine);
+        bool Start(unsigned long notifyFilter, bool recursive, DataCallbackFunction lpCompletionRoutine);
 
       private:
         /**
+         * \brief clone up to 'ulSize' bytes into a buffer.
+         *        it is up to the caller to clear/delete the buffer.
+         * \param ulSize the max number of bytes we want to copy
+         * \return the cloned data.
+         */
+        [[nodiscard]] unsigned char* Clone(unsigned long ulSize) const;
+
+        /**
          * \brief Prepare the buffer and structure for processing.
-         * \param object the object we would like to pass to the `OVERLAPPED` structure.
          * \param bufferLength the lenght of the buffer.
          * \param lpCompletionRoutine the routine we will be calling when we get a valid notification
          */
-        void PrepareMonitor(void* object, unsigned long bufferLength, const _COMPLETION_ROUTINE& lpCompletionRoutine);
+        void PrepareMonitor( unsigned long bufferLength, DataCallbackFunction& lpCompletionRoutine);
 
         /***
          * \brief the completion routine the caller of Start( ... ) would like called when an event is raised.
          */
-        _COMPLETION_ROUTINE _lpCompletionRoutine;
-
-        /***
-         * \brief the object that the caller of Start(...) would like to pass back.
-         */
-        void* _object;
+        DataCallbackFunction _lpCompletionRoutine;
 
         /**
          * \brief if we are not watching for folder deletion, we will create our own watcher here
@@ -167,6 +151,11 @@ namespace myoddweb
          * \brief the path
          */
         const Monitor& _monitor;
+
+        /**
+         * \brief the locks so we can add data.
+         */
+        std::recursive_mutex _lock;
 
         /**
          * \brief the overlapped

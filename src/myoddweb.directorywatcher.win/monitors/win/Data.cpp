@@ -5,6 +5,7 @@
 #include <utility>
 #include <Windows.h>
 #include "Data.h"
+#include "../../utils/Lock.h"
 
 namespace myoddweb
 {
@@ -15,7 +16,6 @@ namespace myoddweb
       Data::Data(const Monitor& monitor, const unsigned long bufferLength)
         :
         _lpCompletionRoutine(nullptr), 
-        _object(nullptr),
         _folder(nullptr),
         _hDirectory(nullptr),
         _buffer(nullptr),
@@ -35,21 +35,17 @@ namespace myoddweb
 
       /**
        * \brief Prepare the buffer and structure for processing.
-       * \param object the object we would like to pass to the `OVERLAPPED` structure.
-       * \param bufferLength the lenght of the buffer.
+       * \param bufferLength the length of the buffer.
        * \param lpCompletionRoutine the routine we will be calling when we get a valid notification
        */
-      void Data::PrepareMonitor(void* object, const unsigned long bufferLength, const _COMPLETION_ROUTINE& lpCompletionRoutine)
+      void Data::PrepareMonitor(const unsigned long bufferLength, DataCallbackFunction& lpCompletionRoutine)
       {
         // make sure that the buffer is clear
         ClearBuffer();
 
         // the buffer
         _bufferLength = bufferLength;
-
-        // the object
-        _object = object;
-
+        
         // save the completion source.
         _lpCompletionRoutine = lpCompletionRoutine;
 
@@ -85,13 +81,24 @@ namespace myoddweb
        */
       void Data::CloseFolder()
       {
-        if( nullptr == _folder )
+        if (nullptr == _folder)
         {
           return;
         }
-        _folder->Close();
-
-        delete _folder;
+        auto guard = Lock(_lock);
+        try
+        {
+          if (nullptr == _folder)
+          {
+            return;
+          }
+          _folder->Close();
+          delete _folder;
+        }
+        catch( ... )
+        {
+          //  @todo: we should log that ... but where?
+        }
         _folder = nullptr;
       }
 
@@ -104,18 +111,22 @@ namespace myoddweb
         //  is it open?
         if (IsValidHandle())
         {
-          try
+          auto guard = Lock(_lock);
+          if (IsValidHandle())
           {
-            // CancelIoEx(_data->DirectoryHandle(), _data->Overlapped());
-            ::CancelIo(_hDirectory);
-            ::CloseHandle(_hDirectory);
-          }
-          catch(...)
-          {
-            // We can ignore this... as per the doc:
-            //   If the application is running under a debugger, the function will throw an exception if it receives either a handle value that is not valid or a pseudo-
-            //   handle value. This can happen if you close a handle twice, or if you call CloseHandle on a handle returned by the FindFirstFile function instead of 
-            //   calling the FindClose function.
+            try
+            {
+              // CancelIoEx(_data->DirectoryHandle(), _data->Overlapped());
+              ::CancelIo(_hDirectory);
+              ::CloseHandle(_hDirectory);
+            }
+            catch (...)
+            {
+              // We can ignore this... as per the doc:
+              //   If the application is running under a debugger, the function will throw an exception if it receives either a handle value that is not valid or a pseudo-
+              //   handle value. This can happen if you close a handle twice, or if you call CloseHandle on a handle returned by the FindFirstFile function instead of 
+              //   calling the FindClose function.
+            }
           }
         }
         // the directory is closed.
@@ -131,6 +142,11 @@ namespace myoddweb
         {
           return;
         }
+        auto guard = Lock(_lock);
+        if (_buffer == nullptr)
+        {
+          return;
+        }
         delete[] _buffer;
         _buffer = nullptr;
       }
@@ -140,6 +156,7 @@ namespace myoddweb
        */
       void Data::ClearOverlapped()
       {
+        auto guard = Lock(_lock);
         memset(&_overlapped, 0, sizeof(OVERLAPPED));
       }
 
@@ -172,7 +189,7 @@ namespace myoddweb
 
       /**
        * \brief get the buffer length
-       * \return the buffer lenght
+       * \return the buffer length
        */
       unsigned long Data::BufferLength() const
       {
@@ -256,7 +273,7 @@ namespace myoddweb
         const auto shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
         const auto fileAttr = FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED;
 
-        auto handle = CreateFileW(
+        const auto handle = CreateFileW(
           _monitor.Path(),		        // the path we are watching
           FILE_LIST_DIRECTORY,        // required for ReadDirectoryChangesW( ... )
           shareMode,
@@ -280,16 +297,15 @@ namespace myoddweb
 
       /**
        * \brief start monitoring a given folder.
-       * \param object the object we will be passed by the overlapped param
        * \param notifyFilter the notification filter, (what we are watching the folder for)
        * \param recursive recursively check the given folder or not.
        * \param lpCompletionRoutine the completion routine we will call.
        * \return success or not
        */
-      bool Data::Start(void* object, const unsigned long notifyFilter, const bool recursive, const _COMPLETION_ROUTINE& lpCompletionRoutine)
+      bool Data::Start(const unsigned long notifyFilter, const bool recursive, DataCallbackFunction lpCompletionRoutine)
       {
         // prepare all the values
-        PrepareMonitor(object, _bufferLength, lpCompletionRoutine);
+        PrepareMonitor( _bufferLength, lpCompletionRoutine );
 
         // This call needs to be reissued after every APC.
         if( !::ReadDirectoryChangesW(
@@ -321,7 +337,7 @@ namespace myoddweb
           }
           if (_folder->IsValidHandle() )
           {
-            _folder->Start(nullptr, FILE_NOTIFY_CHANGE_DIR_NAME, false, lpCompletionRoutine);
+            _folder->Start(FILE_NOTIFY_CHANGE_DIR_NAME, false, lpCompletionRoutine);
           }
         }
         return true;
@@ -337,7 +353,7 @@ namespace myoddweb
       )
       {
         // get the object we are working with
-        const auto obj = static_cast<Data*>(lpOverlapped->hEvent);
+        const auto data = static_cast<Data*>(lpOverlapped->hEvent);
 
         switch (dwErrorCode)
         {
@@ -345,34 +361,34 @@ namespace myoddweb
           break;
 
         case ERROR_OPERATION_ABORTED:
-          if (obj != nullptr && dwNumberOfBytesTransfered != 0 )
+          if (data != nullptr && dwNumberOfBytesTransfered != 0 )
           {
-            obj->_monitor.AddEventError(EventError::Aborted);
+            data->_monitor.AddEventError(EventError::Aborted);
           }
           return;
 
         case ERROR_ACCESS_DENIED:
-          if (obj != nullptr && dwNumberOfBytesTransfered != 0)
+          if (data != nullptr && dwNumberOfBytesTransfered != 0)
           {
-            obj->Close();
-            obj->_monitor.AddEventError(EventError::Access);
+            data->Close();
+            data->_monitor.AddEventError(EventError::Access);
           }
           return;
 
         default:
 MY_TRACE("Error %d!\n", dwNumberOfBytesTransfered);
-          if (obj != nullptr && dwNumberOfBytesTransfered != 0)
+          if (data != nullptr && dwNumberOfBytesTransfered != 0)
           {
             // https://msdn.microsoft.com/en-gb/574eccda-03eb-4e8a-9d74-cfaecc7312ce?f=255&MSPPError=-2147217396
             OVERLAPPED stOverlapped = {};
             DWORD dwBytesRead = 0;
-            if (!GetOverlappedResult(obj->DirectoryHandle(),
+            if (!GetOverlappedResult(data->DirectoryHandle(),
                 &stOverlapped,
                 &dwBytesRead,
                 FALSE))
             {
               const auto dwError = GetLastError();
-              obj->_monitor.AddEventError(EventError::Overflow);
+              data->_monitor.AddEventError(EventError::Overflow);
             }
           }
           return;
@@ -380,12 +396,17 @@ MY_TRACE("Error %d!\n", dwNumberOfBytesTransfered);
 
         // do we have an object?
         // should never happen ... but still.
-        if (nullptr == obj)
+        if (nullptr == data)
         {
           return;
         }
 
-        obj->_lpCompletionRoutine(dwNumberOfBytesTransfered, obj->_object, *obj);
+        // Can't use sizeof(FILE_NOTIFY_INFORMATION) because
+        // the structure is padded to 16 bytes.
+        _ASSERTE(dwNumberOfBytesTransfered >= offsetof(FILE_NOTIFY_INFORMATION, FileName) + sizeof(WCHAR));
+
+        // call the derived function to handle this.
+        data->_lpCompletionRoutine( data->Clone(dwNumberOfBytesTransfered) );
       }
     }
   }

@@ -81,10 +81,7 @@ namespace myoddweb
         _mustStop = true;
 
         // wait for the thread to complete.
-        if (_future.valid()) 
-        {
-          _future.get();
-        }
+        Wait::SpinUntil(_future, 1000);
       }
 
       /**
@@ -191,7 +188,8 @@ namespace myoddweb
         // https://docs.microsoft.com/en-gb/windows/desktop/api/WinBase/nf-winbase-readdirectorychangesw
         const auto notifyFilter = GetNotifyFilter();
 
-        if (!_data->Start(this, notifyFilter, _parent.Recursive(), &FileIoCompletionRoutine))
+        const auto func(std::bind(&Common::DataCallbackFunction, this, std::placeholders::_1 ));
+        if (!_data->Start(notifyFilter, _parent.Recursive(), func ))
         {
           // we could not create the monitoring
           // so we might as well get out now.
@@ -203,60 +201,27 @@ namespace myoddweb
       /***
        * \brief The async callback function for ReadDirectoryChangesW
        */
-      void __stdcall Common::FileIoCompletionRoutine(
-        const unsigned long mumberOfBytesTransfered,
-        void* object,
-        Data& data
-      )
+      void Common::DataCallbackFunction(unsigned char* pBufferBk)
       {
         MYODDWEB_PROFILE_FUNCTION();
-
-        // get the object we are working with
-        auto obj = static_cast<Common*>(object);
-
-        // If the buffer overflows, the entire contents of the buffer are discarded, 
-        // the lpBytesReturned parameter contains zero, and the ReadDirectoryChangesW function 
-        // fails with the error code ERROR_NOTIFY_ENUM_DIR.
-        if (0 == mumberOfBytesTransfered)
-        {
-          // noting to read, just restart
-          if (obj != nullptr)
-          {
-            obj->Read();
-          }
-          return;
-        }
-
-        // Can't use sizeof(FILE_NOTIFY_INFORMATION) because
-        // the structure is padded to 16 bytes.
-        _ASSERTE(mumberOfBytesTransfered >= offsetof(FILE_NOTIFY_INFORMATION, FileName) + sizeof(WCHAR));
-
-        // clone the data so we can start reading right away.
-        unsigned char* pBufferBk = nullptr;
-        try
-        {
-          pBufferBk = data.Clone(mumberOfBytesTransfered);
-        }
-        catch (...)
-        {
-          if (obj != nullptr)
-          {
-            obj->_parent.AddEventError(EventError::Memory);
-          }
-        }
 
         // Get the new read issued as fast as possible. The documentation
         // says that the original OVERLAPPED structure will not be used
         // again once the completion routine is called.
-        if (obj != nullptr)
-        {
-          obj->Read();
+        Read();
 
-          // we cloned the data and restarted the read
-          // so we can now process the data
-          // @todo this should be moved to a thread.
-          obj->ProcessNotificationFromBackup(pBufferBk);
+        // If the buffer overflows, the entire contents of the buffer are discarded, 
+        // the lpBytesReturned parameter contains zero, and the ReadDirectoryChangesW function 
+        // fails with the error code ERROR_NOTIFY_ENUM_DIR.
+        if (nullptr == pBufferBk)
+        {
+          return;
         }
+
+        // we cloned the data and restarted the read
+        // so we can now process the data
+        // @todo this should be moved to a thread.
+        ProcessNotificationFromBackup(pBufferBk);
       }
 
       /**

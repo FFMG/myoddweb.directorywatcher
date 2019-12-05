@@ -120,21 +120,36 @@ namespace myoddweb
       // when we consider this timed-out
       const auto until = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds);
 
-      const auto zeroMillisecond = std::chrono::milliseconds(0);
+      const auto waitFor = std::chrono::nanoseconds(1);
+      auto concurentThreadsSupported = std::thread::hardware_concurrency();
+      if( 0 == concurentThreadsSupported )
+      {
+        concurentThreadsSupported = 1;
+      }
       for (auto count = 0; count < std::numeric_limits<int>::max(); ++count)
       {
-        // wait for that thread to complete.
-        // it could hang forever as well
-        // but we tried to make sure that it never does.
-        // but it is posible that the condition() will hang.
-        const auto status = future.wait_for(zeroMillisecond);
-        if (status == std::future_status::ready)
+        if (future.valid())
         {
-          // the thread is finished
-          return true;
+          // wait for that thread to complete.
+          // it could hang forever as well
+          // but we tried to make sure that it never does.
+          // but it is posible that the condition() will hang.
+          const auto status = future.wait_for(waitFor);
+          if (status == std::future_status::ready)
+          {
+            // the thread is finished
+            return true;
+          }
         }
 
-        std::this_thread::sleep_for(zeroMillisecond);
+        if( count % concurentThreadsSupported != 0 )
+        {
+          std::this_thread::sleep_for(std::chrono::milliseconds(count % concurentThreadsSupported));
+        }
+        else
+        {
+          std::this_thread::yield();
+        }       
 
         // are we done?
         if (std::chrono::high_resolution_clock::now() >= until)
