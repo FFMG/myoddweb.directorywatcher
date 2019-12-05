@@ -90,7 +90,7 @@ namespace myoddweb.directorywatcher.utils.Helper
       {
         _start = Get<Delegates.Start>("Start");
       }
-      Delegates.Request r = new Delegates.Request
+      var requestDelegatedelegate = new Delegates.Request
       {
         Recursive = request.Recursive,
         Path = request.Path,
@@ -99,7 +99,7 @@ namespace myoddweb.directorywatcher.utils.Helper
       };
 
       // start
-      return _start(ref r );
+      return _start(ref requestDelegatedelegate);
     }
 
     public bool Stop(long id)

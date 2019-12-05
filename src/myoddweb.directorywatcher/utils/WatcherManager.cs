@@ -230,11 +230,11 @@ namespace myoddweb.directorywatcher.utils
     #endregion
 
     #region Abstract Methods
-    abstract public long Start(IRequest request);
+    public abstract long Start(IRequest request);
 
-    abstract public bool Stop(long id);
+    public abstract bool Stop(long id);
 
-    abstract public long GetEvents(long id, out IList<IEvent> events);
+    public abstract long GetEvents(long id, out IList<IEvent> events);
     #endregion
   }
 }

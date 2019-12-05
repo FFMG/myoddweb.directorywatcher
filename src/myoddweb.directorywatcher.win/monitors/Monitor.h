@@ -8,7 +8,6 @@
 #include "../utils/Collector.h"
 #include "../utils/Request.h"
 #include "../utils/Timer.h"
-#include "Callbacks.h"
 
 namespace myoddweb
 {
@@ -109,7 +108,7 @@ namespace myoddweb
       virtual void OnStart() = 0;
       virtual void OnStop() = 0;
 
-      virtual const long long& ParentId() const = 0;
+      [[nodiscard]] virtual const long long& ParentId() const = 0;
 
     private:
       /**
