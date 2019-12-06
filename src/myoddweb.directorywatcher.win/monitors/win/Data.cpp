@@ -26,42 +26,45 @@ namespace myoddweb
         _notifyFilter(notifyFilter),
         _dataCallbackFunction( dataCallbackFunction ),
         _bufferLength(bufferLength),
-        _folder(nullptr),
         _hDirectory(nullptr),
         _buffer(nullptr),
         _monitor(monitor),
         _state( State::Unknown )
       {
         // prepapre the buffer that will receive our data
-        if (_buffer == nullptr)
-        {
-          // create the buffer if needed.
-          _buffer = new unsigned char[_bufferLength];
-        }
+        // create the buffer if needed.
+        _buffer = new unsigned char[_bufferLength];
+      }
 
+      Data::Data(const Data& src ) : 
+        Data( src._monitor, 
+          src._notifyFilter, 
+          src._recursive,
+          src._dataCallbackFunction, 
+          src._bufferLength )
+      {
+        // then copy the buffer.
+        memcpy(_buffer, src._buffer, sizeof(src._buffer));
       }
 
       Data::~Data()
       {
         Close();
-
-        // clear the folder.
-        delete _folder;
-        _folder = nullptr;
       }
 
       /**
        * \brief prepare the various buffer for changes.
        */
-      void Data::PrepareForChanges()
+      void Data::PrepareForRead()
       {
         MYODDWEB_PROFILE_FUNCTION();
         
+        // restart the buffer.
         memset(_buffer, 0, sizeof(unsigned char)*_bufferLength);
 
         // save the overlapped opject.
         ClearOverlapped();
-        _overlapped.hEvent = this;
+        _overlapped.hEvent = new Data( *this );
       }
 
       /**
@@ -76,13 +79,10 @@ namespace myoddweb
           return;
         }
 
-MY_TRACE("Closing %p\n", this );
+//MY_TRACE("Closing %p\n", this );
 
         try
         {
-          // close the folder
-          CloseFolder();
-
           // the handle 
           ClearHandle();
 
@@ -102,32 +102,6 @@ MY_TRACE("Closing %p\n", this );
       }
 
       /**
-       * \brief if we opened the folder data, close it now.
-       */
-      void Data::CloseFolder()
-      {
-        if (nullptr == _folder)
-        {
-          return;
-        }
-        auto guard = Lock(_lock);
-        try
-        {
-          if (nullptr == _folder)
-          {
-            return;
-          }
-          _folder->Close();
-          delete _folder;
-        }
-        catch( ... )
-        {
-          //  @todo: we should log that ... but where?
-        }
-        _folder = nullptr;
-      }
-
-      /**
        * \brief Clear the handle
        */
       void Data::ClearHandle()
@@ -140,15 +114,7 @@ MY_TRACE("Closing %p\n", this );
           {
             try
             {
-              // CancelIoEx(_data->DirectoryHandle(), _data->Overlapped());
-              ::CancelIo(_hDirectory);
-
-
-              OVERLAPPED o = {};
-              o.hEvent = _overlapped.hEvent;
-              DWORD dwBytes = _bufferLength;
-              GetOverlappedResult(_hDirectory, &_overlapped, &dwBytes, TRUE);
-
+              ::CancelIo(_hDirectory);           
               ::CloseHandle(_hDirectory);
             }
             catch (...)
@@ -358,10 +324,12 @@ MY_TRACE("Closing %p\n", this );
       /**
        * \brief start waiting for notification
        */
-      bool Data::StartWaitForChanges()
+      bool Data::BeginRead()
       {
+        MYODDWEB_PROFILE_FUNCTION();
+
         // prepare all the values
-        PrepareForChanges();
+        PrepareForRead();
 
         return
         ::ReadDirectoryChangesW(
@@ -397,31 +365,13 @@ MY_TRACE("Closing %p\n", this );
         }
 
         // This call needs to be reissued after every APC.
-MY_TRACE( "Waiting to read! %p\n", this );
+//MY_TRACE( "Waiting to read! %p\n", this );
 
-        if( !StartWaitForChanges() )
+        if( !BeginRead() )
         {
           return false;
         }
 
-        // If we are not monitoring folder changes
-        // then we need to check our own folder withour recursion.
-        // that way, if it is deleted, we will be able to release the handle(s).
-        if ((_notifyFilter & FILE_NOTIFY_CHANGE_DIR_NAME) != FILE_NOTIFY_CHANGE_DIR_NAME)
-        {
-          if( nullptr == _folder )
-          {
-            _folder = new Data(_monitor, FILE_NOTIFY_CHANGE_DIR_NAME, false, _dataCallbackFunction, _bufferLength);
-          }
-          if(_folder->_hDirectory == nullptr )
-          {
-            _folder->Open();
-          }
-          if (_folder->IsValidHandle() )
-          {
-            _folder->Start();
-          }
-        }
         return true;
       }
 
@@ -437,7 +387,8 @@ MY_TRACE( "Waiting to read! %p\n", this );
         // get the object we are working with
         const auto data = static_cast<Data*>(lpOverlapped->hEvent);
 
-MY_TRACE("Done reading! %p\n", data );
+//MY_TRACE("Done reading! %p\n", data);
+
         // do we have an object?
         // should never happen ... but still.
         if (nullptr == data)
@@ -448,38 +399,54 @@ MY_TRACE("Done reading! %p\n", data );
         switch (dwErrorCode)
         {
         case ERROR_SUCCESS:// all good, continue;
+          data->ProcessRead(dwNumberOfBytesTransfered);
+          break;
+
+        default:
+          data->ProcessError(dwErrorCode);
+          break;
+        }
+
+        // we are done here
+        delete data;
+      }
+
+      /**
+         * \brief process an error code.
+         * \param errorCode the error received.
+         */
+      void Data::ProcessError(unsigned long errorCode)
+      {
+        switch (errorCode)
+        {
+        case ERROR_SUCCESS:// all good, continue;
           break;
 
         case ERROR_OPERATION_ABORTED:
-          data->_monitor.AddEventError(EventError::Aborted);
+          _monitor.AddEventError(EventError::Aborted);
           return;
 
         case ERROR_ACCESS_DENIED:
-          data->Close();
-          data->_monitor.AddEventError(EventError::Access);
+          Close();
+          _monitor.AddEventError(EventError::Access);
           return;
 
         default:
-          if (dwNumberOfBytesTransfered != 0)
-          {
-            // https://msdn.microsoft.com/en-gb/574eccda-03eb-4e8a-9d74-cfaecc7312ce?f=255&MSPPError=-2147217396
-            OVERLAPPED stOverlapped = {};
-            DWORD dwBytesRead = 0;
-            if (!GetOverlappedResult(data->DirectoryHandle(),
-                &stOverlapped,
-                &dwBytesRead,
-                FALSE))
-            {
-              const auto dwError = GetLastError();
-              data->_monitor.AddEventError(EventError::Overflow);
-            }
-          }
+          const auto dwError = GetLastError();
+          _monitor.AddEventError(EventError::Overflow);
           return;
         }
+      }
 
+      /**
+       * \brief process a read received.
+       * \param dwNumberOfBytesTransfered the number of bytes received.
+       */
+      void Data::ProcessRead( const unsigned long dwNumberOfBytesTransfered )
+      {
         if (dwNumberOfBytesTransfered == 0)
         {
-          data->_dataCallbackFunction(nullptr);
+          _dataCallbackFunction(nullptr);
           return;
         }
 
@@ -488,7 +455,7 @@ MY_TRACE("Done reading! %p\n", data );
         _ASSERTE(dwNumberOfBytesTransfered >= offsetof(FILE_NOTIFY_INFORMATION, FileName) + sizeof(WCHAR));
 
         // call the derived function to handle this.
-        data->_dataCallbackFunction( data->Clone(dwNumberOfBytesTransfered) );
+        _dataCallbackFunction( Clone(dwNumberOfBytesTransfered) );
       }
     }
   }

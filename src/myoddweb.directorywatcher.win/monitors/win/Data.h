@@ -54,7 +54,6 @@ namespace myoddweb
         /**
          * \brief Prevent copy construction
          */
-        Data(const Data&) = delete;
         Data(Data&&) = delete;
         Data& operator=(const Data&) = delete;
         Data& operator=(Data&& other) = delete;
@@ -114,15 +113,32 @@ namespace myoddweb
 
       private:
         /**
+         * \brief copy constructor is private as it is used only to gather data.
+         */
+        Data(const Data&);
+
+        /**
          * \brief start monitoring a given folder.
          * \return success or not
          */
-        bool StartWaitForChanges();
+        bool BeginRead();
 
         /**
          * \brief prepare the various buffer for changes.
          */
-        void PrepareForChanges();
+        void PrepareForRead();
+
+        /**
+         * \brief process a read received.
+         * \param dwNumberOfBytesTransfered the number of bytes received.
+         */
+        void ProcessRead(unsigned long dwNumberOfBytesTransfered );
+
+        /**
+         * \brief process an error code.
+         * \param errorCode the error received.
+         */
+        void ProcessError(unsigned long errorCode);
 
         /**
          * \brief clone up to 'ulSize' bytes into a buffer.
@@ -131,12 +147,6 @@ namespace myoddweb
          * \return the cloned data.
          */
         [[nodiscard]] unsigned char* Clone(unsigned long ulSize);
-
-        /**
-         * \brief Prepare the buffer and structure for processing.
-         * \param dataCallbackFunction the routine we will be calling when we get a valid notification
-         */
-        void SetCallbackFunction( DataCallbackFunction& dataCallbackFunction);
 
         /**
          * \brief what we wish to be notified about
@@ -158,12 +168,6 @@ namespace myoddweb
          * \brief the completion routine the caller of Start( ... ) would like called when an event is raised.
          */
         DataCallbackFunction& _dataCallbackFunction;
-
-        /**
-         * \brief if we are not watching for folder deletion, we will create our own watcher here
-         *        to monitor the folder being deleted.
-         */
-        Data* _folder;
 
         static void __stdcall FileIoCompletionRoutine(
           unsigned long dwErrorCode,							  // completion code
@@ -211,11 +215,6 @@ namespace myoddweb
          * \brief clear the buffer data.
          */
         void ClearBuffer();
-
-        /**
-         * \brief if we opened the folder data, close it now.
-         */
-        void CloseFolder();
 
         /**
          * \brief clear the overlapped structure.
