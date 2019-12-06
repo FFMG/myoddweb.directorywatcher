@@ -54,10 +54,11 @@ namespace myoddweb
         /**
          * \brief Prevent copy construction
          */
+        Data() = delete;
         Data(Data&&) = delete;
+        Data(const Data&) = delete;
         Data& operator=(const Data&) = delete;
         Data& operator=(Data&& other) = delete;
-        Data() = delete;
 
         /**
          * \brief Clear all the data
@@ -112,11 +113,6 @@ namespace myoddweb
         bool Start();
 
       private:
-        /**
-         * \brief copy constructor is private as it is used only to gather data.
-         */
-        Data(const Data&);
-
         /**
          * \brief start monitoring a given folder.
          * \return success or not

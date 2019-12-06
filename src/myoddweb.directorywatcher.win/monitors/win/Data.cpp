@@ -36,17 +36,6 @@ namespace myoddweb
         _buffer = new unsigned char[_bufferLength];
       }
 
-      Data::Data(const Data& src ) : 
-        Data( src._monitor, 
-          src._notifyFilter, 
-          src._recursive,
-          src._dataCallbackFunction, 
-          src._bufferLength )
-      {
-        // then copy the buffer.
-        memcpy(_buffer, src._buffer, sizeof(src._buffer));
-      }
-
       Data::~Data()
       {
         Close();
@@ -64,7 +53,7 @@ namespace myoddweb
 
         // save the overlapped opject.
         ClearOverlapped();
-        _overlapped.hEvent = new Data( *this );
+        _overlapped.hEvent = this;
       }
 
       /**
@@ -406,9 +395,6 @@ namespace myoddweb
           data->ProcessError(dwErrorCode);
           break;
         }
-
-        // we are done here
-        delete data;
       }
 
       /**
