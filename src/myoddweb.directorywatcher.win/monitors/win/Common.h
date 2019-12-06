@@ -49,7 +49,14 @@ namespace myoddweb
 
         void ProcessNotificationFromBackup(const unsigned char* pBuffer) const;
 
+        /**
+         * \brief send a request for the data class to read for a single file change.
+         */
         void Read();
+
+        /**
+         * \brief long running thead to check for folder changes as well as disconnects.
+         */
         void Run();
 
         /**
@@ -83,6 +90,11 @@ namespace myoddweb
          * \brief the current thread handle, if we have one.
          */
         std::future<void>* _future;
+
+        /**
+         * \brief the callback function.
+         */
+        Data::DataCallbackFunction* _function;
 
         /**
          * \brief start the worker thread

@@ -27,6 +27,7 @@ namespace myoddweb
         _data(nullptr),
         _parent(parent),
         _future(nullptr),
+        _function(nullptr),
         _bufferLength(bufferLength)
       {
       }
@@ -88,10 +89,16 @@ namespace myoddweb
         // wait for the thread to complete.
         if (_future != nullptr)
         {
-          Wait::SpinUntil(*_future, 1000);
+          (*_future).wait();
         }
+
+        // the future should have ended now
         delete _future;
         _future = nullptr;
+
+        // then stop the function as well.
+        delete _function;
+        _function = nullptr;
       }
 
       /**
@@ -106,6 +113,9 @@ namespace myoddweb
 
         // we must no longer stop
         _mustStop = false;
+
+        // create the function
+        _function = new Data::DataCallbackFunction(std::bind(&Common::DataCallbackFunction, this, std::placeholders::_1));
 
         // start the data
         _data = new Data(_parent, _bufferLength);
@@ -165,7 +175,7 @@ namespace myoddweb
             }
           }
 
-          // sleep a bit
+          // sleep a bit, we must be alertable so we can pass receive messages.
           SleepEx(sleepTime, true);
 
           // wait a bit longer
@@ -200,8 +210,7 @@ namespace myoddweb
         // https://docs.microsoft.com/en-gb/windows/desktop/api/WinBase/nf-winbase-readdirectorychangesw
         const auto notifyFilter = GetNotifyFilter();
 
-        auto func = new std::function<void(unsigned char*)>((std::bind(&Common::DataCallbackFunction, this, std::placeholders::_1 )));
-        if (!_data->Start(notifyFilter, _parent.Recursive(), *func ))
+        if (!_data->Start(notifyFilter, _parent.Recursive(), *_function))
         {
           // we could not create the monitoring
           // so we might as well get out now.

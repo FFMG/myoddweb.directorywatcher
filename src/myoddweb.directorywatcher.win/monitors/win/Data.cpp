@@ -21,7 +21,8 @@ namespace myoddweb
         _hDirectory(nullptr),
         _buffer(nullptr),
         _bufferLength(bufferLength),
-        _monitor(monitor)
+        _monitor(monitor),
+        _state( State::Unknown )
       {
       }
 
@@ -43,17 +44,24 @@ namespace myoddweb
       {
         MYODDWEB_PROFILE_FUNCTION();
 
-        // make sure that the buffer is clear
-        ClearBuffer();
+        if (bufferLength != _bufferLength)
+        {
+          // make sure that the buffer is clear
+          ClearBuffer();
+        }
 
-        // the buffer
-        _bufferLength = bufferLength;
+        if( _buffer == nullptr )
+        {
+          // set the new size
+          _bufferLength = bufferLength;
+
+          // then we can create it.
+          _buffer = new unsigned char[_bufferLength];
+        }
         
         // save the completion source.
         _dataCallbackFunction = &dataCallbackFunction;  
 
-        // then we can create it.
-        _buffer = new unsigned char[_bufferLength];
         memset(_buffer, 0, sizeof(unsigned char)*_bufferLength);
 
         // save the overlapped opject.
@@ -66,17 +74,34 @@ namespace myoddweb
        */
       void Data::Close()
       {
-        // close the folder
-        CloseFolder();
+        // no need for double lock
+        auto guard = Lock(_lock);
+        if (_state == State::Stopped)
+        {
+          return;
+        }
 
-        // the handle 
-        ClearHandle();
+        try
+        {
+          // close the folder
+          CloseFolder();
 
-        // the buffer.
-        ClearBuffer();
+          // the handle 
+          ClearHandle();
 
-        // clear the overlapped structure.
-        ClearOverlapped();
+          // the buffer.
+          ClearBuffer();
+
+          // clear the overlapped structure.
+          ClearOverlapped();
+        }
+        catch (...)
+        {
+          // @todo log this
+        }
+
+        // we are now stopped.
+        _state = Data::Stopped;
       }
 
       /**
@@ -104,7 +129,6 @@ namespace myoddweb
         }
         _folder = nullptr;
       }
-
 
       /**
        * \brief Clear the handle
@@ -214,7 +238,7 @@ namespace myoddweb
        * \param ulSize the max numberof bytes we want to copy
        * \return the cloned data.
        */
-      unsigned char* Data::Clone(const unsigned long ulSize) const
+      unsigned char* Data::Clone(const unsigned long ulSize)
       {
         // if the size if more than we can offer we need to prevent an overflow.
         if (ulSize > _bufferLength)
@@ -224,6 +248,14 @@ namespace myoddweb
 
         // create the clone
         const auto pBuffer = new unsigned char[ulSize];
+
+        // use the lock to prevent buffer from going away 
+        // while we are busy working here.
+        auto guard = Lock(_lock);
+        if (_buffer == nullptr || _state == State::Stopped )
+        {
+          return nullptr;
+        }
 
         // copy it.
         memcpy(pBuffer, _buffer, ulSize);
@@ -265,37 +297,58 @@ namespace myoddweb
        */
       bool Data::Open( )
       {
-        // check if this was done alread
+        // no need to worry about double lock
+        auto guard = Lock(_lock);
+
+        // check if this was done already
         // we cannot use IsOpen() as INVALID_HANDLE_VALUE would cause a return false.
         if (DirectoryHandle() != nullptr)
         {
           return DirectoryHandle() != INVALID_HANDLE_VALUE;
         }
 
+        // are we started?
+        if (_state == State::Started)
+        {
+          // we arelady started
+          return true;
+        }
+
         // how we want to open this directory.
         const auto shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
         const auto fileAttr = FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED;
 
-        const auto handle = CreateFileW(
-          _monitor.Path(),		        // the path we are watching
-          FILE_LIST_DIRECTORY,        // required for ReadDirectoryChangesW( ... )
-          shareMode,
-          nullptr,                    // security descriptor
-          OPEN_EXISTING,              // how to create
-          fileAttr,
-          nullptr                     // file with attributes to copy
-        );
-
-        if (handle == INVALID_HANDLE_VALUE)
+        try
         {
+          const auto handle = CreateFileW(
+            _monitor.Path(),		        // the path we are watching
+            FILE_LIST_DIRECTORY,        // required for ReadDirectoryChangesW( ... )
+            shareMode,
+            nullptr,                    // security descriptor
+            OPEN_EXISTING,              // how to create
+            fileAttr,
+            nullptr                     // file with attributes to copy
+          );
+
+          if (handle == INVALID_HANDLE_VALUE)
+          {
+            return false;
+          }
+
+          // set the handle.
+          _hDirectory = handle;
+        }
+        catch (...)
+        {
+          _hDirectory = INVALID_HANDLE_VALUE;
           return false;
         }
 
-        // set the handle.
-        _hDirectory = handle;
+        // we are now open
+        _state = State::Started;
 
         // check if it all worked.
-        return IsValidHandle();
+        return true;
       }
 
       /**
@@ -306,7 +359,18 @@ namespace myoddweb
        * \return success or not
        */
       bool Data::Start(const unsigned long notifyFilter, const bool recursive, DataCallbackFunction& dataCallbackFunction)
-      {
+      {        
+        if (_state == State::Stopped)
+        {
+          // we stopped.
+          return false;
+        }
+        auto guard = Lock(_lock);
+        if (_state == State::Stopped)
+        {
+          return false;
+        }
+
         // prepare all the values
         PrepareMonitor( _bufferLength, dataCallbackFunction);
 
@@ -358,29 +422,29 @@ namespace myoddweb
         // get the object we are working with
         const auto data = static_cast<Data*>(lpOverlapped->hEvent);
 
+        // do we have an object?
+        // should never happen ... but still.
+        if (nullptr == data)
+        {
+          return;
+        }
+
         switch (dwErrorCode)
         {
         case ERROR_SUCCESS:// all good, continue;
           break;
 
         case ERROR_OPERATION_ABORTED:
-          if (data != nullptr && dwNumberOfBytesTransfered != 0 )
-          {
-            data->_monitor.AddEventError(EventError::Aborted);
-          }
+          data->_monitor.AddEventError(EventError::Aborted);
           return;
 
         case ERROR_ACCESS_DENIED:
-          if (data != nullptr && dwNumberOfBytesTransfered != 0)
-          {
-            data->Close();
-            data->_monitor.AddEventError(EventError::Access);
-          }
+          data->Close();
+          data->_monitor.AddEventError(EventError::Access);
           return;
 
         default:
-MY_TRACE("Error %d!\n", dwNumberOfBytesTransfered);
-          if (data != nullptr && dwNumberOfBytesTransfered != 0)
+          if (dwNumberOfBytesTransfered != 0)
           {
             // https://msdn.microsoft.com/en-gb/574eccda-03eb-4e8a-9d74-cfaecc7312ce?f=255&MSPPError=-2147217396
             OVERLAPPED stOverlapped = {};
@@ -397,15 +461,9 @@ MY_TRACE("Error %d!\n", dwNumberOfBytesTransfered);
           return;
         }
 
-        // do we have an object?
-        // should never happen ... but still.
-        if (nullptr == data)
-        {
-          return;
-        }
-
         if (dwNumberOfBytesTransfered == 0)
         {
+          (*data->_dataCallbackFunction)(nullptr);
           return;
         }
 

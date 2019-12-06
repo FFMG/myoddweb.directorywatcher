@@ -30,7 +30,13 @@ namespace myoddweb
     {
       class Data
       {
-        typedef std::function<void(unsigned char*)> DataCallbackFunction;
+        enum State
+        {
+          Unknown,
+          Stopped,
+          Started
+        };
+
       public:
         explicit Data(const Monitor& monitor, unsigned long bufferLength);
         ~Data();
@@ -43,6 +49,8 @@ namespace myoddweb
         Data& operator=(const Data&) = delete;
         Data& operator=(Data&& other) = delete;
         Data() = delete;
+
+        typedef std::function<void(unsigned char*)> DataCallbackFunction;
 
         /**
          * \brief Clear all the data
@@ -106,7 +114,7 @@ namespace myoddweb
          * \param ulSize the max number of bytes we want to copy
          * \return the cloned data.
          */
-        [[nodiscard]] unsigned char* Clone(unsigned long ulSize) const;
+        [[nodiscard]] unsigned char* Clone(unsigned long ulSize);
 
         /**
          * \brief Prepare the buffer and structure for processing.
@@ -114,6 +122,8 @@ namespace myoddweb
          * \param dataCallbackFunction the routine we will be calling when we get a valid notification
          */
         void PrepareMonitor( unsigned long bufferLength, DataCallbackFunction& dataCallbackFunction);
+
+        Data::State _state;
 
         /***
          * \brief the completion routine the caller of Start( ... ) would like called when an event is raised.
