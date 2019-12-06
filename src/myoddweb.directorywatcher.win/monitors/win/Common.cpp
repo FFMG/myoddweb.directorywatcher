@@ -26,6 +26,7 @@ namespace myoddweb
         _mustStop(false),
         _data(nullptr),
         _parent(parent),
+        _future(nullptr),
         _bufferLength(bufferLength)
       {
       }
@@ -41,6 +42,8 @@ namespace myoddweb
        */
       bool Common::Start()
       {
+        MYODDWEB_PROFILE_FUNCTION();
+
         // close everything
         Stop();
 
@@ -77,11 +80,18 @@ namespace myoddweb
        */
       void Common::StopAndResetThread()
       {
+        MYODDWEB_PROFILE_FUNCTION();
+
         // tell everybody to stop...
         _mustStop = true;
 
         // wait for the thread to complete.
-        Wait::SpinUntil(_future, 1000);
+        if (_future != nullptr)
+        {
+          Wait::SpinUntil(*_future, 1000);
+        }
+        delete _future;
+        _future = nullptr;
       }
 
       /**
@@ -89,6 +99,8 @@ namespace myoddweb
        */
       void Common::StartWorkerThread()
       {
+        MYODDWEB_PROFILE_FUNCTION();
+
         // stop the old one... if any
         StopAndResetThread();
 
@@ -99,7 +111,7 @@ namespace myoddweb
         _data = new Data(_parent, _bufferLength);
 
         // we can now looking for changes.
-        _future = std::async( std::launch::async, &Common::Run, this);
+        _future = new std::future<void>(std::async( std::launch::async, &Common::Run, this));
       }
 
       /**
@@ -188,8 +200,8 @@ namespace myoddweb
         // https://docs.microsoft.com/en-gb/windows/desktop/api/WinBase/nf-winbase-readdirectorychangesw
         const auto notifyFilter = GetNotifyFilter();
 
-        const auto func(std::bind(&Common::DataCallbackFunction, this, std::placeholders::_1 ));
-        if (!_data->Start(notifyFilter, _parent.Recursive(), func ))
+        auto func = new std::function<void(unsigned char*)>((std::bind(&Common::DataCallbackFunction, this, std::placeholders::_1 )));
+        if (!_data->Start(notifyFilter, _parent.Recursive(), *func ))
         {
           // we could not create the monitoring
           // so we might as well get out now.

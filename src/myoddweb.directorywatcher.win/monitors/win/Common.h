@@ -82,7 +82,7 @@ namespace myoddweb
         /**
          * \brief the current thread handle, if we have one.
          */
-        std::future<void> _future;
+        std::future<void>* _future;
 
         /**
          * \brief start the worker thread

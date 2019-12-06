@@ -94,10 +94,10 @@ namespace myoddweb
          * \brief start monitoring a given folder.
          * \param notifyFilter the notification filter, (what we are watching the folder for)
          * \param recursive recursively check the given folder or not.
-         * \param lpCompletionRoutine the completion routine we will call.
+         * \param dataCallbackFunction the completion routine we will call.
          * \return success or not
          */
-        bool Start(unsigned long notifyFilter, bool recursive, DataCallbackFunction lpCompletionRoutine);
+        bool Start(unsigned long notifyFilter, bool recursive, DataCallbackFunction& dataCallbackFunction);
 
       private:
         /**
@@ -111,14 +111,14 @@ namespace myoddweb
         /**
          * \brief Prepare the buffer and structure for processing.
          * \param bufferLength the lenght of the buffer.
-         * \param lpCompletionRoutine the routine we will be calling when we get a valid notification
+         * \param dataCallbackFunction the routine we will be calling when we get a valid notification
          */
-        void PrepareMonitor( unsigned long bufferLength, DataCallbackFunction& lpCompletionRoutine);
+        void PrepareMonitor( unsigned long bufferLength, DataCallbackFunction& dataCallbackFunction);
 
         /***
          * \brief the completion routine the caller of Start( ... ) would like called when an event is raised.
          */
-        DataCallbackFunction _lpCompletionRoutine;
+        DataCallbackFunction* _dataCallbackFunction;
 
         /**
          * \brief if we are not watching for folder deletion, we will create our own watcher here

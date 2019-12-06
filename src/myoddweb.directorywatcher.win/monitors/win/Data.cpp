@@ -6,6 +6,7 @@
 #include <Windows.h>
 #include "Data.h"
 #include "../../utils/Lock.h"
+#include "../../utils/Instrumentor.h"
 
 namespace myoddweb
 {
@@ -15,7 +16,7 @@ namespace myoddweb
     {
       Data::Data(const Monitor& monitor, const unsigned long bufferLength)
         :
-        _lpCompletionRoutine(nullptr), 
+        _dataCallbackFunction(nullptr),
         _folder(nullptr),
         _hDirectory(nullptr),
         _buffer(nullptr),
@@ -36,10 +37,12 @@ namespace myoddweb
       /**
        * \brief Prepare the buffer and structure for processing.
        * \param bufferLength the length of the buffer.
-       * \param lpCompletionRoutine the routine we will be calling when we get a valid notification
+       * \param dataCallbackFunction the routine we will be calling when we get a valid notification
        */
-      void Data::PrepareMonitor(const unsigned long bufferLength, DataCallbackFunction& lpCompletionRoutine)
+      void Data::PrepareMonitor(const unsigned long bufferLength, DataCallbackFunction& dataCallbackFunction)
       {
+        MYODDWEB_PROFILE_FUNCTION();
+
         // make sure that the buffer is clear
         ClearBuffer();
 
@@ -47,7 +50,7 @@ namespace myoddweb
         _bufferLength = bufferLength;
         
         // save the completion source.
-        _lpCompletionRoutine = lpCompletionRoutine;
+        _dataCallbackFunction = &dataCallbackFunction;  
 
         // then we can create it.
         _buffer = new unsigned char[_bufferLength];
@@ -299,13 +302,13 @@ namespace myoddweb
        * \brief start monitoring a given folder.
        * \param notifyFilter the notification filter, (what we are watching the folder for)
        * \param recursive recursively check the given folder or not.
-       * \param lpCompletionRoutine the completion routine we will call.
+       * \param dataCallbackFunction the completion routine we will call.
        * \return success or not
        */
-      bool Data::Start(const unsigned long notifyFilter, const bool recursive, DataCallbackFunction lpCompletionRoutine)
+      bool Data::Start(const unsigned long notifyFilter, const bool recursive, DataCallbackFunction& dataCallbackFunction)
       {
         // prepare all the values
-        PrepareMonitor( _bufferLength, lpCompletionRoutine );
+        PrepareMonitor( _bufferLength, dataCallbackFunction);
 
         // This call needs to be reissued after every APC.
         if( !::ReadDirectoryChangesW(
@@ -337,7 +340,7 @@ namespace myoddweb
           }
           if (_folder->IsValidHandle() )
           {
-            _folder->Start(FILE_NOTIFY_CHANGE_DIR_NAME, false, lpCompletionRoutine);
+            _folder->Start(FILE_NOTIFY_CHANGE_DIR_NAME, false, dataCallbackFunction);
           }
         }
         return true;
@@ -401,12 +404,17 @@ MY_TRACE("Error %d!\n", dwNumberOfBytesTransfered);
           return;
         }
 
+        if (dwNumberOfBytesTransfered == 0)
+        {
+          return;
+        }
+
         // Can't use sizeof(FILE_NOTIFY_INFORMATION) because
         // the structure is padded to 16 bytes.
         _ASSERTE(dwNumberOfBytesTransfered >= offsetof(FILE_NOTIFY_INFORMATION, FileName) + sizeof(WCHAR));
 
         // call the derived function to handle this.
-        data->_lpCompletionRoutine( data->Clone(dwNumberOfBytesTransfered) );
+        (*data->_dataCallbackFunction)( data->Clone(dwNumberOfBytesTransfered) );
       }
     }
   }

@@ -16,9 +16,12 @@ namespace myoddweb
       bool _mustStop;
       std::future<void> _future;
 
+      long long _delay;
+
     public:
       Timer() : 
-        _mustStop( false )
+        _mustStop( false ),
+        _delay( -1 )
       {
       }
             
@@ -32,6 +35,7 @@ namespace myoddweb
       {
         Stop();
         _mustStop = false;
+        _delay = delay;
         const auto sleep = std::chrono::milliseconds(delay);
         _future = std::async(std::launch::async, [=]()
           {
@@ -55,9 +59,13 @@ namespace myoddweb
       void Stop() 
       {
         _mustStop = true;
+        if (_delay == -1)
+        {
+          return;
+        }
 
         // zero ms 
-        const auto zeroMilliseconds = std::chrono::milliseconds(0);
+        const auto delay = std::chrono::nanoseconds(1);
 
         // wait for a could of ms
         Wait::SpinUntil([=] 
@@ -67,10 +75,12 @@ namespace myoddweb
               // the value is not even set.
               return true;
             }
-            const auto status = _future.wait_for(zeroMilliseconds);
+            const auto status = _future.wait_for(delay);
             return (status == std::future_status::ready);
-          }, 10000);
+          }, _delay );
 
+        // we are done
+        _delay = -1;
       }
     };
   }

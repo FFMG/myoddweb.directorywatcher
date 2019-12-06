@@ -9,6 +9,7 @@
 #ifdef _DEBUG
 #include <cassert>
 #endif
+#include "../utils/Instrumentor.h"
 
 namespace myoddweb
 {
@@ -393,6 +394,8 @@ namespace myoddweb
      */
     void MultipleWinMonitor::Start(const std::vector<Monitor*>& container)
     {
+      MYODDWEB_PROFILE_FUNCTION();
+
       for (auto monitor = container.begin(); monitor != container.end(); ++monitor)
       {
         // the parent is in charge of the callback.
