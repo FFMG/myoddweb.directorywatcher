@@ -13,13 +13,6 @@ namespace myoddweb
      */
     constexpr auto MYODDWEB_MIN_THREAD_SLEEP = 2L;
 
-    /*
-     * The maximum number of Milliseconds we want to sleep.
-     * If this number is too low then we will use more CPU
-     * But if it is too high then shutdown could be really slow.
-     */
-    constexpr auto  MYODDWEB_MAX_THREAD_SLEEP = 256L;
-
     /**
      * When a handle becomes invalid, (the watched folder was deleted)
      * How often do we want to re-check the folder and, if valid

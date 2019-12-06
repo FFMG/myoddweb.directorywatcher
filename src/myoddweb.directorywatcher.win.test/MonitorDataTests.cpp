@@ -10,20 +10,27 @@ using myoddweb::directorywatcher::Request;
 TEST(Data, BufferLenghValueIsSaved) {
   const auto r = Request( L"c:\\", true, nullptr, 0);
   const WinMonitor wm( 1, 2, r );
-  const Data md(wm, 100);
+  auto fnc = Data::DataCallbackFunction();
+  const Data md(wm, 
+    FILE_NOTIFY_CHANGE_FILE_NAME,
+    false,
+    fnc,
+    100);
   ASSERT_EQ(100, md.BufferLength() );
 }
 
 TEST(Data, BufferIsNullByDefault) {
   const auto r = Request(L"c:\\", true, nullptr, 0);
   const WinMonitor wm(1, 2, r);
-  const Data md(wm, 100);
+  auto fnc = Data::DataCallbackFunction();
+  const Data md(wm, FILE_NOTIFY_CHANGE_FILE_NAME, false, fnc, 100);
   ASSERT_EQ(nullptr, md.Buffer());
 }
 
 TEST(Data, DirectoryHandleIsNullByDefault) {
   const auto r = Request(L"c:\\", true, nullptr, 0);
   const WinMonitor wm(1, 2, r);
-  const Data md(wm, 100);
+  auto fnc = Data::DataCallbackFunction();
+  const Data md(wm, FILE_NOTIFY_CHANGE_FILE_NAME, false, fnc, 100);
   ASSERT_EQ(nullptr, md.DirectoryHandle());
 }

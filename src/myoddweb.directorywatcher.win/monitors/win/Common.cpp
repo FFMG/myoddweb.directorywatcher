@@ -117,8 +117,13 @@ namespace myoddweb
         // create the function
         _function = new Data::DataCallbackFunction(std::bind(&Common::DataCallbackFunction, this, std::placeholders::_1));
 
-        // start the data
-        _data = new Data(_parent, _bufferLength);
+        // what we are looking for.
+        // https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-findfirstchangenotificationa
+        // https://docs.microsoft.com/en-gb/windows/desktop/api/WinBase/nf-winbase-readdirectorychangesw
+        const auto notifyFilter = GetNotifyFilter();
+
+        // create the data
+        _data = new Data(_parent, notifyFilter, _parent.Recursive(), *_function, _bufferLength);
 
         // we can now looking for changes.
         _future = new std::future<void>(std::async( std::launch::async, &Common::Run, this));
@@ -153,14 +158,24 @@ namespace myoddweb
         // invalid handle wait
         auto invalidHandleWait = 0;
 
-        // now we keep on waiting.
-        auto sleepTime = MYODDWEB_MIN_THREAD_SLEEP;
-        while (!MustStop())
+        auto concurentThreadsSupported = std::thread::hardware_concurrency();
+        if (0 == concurentThreadsSupported)
         {
+          concurentThreadsSupported = 1;
+        }
+
+        auto count = 0;
+        for (;;)
+        {
+          if (MustStop())
+          {
+            break;
+          }
+
           if (!_data->IsValidHandle())
           {
             // wait a little bit longer.
-            invalidHandleWait += sleepTime;
+            invalidHandleWait += MYODDWEB_MIN_THREAD_SLEEP;
             if (invalidHandleWait >= MYODDWEB_INVALID_HANDLE_SLEEP)
             {
               // reset the wait time.
@@ -174,21 +189,27 @@ namespace myoddweb
               }
             }
           }
+          else
+          {
+            invalidHandleWait = 0;
+          }
 
           // sleep a bit, we must be alertable so we can pass receive messages.
-          SleepEx(sleepTime, true);
-
-          // wait a bit longer
-          sleepTime *= 2;
+          SleepEx(MYODDWEB_MIN_THREAD_SLEEP, true);
 
           // but not too much
-          if (sleepTime > MYODDWEB_MAX_THREAD_SLEEP)
+          if (count % concurentThreadsSupported != 0)
+          {
+            std::this_thread::sleep_for(std::chrono::milliseconds(MYODDWEB_MIN_THREAD_SLEEP));
+            ++count;
+          }
+          else
           {
             std::this_thread::yield();
-            sleepTime = MYODDWEB_MIN_THREAD_SLEEP;
+            count = 1;
           }
         }
-        
+
         // if we are here... we can release the data
         _data->Close();
       }
@@ -205,12 +226,8 @@ namespace myoddweb
           return;
         }
 
-        // what we are looking for.
-        // https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-findfirstchangenotificationa
-        // https://docs.microsoft.com/en-gb/windows/desktop/api/WinBase/nf-winbase-readdirectorychangesw
-        const auto notifyFilter = GetNotifyFilter();
-
-        if (!_data->Start(notifyFilter, _parent.Recursive(), *_function))
+        // start the read now.
+        if (!_data->Start())
         {
           // we could not create the monitoring
           // so we might as well get out now.

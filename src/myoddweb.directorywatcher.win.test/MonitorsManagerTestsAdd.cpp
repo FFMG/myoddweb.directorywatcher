@@ -35,6 +35,27 @@ TEST(MonitorsManagerAdd, SimpleStartAndStop) {
   EXPECT_NO_THROW(::MonitorsManager::Stop(id));
 }
 
+TEST(MonitorsManagerAdd, StartStopThenAddFileToFolder) {
+
+  for (auto i = 0; i < 1; ++i)
+  {
+    // create the helper.
+    auto helper = new MonitorsManagerTestHelper();
+
+    const auto request = ::Request(helper->Folder(), false, function, 0);
+    const auto id = ::MonitorsManager::Start(request);
+    Add(id, helper);
+
+    // just add a file
+    auto _ = helper->AddFile();
+
+    EXPECT_NO_THROW(::MonitorsManager::Stop(id));
+
+    // this should not throw as we are not watching anything anymore
+    _ = helper->AddFile();
+  }
+}
+
 TEST(MonitorsManagerAdd, InvalidPathDoesNOtThrow) {
 
   const auto request = ::Request(L"somebadname", false, nullptr, 0);

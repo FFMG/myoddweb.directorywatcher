@@ -30,7 +30,7 @@ namespace myoddweb
     {
       class Data
       {
-        enum State
+        enum class State
         {
           Unknown,
           Stopped,
@@ -38,7 +38,17 @@ namespace myoddweb
         };
 
       public:
-        explicit Data(const Monitor& monitor, unsigned long bufferLength);
+        /**
+         * \brief callback function when we get a notification.
+         */
+        typedef std::function<void(unsigned char*)> DataCallbackFunction;
+
+        explicit Data(
+          const Monitor& monitor, 
+          unsigned long notifyFilter,
+          bool recursive,
+          DataCallbackFunction& dataCallbackFunction,
+          unsigned long bufferLength);
         ~Data();
 
         /**
@@ -49,8 +59,6 @@ namespace myoddweb
         Data& operator=(const Data&) = delete;
         Data& operator=(Data&& other) = delete;
         Data() = delete;
-
-        typedef std::function<void(unsigned char*)> DataCallbackFunction;
 
         /**
          * \brief Clear all the data
@@ -100,14 +108,22 @@ namespace myoddweb
 
         /**
          * \brief start monitoring a given folder.
-         * \param notifyFilter the notification filter, (what we are watching the folder for)
-         * \param recursive recursively check the given folder or not.
-         * \param dataCallbackFunction the completion routine we will call.
          * \return success or not
          */
-        bool Start(unsigned long notifyFilter, bool recursive, DataCallbackFunction& dataCallbackFunction);
+        bool Start();
 
       private:
+        /**
+         * \brief start monitoring a given folder.
+         * \return success or not
+         */
+        bool StartWaitForChanges();
+
+        /**
+         * \brief prepare the various buffer for changes.
+         */
+        void PrepareForChanges();
+
         /**
          * \brief clone up to 'ulSize' bytes into a buffer.
          *        it is up to the caller to clear/delete the buffer.
@@ -118,17 +134,30 @@ namespace myoddweb
 
         /**
          * \brief Prepare the buffer and structure for processing.
-         * \param bufferLength the lenght of the buffer.
          * \param dataCallbackFunction the routine we will be calling when we get a valid notification
          */
-        void PrepareMonitor( unsigned long bufferLength, DataCallbackFunction& dataCallbackFunction);
+        void SetCallbackFunction( DataCallbackFunction& dataCallbackFunction);
 
+        /**
+         * \brief what we wish to be notified about
+         * \see https://docs.microsoft.com/en-gb/windows/win32/api/winbase/nf-winbase-readdirectorychangesw
+         */
+        const unsigned long _notifyFilter;
+
+        /**
+         * \brief if this is a recursive monitoring or not.
+         */
+        const bool _recursive;
+
+        /**
+         * \brief our current state
+         */
         Data::State _state;
 
         /***
          * \brief the completion routine the caller of Start( ... ) would like called when an event is raised.
          */
-        DataCallbackFunction* _dataCallbackFunction;
+        DataCallbackFunction& _dataCallbackFunction;
 
         /**
          * \brief if we are not watching for folder deletion, we will create our own watcher here

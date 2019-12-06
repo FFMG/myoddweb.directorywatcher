@@ -66,7 +66,7 @@ namespace myoddweb
       }
 
       // our thread competed, get out.
-      return callFuture.get();
+      return true; // callFuture.get();
     }
 
     /**

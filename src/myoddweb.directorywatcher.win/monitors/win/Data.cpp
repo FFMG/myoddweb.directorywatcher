@@ -14,16 +14,31 @@ namespace myoddweb
   {
     namespace win
     {
-      Data::Data(const Monitor& monitor, const unsigned long bufferLength)
+      Data::Data(
+        const Monitor& monitor, 
+        const unsigned long notifyFilter,
+        const bool recursive,
+        DataCallbackFunction& dataCallbackFunction,
+        const unsigned long bufferLength
+        )
         :
-        _dataCallbackFunction(nullptr),
+        _recursive( recursive ),
+        _notifyFilter(notifyFilter),
+        _dataCallbackFunction( dataCallbackFunction ),
+        _bufferLength(bufferLength),
         _folder(nullptr),
         _hDirectory(nullptr),
         _buffer(nullptr),
-        _bufferLength(bufferLength),
         _monitor(monitor),
         _state( State::Unknown )
       {
+        // prepapre the buffer that will receive our data
+        if (_buffer == nullptr)
+        {
+          // create the buffer if needed.
+          _buffer = new unsigned char[_bufferLength];
+        }
+
       }
 
       Data::~Data()
@@ -36,32 +51,12 @@ namespace myoddweb
       }
 
       /**
-       * \brief Prepare the buffer and structure for processing.
-       * \param bufferLength the length of the buffer.
-       * \param dataCallbackFunction the routine we will be calling when we get a valid notification
+       * \brief prepare the various buffer for changes.
        */
-      void Data::PrepareMonitor(const unsigned long bufferLength, DataCallbackFunction& dataCallbackFunction)
+      void Data::PrepareForChanges()
       {
         MYODDWEB_PROFILE_FUNCTION();
-
-        if (bufferLength != _bufferLength)
-        {
-          // make sure that the buffer is clear
-          ClearBuffer();
-        }
-
-        if( _buffer == nullptr )
-        {
-          // set the new size
-          _bufferLength = bufferLength;
-
-          // then we can create it.
-          _buffer = new unsigned char[_bufferLength];
-        }
         
-        // save the completion source.
-        _dataCallbackFunction = &dataCallbackFunction;  
-
         memset(_buffer, 0, sizeof(unsigned char)*_bufferLength);
 
         // save the overlapped opject.
@@ -80,6 +75,8 @@ namespace myoddweb
         {
           return;
         }
+
+MY_TRACE("Closing %p\n", this );
 
         try
         {
@@ -101,7 +98,7 @@ namespace myoddweb
         }
 
         // we are now stopped.
-        _state = Data::Stopped;
+        _state = State::Stopped;
       }
 
       /**
@@ -145,6 +142,13 @@ namespace myoddweb
             {
               // CancelIoEx(_data->DirectoryHandle(), _data->Overlapped());
               ::CancelIo(_hDirectory);
+
+
+              OVERLAPPED o = {};
+              o.hEvent = _overlapped.hEvent;
+              DWORD dwBytes = _bufferLength;
+              GetOverlappedResult(_hDirectory, &_overlapped, &dwBytes, TRUE);
+
               ::CloseHandle(_hDirectory);
             }
             catch (...)
@@ -352,13 +356,34 @@ namespace myoddweb
       }
 
       /**
+       * \brief start waiting for notification
+       */
+      bool Data::StartWaitForChanges()
+      {
+        // prepare all the values
+        PrepareForChanges();
+
+        return
+        ::ReadDirectoryChangesW(
+          DirectoryHandle(),
+          Buffer(),
+          BufferLength(),
+          _recursive,
+          _notifyFilter,
+          nullptr,                // bytes returned, (not used here as we are async)
+          Overlapped(),           // buffer with our information
+          &FileIoCompletionRoutine
+        ) == 1;
+      }
+
+      /**
        * \brief start monitoring a given folder.
        * \param notifyFilter the notification filter, (what we are watching the folder for)
        * \param recursive recursively check the given folder or not.
        * \param dataCallbackFunction the completion routine we will call.
        * \return success or not
        */
-      bool Data::Start(const unsigned long notifyFilter, const bool recursive, DataCallbackFunction& dataCallbackFunction)
+      bool Data::Start()
       {        
         if (_state == State::Stopped)
         {
@@ -371,20 +396,10 @@ namespace myoddweb
           return false;
         }
 
-        // prepare all the values
-        PrepareMonitor( _bufferLength, dataCallbackFunction);
-
         // This call needs to be reissued after every APC.
-        if( !::ReadDirectoryChangesW(
-          DirectoryHandle(),
-          Buffer(),
-          BufferLength(),
-          recursive,
-          notifyFilter,
-          nullptr,                // bytes returned, (not used here as we are async)
-          Overlapped(),           // buffer with our information
-          &FileIoCompletionRoutine
-        ))
+MY_TRACE( "Waiting to read! %p\n", this );
+
+        if( !StartWaitForChanges() )
         {
           return false;
         }
@@ -392,11 +407,11 @@ namespace myoddweb
         // If we are not monitoring folder changes
         // then we need to check our own folder withour recursion.
         // that way, if it is deleted, we will be able to release the handle(s).
-        if ((notifyFilter & FILE_NOTIFY_CHANGE_DIR_NAME) != FILE_NOTIFY_CHANGE_DIR_NAME)
+        if ((_notifyFilter & FILE_NOTIFY_CHANGE_DIR_NAME) != FILE_NOTIFY_CHANGE_DIR_NAME)
         {
           if( nullptr == _folder )
           {
-            _folder = new Data(_monitor, _bufferLength);
+            _folder = new Data(_monitor, FILE_NOTIFY_CHANGE_DIR_NAME, false, _dataCallbackFunction, _bufferLength);
           }
           if(_folder->_hDirectory == nullptr )
           {
@@ -404,7 +419,7 @@ namespace myoddweb
           }
           if (_folder->IsValidHandle() )
           {
-            _folder->Start(FILE_NOTIFY_CHANGE_DIR_NAME, false, dataCallbackFunction);
+            _folder->Start();
           }
         }
         return true;
@@ -422,6 +437,7 @@ namespace myoddweb
         // get the object we are working with
         const auto data = static_cast<Data*>(lpOverlapped->hEvent);
 
+MY_TRACE("Done reading! %p\n", data );
         // do we have an object?
         // should never happen ... but still.
         if (nullptr == data)
@@ -463,7 +479,7 @@ namespace myoddweb
 
         if (dwNumberOfBytesTransfered == 0)
         {
-          (*data->_dataCallbackFunction)(nullptr);
+          data->_dataCallbackFunction(nullptr);
           return;
         }
 
@@ -472,7 +488,7 @@ namespace myoddweb
         _ASSERTE(dwNumberOfBytesTransfered >= offsetof(FILE_NOTIFY_INFORMATION, FileName) + sizeof(WCHAR));
 
         // call the derived function to handle this.
-        (*data->_dataCallbackFunction)( data->Clone(dwNumberOfBytesTransfered) );
+        data->_dataCallbackFunction( data->Clone(dwNumberOfBytesTransfered) );
       }
     }
   }
