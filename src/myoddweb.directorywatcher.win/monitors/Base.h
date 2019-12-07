@@ -8,11 +8,18 @@ namespace myoddweb
   namespace directorywatcher
   {
     /**
-     * The min number of Milliseconds we want to wait.
-     * If this number is too low then we will use more CPU.
+     * \brief The min number of Milliseconds we want to wait for an IO signal.
+     *        If this number is too low then we will use more CPU.
      */
-    constexpr auto MYODDWEB_MIN_THREAD_SLEEP = 2L;
+    constexpr auto MYODDWEB_MIN_THREAD_SLEEP = 50L;
 
+    /** 
+     * \brief similar to the call above, but this puts our thread to sleep
+     *        completely, giving other threads a change to process data.
+     *        If this number is too low then we will use more CPU.
+     */
+    constexpr auto MYODDWEB_CPU_THREAD_SLEEP = 100L;
+    
     /**
      * When a handle becomes invalid, (the watched folder was deleted)
      * How often do we want to re-check the folder and, if valid
@@ -25,5 +32,11 @@ namespace myoddweb
      * If the number is too large the number of running threads will cause issues.
      */
     constexpr auto MYODDWEB_MAX_NUMBER_OF_SUBPATH = 64L;
+
+    /**
+     * \brief how long we want to wait for the various IOs to complete before
+     *        we stop the watcher.
+     */
+    constexpr auto MYODDWEB_WAITFOR_IO_COMPLETION = 1000;
   }
 }

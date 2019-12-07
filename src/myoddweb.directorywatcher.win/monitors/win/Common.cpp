@@ -164,6 +164,10 @@ namespace myoddweb
           concurentThreadsSupported = 1;
         }
 
+        // the amount of time we want to put our thread to sleep
+        // so we do not cause a tight loop to burn the CPU.
+        const auto threadSleep = std::chrono::milliseconds(MYODDWEB_CPU_THREAD_SLEEP);
+
         auto count = 0;
         for (;;)
         {
@@ -191,16 +195,17 @@ namespace myoddweb
           }
           else
           {
+            // The handle is good, so we can reset the value
             invalidHandleWait = 0;
           }
 
-          // sleep a bit, we must be alertable so we can pass receive messages.
-          SleepEx(MYODDWEB_MIN_THREAD_SLEEP, true);
+          // sleep a bit, we must be alertable so we can pass/receive messages.
+          ::SleepEx(MYODDWEB_MIN_THREAD_SLEEP, true);
 
-          // but not too much
+          // we now need to slow the thread down a little more
           if (count % concurentThreadsSupported != 0)
           {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(threadSleep);
             ++count;
           }
           else

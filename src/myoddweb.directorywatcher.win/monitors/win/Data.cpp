@@ -7,6 +7,7 @@
 #include "Data.h"
 #include "../../utils/Lock.h"
 #include "../../utils/Instrumentor.h"
+#include "../Base.h"
 
 namespace myoddweb
 {
@@ -120,17 +121,27 @@ namespace myoddweb
           _hDirectory = nullptr;
           return;
         }
+
         try
         {
           // tell all the pending reads that we are ready
           // to stop handling messages now.
           _operationAborted = false;
 
-          ::CancelIo(_hDirectory);
-          Wait::SpinUntil([&] {
-            ::SleepEx(10, true);
-            return _operationAborted == true;
-          }, 100 );
+          // flag that we want to cancel the operation
+          ::CancelIoEx(_hDirectory, Overlapped() );
+
+          // then wait a little for the operation to be cancelled.
+          Wait::SpinUntil([&] 
+            {
+              // wait a little to ensure that the aborted message is given.
+              // we will return as soon as the message is recived.
+              // if we do not wait for the abort message, we might get other
+              // messages out of sequence.
+              ::SleepEx(1, true);
+              return _operationAborted == true;
+            }, MYODDWEB_WAITFOR_IO_COMPLETION
+          );
           ::CloseHandle(_hDirectory);
         }
         catch (...)
