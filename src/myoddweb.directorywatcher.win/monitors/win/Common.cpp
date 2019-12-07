@@ -200,7 +200,7 @@ namespace myoddweb
           // but not too much
           if (count % concurentThreadsSupported != 0)
           {
-            std::this_thread::sleep_for(std::chrono::milliseconds(MYODDWEB_MIN_THREAD_SLEEP));
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             ++count;
           }
           else

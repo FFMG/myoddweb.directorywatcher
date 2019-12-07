@@ -29,6 +29,7 @@ namespace myoddweb
         _hDirectory(nullptr),
         _buffer(nullptr),
         _monitor(monitor),
+        _operationAborted( false ),
         _state( State::Unknown )
       {
         // prepapre the buffer that will receive our data
@@ -54,25 +55,31 @@ namespace myoddweb
         // save the overlapped opject.
         ClearOverlapped();
         _overlapped.hEvent = this;
+
+        // assume that we are not aborted
+        _operationAborted = false;
       }
 
       /**
-       * \brief Clear all the data
+       * \brief Clear all the data and close all connections handles.
        */
       void Data::Close()
       {
-        // no need for double lock
+        // no need for double lock as closes are not called
+        // that often or at least they should not be.
         auto guard = Lock(_lock);
-        if (_state == State::Stopped)
+        if (IsStoppedOrStopping())
         {
           return;
         }
 
-//MY_TRACE("Closing %p\n", this );
+        // reflect that we are now stopping.
+        // from now on we should not be processing any messages.
+        _state = State::Stopping;
 
         try
         {
-          // the handle 
+          // close the handle 
           ClearHandle();
 
           // the buffer.
@@ -96,25 +103,44 @@ namespace myoddweb
       void Data::ClearHandle()
       {
         //  is it open?
-        if (IsValidHandle())
+        if (!IsValidHandle())
         {
-          auto guard = Lock(_lock);
-          if (IsValidHandle())
-          {
-            try
-            {
-              ::CancelIo(_hDirectory);           
-              ::CloseHandle(_hDirectory);
-            }
-            catch (...)
-            {
-              // We can ignore this... as per the doc:
-              //   If the application is running under a debugger, the function will throw an exception if it receives either a handle value that is not valid or a pseudo-
-              //   handle value. This can happen if you close a handle twice, or if you call CloseHandle on a handle returned by the FindFirstFile function instead of 
-              //   calling the FindClose function.
-            }
-          }
+          // make sure that the handle is null
+          // as it couls also be 0xffffff
+          _hDirectory = nullptr;
+          return;
         }
+
+        // get the lock and check again
+        auto guard = Lock(_lock);
+        if (!IsValidHandle())
+        {
+          // make sure that the handle is null
+          // as it couls also be 0xffffff
+          _hDirectory = nullptr;
+          return;
+        }
+        try
+        {
+          // tell all the pending reads that we are ready
+          // to stop handling messages now.
+          _operationAborted = false;
+
+          ::CancelIo(_hDirectory);
+          Wait::SpinUntil([&] {
+            ::SleepEx(10, true);
+            return _operationAborted == true;
+          }, 100 );
+          ::CloseHandle(_hDirectory);
+        }
+        catch (...)
+        {
+          // We can ignore this... as per the doc:
+          //   If the application is running under a debugger, the function will throw an exception if it receives either a handle value that is not valid or a pseudo-
+          //   handle value. This can happen if you close a handle twice, or if you call CloseHandle on a handle returned by the FindFirstFile function instead of 
+          //   calling the FindClose function.
+        }
+
         // the directory is closed.
         _hDirectory = nullptr;
       }
@@ -211,7 +237,7 @@ namespace myoddweb
         // use the lock to prevent buffer from going away 
         // while we are busy working here.
         auto guard = Lock(_lock);
-        if (_buffer == nullptr || _state == State::Stopped )
+        if (_buffer == nullptr || _state == State::Stopped || _state == State::Stopping)
         {
           return nullptr;
         }
@@ -342,25 +368,22 @@ namespace myoddweb
        */
       bool Data::Start()
       {        
-        if (_state == State::Stopped)
-        {
-          // we stopped.
-          return false;
-        }
+        // no need for a double lock.
         auto guard = Lock(_lock);
-        if (_state == State::Stopped)
+        if (IsStoppedOrStopping())
         {
+          // we stopped or we are stopping
           return false;
         }
 
-        // This call needs to be reissued after every APC.
-//MY_TRACE( "Waiting to read! %p\n", this );
-
+        // start the very first read notification
+        // then every time we get a message we will read again.
         if( !BeginRead() )
         {
           return false;
         }
 
+        // we are done here.
         return true;
       }
 
@@ -409,8 +432,14 @@ namespace myoddweb
           break;
 
         case ERROR_OPERATION_ABORTED:
+          // we are stopping, so we can indicate that we 
+          // are now completely ready to stop.
           _monitor.AddEventError(EventError::Aborted);
-          return;
+
+          // set the flag _after_ we posted the message above
+          // as what happens after this is undefined.
+          _operationAborted = true;
+          break;
 
         case ERROR_ACCESS_DENIED:
           Close();
@@ -420,8 +449,10 @@ namespace myoddweb
         default:
           const auto dwError = GetLastError();
           _monitor.AddEventError(EventError::Overflow);
-          return;
+          break;
         }
+
+
       }
 
       /**

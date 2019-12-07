@@ -34,6 +34,7 @@ namespace myoddweb
         {
           Unknown,
           Stopped,
+          Stopping,
           Started
         };
 
@@ -55,8 +56,8 @@ namespace myoddweb
          * \brief Prevent copy construction
          */
         Data() = delete;
-        Data(Data&&) = delete;
         Data(const Data&) = delete;
+        Data(Data&&) = delete;
         Data& operator=(const Data&) = delete;
         Data& operator=(Data&& other) = delete;
 
@@ -114,6 +115,15 @@ namespace myoddweb
 
       private:
         /**
+         * \brief return true if we are in the process of stopping
+         *        or if we have stopped already.
+         */
+        bool IsStoppedOrStopping() const 
+        {
+          return _state == State::Stopped || _state == State::Stopping;
+        }
+
+        /**
          * \brief start monitoring a given folder.
          * \return success or not
          */
@@ -159,6 +169,12 @@ namespace myoddweb
          * \brief our current state
          */
         Data::State _state;
+
+        /**
+         * \brief flag to indicate that we received the operation aborted message
+         *        and we are able to close the file handle now.
+         */
+        bool _operationAborted;
 
         /***
          * \brief the completion routine the caller of Start( ... ) would like called when an event is raised.

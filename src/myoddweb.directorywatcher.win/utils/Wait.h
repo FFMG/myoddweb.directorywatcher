@@ -88,9 +88,8 @@ namespace myoddweb
        *        if empty/null then we will never check the condition
        * \param milliseconds the maximum amount of time we want to wait
        *        if the condition is not set then we will always return false and wait for that number of ms.
-       * \param promise the promise that we will use to set the result.
        */
-      void Awaiter( std::function<bool()>&& condition, const long long milliseconds, std::promise<bool>&& promise);
+      bool Awaiter( std::function<bool()>&& condition, const long long milliseconds );
     };
   }
 }

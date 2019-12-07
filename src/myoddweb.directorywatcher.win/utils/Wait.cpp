@@ -3,6 +3,12 @@
 #include <limits> 
 #include <utility>
 
+#if defined( _WIN32) || defined(_WIN64 )
+  #define MYODDWEB_MAX_WAIT_INT ((unsigned int)-1)
+  #include <Windows.h>
+#else
+  #define MYODDWEB_MAX_WAIT_INT std::numeric_limits<int>::max()
+#endif
 namespace myoddweb
 {
   namespace directorywatcher
@@ -41,32 +47,9 @@ namespace myoddweb
     bool Wait::SpinUntilInternal( std::function<bool()>& condition, const long long milliseconds)
     {
       Wait waiter;
-      std::promise<bool> callResult;
-      auto callFuture = callResult.get_future();
 
-      // start the thread with the arguments we have
-      auto future = std::async(std::launch::async,
-        &Awaiter, 
-        &waiter, 
-        std::move(condition),
-        milliseconds, 
-        std::move(callResult)
-      );
-
-      // how long we will allow it to run for
-      // note that we are adding a little bit of padding.
-      const auto padding = 10;
-
-      // wait for the future to complete ... or timeout.
-      // if we return false, we gave up waiting.
-      if (!SpinUntilFutureComplete( future, milliseconds + padding ))
-      {
-        // we timed out, so something failed...
-        return false;
-      }
-
-      // our thread competed, get out.
-      return true; // callFuture.get();
+      // call the awaiter.
+      return waiter.Awaiter( std::move(condition), milliseconds );
     }
 
     /**
@@ -83,25 +66,7 @@ namespace myoddweb
       auto callFuture = callResult.get_future();
 
       // start the thread with the arguments we have
-      auto future = std::async(std::launch::async,
-        &Awaiter,
-        &waiter,
-        nullptr,
-        milliseconds,
-        std::move(callResult)
-      );
-
-      // how long we will allow it to run for
-      // note that we are adding a little bit of padding.
-      const auto padding = 10;
-
-      // wait for the future to complete ... or timeout.
-      // if we return false, we gave up waiting.
-      if (!SpinUntilFutureComplete(future, milliseconds + padding))
-      {
-        // we timed out, so something failed...
-        return false;
-      }
+      waiter.Awaiter( nullptr, milliseconds );
 
       // our thread competed, get out.
       return callFuture.get();
@@ -126,7 +91,7 @@ namespace myoddweb
       {
         concurentThreadsSupported = 1;
       }
-      for (auto count = 0; count < std::numeric_limits<int>::max(); ++count)
+      for (auto count = 0; count < MYODDWEB_MAX_WAIT_INT; ++count)
       {
         if (future.valid())
         {
@@ -175,11 +140,10 @@ namespace myoddweb
      *        if the condition is not set then we will always return false and wait for that number of ms.
      * \param promise the promise that we will use to set the result.
      */
-    void Wait::Awaiter
+    bool Wait::Awaiter
     (
       std::function<bool()>&& condition, 
-      const long long milliseconds, 
-      std::promise<bool>&& promise
+      const long long milliseconds
     )
     {
       auto result = false;
@@ -203,7 +167,7 @@ namespace myoddweb
 
           // when we want to sleep until.
           const auto until = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds);
-          for (auto count = 0; count < std::numeric_limits<int>::max(); ++count)
+          for (auto count = 0; count < MYODDWEB_MAX_WAIT_INT; ++count)
           {
             try
             {
@@ -230,6 +194,9 @@ namespace myoddweb
             }
             else
             {
+#if defined( _WIN32) || defined(_WIN64 )
+              ::SleepEx(1, TRUE);
+#endif
               // yield.
               std::this_thread::yield();
             }
@@ -253,7 +220,7 @@ namespace myoddweb
       _conditionVariable.notify_one();
 
       // all done
-      promise.set_value( result );
+      return result;
     }
   }
 }

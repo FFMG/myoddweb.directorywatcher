@@ -36,9 +36,6 @@ TEST(MonitorsManagerAdd, SimpleStartAndStop) {
 }
 
 TEST(MonitorsManagerAdd, StartStopThenAddFileToFolder) {
-
-  for (auto i = 0; i < 1; ++i)
-  {
     // create the helper.
     auto helper = new MonitorsManagerTestHelper();
 
@@ -53,7 +50,6 @@ TEST(MonitorsManagerAdd, StartStopThenAddFileToFolder) {
 
     // this should not throw as we are not watching anything anymore
     _ = helper->AddFile();
-  }
 }
 
 TEST(MonitorsManagerAdd, InvalidPathDoesNOtThrow) {
