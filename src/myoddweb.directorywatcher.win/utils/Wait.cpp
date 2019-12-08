@@ -62,14 +62,9 @@ namespace myoddweb
     bool Wait::SpinUntilInternal(const long long milliseconds)
     {
       Wait waiter;
-      std::promise<bool> callResult;
-      auto callFuture = callResult.get_future();
 
       // start the thread with the arguments we have
-      waiter.Awaiter( nullptr, milliseconds );
-
-      // our thread competed, get out.
-      return callFuture.get();
+      return waiter.Awaiter( nullptr, milliseconds );
     }
 
     /**

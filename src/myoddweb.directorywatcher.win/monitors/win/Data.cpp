@@ -129,19 +129,23 @@ namespace myoddweb
           _operationAborted = false;
 
           // flag that we want to cancel the operation
-          ::CancelIoEx(_hDirectory, Overlapped() );
-
-          // then wait a little for the operation to be cancelled.
-          Wait::SpinUntil([&] 
-            {
-              // wait a little to ensure that the aborted message is given.
-              // we will return as soon as the message is recived.
-              // if we do not wait for the abort message, we might get other
-              // messages out of sequence.
-              ::SleepEx(1, true);
-              return _operationAborted == true;
-            }, MYODDWEB_WAITFOR_IO_COMPLETION
-          );
+          // if `CancelIoEx` returns zero then it means that either the handle
+          // and/or the OVERLAPPED pointer could not be found.
+          // \see https://docs.microsoft.com/en-us/windows/win32/fileio/cancelioex-func
+          if (0 != ::CancelIoEx(_hDirectory, Overlapped()))
+          {
+            // then wait a little for the operation to be cancelled.
+            Wait::SpinUntil([&]
+              {
+                // wait a little to ensure that the aborted message is given.
+                // we will return as soon as the message is recived.
+                // if we do not wait for the abort message, we might get other
+                // messages out of sequence.
+                ::SleepEx(1, true);
+                return _operationAborted == true;
+              }, MYODDWEB_WAITFOR_IO_COMPLETION
+            );
+          }
           ::CloseHandle(_hDirectory);
         }
         catch (...)

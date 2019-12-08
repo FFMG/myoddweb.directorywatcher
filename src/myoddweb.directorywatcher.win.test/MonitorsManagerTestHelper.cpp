@@ -74,11 +74,25 @@ MonitorsManagerTestHelper::~MonitorsManagerTestHelper()
 
   for each (auto folder in _folders)
   {
-    std::filesystem::remove(folder);
+    try
+    {
+      std::filesystem::remove(folder);
+    }
+    catch (...)
+    {
+      // to log
+    }
   }
-
-  // and the directory
-  std::filesystem::remove( Folder() );
+  
+  try
+  {
+    // and the directory
+    std::filesystem::remove(Folder());
+  }
+  catch (...)
+  {
+    // to log
+  }
 }
 
 const wchar_t* MonitorsManagerTestHelper::Folder() const 
@@ -130,7 +144,14 @@ bool MonitorsManagerTestHelper::RemoveFolder(const std::wstring& folder) const
 
 bool MonitorsManagerTestHelper::RemoveFile( const std::wstring& filename) const
 {
-  return std::filesystem::remove( filename );
+  try
+  {
+    return std::filesystem::remove(filename);
+  }
+  catch (...)
+  {
+    return false;
+  }
 }
 
 std::wstring MonitorsManagerTestHelper::AddFile()
