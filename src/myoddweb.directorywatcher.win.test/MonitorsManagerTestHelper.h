@@ -6,9 +6,7 @@
 using myoddweb::directorywatcher::EventAction;
 
 constexpr auto TEST_TIMEOUT = 50;
-constexpr auto  TEST_TIMEOUT_WAIT = 10000;
-
-void _wait(long long ms);
+constexpr auto  TEST_TIMEOUT_WAIT = 1000;
 
 class MonitorsManagerTestHelper;
 

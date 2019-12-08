@@ -1,5 +1,4 @@
 #pragma once
-
 #include "pch.h"
 
 #include "../myoddweb.directorywatcher.win/utils/MonitorsManager.h"
@@ -102,7 +101,7 @@ TEST_P(ValidateNumberOfItemAdded, CallbackWhenFileIsAdded) {
   for (auto i = 0; i < number; ++i)
   {
     // add a single file to it.
-    helper->AddFile();
+    auto _ = helper->AddFile();
   }
 
   // give a little more than the timeout

@@ -252,7 +252,7 @@ namespace myoddweb
         // use the lock to prevent buffer from going away 
         // while we are busy working here.
         auto guard = Lock(_lock);
-        if (_buffer == nullptr || _state == State::Stopped || _state == State::Stopping)
+        if (_buffer == nullptr || IsStoppedOrStopping() )
         {
           return nullptr;
         }
@@ -413,8 +413,6 @@ namespace myoddweb
       {
         // get the object we are working with
         const auto data = static_cast<Data*>(lpOverlapped->hEvent);
-
-//MY_TRACE("Done reading! %p\n", data);
 
         // do we have an object?
         // should never happen ... but still.

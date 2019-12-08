@@ -3,9 +3,10 @@
 // See the LICENSE file in the project root for more information.
 #pragma once
 #include <Windows.h>
-#include "../Monitor.h"
-#include "Data.h"
 #include <future>
+#include "Data.h"
+#include "../Monitor.h"
+#include "../Base.h"
 #include "../../utils/EventAction.h"
 
 namespace myoddweb
@@ -89,7 +90,12 @@ namespace myoddweb
         /**
          * \brief the current thread handle, if we have one.
          */
+#ifdef MYODDWEB_USE_FUTURE
         std::future<void>* _future;
+#else
+        std::thread* _thread;
+        static void _Run(Common*);
+#endif
 
         /**
          * \brief the callback function.

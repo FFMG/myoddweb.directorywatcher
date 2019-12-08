@@ -53,6 +53,7 @@ namespace myoddweb
               function();
             }
           });
+        std::this_thread::yield();
         return true;
       }
 

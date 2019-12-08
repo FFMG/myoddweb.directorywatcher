@@ -21,15 +21,15 @@ namespace myoddweb
     constexpr auto MYODDWEB_CPU_THREAD_SLEEP = 100L;
     
     /**
-     * When a handle becomes invalid, (the watched folder was deleted)
-     * How often do we want to re-check the folder and, if valid
-     * How often do we want to try and re-open it.
+     * \brief When a handle becomes invalid, (the watched folder was deleted)
+     *        How often do we want to re-check the folder and, if valid
+     *        How often do we want to try and re-open it.
      */
     constexpr auto  MYODDWEB_INVALID_HANDLE_SLEEP = 5000L;
 
     /**
-     * The maximum number of subpath we want to allow in multiple windows monitor.
-     * If the number is too large the number of running threads will cause issues.
+     * \brief The maximum number of subpath we want to allow in multiple windows monitor.
+     *        If the number is too large the number of running threads will cause issues.
      */
     constexpr auto MYODDWEB_MAX_NUMBER_OF_SUBPATH = 64L;
 
@@ -38,5 +38,11 @@ namespace myoddweb
      *        we stop the watcher.
      */
     constexpr auto MYODDWEB_WAITFOR_IO_COMPLETION = 1000;
+
+    /**
+     * \brief if this macro is defined we will use std::futures
+     *        otherwise we will use std::thread
+     */
+    // #define MYODDWEB_USE_FUTURE 1
   }
 }

@@ -50,6 +50,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Wait.cpp" />
+    <ClCompile Include="MonitorsManagerEdge.cpp" />
     <ClCompile Include="MonitorsManagerTestHelper.cpp" />
     <ClCompile Include="MonitorsManagerTestsDelete.cpp" />
     <ClCompile Include="RequestTest.cpp" />

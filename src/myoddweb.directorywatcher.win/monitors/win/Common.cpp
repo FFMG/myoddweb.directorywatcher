@@ -4,7 +4,6 @@
 #include <process.h>
 #include <Windows.h>
 #include "Common.h"
-#include "../Base.h"
 #include "../../utils/Io.h"
 #include "../../utils/EventError.h"
 #include "../../utils/MonitorsManager.h"
@@ -26,7 +25,11 @@ namespace myoddweb
         _mustStop(false),
         _data(nullptr),
         _parent(parent),
+#ifdef MYODDWEB_USE_FUTURE
         _future(nullptr),
+#else
+        _thread(nullptr),
+#endif
         _function(nullptr),
         _bufferLength(bufferLength)
       {
@@ -87,15 +90,22 @@ namespace myoddweb
         _mustStop = true;
 
         // wait for the thread to complete.
+#ifdef MYODDWEB_USE_FUTURE
         if (_future != nullptr)
         {
           (*_future).wait();
         }
-
         // the future should have ended now
         delete _future;
         _future = nullptr;
-
+#else
+        if (_thread != nullptr)
+        {
+          (*_thread).join();
+        }
+        delete _thread;
+        _thread = nullptr;
+#endif
         // then stop the function as well.
         delete _function;
         _function = nullptr;
@@ -126,8 +136,19 @@ namespace myoddweb
         _data = new Data(_parent, notifyFilter, _parent.Recursive(), *_function, _bufferLength);
 
         // we can now looking for changes.
+#ifdef MYODDWEB_USE_FUTURE
         _future = new std::future<void>(std::async( std::launch::async, &Common::Run, this));
+#else
+        _thread = new std::thread( &Common::_Run, this);
+#endif
       }
+
+#ifndef MYODDWEB_USE_FUTURE
+      void Common::_Run(Common* src)
+      {
+        src->Run();
+      }
+#endif
 
       /**
        * \brief check if we have to stop the current work.

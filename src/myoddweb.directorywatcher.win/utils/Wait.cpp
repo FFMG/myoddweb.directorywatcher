@@ -145,24 +145,15 @@ namespace myoddweb
       std::unique_lock<std::mutex> lock(_mutex);
       try
       {
-        if (condition == nullptr)
-        {
-          // just wait for 'x' ms.
-          _conditionVariable.wait_for(lock, std::chrono::milliseconds(milliseconds));
+        // one ms wait.
+        const auto oneMillisecond = std::chrono::milliseconds(1);
+        const auto zeroMilliseconds = std::chrono::milliseconds(0);
 
-          // simple timeout, always false
-          // because the condition could never be 'true'
-          result = true;
-        }
-        else
+        // when we want to sleep until.
+        const auto until = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds);
+        for (auto count = 0; count < MYODDWEB_MAX_WAIT_INT; ++count)
         {
-          // one ms wait.
-          const auto oneMillisecond = std::chrono::milliseconds(1);
-          const auto zeroMilliseconds = std::chrono::milliseconds(0);
-
-          // when we want to sleep until.
-          const auto until = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds);
-          for (auto count = 0; count < MYODDWEB_MAX_WAIT_INT; ++count)
+          if (condition != nullptr)
           {
             try
             {
@@ -176,31 +167,31 @@ namespace myoddweb
             {
               // this is bad ... the condition failed.
             }
+          }
 
-            if (count % 4 == 0)
-            {
-              // slee a little bit
-              std::this_thread::sleep_for(oneMillisecond);
-            }
-            else if (count % 2 == 0)
-            {
-              // slee a little bit
-              std::this_thread::sleep_for(zeroMilliseconds);
-            }
-            else
-            {
+          if (count % 4 == 0)
+          {
+            // slee a little bit
 #if defined( _WIN32) || defined(_WIN64 )
-              ::SleepEx(1, TRUE);
+            ::SleepEx(1, TRUE);
 #endif
-              // yield.
-              std::this_thread::yield();
-            }
+            std::this_thread::sleep_for(oneMillisecond);
+          }
+          else if (count % 2 == 0)
+          {
+            // slee a little bit
+            std::this_thread::sleep_for(zeroMilliseconds);
+          }
+          else
+          {
+            // yield.
+            std::this_thread::yield();
+          }
 
-            // are we done?
-            if (std::chrono::high_resolution_clock::now() >= until)
-            {
-              break;
-            }
+          // are we done?
+          if (std::chrono::high_resolution_clock::now() >= until)
+          {
+            break;
           }
         }
       }

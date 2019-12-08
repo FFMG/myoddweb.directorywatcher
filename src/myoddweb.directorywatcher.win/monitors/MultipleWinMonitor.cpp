@@ -6,6 +6,9 @@
 #include "../utils/Io.h"
 #include "../utils/Lock.h"
 
+#include <algorithm>
+#include <execution>
+
 #ifdef _DEBUG
 #include <cassert>
 #endif
@@ -289,20 +292,14 @@ namespace myoddweb
       std::vector<Event*> events;
       std::vector<std::future<std::vector<Event*>>> fevents;
 
-      for (auto it = _recursiveChildren.begin(); it != _recursiveChildren.end(); ++it)
-      {
-        // the monitor, we need to copy to variable to prevent closure...
-        const auto monitor = *it;
-        fevents.push_back(std::async(std::launch::async, [&] { return GetEvents(monitor); }) );
-      }
-
-      for (auto it = fevents.begin(); it != fevents.end(); ++it)
-      {
-        const auto levents = (*it).get();
-
-        // add them to our list of events.
-        events.insert(events.end(), levents.begin(), levents.end());
-      }
+      std::for_each(
+        std::execution::par,
+        _recursiveChildren.begin(),
+        _recursiveChildren.end(),
+        [&](Monitor* monitor) { 
+          const auto levents = GetEvents(monitor);
+          events.insert(events.end(), levents.begin(), levents.end()); }
+      );
       return events;
     }
 

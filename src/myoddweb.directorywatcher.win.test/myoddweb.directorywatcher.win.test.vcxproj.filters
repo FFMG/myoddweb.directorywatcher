@@ -51,6 +51,7 @@
     <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Wait.cpp">
       <Filter>win\utils</Filter>
     </ClCompile>
+    <ClCompile Include="MonitorsManagerEdge.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
