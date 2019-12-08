@@ -25,6 +25,7 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values(true, false)
   ));
 TEST(MonitorsManagerDelete, IfTimeoutIsZeroCallbackIsNeverCalled) {
+
   // create the helper.
   auto helper = new MonitorsManagerTestHelper();
 

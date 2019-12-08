@@ -8,6 +8,11 @@
 #include "../myoddweb.directorywatcher.win/utils/Io.h"
 #include "../myoddweb.directorywatcher.win/utils/EventAction.h"
 #include "../myoddweb.directorywatcher.win/utils/Wait.h"
+#include <gtest\gtest.h>
+
+#include <locale>
+#include <codecvt>
+#include <string>
 
 using myoddweb::directorywatcher::EventAction;
 using myoddweb::directorywatcher::Io;
@@ -48,15 +53,28 @@ bool Add(long long id, MonitorsManagerTestHelper* mng)
   return true;
 }
 
+std::wstring utf8toUtf16(const std::string& str)
+{
+  if (str.empty())
+    return std::wstring();
+
+  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+  return converter.from_bytes(str);
+}
+
 MonitorsManagerTestHelper::MonitorsManagerTestHelper() :
   _addedFiles(0),
   _addedFolders(0),
   _removedFiles(0),
   _removedFolders(0)
 {
+  const auto name = utf8toUtf16(
+    ::testing::UnitTest::GetInstance()->current_test_info()->name()
+  );
+
   _tmpFolder = std::filesystem::temp_directory_path();
   
-  auto subDirectory = L"test." + RandomString(4);
+  auto subDirectory = L"test." + name + RandomString(4);
   _folder = ::Io::Combine(_tmpFolder, subDirectory );
 
   std::filesystem::create_directory(Folder());
