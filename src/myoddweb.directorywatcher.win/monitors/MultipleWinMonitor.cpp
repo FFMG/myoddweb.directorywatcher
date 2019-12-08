@@ -7,7 +7,6 @@
 #include "../utils/Lock.h"
 
 #include <algorithm>
-#include <execution>
 
 #ifdef _DEBUG
 #include <cassert>
@@ -290,16 +289,15 @@ namespace myoddweb
     {
       // all the events.
       std::vector<Event*> events;
-      std::vector<std::future<std::vector<Event*>>> fevents;
-
-      std::for_each(
-        std::execution::par,
-        _recursiveChildren.begin(),
-        _recursiveChildren.end(),
-        [&](Monitor* monitor) { 
-          const auto levents = GetEvents(monitor);
-          events.insert(events.end(), levents.begin(), levents.end()); }
-      );
+      for (auto monitor : _recursiveChildren)
+      {
+        const auto levents = GetEvents(monitor);
+        if (levents.size() == 0)
+        {
+          continue;
+        }
+        events.insert(events.end(), levents.begin(), levents.end());
+      }
       return events;
     }
 
