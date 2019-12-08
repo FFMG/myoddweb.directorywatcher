@@ -68,9 +68,10 @@ MonitorsManagerTestHelper::MonitorsManagerTestHelper() :
   _removedFiles(0),
   _removedFolders(0)
 {
-  const auto name = utf8toUtf16(
+  auto name = utf8toUtf16(
     ::testing::UnitTest::GetInstance()->current_test_info()->name()
   );
+  std::replace(name.begin(), name.end(), '/', '_');
 
   _tmpFolder = std::filesystem::temp_directory_path();
   
