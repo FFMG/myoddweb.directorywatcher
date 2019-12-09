@@ -1,4 +1,6 @@
+using myoddweb.directorywatcher.interfaces;
 using NUnit.Framework;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -75,7 +77,7 @@ namespace myoddweb.directorywatcher.test
     [TestCase(1, false)]
     [TestCase(5, false)]
     [TestCase(42, false)]
-    public Task GetNotificationsMultipleWatchers(int number, bool recursive)
+    public void GetNotificationsMultipleWatchers(int number, bool recursive)
     {
       using var helper = new HelperTest();
 
@@ -118,8 +120,56 @@ namespace myoddweb.directorywatcher.test
       // stop
       Assert.AreEqual(number, added1);
       Assert.AreEqual(number, added2);
-      return Task.CompletedTask;
     }
 
+    [TestCase(5, true)]
+    [TestCase(5, false)]
+    public async Task RemoveDelegateBeforeStop(int number, bool recursive )
+    {
+      var added = 0;
+      Task fn(IFileSystemEvent ft, CancellationToken token)
+      {
+        ++added;
+        return Task.CompletedTask;
+      };
+
+      using var helper = new HelperTest();
+      using var watcher = new Watcher();
+      watcher.Add(new Request(helper.Folder, recursive));
+      watcher.Start();
+
+      watcher.OnAddedAsync += fn;
+
+      for (var i = 0; i < number; ++i)
+      {
+        helper.AddFile();
+      }
+
+      // wait a bit
+      var stopWatch = new Stopwatch();
+      stopWatch.Start();
+      _ = SpinWait.SpinUntil(() =>
+      {
+        return number == added;
+      }, number * 1000);
+      stopWatch.Stop();
+
+      // check that they all added.
+      Assert.AreEqual(number, added);
+
+      // stop watching
+      watcher.OnAddedAsync -= fn;
+
+      // add some more
+      for (var i = 0; i < number; ++i)
+      {
+        helper.AddFile();
+      }
+
+      await Task.Delay((int)stopWatch.ElapsedMilliseconds).ConfigureAwait( false );
+      Assert.AreEqual(number, added);
+
+      watcher.Stop();
+    }
   }
 }

@@ -12,8 +12,10 @@ Notable changes
 
 ### Changed
 
+- Various code optimisations.
 - Various performance / memory fixes
   - Some code now running is parallel to speed-up the processing of folders/files that have changed.
+- Minor other improvements
 
 ### Fixed
 
