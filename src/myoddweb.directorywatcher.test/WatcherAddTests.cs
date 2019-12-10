@@ -8,36 +8,6 @@ namespace myoddweb.directorywatcher.test
   [TestFixture]
   internal class WatcherAddTests
   {
-    private string _tempDirectory;
-    [SetUp]
-    public void Setup()
-    {
-      // create the folder that we will be working in
-      _tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-      Directory.CreateDirectory(_tempDirectory);
-    }
-
-    [TearDown]
-    public void TearDown()
-    {
-      var di = new DirectoryInfo(_tempDirectory);
-      foreach (var file in di.GetFiles())
-      {
-        try
-        {
-          file.Delete();
-        }
-        catch
-        {
-          //nothing
-        }
-      }
-      foreach (var dir in di.GetDirectories())
-      {
-        dir.Delete(true);
-      }
-    }
-
     [TestCase(0, true)] // if nothing is added, we don't see anything
     [TestCase(1, true)]
     [TestCase(5, true)]
@@ -48,13 +18,15 @@ namespace myoddweb.directorywatcher.test
     [TestCase(42, false)]
     public async Task TestSimpleAddFilesNotification(int numberToAdd, bool recursive)
     {
+      using var helper = new HelperTest();
+
       // the number of files we will be adding
       var numberAdded = 0;
 
       // first we need to create the watcher
       using ( var watcher = new Watcher())
       {
-        watcher.Add(new Request(_tempDirectory, recursive));
+        watcher.Add(new Request(helper.Folder, recursive));
         watcher.OnAddedAsync += ( fse,  token) =>
           {
             TestContext.Out.WriteLine("Message to write to log");
@@ -68,13 +40,12 @@ namespace myoddweb.directorywatcher.test
         for (var i = 0; i < numberToAdd; ++i)
         {
           // create an empty file
-          var filename = Path.Combine(_tempDirectory, Path.GetRandomFileName());
-          await using (File.Create(filename)) { }
+          helper.AddFile();
           await Task.Yield();
         }
 
         // give a bit of time
-        SpinWait.SpinUntil( () => numberAdded >= numberToAdd, 10000);
+        _ = SpinWait.SpinUntil( () => numberAdded >= numberToAdd, numberToAdd * 1000 );
       }
       Assert.AreEqual(numberToAdd, numberAdded);
     }

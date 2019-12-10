@@ -124,7 +124,7 @@ namespace myoddweb.directorywatcher.test
 
     [TestCase(5, true)]
     [TestCase(5, false)]
-    public async Task RemoveDelegateBeforeStop(int number, bool recursive )
+    public async Task RemoveAddedDelegateBeforeStop(int number, bool recursive )
     {
       var added = 0;
       Task fn(IFileSystemEvent ft, CancellationToken token)
