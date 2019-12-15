@@ -1,6 +1,7 @@
 using myoddweb.directorywatcher.interfaces;
 using NUnit.Framework;
 using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -170,6 +171,33 @@ namespace myoddweb.directorywatcher.test
       Assert.AreEqual(number, added);
 
       watcher.Stop();
+    }
+
+    [TestCase(true)]
+    [TestCase(false)]
+    public async Task DeleteWatchedFolder( bool recursive )
+    {
+      using var helper = new HelperTest();
+      
+      // create a folder will be actually watch
+      var folder = helper.AddFolder();
+      await Task.Delay(100).ConfigureAwait(false);
+
+      // start watching it.
+      using var watcher = new Watcher();
+      watcher.Add(new Request(folder, recursive));
+      watcher.Start();
+
+      // try and delete it
+      Assert.DoesNotThrow(() => Directory.Delete(folder, true));
+
+      watcher.Stop();
+    }
+
+    [Test]
+    public async Task RenameWatchedFolder()
+    {
+
     }
   }
 }

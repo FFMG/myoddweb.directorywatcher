@@ -36,5 +36,12 @@ namespace myoddweb.directorywatcher.test
       string tempFile = Path.Combine(Folder, Path.GetRandomFileName());
       using (File.Create(tempFile)) { };
     }
+
+    public string AddFolder()
+    {
+      string tempDirectory = Path.Combine(Folder, $"test.sub.{Path.GetRandomFileName()}");
+      Directory.CreateDirectory(tempDirectory);
+      return tempDirectory;
+    }
   }
 }
