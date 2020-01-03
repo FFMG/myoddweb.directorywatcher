@@ -13,6 +13,7 @@ Notable changes
 
 ### Changed
 
+- Helper is no longer backward compatible! If you are using another app to call the helper you will need to use my sample(s) to reconnect.
 - Various code optimisations.
 - Various performance / memory fixes
   - Some code now running is parallel to speed-up the processing of folders/files that have changed.
