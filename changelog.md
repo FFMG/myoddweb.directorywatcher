@@ -2,7 +2,7 @@
 
 Notable changes
 
-## 0.1.7 - [Current]
+## 0.1.7 - 03-01-2020
 
 ### Added
 
