@@ -8,7 +8,8 @@ Notable changes
 
 - Instrumentation, [Thanks to The Cherno / Hazel project)](https://github.com/TheCherno/Hazel/)
   The flag `MYODDWEB_PROFILE` needs to be set to 1.
-- Version number fo unmanaged `myoddweb.directorywatcher` helper.
+- Version number for unmanaged `myoddweb.directorywatcher` helper.
+- A whole lot of unit tests.
 
 ### Changed
 
