@@ -376,9 +376,6 @@ namespace myoddweb
 
       /**
        * \brief start monitoring a given folder.
-       * \param notifyFilter the notification filter, (what we are watching the folder for)
-       * \param recursive recursively check the given folder or not.
-       * \param dataCallbackFunction the completion routine we will call.
        * \return success or not
        */
       bool Data::Start()
