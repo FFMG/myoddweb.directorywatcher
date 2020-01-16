@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MyOddWeb.CommandlineParser" Version="0.1.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\myoddweb.directorywatcher.interfaces\myoddweb.directorywatcher.interfaces.csproj" />
+    <ProjectReference Include="..\..\src\myoddweb.directorywatcher\myoddweb.directorywatcher.csproj" />
+  </ItemGroup>
+
+</Project>
