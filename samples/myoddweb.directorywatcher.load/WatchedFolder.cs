@@ -3,16 +3,12 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using myoddweb.directorywatcher.interfaces;
+using myoddweb.directorywatcher.load.Output;
 
 namespace myoddweb.directorywatcher.load
 {
   internal class WatchedFolder
   {
-    /// <summary>
-    /// The original console color
-    /// </summary>
-    private readonly ConsoleColor _consoleColor;
-
     /// <summary>
     /// We need a static lock so it is shared by all.
     /// </summary>
@@ -38,10 +34,14 @@ namespace myoddweb.directorywatcher.load
     /// </summary>
     public DirectoryInfo Folder { get; }
 
-    public WatchedFolder(DirectoryInfo directory, int howOftenStopWatch, IWatcher2 watcher)
-    {
-      _consoleColor = Console.ForegroundColor;
+    /// <summary>
+    /// How we will be displaying the output information.
+    /// </summary>
+    private readonly IOutput _output;
 
+    public WatchedFolder( IOutput output, DirectoryInfo directory, int howOftenStopWatch, IWatcher2 watcher)
+    {
+      _output = output ?? throw new ArgumentNullException(nameof(output));
       Folder = directory ?? throw new ArgumentNullException(nameof(directory));
       _howOftenStopWatch = howOftenStopWatch;
       Watcher = watcher ?? throw new ArgumentNullException(nameof(watcher));
@@ -75,53 +75,34 @@ namespace myoddweb.directorywatcher.load
       }
     }
 
-    private async Task OnRenamedAsync(IRenamedFileSystemEvent rfse, CancellationToken token)
+    private Task OnRenamedAsync(IRenamedFileSystemEvent rfse, CancellationToken token)
     {
-      await AddMessage(ConsoleColor.Cyan, rfse.DateTimeUtc, $"[{(rfse.IsFile ? "F" : "D")}][R]:{rfse.PreviousFileSystemInfo.FullName} > {rfse.FileSystemInfo.FullName}", token).ConfigureAwait(false);
+      _output.AddInformationMessage( rfse.DateTimeUtc, $"[{(rfse.IsFile ? "F" : "D")}][R]:{rfse.PreviousFileSystemInfo.FullName} > {rfse.FileSystemInfo.FullName}", token);
+      return Task.CompletedTask;
     }
 
-    private async Task OnTouchedAsync(IFileSystemEvent fse, CancellationToken token)
+    private Task OnTouchedAsync(IFileSystemEvent fse, CancellationToken token)
     {
-      await AddMessage(ConsoleColor.Gray, fse.DateTimeUtc, $"[{(fse.IsFile ? "F" : "D")}][T]:{fse.FileSystemInfo.FullName}", token).ConfigureAwait(false);
+      _output.AddInformationMessage( fse.DateTimeUtc, $"[{(fse.IsFile ? "F" : "D")}][T]:{fse.FileSystemInfo.FullName}", token);
+      return Task.CompletedTask;
     }
 
-    private async Task OnRemovedAsync(IFileSystemEvent fse, CancellationToken token)
+    private Task OnRemovedAsync(IFileSystemEvent fse, CancellationToken token)
     {
-      await AddMessage(ConsoleColor.Yellow, fse.DateTimeUtc, $"[{(fse.IsFile ? "F" : "D")}][-]:{fse.FileSystemInfo.FullName}", token).ConfigureAwait(false);
+      _output.AddWarningMessage(fse.DateTimeUtc, $"[{(fse.IsFile ? "F" : "D")}][-]:{fse.FileSystemInfo.FullName}", token);
+      return Task.CompletedTask;
     }
 
-    private async Task OnErrorAsync(IEventError ee, CancellationToken token)
+    private Task OnErrorAsync(IEventError ee, CancellationToken token)
     {
-      await AddMessage(ConsoleColor.Red, ee.DateTimeUtc, $"[!]:{ee.Message}", token).ConfigureAwait(false);
+      _output.AddErrorMessage( ee.DateTimeUtc, $"[!]:{ee.Message}", token);
+      return Task.CompletedTask;
     }
 
-    private async Task OnAddedAsync(IFileSystemEvent fse, CancellationToken token)
+    private Task OnAddedAsync(IFileSystemEvent fse, CancellationToken token)
     {
-      await AddMessage(ConsoleColor.Green, fse.DateTimeUtc, $"[{(fse.IsFile ? "F" : "D")}][+]:{fse.FileSystemInfo.FullName}", token).ConfigureAwait(false);
-    }
-
-    private async Task AddMessage(ConsoleColor color, DateTime dt, string message, CancellationToken token)
-    {
-      await Task.Run(() =>
-      {
-        lock (Lock)
-        {
-          try
-          {
-            Console.ForegroundColor = color;
-            Console.WriteLine($"[{dt:HH:mm:ss.ffff}]:{message}");
-          }
-          catch (Exception e)
-          {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(e.Message);
-          }
-          finally
-          {
-            Console.ForegroundColor = _consoleColor;
-          }
-        }
-      }, token);
+      _output.AddInformationMessage( fse.DateTimeUtc, $"[{(fse.IsFile ? "F" : "D")}][+]:{fse.FileSystemInfo.FullName}", token);
+      return Task.CompletedTask;
     }
 
     public void Start()

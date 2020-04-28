@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Timers;
 using myoddweb.directorywatcher.interfaces;
+using myoddweb.directorywatcher.load.Output;
+using Timer = System.Timers.Timer;
 
 namespace myoddweb.directorywatcher.load
 {
@@ -13,12 +17,7 @@ namespace myoddweb.directorywatcher.load
     /// How many iteration of changes we want to have
     /// </summary>
     private int _iterations;
-
-    /// <summary>
-    /// How many folder we want to watch
-    /// </summary>
-    private readonly int _numFolders;
-
+    
     /// <summary>
     /// The drive letters.
     /// </summary>
@@ -35,37 +34,54 @@ namespace myoddweb.directorywatcher.load
     private readonly List<WatchedFolder> _watchers = new List<WatchedFolder>();
 
     /// <summary>
-    /// How often we want to change
+    /// This is the timer to add new folders
     /// </summary>
-    private readonly int _change;
+    private readonly Timer _addWatchedFolderTimer = new Timer();
 
     /// <summary>
-    /// Our timer
+    /// This is the folder to remove watched folders.
     /// </summary>
-    private readonly Timer _timer = new Timer();
+    private readonly Timer _removeWatchedFolderTimer = new Timer();
 
     /// <summary>
-    /// If the watcher is unique or not
+    /// Display stas from time to time.
     /// </summary>
-    private readonly bool _unique;
+    private readonly Timer _displayUpdatesTimer = new Timer();
 
-    public Load(int iterations, int numFolders, int change, bool unique)
+    /// <summary>
+    /// All the options
+    /// </summary>
+    private Options Options { get; }
+
+    /// <summary>
+    /// The screen/file/noop output controller
+    /// </summary>
+    private readonly IOutput _output;
+
+    /// <summary>
+    /// How we will be displaying the output information.
+    /// </summary>
+    private readonly IOutput _nonQuietOutput;
+
+    public Load(Options options )
     {
-      if (iterations <= 0)
-      {
-        throw new ArgumentException("The number of iterations cannot be -ve or zero", nameof(iterations));
-      }
-      _iterations = iterations;
+      Options = options ?? throw new ArgumentNullException( nameof(options));
 
-      if (numFolders <= 0)
+      if (Options.Quiet)
       {
-        throw new ArgumentException("The number of folders cannot be -ve or zero", nameof(numFolders));
+        // display nothing from the events
+        _output = new Noop();
       }
-      _numFolders = numFolders;
-      _change = change;
-      _unique = unique;
+      else
+      {
+        // display the messages out to the console.
+        _output = new Output.Console();
+      }
+      _nonQuietOutput = new Output.Console();
 
       _drives = GetDrives();
+
+      _iterations = Options.Iterations;
 
       _folders = GetFolders();
 
@@ -76,37 +92,91 @@ namespace myoddweb.directorywatcher.load
 
     public void Start()
     {
-      // start them all
-      foreach (var w in _watchers)
+      lock (_watchers)
       {
-        w.Start();
+        // start them all
+        foreach (var w in _watchers)
+        {
+          w.Start();
+        }
       }
 
       // start the timer
-      StartTimer();
+      StartTimers();
     }
 
     public void Stop()
     {
-      StopTimer();
+      StopTimers();
 
       // stop them all
-      foreach (var w in _watchers)
+      lock (_watchers)
       {
-        w.Stop();
+        foreach (var w in _watchers)
+        {
+          w.Stop();
+        }
       }
     }
 
-    private void StartTimer()
+    private void StartTimers()
     {
-      StopTimer();
-      _timer.Interval = _change * 1000;
-      _timer.Elapsed += OnTimerEvent;
-      _timer.AutoReset = true;
-      _timer.Enabled = true;
+      StopTimers();
+
+      // the add folder
+      _addWatchedFolderTimer.Interval = Options.Change * 1000;
+      _addWatchedFolderTimer.Elapsed += OnAddFolderTimerEvent;
+      _addWatchedFolderTimer.AutoReset = true;
+
+      // the remove folder
+      _removeWatchedFolderTimer.Interval = Options.Change * 1000;
+      _removeWatchedFolderTimer.Elapsed += OnRemoveFolderTimerEvent;
+      _removeWatchedFolderTimer.AutoReset = true;
+
+      // display stats
+      _displayUpdatesTimer.Interval = 10 * 1000;  // every 10 seconds
+      _displayUpdatesTimer.Elapsed += OnDisplayUpdatesTimerEvent;
+      _displayUpdatesTimer.AutoReset = true;
+
+        // start all.
+      _addWatchedFolderTimer.Enabled = true;
+      _removeWatchedFolderTimer.Enabled = true;
+      _displayUpdatesTimer.Enabled = true;
     }
 
-    private void OnTimerEvent(object sender, ElapsedEventArgs e)
+    private void OnAddFolderTimerEvent(object sender, ElapsedEventArgs e)
+    {
+      // only add another watched folder if we still have iterations.
+      --_iterations;
+      if (_iterations <= 0)
+      {
+        Stop();
+        _nonQuietOutput.AddMessage("All done!", CancellationToken.None);
+        return;
+      }
+
+      // add another watcher
+      var newWatchedFolder = AddWatchedFolder();
+      newWatchedFolder.Start();
+    }
+
+    private void OnDisplayUpdatesTimerEvent(object sender, ElapsedEventArgs e)
+    {
+      // we need to display the nmuber if item
+      var number = Process.GetCurrentProcess().Threads.Count;
+      _nonQuietOutput.AddMessage($"Number of threads: {number}", CancellationToken.None);
+    }
+
+    private void OnRemoveFolderTimerEvent(object sender, ElapsedEventArgs e)
+    {
+      // remove a watched folder
+      RemoveWatchedFolder();
+    }
+
+    /// <summary>
+    /// Try and remove one watched folder
+    /// </summary>
+    private void RemoveWatchedFolder()
     {
       // get one of the watcher
       var watchedFolder = GetRandomWatchedFolder();
@@ -115,27 +185,27 @@ namespace myoddweb.directorywatcher.load
         return;
       }
 
-      --_iterations;
-      if (_iterations <= 0)
-      {
-        Stop();
-        Console.WriteLine("All done!");
-        return;
-      }
-
       // stop the event
       watchedFolder.Stop();
-      _watchers.Remove(watchedFolder);
+      lock (_watchers)
+      {
+        _watchers.Remove(watchedFolder);
+      }
 
-      // add another watcher
-      var newWatchedFolder = AddWatchedFolder();
-      newWatchedFolder.Start();
+      // add a note
+      _nonQuietOutput.AddMessage($"Stopped Watching folder: {watchedFolder.Folder.Name}", CancellationToken.None);
     }
 
-    private void StopTimer()
+    private void StopTimers()
     {
-      _timer.Enabled = false;
-      _timer.Elapsed -= OnTimerEvent;
+      _addWatchedFolderTimer.Enabled = false;
+      _addWatchedFolderTimer.Elapsed -= OnAddFolderTimerEvent;
+
+      _removeWatchedFolderTimer.Enabled = false;
+      _removeWatchedFolderTimer.Elapsed -= OnRemoveFolderTimerEvent;
+
+      _displayUpdatesTimer.Enabled = false;
+      _displayUpdatesTimer.Elapsed -= OnDisplayUpdatesTimerEvent;
     }
 
     /// <summary>
@@ -164,7 +234,7 @@ namespace myoddweb.directorywatcher.load
     private void CreateWatchers()
     {
       // we need to create a watcher and add it to our list.
-      for (var i = 0; i < _numFolders; ++i)
+      for (var i = 0; i < Options.Folders; ++i)
       {
         AddWatchedFolder();
       }
@@ -173,23 +243,30 @@ namespace myoddweb.directorywatcher.load
     private WatchedFolder AddWatchedFolder()
     {
       IWatcher2 watcher;
-      if ( !_unique )
+      if ( !Options.Unique )
       {
         watcher = new Watcher();
       }
       else
       {
-        watcher = _watchers.FirstOrDefault()?.Watcher ?? new Watcher();
+        lock (_watchers)
+        {
+          watcher = _watchers.FirstOrDefault()?.Watcher ?? new Watcher();
+        }
       }
 
       var watchedFolder = new WatchedFolder(
+        _output,
         GetRandomFolder(),
-        _change,
+        Options.Change,
         watcher
       );
-      _watchers.Add(watchedFolder );
+      lock (_watchers)
+      {
+        _watchers.Add(watchedFolder );
+      }
 
-      Console.WriteLine( $"Adding another watched folder: {watchedFolder.Folder}");
+      _nonQuietOutput.AddMessage($"Adding another watched folder: {watchedFolder.Folder}", CancellationToken.None);
 
       return watchedFolder;
     }
@@ -209,7 +286,10 @@ namespace myoddweb.directorywatcher.load
     /// <returns></returns>
     private WatchedFolder GetRandomWatchedFolder()
     {
-      return _watchers.OrderBy(x => Guid.NewGuid()).FirstOrDefault();
+      lock (_watchers)
+      {
+        return _watchers.OrderBy(x => Guid.NewGuid()).FirstOrDefault();
+      }
     }
 
     /// <summary>
@@ -217,7 +297,7 @@ namespace myoddweb.directorywatcher.load
     /// </summary>
     /// <param name="root">The root folder</param>
     /// <returns></returns>
-    private IList<DirectoryInfo> GetSubfolders(DirectoryInfo root )
+    private IEnumerable<DirectoryInfo> GetSubfolders(DirectoryInfo root )
     {
       try
       {
@@ -228,7 +308,7 @@ namespace myoddweb.directorywatcher.load
         {
           folders.Add( folder );
           folders.AddRange( GetSubfolders( folder ));
-          if (folders.Count > _numFolders)
+          if (folders.Count > Options.Folders)
           {
             break;
           }
@@ -264,7 +344,9 @@ namespace myoddweb.directorywatcher.load
     public void Dispose()
     {
       Stop();
-      _timer?.Dispose();
+      _addWatchedFolderTimer?.Dispose();
+      _removeWatchedFolderTimer?.Dispose();
+      _displayUpdatesTimer?.Dispose();
     }
   }
 }
