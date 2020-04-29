@@ -5,8 +5,6 @@
 #include <Windows.h>
 #include "../Monitor.h"
 
-#define MY_TRACE(msg, ...) MyTraceImpl(__LINE__, __FILE__, msg, __VA_ARGS__)
-
 // implementation us
 static void MyTraceImpl(int line, const char* fileName, const char* msg, ...)
 {

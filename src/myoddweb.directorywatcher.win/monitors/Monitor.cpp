@@ -78,7 +78,6 @@ namespace myoddweb
      */
     void Monitor::AddEvent(const EventAction action, const std::wstring& fileName, const bool isFile) const
     {
-MY_TRACE("---------\nAddEvent %d, id %lld\n", (int)action, ParentId());
       MYODDWEB_PROFILE_FUNCTION();
       _eventCollector->Add(action, Path(), fileName, isFile, EventError::None);
     }
@@ -260,7 +259,6 @@ MY_TRACE("---------\nAddEvent %d, id %lld\n", (int)action, ParentId());
         return;
       }
 
-MY_TRACE("---------\nEvents %d, id %lld\n", events.size(), ParentId());
       // then call the callback
       for (auto it = events.begin(); it != events.end(); ++it)
       {
