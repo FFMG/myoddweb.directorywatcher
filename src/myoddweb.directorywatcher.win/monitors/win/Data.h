@@ -5,21 +5,6 @@
 #include <Windows.h>
 #include "../Monitor.h"
 
-// implementation us
-static void MyTraceImpl(int line, const char* fileName, const char* msg, ...)
-{
-  va_list args;
-  char buffer[256] = { 0 };
-//  sprintf_s(buffer, "%s(%d) : ", fileName, line);
-//  OutputDebugStringA(buffer);
-
-  // retrieve the variable arguments
-  va_start(args, msg);
-  vsprintf_s(buffer, msg, args);
-  OutputDebugStringA(buffer);
-  va_end(args);
-}
-
 namespace myoddweb
 {
   namespace directorywatcher
