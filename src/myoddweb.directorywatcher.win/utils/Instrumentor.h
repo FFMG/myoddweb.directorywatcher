@@ -18,6 +18,7 @@
 #define MYODDWEB_PROFILE_BUFFER 1000
 
 // from https://github.com/TheCherno/Hazel
+// go to chrome://tracing/
 namespace myoddweb
 {
   namespace directorywatcher
@@ -203,6 +204,8 @@ namespace myoddweb
 #ifdef _DEBUG
  /**
    * \brief turn profiling on/off, uses a _lot_ of disc space!
+   *        go to chrome://tracing/
+   *        open Profile-Global.json
    */
   #define MYODDWEB_PROFILE 0
 #else

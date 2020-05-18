@@ -23,6 +23,7 @@ namespace myoddweb.directorywatcher.load
         new OptionalCommandlineArgumentRule( new []{ "unique", "u"}, "true", "If we want to use a unique watcher, shared, or use a watcher per directory." ),
         new OptionalCommandlineArgumentRule( new []{ "stats", "s"}, "true", "Display stats every 10 seconds." ),
         new OptionalCommandlineArgumentRule( new []{ "quiet", "q"}, "false", "Do not display the folder updates." ),
+        new OptionalCommandlineArgumentRule( new []{ "drives", "d"}, "false", "Test all the drives only." ),
       });
 
       // check for help
@@ -33,12 +34,24 @@ namespace myoddweb.directorywatcher.load
         return;
       }
 
-      using var load = new Load( new Options( arguments ) );
-      load.Start();
+      var options = new Options(arguments);
+      ILoad load = null;
+
+      if (options.Drives)
+      {
+        load = new Drives(options);
+      }
+      else
+      {
+        load = new Load(options);
+      }
+
+      load?.Start();
 
       WaitForCtrlC();
 
-      load.Stop();
+      load?.Stop();
+      load?.Dispose();
     }
 
     private static void WaitForCtrlC()

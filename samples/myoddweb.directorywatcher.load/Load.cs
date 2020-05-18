@@ -11,7 +11,7 @@ using Timer = System.Timers.Timer;
 
 namespace myoddweb.directorywatcher.load
 {
-  internal class Load : IDisposable
+  internal class Load : ILoad
   {
     /// <summary>
     /// How many iteration of changes we want to have
