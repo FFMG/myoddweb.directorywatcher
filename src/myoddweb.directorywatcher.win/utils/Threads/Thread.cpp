@@ -1,12 +1,12 @@
 #include "Thread.h"
 
-#include "Wait.h"
+#include "..\Wait.h"
 
 namespace myoddweb::directorywatcher
 {
   Thread::Thread() :
-    _localRunner(nullptr),
-    _parentRunner(nullptr),
+    _localWorker(nullptr),
+    _parentWorker(nullptr),
 #ifdef MYODDWEB_USE_FUTURE
     _future(nullptr),
 #else
@@ -18,13 +18,13 @@ namespace myoddweb::directorywatcher
 
   Thread::Thread(const TCallback& function) : Thread()
   {
-    _localRunner = new LocalThreadRunner(function);
-    CreateThread(_localRunner);
+    _localWorker = new LocalThreadRunner(function);
+    CreateWorker(_localWorker);
   }
 
-  Thread::Thread(ThreadRunner& runner) : Thread()
+  Thread::Thread(Worker& runner) : Thread()
   {
-    CreateThread(&runner);
+    CreateWorker(&runner);
   }
 
   /**
@@ -33,24 +33,24 @@ namespace myoddweb::directorywatcher
   Thread::~Thread()
   {
     Wait();
-    delete _localRunner;
-    _localRunner = nullptr;
+    delete _localWorker;
+    _localWorker = nullptr;
   }
 
   /**
    * \brief create the runner either with future/thread
-   * \param runner the runner that we want to start working with.
+   * \param worker the runner that we want to start working with.
    */
-  void Thread::CreateThread(ThreadRunner* runner)
+  void Thread::CreateWorker(Worker* worker)
   {
 #ifdef MYODDWEB_USE_FUTURE
     _future = new std::future<void>(std::async(std::launch::async, &ThreadRunner::Run, runner));
 #else
-    _thread = new std::thread(&Thread::StaticRunner, runner);
+    _thread = new std::thread(&Thread::StaticWorker, worker);
 #endif
 
-    // save the parent runner.
-    _parentRunner = runner;
+    // save the parent worker.
+    _parentWorker = worker;
   }
 
   /**
@@ -62,11 +62,11 @@ namespace myoddweb::directorywatcher
   {
     Wait::SpinUntil([&] 
       {
-        return _parentRunner == nullptr || _parentRunner->Completed();
+        return _parentWorker == nullptr || _parentWorker->Completed();
       },  
       timeout);
 
-    return (_parentRunner == nullptr || _parentRunner->Completed()) ? 
+    return (_parentWorker == nullptr || _parentWorker->Completed()) ?
       wait_result::complete :
       wait_result::timeout;
   }
@@ -97,11 +97,11 @@ namespace myoddweb::directorywatcher
 #ifndef MYODDWEB_USE_FUTURE
   /**
    * \brief static runner used by std::thread to call the runner.
-   * \param runner the runner that we will be calling.
+   * \param worker the runner that we will be calling.
    */
-  void Thread::StaticRunner(ThreadRunner* runner )
+  void Thread::StaticWorker(Worker* worker )
   {
-    runner->Run();
+    worker->Launch();
   }
 #endif
 }

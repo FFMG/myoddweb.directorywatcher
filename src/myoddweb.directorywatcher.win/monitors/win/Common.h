@@ -7,7 +7,7 @@
 #include "Data.h"
 #include "../Monitor.h"
 #include "../../utils/EventAction.h"
-#include "../../utils/Thread.h"
+#include "../../utils/Threads/Thread.h"
 
 namespace myoddweb
 {
@@ -15,7 +15,7 @@ namespace myoddweb
   {
     namespace win
     {
-      class Common : ThreadRunner
+      class Common : public Worker
       {
       protected:
         Common(Monitor& parent, unsigned long bufferLength);
@@ -36,16 +36,21 @@ namespace myoddweb
         virtual bool Start();
         virtual void Stop();
 
-        void OnRunThread() override;
-
       protected:
+        // invalid handle wait
+        int _invalidHandleWait;
+
+        bool OnWorkerStart() override;
+        bool OnWorkerUpdate(float elapsedTime) override;
+        void OnWorkerEnd() override;
+
         /**
          * \brief Get the notification filter.
          * \return the notification filter
          */
         virtual unsigned long GetNotifyFilter() const = 0;
 
-        void DataCallbackFunction(unsigned char* pBufferBk);
+        void DataCallbackFunction(unsigned char* pBufferBk) const;
 
       private:
         void StopAndResetThread();
@@ -55,7 +60,7 @@ namespace myoddweb
         /**
          * \brief send a request for the data class to read for a single file change.
          */
-        void Read();
+        void Read() const;
 
         /**
          * \brief check if we have to stop the current work.

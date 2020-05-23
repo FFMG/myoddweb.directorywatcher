@@ -39,8 +39,11 @@
     <ClCompile Include="utils\Wait.cpp">
       <Filter>utils</Filter>
     </ClCompile>
-    <ClCompile Include="utils\Thread.cpp">
-      <Filter>utils</Filter>
+    <ClCompile Include="utils\Threads\Thread.cpp">
+      <Filter>utils\Threads</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\Threads\Worker.cpp">
+      <Filter>utils\Threads</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -111,8 +114,11 @@
     <ClInclude Include="utils\Wait.h">
       <Filter>utils</Filter>
     </ClInclude>
-    <ClInclude Include="utils\Thread.h">
-      <Filter>utils</Filter>
+    <ClInclude Include="utils\Threads\Thread.h">
+      <Filter>utils\Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\Threads\Worker.h">
+      <Filter>utils\Threads</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -124,6 +130,9 @@
     </Filter>
     <Filter Include="utils">
       <UniqueIdentifier>{de21a89a-20d6-4763-95a5-86a36cd16d6f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils\Threads">
+      <UniqueIdentifier>{7613322a-988a-448d-8bc0-94ba6b5c6d37}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
