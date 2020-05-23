@@ -34,15 +34,29 @@ namespace myoddweb
     constexpr auto MYODDWEB_MAX_NUMBER_OF_SUBPATH = 64L;
 
     /**
+     * \brief The optimal number of threads per monitors.
+     *        This nnumber is difficult to match in many cases as not all subfolders can be watched
+     *        And/or there might not even be that many folders to watch.
+     */
+    constexpr auto MYODDWEB_OPTIMAL_NUMBER_OF_THREADS_PER_MONITOR = 200L;
+
+    /**
      * \brief how long we want to wait for the various IOs to complete before
      *        we stop the watcher.
      */
     constexpr auto MYODDWEB_WAITFOR_IO_COMPLETION = 1000;
 
     /**
+     * \brief how long we want to wait for the various threads to complete.
+     *        before we stop waiting and move on
+     *        This value should not be too small otherwise have dangling threads.
+     */
+    constexpr auto MYODDWEB_WAITFOR_WORKER_COMPLETION = 5000;
+
+    /**
      * \brief if this macro is defined we will use std::futures
      *        otherwise we will use std::thread
      */
-    // #define MYODDWEB_USE_FUTURE 1
+    //#define MYODDWEB_USE_FUTURE 1
   }
 }

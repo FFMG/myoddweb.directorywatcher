@@ -17,6 +17,11 @@ namespace myoddweb.directorywatcher.load
     private readonly IList<DirectoryInfo> _drives;
 
     /// <summary>
+    /// How many iteration of changes we want to have
+    /// </summary>
+    private int _iterations;
+
+    /// <summary>
     /// The number of folders we are looking after
     /// </summary>
     private readonly List<WatchedFolder> _watchers = new List<WatchedFolder>();
@@ -57,7 +62,11 @@ namespace myoddweb.directorywatcher.load
       }
       _nonQuietOutput = new Output.Console();
 
+      // get all the drives.
       _drives = GetDrives();
+
+      // get the number of iterations
+      _iterations = Options.Iterations;
 
       // create the folders we will be watching
       // we always include the root folders
@@ -99,9 +108,10 @@ namespace myoddweb.directorywatcher.load
     private void CreateWatchers()
     {
       // we need to create a watcher and add it to our list.
-      foreach( var drive in _drives )
+      var watcher = new Watcher();
+      foreach ( var drive in _drives )
       {
-        _watchers.Add( new WatchedFolder(_output, drive, 0, new Watcher() ));
+        _watchers.Add( new WatchedFolder(_output, drive, 0, watcher ));
       }
     }
 
@@ -154,7 +164,18 @@ namespace myoddweb.directorywatcher.load
       var number = Process.GetCurrentProcess().Threads.Count;
       _nonQuietOutput.AddMessage($"Number of threads: {number}", CancellationToken.None);
 
+      // stop and start again
+      // this will ensure that we get rid of memory/treads and so on.
       Stop();
+
+      // only add another watched folder if we still have iterations.
+      --_iterations;
+      if (_iterations <= 0)
+      {
+        _nonQuietOutput.AddMessage("All done!", CancellationToken.None);
+        return;
+      }
+
       Start();
     }
   }

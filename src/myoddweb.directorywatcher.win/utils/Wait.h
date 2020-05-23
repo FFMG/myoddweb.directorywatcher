@@ -3,6 +3,8 @@
 #include <functional>
 #include <future>
 
+#include "Thread.h"
+
 namespace myoddweb
 {
   namespace directorywatcher
@@ -37,6 +39,11 @@ namespace myoddweb
       static bool SpinUntil( std::future<T>& future, long long milliseconds)
       {
         return SpinUntilFutureComplete(future, milliseconds);
+      }
+
+      static bool SpinUntil(Thread& thread, long long milliseconds)
+      {
+        return SpinUntilThreadComplete(thread, milliseconds);
       }
 
     private:
@@ -78,6 +85,15 @@ namespace myoddweb
        */
       template <typename T>
       static bool SpinUntilFutureComplete(std::future<T>& future, long long milliseconds );
+
+      /**
+       * \brief wait for a Thread to complete, if it does not complete we will get out.
+       *        note that even if the timeout if very large, we will not spin for ever.
+       * \param milliseconds the max amount of time we are prepared to wait for.
+       * \param thread the thread we will be waiting for.
+       * \return true if the future completed or false if we timed out.
+       */
+      static bool SpinUntilThreadComplete(Thread& thread, long long milliseconds);
 
       /**
        * \brief the main function that does all the waiting.

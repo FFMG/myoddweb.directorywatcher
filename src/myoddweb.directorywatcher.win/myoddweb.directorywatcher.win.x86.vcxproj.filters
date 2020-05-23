@@ -39,6 +39,9 @@
     <ClCompile Include="utils\Wait.cpp">
       <Filter>utilities</Filter>
     </ClCompile>
+    <ClCompile Include="utils\Thread.cpp">
+      <Filter>utilities</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -106,6 +109,9 @@
       <Filter>utilities</Filter>
     </ClInclude>
     <ClInclude Include="utils\Wait.h">
+      <Filter>utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\Thread.h">
       <Filter>utilities</Filter>
     </ClInclude>
   </ItemGroup>

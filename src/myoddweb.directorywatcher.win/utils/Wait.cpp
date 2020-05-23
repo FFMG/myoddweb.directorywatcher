@@ -125,6 +125,59 @@ namespace myoddweb
     }
 
     /**
+     * \brief wait for a Thread to complete, if it does not complete we will get out.
+     *        note that even if the timeout if very large, we will not spin for ever.
+     * \param milliseconds the max amount of time we are prepared to wait for.
+     * \param thread the thread we will be waiting for.
+     * \return true if the future completed or false if we timed out.
+     */
+    bool Wait::SpinUntilThreadComplete(Thread& thread, const long long milliseconds)
+    {
+      // when we consider this timed-out
+      const auto until = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds);
+
+      const auto waitFor = 1/*ms*/;
+      auto concurentThreadsSupported = std::thread::hardware_concurrency();
+      if (0 == concurentThreadsSupported)
+      {
+        concurentThreadsSupported = 1;
+      }
+      for (auto count = 0; count < MYODDWEB_MAX_WAIT_INT; ++count)
+      {
+        // wait for that thread to complete.
+        // it could hang forever as well
+        // but we tried to make sure that it never does.
+        // but it is posible that the condition() will hang.
+        const auto status = thread.WaitFor( waitFor );
+        if (status == Thread::wait_result::complete )
+        {
+          // the thread is finished
+          return true;
+        }
+
+        if (count % concurentThreadsSupported != 0)
+        {
+          std::this_thread::sleep_for(std::chrono::milliseconds(count % concurentThreadsSupported));
+        }
+        else
+        {
+          std::this_thread::yield();
+        }
+
+        // are we done?
+        if (std::chrono::high_resolution_clock::now() >= until)
+        {
+          // we timed out.
+          return false;
+        }
+      }
+
+      // if we ever get here ... we reached the spin limit
+      // this future is gone, it will never complete.
+      return false;
+    }
+
+    /**
      * \brief the main function that does all the waiting.
      *        the promise will contain the result of the waiting
      *          - false = we timed-out

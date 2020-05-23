@@ -3,11 +3,11 @@
 // See the LICENSE file in the project root for more information.
 #pragma once
 #include <Windows.h>
-#include <future>
+
 #include "Data.h"
 #include "../Monitor.h"
-#include "../Base.h"
 #include "../../utils/EventAction.h"
+#include "../../utils/Thread.h"
 
 namespace myoddweb
 {
@@ -15,7 +15,7 @@ namespace myoddweb
   {
     namespace win
     {
-      class Common
+      class Common : ThreadRunner
       {
       protected:
         Common(Monitor& parent, unsigned long bufferLength);
@@ -36,6 +36,8 @@ namespace myoddweb
         virtual bool Start();
         virtual void Stop();
 
+        void OnRunThread() override;
+
       protected:
         /**
          * \brief Get the notification filter.
@@ -54,11 +56,6 @@ namespace myoddweb
          * \brief send a request for the data class to read for a single file change.
          */
         void Read();
-
-        /**
-         * \brief long running thead to check for folder changes as well as disconnects.
-         */
-        void Run();
 
         /**
          * \brief check if we have to stop the current work.
@@ -90,12 +87,7 @@ namespace myoddweb
         /**
          * \brief the current thread handle, if we have one.
          */
-#ifdef MYODDWEB_USE_FUTURE
-        std::future<void>* _future;
-#else
-        std::thread* _thread;
-        static void _Run(Common*);
-#endif
+        Thread* _thread;
 
         /**
          * \brief the callback function.
