@@ -2,86 +2,65 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #pragma once
-#include <chrono>
-#include <future>
 #include "Wait.h"
 
 namespace myoddweb
 {
   namespace directorywatcher
   {
-    class Timer
+    class Timer : public threads::Worker
     {
-    private:
       bool _mustStop;
-      std::future<void> _future;
-
-      long long _delay;
+      threads::TCallback _function;
+      const long long _delayTimeMilliseconds;
+      float _elapsedTimeMilliseconds;
 
     public:
-      Timer() : 
+      explicit Timer(threads::TCallback function, const long long delayTimeMilliseconds)
+        :
         _mustStop( false ),
-        _delay( -1 )
+        _function(std::move(function)),
+        _delayTimeMilliseconds( delayTimeMilliseconds),
+        _elapsedTimeMilliseconds(0)
       {
       }
             
       ~Timer()
       {
-        Stop();
+        Timer::Stop();
       }
 
-      template<typename Function>
-      bool Start(Function function, const long long& delay)
-      {
-        Stop();
-        _mustStop = false;
-        _delay = delay;
-        const auto sleep = std::chrono::milliseconds(delay);
-        _future = std::async(std::launch::async, [=]()
-          {
-            for (;;)
-            {
-              if (_mustStop)
-              {
-                return;
-              }
-              std::this_thread::sleep_for( sleep );
-              if (_mustStop)
-              {
-                return;
-              }
-              function();
-            }
-          });
-        std::this_thread::yield();
-        return true;
-      }
-
-      void Stop() 
+      void Stop() override
       {
         _mustStop = true;
-        if (_delay == -1)
+      }
+
+      /**
+       * \brief Give the worker a chance to do something in the loop
+       *        Workers can do _all_ the work at once and simply return false
+       *        or if they have a tight look they can return true until they need to come out.
+       * \param fElapsedTimeMilliseconds the amount of time since the last time we made this call.
+       * \return true if we want to continue or false if we want to end the thread
+       */
+      bool OnWorkerUpdate(float fElapsedTimeMilliseconds) override
+      {
+        if( _mustStop )
         {
-          return;
+          return false;
+        }
+        _elapsedTimeMilliseconds += fElapsedTimeMilliseconds;
+        if( _elapsedTimeMilliseconds < _delayTimeMilliseconds)
+        {
+          return true;
         }
 
-        // zero ms 
-        const auto delay = std::chrono::nanoseconds(1);
+        //  restart the timer.
+        _elapsedTimeMilliseconds = 0;
 
-        // wait for a could of ms
-        Wait::SpinUntil([=] 
-          {
-            if (!_future.valid())
-            {
-              // the value is not even set.
-              return true;
-            }
-            const auto status = _future.wait_for(delay);
-            return (status == std::future_status::ready);
-          }, _delay );
+        // run the function
+        _function();
 
-        // we are done
-        _delay = -1;
+        return !_mustStop;
       }
     };
   }
