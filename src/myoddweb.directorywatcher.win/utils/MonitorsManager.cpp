@@ -38,7 +38,7 @@ namespace myoddweb
       }
 
       // lock
-      auto guard = Lock(_lock);
+      MYODDWEB_LOCK(_lock);
 
       // check again
       if (nullptr != _instance)
@@ -83,7 +83,7 @@ namespace myoddweb
     bool MonitorsManager::Stop(const long long id)
     {
       MYODDWEB_PROFILE_FUNCTION();
-      auto guard = Lock(_lock);
+      MYODDWEB_LOCK(_lock);
 
       // if we do not have an instance... then we have nothing.
       if (_instance == nullptr)
@@ -129,8 +129,7 @@ namespace myoddweb
     Monitor* MonitorsManager::CreateAndddToList(const Request& request)
     {
       MYODDWEB_PROFILE_FUNCTION();
-
-      auto guard = Lock(_lock);
+      MYODDWEB_LOCK(_lock);
       try
       {
         for (;;)
@@ -219,10 +218,10 @@ namespace myoddweb
     bool MonitorsManager::StopAndDelete(const long long id)
     {
       MYODDWEB_PROFILE_FUNCTION();
+      MYODDWEB_LOCK(_lock);
 
       try
       {
-        auto guard = Lock(_lock);
         const auto monitor = _monitors.find(id);
         if (monitor == _monitors.end())
         {
@@ -233,9 +232,15 @@ namespace myoddweb
         // stop everything
         monitor->second->Stop();
 
-        // delete it
-        delete monitor->second;
-
+        try
+        {
+          // delete it
+          delete monitor->second;
+        }
+        catch (...)
+        {
+          
+        }
         // remove it
         _monitors.erase(monitor);
 

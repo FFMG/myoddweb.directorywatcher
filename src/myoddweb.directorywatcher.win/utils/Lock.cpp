@@ -3,20 +3,17 @@
 // See the LICENSE file in the project root for more information.
 #include "Lock.h"
 
-namespace myoddweb
+namespace myoddweb:: directorywatcher
 {
-  namespace directorywatcher
+  // grab the lock
+  Lock::Lock(std::recursive_mutex& lock) : _lock(lock)
   {
-    // grab the lock
-    Lock::Lock(std::recursive_mutex& lock) : _lock(lock)
-    {
-      _lock.lock();
-    }
+    _lock.lock();
+  }
 
-    // release the lock
-    Lock::~Lock()
-    {
-      _lock.unlock();
-    }
+  // release the lock
+  Lock::~Lock()
+  {
+    _lock.unlock();
   }
 }
