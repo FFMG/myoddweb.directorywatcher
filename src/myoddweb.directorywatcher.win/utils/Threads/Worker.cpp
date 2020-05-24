@@ -1,11 +1,9 @@
 #include "Worker.h"
-
 #include <thread>
-#include <Windows.h>
-
 #include "../../monitors/Base.h"
+#include "../Wait.h"
 
-namespace myoddweb::directorywatcher
+namespace myoddweb::directorywatcher::threads
 {
   Worker::Worker() :
     _started(false),
@@ -57,6 +55,38 @@ namespace myoddweb::directorywatcher
   }
 
   /**
+   * \brief stop the running thread and wait
+   * \param timeout how long we want to wait
+   * \return if the worker completed or if we timeed out.
+   */
+  WaitResult Worker::StopAndWait(const long long timeout)
+  {
+    // then wait for it to complete.
+    if (!Started() || Completed())
+    {
+      // stopped already or not ever running
+      return WaitResult::complete;
+    }
+
+    // stop it
+    Stop();
+
+    // wait for it
+    if (false == Wait::SpinUntil([&]
+      {
+        MYODDWEB_ALERTABLE_SLEEP(1);
+        return Completed();
+      },
+      timeout))
+    {
+      return WaitResult::timeout;
+    }
+    
+    // done
+    return WaitResult::complete;
+  }
+
+  /**
    * \brief called when the thread is starting
        *        this should not block anything
    */
@@ -78,6 +108,10 @@ namespace myoddweb::directorywatcher
       _exceptions.push_back(e);
       return false;
     }
+    catch ( ... )
+    {
+      return false;
+    }
   }
 
   /**
@@ -96,45 +130,54 @@ namespace myoddweb::directorywatcher
 
       // the amount of time we want to put our thread to sleep
       // so we do not cause a tight loop to burn the CPU.
-      const auto threadSleep = std::chrono::milliseconds(MYODDWEB_CPU_THREAD_SLEEP);
+      const auto threadSleep = std::chrono::milliseconds(MYODDWEB_MIN_THREADPOOL_SLEEP);
 
       auto count = 0;
       for (;;)
       {
-        // update and calculate the elapsed time.
-        _timePoint2 = std::chrono::system_clock::now();
-        const auto elapsedTime = _timePoint2 - _timePoint1;
-        _timePoint1 = _timePoint2;
-        const auto fElapsedTime = elapsedTime.count();
-
-        // call the derived class.
-        if( !OnWorkerUpdate(fElapsedTime))
+        try
         {
-          // we are done
-          break;
+          // update and calculate the elapsed time.
+          _timePoint2 = std::chrono::system_clock::now();
+          const std::chrono::duration<float, std::milli> elapsedTime = _timePoint2 - _timePoint1;
+          _timePoint1 = _timePoint2;
+          const auto fElapsedTimeMilliseconds = elapsedTime.count();
+
+          // call the derived class.
+          if (!OnWorkerUpdate(fElapsedTimeMilliseconds))
+          {
+            // we are done
+            break;
+          }
+
+          // sleep a bit, we must be alertable so we can pass/receive messages.
+          MYODDWEB_ALERTABLE_SLEEP(MYODDWEB_MIN_THREADPOOL_SLEEP);
+
+          // we now need to slow the thread down a little more
+          if (count % concurentThreadsSupported != 0)
+          {
+            std::this_thread::sleep_for(threadSleep);
+            ++count;
+          }
+          else
+          {
+            std::this_thread::yield();
+            count = 1;
+          }
         }
-
-
-        // sleep a bit, we must be alertable so we can pass/receive messages.
-        ::SleepEx(MYODDWEB_MIN_THREAD_SLEEP, true);
-
-        // we now need to slow the thread down a little more
-        if (count % concurentThreadsSupported != 0)
+        catch( ... )
         {
-          std::this_thread::sleep_for(threadSleep);
-          ++count;
+          // log it?
         }
-        else
-        {
-          std::this_thread::yield();
-          count = 1;
-        }
-
       }
     }
     catch (const std::exception& e)
     {
       _exceptions.push_back(e);
+    }
+    catch ( ... )
+    {
+      // log it
     }
   }
 
@@ -151,6 +194,10 @@ namespace myoddweb::directorywatcher
     catch (const std::exception& e)
     {
       _exceptions.push_back( e );
+    }
+    catch ( ... )
+    {
+      // log it
     }
 
     // whatever happens, we have now completed
