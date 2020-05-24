@@ -7,6 +7,7 @@
 #include "../utils/EventError.h"
 #include "../utils/Collector.h"
 #include "../utils/Request.h"
+#include "../utils/Threads/WorkerPool.h"
 #include "../utils/Timer.h"
 
 namespace myoddweb
@@ -51,6 +52,11 @@ namespace myoddweb
       bool Start();
       void Stop();
 
+      /**
+       * \brief get the worker pool
+       */
+      [[nodiscard]]
+      virtual threads::WorkerPool& WorkerPool() const = 0;
     protected:
       /**
        * \brief the unique monitor id.
