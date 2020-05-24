@@ -136,7 +136,7 @@ namespace myoddweb
       MYODDWEB_PROFILE_FUNCTION();
 
       // lock
-      auto guard = Lock(_lock);
+      MYODDWEB_LOCK(_lock);
 
       // if we have nothing to do, no point in calling the extra functions.
       if (_nextCleanupTimeCheck == 0)
@@ -367,7 +367,7 @@ namespace myoddweb
 
       // we can now get the lock so we can add data.
       // the lock is released automatically.
-      auto guard = Lock(_lock);
+      MYODDWEB_LOCK(_lock);
 
       // add it.
       _currentEvents->push_back(event);
@@ -403,7 +403,7 @@ namespace myoddweb
 
       // lock and check again if we need to do the work.
       // and if not, get out straight away.
-      auto guard = Lock(_lock);
+      MYODDWEB_LOCK(_lock);
       if (_nextCleanupTimeCheck != 0 && _nextCleanupTimeCheck > now)
       {
         return;

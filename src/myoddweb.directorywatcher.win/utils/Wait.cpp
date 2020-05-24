@@ -2,12 +2,13 @@
 #include <chrono>
 #include <utility>
 
+#include "../monitors/Base.h"
+
 #if defined( _WIN32) || defined(_WIN64 )
-  #define MYODDWEB_MAX_WAIT_INT ((unsigned int)-1)
-  #include <Windows.h>
+  constexpr auto MYODDWEB_MAX_WAIT_INT = static_cast<unsigned int>(-1);
 #else
   #include <limits> 
-  #define MYODDWEB_MAX_WAIT_INT std::numeric_limits<int>::max()
+  constexpr auto MYODDWEB_MAX_WAIT_INT = std::numeric_limits<int>::max()
 #endif
 namespace myoddweb
 {
@@ -149,7 +150,7 @@ namespace myoddweb
         // but we tried to make sure that it never does.
         // but it is posible that the condition() will hang.
         const auto status = thread.WaitFor( waitFor );
-        if (status == threads::Thread::wait_result::complete )
+        if (status == threads::WaitResult::complete )
         {
           // the thread is finished
           return true;
@@ -202,7 +203,7 @@ namespace myoddweb
         const auto zeroMilliseconds = std::chrono::milliseconds(0);
 
         // when we want to sleep until.
-        const auto until = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds);
+        const auto until = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds == -1 ? 1 : milliseconds);
         for (auto count = 0; count < MYODDWEB_MAX_WAIT_INT; ++count)
         {
           if (condition != nullptr)
@@ -224,9 +225,7 @@ namespace myoddweb
           if (count % 4 == 0)
           {
             // slee a little bit
-#if defined( _WIN32) || defined(_WIN64 )
-            ::SleepEx(1, TRUE);
-#endif
+            MYODDWEB_ALERTABLE_SLEEP(1);
             std::this_thread::sleep_for(oneMillisecond);
           }
           else if (count % 2 == 0)
@@ -241,7 +240,7 @@ namespace myoddweb
           }
 
           // are we done?
-          if (std::chrono::high_resolution_clock::now() >= until)
+          if (milliseconds != -1 && std::chrono::high_resolution_clock::now() >= until)
           {
             break;
           }
