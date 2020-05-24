@@ -2,6 +2,18 @@
 
 Notable changes
 
+## 0.1.8 - xx-yy-2020
+
+### Added
+
+- Added worker pool to [limit the number thread](https://github.com/FFMG/myoddweb.directorywatcher/issues/8)
+
+### Changed
+
+### Fixed
+
+### Removed
+
 ## 0.1.7 - 03-01-2020
 
 ### Added
