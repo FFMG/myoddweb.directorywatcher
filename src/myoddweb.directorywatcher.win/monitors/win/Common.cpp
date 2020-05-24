@@ -21,13 +21,13 @@ namespace myoddweb ::directorywatcher :: win
       _data(nullptr),
       _parent(parent),
       _bufferLength(bufferLength),
-      _thread(nullptr),
       _function(nullptr)
   {
   }
 
   Common::~Common()
   {
+    StopAndResetThread();
     Common::Stop();
   }
 
@@ -41,9 +41,6 @@ namespace myoddweb ::directorywatcher :: win
 
     // close everything
     Stop();
-
-    // we can alow things to run now
-    _mustStop = false;
 
     // start the worker thread
     // in turn it will start the reading.
@@ -59,15 +56,6 @@ namespace myoddweb ::directorywatcher :: win
   {
     // tell everybody to stop...
     _mustStop = true;
-
-    // stop and wait for the buffer to complete.
-    // we have to wait first otherwise the next step
-    // will reset the buffer and cause posible issues.
-    StopAndResetThread();
-
-    // clear the data.
-    delete _data;
-    _data = nullptr;
   }
 
   /**
@@ -80,17 +68,8 @@ namespace myoddweb ::directorywatcher :: win
     // tell everybody to stop...
     _mustStop = true;
 
-    // wait for the thread to complete.
-    if (_thread != nullptr)
-    {
-      _thread->WaitFor(MYODDWEB_WAITFOR_WORKER_COMPLETION);
-    }
-    delete _thread;
-    _thread = nullptr;
-
-    // then stop the function as well.
-    delete _function;
-    _function = nullptr;
+    // we can now looking for changes.
+    _parent.WorkerPool().WaitFor(*this, MYODDWEB_WAITFOR_WORKER_COMPLETION );
   }
 
   /**
@@ -106,19 +85,8 @@ namespace myoddweb ::directorywatcher :: win
     // we must no longer stop
     _mustStop = false;
 
-    // create the function
-    _function = new Data::DataCallbackFunction(std::bind(&Common::DataCallbackFunction, this, std::placeholders::_1));
-
-    // what we are looking for.
-    // https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-findfirstchangenotificationa
-    // https://docs.microsoft.com/en-gb/windows/desktop/api/WinBase/nf-winbase-readdirectorychangesw
-    const auto notifyFilter = GetNotifyFilter();
-
-    // create the data
-    _data = new Data(_parent, notifyFilter, _parent.Recursive(), *_function, _bufferLength);
-
     // we can now looking for changes.
-    _thread = new Thread( *this );
+    _parent.WorkerPool().Add( *this );
   }
 
   /**
@@ -132,6 +100,17 @@ namespace myoddweb ::directorywatcher :: win
 
   bool Common::OnWorkerStart()
   {
+    // create the function
+    _function = new Data::DataCallbackFunction(std::bind(&Common::DataCallbackFunction, this, std::placeholders::_1));
+
+    // what we are looking for.
+    // https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-findfirstchangenotificationa
+    // https://docs.microsoft.com/en-gb/windows/desktop/api/WinBase/nf-winbase-readdirectorychangesw
+    const auto notifyFilter = GetNotifyFilter();
+
+    // create the data
+    _data = new Data(_parent, notifyFilter, _parent.Recursive(), *_function, _bufferLength);
+
     // try and open the directory
     // if it is open already then nothing should happen here.
     if (!_data->Open())
@@ -151,10 +130,10 @@ namespace myoddweb ::directorywatcher :: win
 
   /**
    * \brief Give the worker a chance to do something in the loop
-   * \param elapsedTime the amount of time since the last time we made this call.
+   * \param fElapsedTimeMilliseconds the amount of time since the last time we made this call.
    * \return true if we want to continue or false if we want to end the thread
    */
-  bool Common::OnWorkerUpdate(float elapsedTime)
+  bool Common::OnWorkerUpdate(float fElapsedTimeMilliseconds)
   {
     if (MustStop())
     {
@@ -183,13 +162,24 @@ namespace myoddweb ::directorywatcher :: win
       // The handle is good, so we can reset the value
       _invalidHandleWait = 0;
     }
-    return true;
+    return !MustStop();
   }
 
   void Common::OnWorkerEnd()
   {
-    // if we are here... we can release the data
-    _data->Close();
+    if (nullptr != _data)
+    {
+      // if we are here... we can release the data
+      _data->Close();
+    }
+
+    // clear the data.
+    delete _data;
+    _data = nullptr;
+
+    // then stop the function as well.
+    delete _function;
+    _function = nullptr;
   }
 
   /**

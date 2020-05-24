@@ -14,11 +14,11 @@ namespace myoddweb
     class WinMonitor : public Monitor
     {
     public:
-      WinMonitor(long long id, long long parentId, const Request& request);
+      WinMonitor(long long id, long long parentId, const Request& request, threads::WorkerPool* workerPool);
       WinMonitor(long long id, const Request& request);
 
     protected:
-      WinMonitor(long long id, long long parentId, const Request& request, unsigned long bufferLength);
+      WinMonitor(long long id, long long parentId, const Request& request, threads::WorkerPool* workerPool, unsigned long bufferLength);
 
     public:
       virtual ~WinMonitor();
@@ -29,9 +29,25 @@ namespace myoddweb
 
       const long long& ParentId() const override;
 
+      /**
+       * \brief get the worker pool
+       */
+      [[nodiscard]]
+      threads::WorkerPool& WorkerPool() const override;
+
     private:
       win::Common* _directories;
       win::Common* _files;
+
+      /**
+       * \brief the worker pool
+       */
+      threads::WorkerPool* _workerPool;
+
+      /**
+       * \brief the worker pool
+       */
+      threads::WorkerPool* _parentWorkerPool;
 
       const unsigned long _bufferLength;
 

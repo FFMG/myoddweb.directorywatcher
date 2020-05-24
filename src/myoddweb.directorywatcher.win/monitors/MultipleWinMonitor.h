@@ -27,11 +27,22 @@ namespace myoddweb
       
       const long long& ParentId() const override;
 
+      /**
+       * \brief get the worker pool
+       */
+      [[nodiscard]]
+      threads::WorkerPool& WorkerPool() const override;
+
     private:
       /**
        * \brief the locks so we can add data.
        */
       std::recursive_mutex _lock;
+
+      /**
+       * \brief the worker pool
+       */
+      threads::WorkerPool* _workerPool;
 
       /**
        * \brief the non recursive parents, we will monitor new folder for those.

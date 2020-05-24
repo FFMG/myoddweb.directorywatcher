@@ -15,7 +15,7 @@ namespace myoddweb
   {
     namespace win
     {
-      class Common : public Worker
+      class Common : public threads::Worker
       {
       protected:
         Common(Monitor& parent, unsigned long bufferLength);
@@ -34,14 +34,14 @@ namespace myoddweb
         virtual ~Common();
 
         virtual bool Start();
-        virtual void Stop();
+        void Stop() override;
 
       protected:
         // invalid handle wait
         int _invalidHandleWait;
 
         bool OnWorkerStart() override;
-        bool OnWorkerUpdate(float elapsedTime) override;
+        bool OnWorkerUpdate(float fElapsedTimeMilliseconds) override;
         void OnWorkerEnd() override;
 
         /**
@@ -88,11 +88,6 @@ namespace myoddweb
          * \brief the max length of the buffers.
          */
         const unsigned long _bufferLength;
-
-        /**
-         * \brief the current thread handle, if we have one.
-         */
-        Thread* _thread;
 
         /**
          * \brief the callback function.

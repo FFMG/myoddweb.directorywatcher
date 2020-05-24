@@ -45,6 +45,12 @@
     <ClCompile Include="utils\Threads\Worker.cpp">
       <Filter>utils\Threads</Filter>
     </ClCompile>
+    <ClCompile Include="utils\Threads\CallbackWorker.cpp">
+      <Filter>utils\Threads</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\Threads\WorkerPool.cpp">
+      <Filter>utils\Threads</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -118,6 +124,15 @@
       <Filter>utils\Threads</Filter>
     </ClInclude>
     <ClInclude Include="utils\Threads\Worker.h">
+      <Filter>utils\Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\Threads\CallbackWorker.h">
+      <Filter>utils\Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\Threads\WorkerPool.h">
+      <Filter>utils\Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\Threads\WaitResult.h">
       <Filter>utils\Threads</Filter>
     </ClInclude>
   </ItemGroup>

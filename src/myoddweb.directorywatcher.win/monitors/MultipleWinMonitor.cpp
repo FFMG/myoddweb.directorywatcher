@@ -16,13 +16,17 @@
 namespace myoddweb::directorywatcher
 {
   MultipleWinMonitor::MultipleWinMonitor(const long long id, const Request& request) :
-    Monitor(id, request)
+    Monitor(id, request),
+    _workerPool( nullptr )
   {
     // use a standar monitor for non recursive items.
     if (!request.Recursive())
     {
       throw std::invalid_argument("The multiple monitor must be recursive.");
     }
+
+    // create the worker pool
+    _workerPool = new threads::WorkerPool();
 
     // try and create the list of monitors.
     CreateMonitors(*_request );
@@ -31,6 +35,9 @@ namespace myoddweb::directorywatcher
   MultipleWinMonitor::~MultipleWinMonitor()
   {
     Delete();
+
+    delete _workerPool;
+    _workerPool = nullptr;
   }
 
   /**
@@ -39,7 +46,7 @@ namespace myoddweb::directorywatcher
   void MultipleWinMonitor::OnStart()
   {
     // guard for multiple entry.
-    auto guard = Lock(_lock);
+    MYODDWEB_LOCK(_lock);
 
     // start the parents
     Start(_nonRecursiveParents);
@@ -54,13 +61,27 @@ namespace myoddweb::directorywatcher
   void MultipleWinMonitor::OnStop()
   {
     // guard for multiple entry.
-    auto guard = Lock(_lock);
+    MYODDWEB_LOCK(_lock);
+
+    if( _workerPool != nullptr )
+    {
+      _workerPool->Stop();
+    }
 
     // stop the parents
     Stop(_nonRecursiveParents);
 
     // and the children
     Stop(_recursiveChildren);
+  }
+
+  /**
+       * \brief get the worker pool
+       */
+  [[nodiscard]]
+  threads::WorkerPool& MultipleWinMonitor::WorkerPool() const
+  {
+    return *_workerPool;
   }
 
   /**
@@ -80,7 +101,7 @@ namespace myoddweb::directorywatcher
   void MultipleWinMonitor::OnGetEvents(std::vector<Event*>& events)
   {
     // guard for multiple (re)entry.
-    auto guard = Lock(_lock);
+    MYODDWEB_LOCK(_lock);
 
     // now that we have the lock ... check if we have stopped.
     if (!Is(State::Started))
@@ -141,13 +162,13 @@ namespace myoddweb::directorywatcher
     }
 
     // guard for multiple entry.
-    auto guard = Lock(_lock);
+    MYODDWEB_LOCK(_lock);
 
     // a folder was added to this path
     // so we have to add this path as a child.
     const auto id = GetNextId();
     const auto request = new Request(path, true, nullptr, 0);
-    auto child = new WinMonitor(id, ParentId(), *request);
+    auto child = new WinMonitor(id, ParentId(), *request, _workerPool);
     _recursiveChildren.push_back(child);
     child->Start();
 
@@ -166,7 +187,7 @@ namespace myoddweb::directorywatcher
     }
 
     // guard for multiple entry.
-    auto guard = Lock(_lock);
+    MYODDWEB_LOCK(_lock);
 
     // the 'path' folder was removed.
     // so we have to remove it as well as all the child folders.
@@ -346,22 +367,22 @@ namespace myoddweb::directorywatcher
       return;
     }
 
-    auto ts = std::vector<Thread*>();
+    auto ts = std::vector<threads::Thread*>();
     try
     {
       for (auto it = container.begin(); it != container.end(); ++it)
       {
         try
         {
-          std::function<void()> callback = std::bind( &Monitor::Stop, *it );
-          ts.push_back( new Thread( callback ));
+          const auto callback = std::bind( &Monitor::Stop, *it );
+          ts.push_back( new threads::Thread( callback ));
         }
         catch (...)
         {
           // @todo we need to log this somewhere.
         }
       }
-
+    
       for( auto it = ts.begin(); it != ts.end(); ++it )
       {
         (*it)->WaitFor(MYODDWEB_WAITFOR_WORKER_COMPLETION);
@@ -381,12 +402,29 @@ namespace myoddweb::directorywatcher
   void MultipleWinMonitor::Start(const std::vector<Monitor*>& container)
   {
     MYODDWEB_PROFILE_FUNCTION();
-
-    for (auto monitor = container.begin(); monitor != container.end(); ++monitor)
+    for( auto worker : container )
     {
-      // the parent is in charge of the callback.
-      (*monitor)->Start();
+      worker->Start();
     }
+    // auto ts = std::vector<threads::Thread*>();
+    // for (auto worker : container)
+    // {
+    //   try
+    //   {
+    //     const auto callback = std::bind(&Monitor::Start, worker);
+    //     ts.push_back(new threads::Thread(callback));
+    //   }
+    //   catch (...)
+    //   {
+    //     // @todo we need to log this somewhere.
+    //   }
+    // }
+    //
+    // for (auto t : ts)
+    // {
+    //   t->WaitFor(MYODDWEB_WAITFOR_WORKER_COMPLETION);
+    //   delete t;
+    // }
   }
 
   /**
@@ -398,7 +436,7 @@ namespace myoddweb::directorywatcher
     Monitor::Stop();
 
     // guard for multiple entry.
-    auto guard = Lock(_lock);
+    MYODDWEB_LOCK(_lock);
 
     // delete the children
     Delete(_recursiveChildren);
@@ -481,21 +519,14 @@ namespace myoddweb::directorywatcher
     if (subPaths.empty() || TotalSize() > MYODDWEB_MAX_NUMBER_OF_SUBPATH)
     {
       // we will breach the depth
-      _recursiveChildren.push_back(new WinMonitor(id, ParentId(), parent));
-      return;
-    }
-
-    if ((subPaths.size() + TotalSize()) > (MYODDWEB_OPTIMAL_NUMBER_OF_THREADS_PER_MONITOR / 2))
-    {
-      // we will breach the depth
-      _recursiveChildren.push_back(new WinMonitor(id, ParentId(), parent));
+      _recursiveChildren.push_back(new WinMonitor(id, ParentId(), parent, _workerPool));
       return;
     }
     
     // adding all the sub-paths will not breach the limit.
     // so we can add the parent, but non-recuresive.
     const auto request = new Request(parent.Path(), false, nullptr, 0);
-    _nonRecursiveParents.push_back(new WinMonitor(id, ParentId(), *request));
+    _nonRecursiveParents.push_back(new WinMonitor(id, ParentId(), *request, _workerPool));
 
     // now try and add all the subpath
     for (const auto& path : subPaths)

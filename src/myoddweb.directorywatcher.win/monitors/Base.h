@@ -30,6 +30,12 @@ namespace myoddweb
      */
     constexpr auto MYODDWEB_MIN_THREAD_SLEEP = 50L;
 
+    /**
+     * \brief The min number of Milliseconds we want to wait for an IO signal.
+     *        because the thread pool managed more than one thread this number can be lower
+     */
+    constexpr auto MYODDWEB_MIN_THREADPOOL_SLEEP = 5;
+
     /** 
      * \brief similar to the call above, but this puts our thread to sleep
      *        completely, giving other threads a change to process data.
@@ -49,13 +55,6 @@ namespace myoddweb
      *        If the number is too large the number of running threads will cause issues.
      */
     constexpr auto MYODDWEB_MAX_NUMBER_OF_SUBPATH = 64L;
-
-    /**
-     * \brief The optimal number of threads per monitors.
-     *        This nnumber is difficult to match in many cases as not all subfolders can be watched
-     *        And/or there might not even be that many folders to watch.
-     */
-    constexpr auto MYODDWEB_OPTIMAL_NUMBER_OF_THREADS_PER_MONITOR = 200L;
 
     /**
      * \brief how long we want to wait for the various IOs to complete before

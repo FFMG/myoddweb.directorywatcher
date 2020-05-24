@@ -3,6 +3,8 @@
 // See the LICENSE file in the project root for more information.
 #include "WinMonitor.h"
 #include <string>
+
+#include "../utils/Instrumentor.h"
 #include "win/Directories.h"
 #include "win/Files.h"
 
@@ -20,10 +22,12 @@ namespace myoddweb
      /**
       * \brief Create the Monitor that uses ReadDirectoryChanges
       * \param id the unique id of this monitor
+      * \param parentId the id of the parent of this monitor.
       * \param request details of the request.
+      * \param workerPool
       */
-    WinMonitor::WinMonitor(const long long id, long long parentId, const Request& request) :
-      WinMonitor(id, parentId, request, MAX_BUFFER_SIZE)
+    WinMonitor::WinMonitor(const long long id, const long long parentId, const Request& request, threads::WorkerPool* workerPool) :
+      WinMonitor(id, parentId, request, workerPool, MAX_BUFFER_SIZE)
     {
     }
 
@@ -34,7 +38,7 @@ namespace myoddweb
      * \param request details of the request.
      */
     WinMonitor::WinMonitor(const long long id, const Request& request) :
-      WinMonitor(id, id, request, MAX_BUFFER_SIZE)
+      WinMonitor(id, id, request, nullptr, MAX_BUFFER_SIZE)
     {
     }
 
@@ -43,21 +47,41 @@ namespace myoddweb
      * \param id the unique id of this monitor
      * \param parentId the id of the owner of this monitor, (top level)
      * \param request details of the request.
+     * \param workerPool the worker pool we will be using.
      * \param bufferLength the size of the buffer
      */
-    WinMonitor::WinMonitor(const long long id, const long long parentId, const Request& request, const unsigned long bufferLength) :
+    WinMonitor::WinMonitor(const long long id, const long long parentId, const Request& request, threads::WorkerPool* workerPool, const unsigned long bufferLength) :
       Monitor(id, request),
       _directories(nullptr),
       _files(nullptr),
       _bufferLength(bufferLength),
-      _parentId( parentId )
+      _parentId( parentId ),
+      _parentWorkerPool( workerPool ),
+      _workerPool( nullptr)
     {
+      if( nullptr == _parentWorkerPool )
+      {
+        _workerPool = new threads::WorkerPool();
+      }
     }
 
     WinMonitor::~WinMonitor()
     {
       Stop();
+
+      delete _workerPool;
+      _workerPool = nullptr;
     }
+
+    /**
+     * \brief get the worker pool
+     */
+    [[nodiscard]]
+    threads::WorkerPool& WinMonitor::WorkerPool() const
+    {
+      return _parentWorkerPool == nullptr ? *_workerPool : *_parentWorkerPool;
+    }
+
 
     /**
      * \brief process the collected events add/remove them.
@@ -73,6 +97,8 @@ namespace myoddweb
      */
     void WinMonitor::OnStart()
     {
+      MYODDWEB_PROFILE_FUNCTION();
+
       // start monitoring the directories
       _directories = new win::Directories(*this, _bufferLength);
       _directories->Start();
