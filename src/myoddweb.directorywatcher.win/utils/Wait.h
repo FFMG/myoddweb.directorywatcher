@@ -41,7 +41,7 @@ namespace myoddweb
         return SpinUntilFutureComplete(future, milliseconds);
       }
 
-      static bool SpinUntil(Thread& thread, long long milliseconds)
+      static bool SpinUntil(threads::Thread& thread, long long milliseconds)
       {
         return SpinUntilThreadComplete(thread, milliseconds);
       }
@@ -93,7 +93,7 @@ namespace myoddweb
        * \param thread the thread we will be waiting for.
        * \return true if the future completed or false if we timed out.
        */
-      static bool SpinUntilThreadComplete(Thread& thread, long long milliseconds);
+      static bool SpinUntilThreadComplete(threads::Thread& thread, long long milliseconds);
 
       /**
        * \brief the main function that does all the waiting.

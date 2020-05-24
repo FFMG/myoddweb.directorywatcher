@@ -1,12 +1,12 @@
 #include "Wait.h"
 #include <chrono>
-#include <limits> 
 #include <utility>
 
 #if defined( _WIN32) || defined(_WIN64 )
   #define MYODDWEB_MAX_WAIT_INT ((unsigned int)-1)
   #include <Windows.h>
 #else
+  #include <limits> 
   #define MYODDWEB_MAX_WAIT_INT std::numeric_limits<int>::max()
 #endif
 namespace myoddweb
@@ -131,7 +131,7 @@ namespace myoddweb
      * \param thread the thread we will be waiting for.
      * \return true if the future completed or false if we timed out.
      */
-    bool Wait::SpinUntilThreadComplete(Thread& thread, const long long milliseconds)
+    bool Wait::SpinUntilThreadComplete(threads::Thread& thread, const long long milliseconds)
     {
       // when we consider this timed-out
       const auto until = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds);
@@ -149,7 +149,7 @@ namespace myoddweb
         // but we tried to make sure that it never does.
         // but it is posible that the condition() will hang.
         const auto status = thread.WaitFor( waitFor );
-        if (status == Thread::wait_result::complete )
+        if (status == threads::Thread::wait_result::complete )
         {
           // the thread is finished
           return true;
@@ -186,7 +186,6 @@ namespace myoddweb
      *        if empty/null then we will never check the condition
      * \param milliseconds the maximum amount of time we want to wait
      *        if the condition is not set then we will always return false and wait for that number of ms.
-     * \param promise the promise that we will use to set the result.
      */
     bool Wait::Awaiter
     (

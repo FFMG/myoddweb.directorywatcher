@@ -2,6 +2,23 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #pragma once
+#if defined(_WIN32)
+  #include <Windows.h>
+
+  // sleep a bit, we must be alertable so we can pass/receive messages.
+  #define MYODDWEB_ALERTABLE_SLEEP( ms) \
+  {                                     \
+    ::SleepEx(ms, true);                \
+  }
+#else
+  #include <chrono>
+  #include <thread>
+
+  #define MYODDWEB_ALERTABLE_SLEEP( ms)                         \
+  {                                                             \
+    std::this_thread::sleep_for(std::chrono::milliseconds(ms)); \
+  }
+#endif
 
 namespace myoddweb
 {
