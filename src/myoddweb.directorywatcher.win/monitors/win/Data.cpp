@@ -136,7 +136,7 @@ namespace myoddweb:: directorywatcher:: win
             // we will return as soon as the message is recived.
             // if we do not wait for the abort message, we might get other
             // messages out of sequence.
-            MYODDWEB_ALERTABLE_SLEEP(1);
+            MYODDWEB_ALERTABLE_SLEEP;
             return _operationAborted == true;
           }, MYODDWEB_WAITFOR_IO_COMPLETION
         );

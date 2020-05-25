@@ -6,17 +6,17 @@
   #include <Windows.h>
 
   // sleep a bit, we must be alertable so we can pass/receive messages.
-  #define MYODDWEB_ALERTABLE_SLEEP( ms) \
-  {                                     \
-    ::SleepEx(ms, true);                \
+  #define MYODDWEB_ALERTABLE_SLEEP                  \
+  {                                                 \
+    ::SleepEx(MYODDWEB_ALERTABLE_SLEEP_TIME, true); \
   }
 #else
   #include <chrono>
   #include <thread>
 
-  #define MYODDWEB_ALERTABLE_SLEEP( ms)                         \
-  {                                                             \
-    std::this_thread::sleep_for(std::chrono::milliseconds(ms)); \
+  #define MYODDWEB_ALERTABLE_SLEEP                                                          \
+  {                                                                                         \
+    std::this_thread::sleep_for(std::chrono::milliseconds(MYODDWEB_ALERTABLE_SLEEP_TIME));  \
   }
 #endif
 
@@ -35,6 +35,11 @@ namespace myoddweb
      *        because the thread pool managed more than one thread this number can be lower
      */
     constexpr auto MYODDWEB_MIN_THREADPOOL_SLEEP = 5;
+
+    /**
+     * \brief How long we want to 'sleep' waiting for an IO alert
+     */
+    constexpr auto MYODDWEB_ALERTABLE_SLEEP_TIME = 1;
 
     /** 
      * \brief similar to the call above, but this puts our thread to sleep

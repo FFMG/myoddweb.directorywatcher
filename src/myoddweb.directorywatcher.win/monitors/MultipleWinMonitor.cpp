@@ -406,25 +406,6 @@ namespace myoddweb::directorywatcher
     {
       worker->Start();
     }
-    // auto ts = std::vector<threads::Thread*>();
-    // for (auto worker : container)
-    // {
-    //   try
-    //   {
-    //     const auto callback = std::bind(&Monitor::Start, worker);
-    //     ts.push_back(new threads::Thread(callback));
-    //   }
-    //   catch (...)
-    //   {
-    //     // @todo we need to log this somewhere.
-    //   }
-    // }
-    //
-    // for (auto t : ts)
-    // {
-    //   t->WaitFor(MYODDWEB_WAITFOR_WORKER_COMPLETION);
-    //   delete t;
-    // }
   }
 
   /**

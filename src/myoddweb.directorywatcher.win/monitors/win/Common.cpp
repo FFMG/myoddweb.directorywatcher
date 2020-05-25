@@ -64,12 +64,18 @@ namespace myoddweb ::directorywatcher :: win
   void Common::StopAndResetThread()
   {
     MYODDWEB_PROFILE_FUNCTION();
+    try
+    {
+      // tell everybody to stop...
+      _mustStop = true;
 
-    // tell everybody to stop...
-    _mustStop = true;
-
-    // we can now looking for changes.
-    _parent.WorkerPool().WaitFor(*this, MYODDWEB_WAITFOR_WORKER_COMPLETION );
+      // we can now looking for changes.
+      _parent.WorkerPool().WaitFor(*this, MYODDWEB_WAITFOR_WORKER_COMPLETION);
+    }
+    catch( ... )
+    {
+      // log here
+    }
   }
 
   /**

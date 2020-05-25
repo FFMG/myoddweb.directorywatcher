@@ -225,7 +225,7 @@ namespace myoddweb
           if (count % 4 == 0)
           {
             // slee a little bit
-            MYODDWEB_ALERTABLE_SLEEP(1);
+            MYODDWEB_ALERTABLE_SLEEP;
             std::this_thread::sleep_for(oneMillisecond);
           }
           else if (count % 2 == 0)

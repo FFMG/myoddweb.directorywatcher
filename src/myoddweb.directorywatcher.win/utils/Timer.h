@@ -42,12 +42,14 @@ namespace myoddweb
        * \param fElapsedTimeMilliseconds the amount of time since the last time we made this call.
        * \return true if we want to continue or false if we want to end the thread
        */
-      bool OnWorkerUpdate(float fElapsedTimeMilliseconds) override
+      bool OnWorkerUpdate( const float fElapsedTimeMilliseconds) override
       {
         if( _mustStop )
         {
           return false;
         }
+
+        // check if we are ready.
         _elapsedTimeMilliseconds += fElapsedTimeMilliseconds;
         if( _elapsedTimeMilliseconds < _delayTimeMilliseconds)
         {

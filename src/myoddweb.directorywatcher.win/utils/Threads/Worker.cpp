@@ -61,29 +61,36 @@ namespace myoddweb::directorywatcher::threads
    */
   WaitResult Worker::StopAndWait(const long long timeout)
   {
-    // then wait for it to complete.
-    if (!Started() || Completed())
+    try
     {
-      // stopped already or not ever running
+      // then wait for it to complete.
+      if (!Started() || Completed())
+      {
+        // stopped already or not ever running
+        return WaitResult::complete;
+      }
+
+      // stop it
+      Stop();
+
+      // wait for it
+      if (false == Wait::SpinUntil([&]
+        {
+          MYODDWEB_ALERTABLE_SLEEP;
+          return Completed();
+        },
+        timeout))
+      {
+        return WaitResult::timeout;
+      }
+
+      // done
       return WaitResult::complete;
     }
-
-    // stop it
-    Stop();
-
-    // wait for it
-    if (false == Wait::SpinUntil([&]
-      {
-        MYODDWEB_ALERTABLE_SLEEP(1);
-        return Completed();
-      },
-      timeout))
+    catch( ... )
     {
       return WaitResult::timeout;
     }
-    
-    // done
-    return WaitResult::complete;
   }
 
   /**
@@ -151,7 +158,7 @@ namespace myoddweb::directorywatcher::threads
           }
 
           // sleep a bit, we must be alertable so we can pass/receive messages.
-          MYODDWEB_ALERTABLE_SLEEP(MYODDWEB_MIN_THREADPOOL_SLEEP);
+          MYODDWEB_ALERTABLE_SLEEP;
 
           // we now need to slow the thread down a little more
           if (count % concurentThreadsSupported != 0)

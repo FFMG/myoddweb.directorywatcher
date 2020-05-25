@@ -219,7 +219,6 @@ namespace myoddweb
     {
       MYODDWEB_PROFILE_FUNCTION();
       MYODDWEB_LOCK(_lock);
-
       try
       {
         const auto monitor = _monitors.find(id);
