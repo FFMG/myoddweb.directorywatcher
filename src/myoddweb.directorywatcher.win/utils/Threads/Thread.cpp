@@ -72,21 +72,26 @@ namespace myoddweb::directorywatcher::threads
    */
   WaitResult Thread::WaitFor(const long long timeout)
   {
-    if(_parentWorker == nullptr || _parentWorker->Completed() )
+    if (_parentWorker == nullptr || _parentWorker->Completed())
     {
       return WaitResult::complete;
     }
 
-    Wait::SpinUntil([&] 
+    auto status = WaitResult::complete;
+    if (!Wait::SpinUntil([&]
       {
-        MYODDWEB_ALERTABLE_SLEEP(1);
+        MYODDWEB_ALERTABLE_SLEEP;
         return _parentWorker == nullptr || _parentWorker->Completed();
-      },  
-      timeout);
+      },
+      timeout))
+    {
+      status = WaitResult::timeout;
+    }
 
-    return (_parentWorker == nullptr || _parentWorker->Completed()) ?
-      WaitResult::complete :
-      WaitResult::timeout;
+    // then wait for the thread itself to complete
+    // when the constructor is called we will clean it up.
+
+    return status;
   }
 
   /**

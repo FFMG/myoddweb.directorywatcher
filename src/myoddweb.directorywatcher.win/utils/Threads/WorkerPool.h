@@ -21,14 +21,14 @@ namespace myoddweb
         bool _mustStop;
 
         /**
-         * \brief the locks so we can add/remove runners.
+         * \brief the lock for the running workers.
          */
-        std::recursive_mutex _lock;
+        std::recursive_mutex _lockRunningWorkers;
 
         /**
-         * \brief all our runners.
+         * \brief the workers that are waiting to start;
          */
-        std::vector<Worker*> _workers;
+        std::recursive_mutex _lockWorkersWaitingToStart;
 
         /**
          * \brief the workers that have yet to be started
@@ -77,6 +77,9 @@ namespace myoddweb
         void Stop() override;
 
       protected:
+        /**
+         * \brief called when the worker thread is about to start
+         */
         bool OnWorkerStart() override;
 
         /**
@@ -88,8 +91,13 @@ namespace myoddweb
          */
         bool OnWorkerUpdate(float fElapsedTimeMilliseconds) override;
 
+        /**
+         * \brief Called when the thread pool has been completed, all the workers should have completed here.
+         *        We are done with all of them now.
+         */
         void OnWorkerEnd() override;
 
+      private:
         /**
          * \brief make a thread safe copy of the running workers.
          */
@@ -124,14 +132,14 @@ namespace myoddweb
          *        we will obtain the lock to remove this item.
          * \param worker the worker we are wanting to remove
          */
-        void RemoveWorkerFromWorkersWaitingStarting( const Worker& worker );
+        void RemoveWorkerFromWorkersWaitingToStart( const Worker& worker );
 
         /**
-         * \brief remove a worker from our list of workers.
-         *        we will obtain the lock to remove this item.
-         * \param worker the worker we are wanting to remove
+         * \brief remove a workers from our list of posible waiting workers.
+         *        we will obtain the lock to remove those items.
+         * \param workers the worker we are wanting to remove
          */
-        void RemoveWorkerFromWorkers(const Worker& worker);
+        void RemoveWorkerFromWorkersWaitingToStart(const std::vector<Worker*>& workers);
 
         /**
          * \brief remove a worker from our list of running workers.
@@ -141,11 +149,37 @@ namespace myoddweb
         void RemoveWorkerFromRunningWorkers(const Worker& worker);
 
         /**
+         * \brief remove workers from our list of running workers.
+         *        we will obtain the lock to remove this items.
+         * \param workers the workers we are wanting to remove
+         */
+        void RemoveWorkerFromRunningWorkers(const std::vector<Worker*>& workers);
+
+        /**
          * \brief remove a single worker from a collection of workers
          * \param container the collection of workers.
          * \param item the worker we want t remove
          */
         static void RemoveWorker(std::vector<Worker*>& container, const Worker& item);
+
+        /**
+         * \brief add a single worker to a list of workers that are waiting to start.
+         * \param worker the worker we want to add.
+         */
+        void AddToWorkersWaitingToStart(Worker& worker);
+
+        /**
+         * \brief add this worker to our list of running workers
+         * \param worker the worker we are adding
+         */
+        void AddToRunningWorkers(Worker& worker);
+
+        /**
+         * \brief had a worker to the container
+         * \param container the container we are adding to
+         * \param item the worker we want to add.
+         */
+        static void AddWorker(std::vector<Worker*>& container, Worker& item);
       };
     }
   }
