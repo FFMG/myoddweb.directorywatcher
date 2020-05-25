@@ -15,7 +15,7 @@ namespace myoddweb
     {
     protected:
       MonitorsManager();
-      virtual ~MonitorsManager();
+      ~MonitorsManager();
 
     public:
       /**

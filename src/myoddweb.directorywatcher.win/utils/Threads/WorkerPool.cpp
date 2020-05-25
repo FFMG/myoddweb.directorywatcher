@@ -219,32 +219,7 @@ namespace myoddweb :: directorywatcher :: threads
       // those workers are no longer running
       RemoveWorkerFromRunningWorkers(workers);
 
-      // auto ts = std::vector<Thread*>();
-      // for( auto worker : workers )
-      // {
-      //   try
-      //   {
-      //     std::function<void()> callback = [=]
-      //     {
-      //       if (!worker->Completed())
-      //       {
-      //         worker->WorkerEnd();
-      //       }
-      //     };
-      //     ts.push_back( new Thread( callback ));
-      //   }
-      //   catch (...)
-      //   {
-      //     // @todo we need to log this somewhere.
-      //   }
-      // }
-    
-      // for( auto t : ts )
-      // {
-      //   t->WaitFor(MYODDWEB_WAITFOR_WORKER_COMPLETION);
-      //   delete t;
-      // }
-      //
+      // call workend for all of them.
       std::for_each(
         std::execution::par_unseq,
         workers.begin(),
@@ -417,32 +392,7 @@ namespace myoddweb :: directorywatcher :: threads
       // because they are not working
       RemoveWorkerFromRunningWorkers(runningWorkers);
 
-      // auto ts = std::vector<Thread*>();
-      // for (auto worker : runningWorkers)
-      // {
-      //   try
-      //   {
-      //     std::function<void()> callback = [=]
-      //     {
-      //       if (!worker->Completed())
-      //       {
-      //         worker->Stop();
-      //       }
-      //     };
-      //     ts.push_back(new Thread(callback));
-      //   }
-      //   catch (...)
-      //   {
-      //     // @todo we need to log this somewhere.
-      //   }
-      // }
-      //
-      // for (auto t : ts)
-      // {
-      //   t->WaitFor(MYODDWEB_WAITFOR_WORKER_COMPLETION);
-      //   delete t;
-      // }
-
+      // stop all the workers.
       std::for_each(
         std::execution::par_unseq,
         runningWorkers.begin(),

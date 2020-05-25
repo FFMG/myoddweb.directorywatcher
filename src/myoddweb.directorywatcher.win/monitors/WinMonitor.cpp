@@ -23,14 +23,14 @@ namespace myoddweb
       * \brief Create the Monitor that uses ReadDirectoryChanges
       * \param id the unique id of this monitor
       * \param parentId the id of the parent of this monitor.
+      * \param workerPool the worker pool
       * \param request details of the request.
-      * \param workerPool
       */
-    WinMonitor::WinMonitor(const long long id, const long long parentId, const Request& request, threads::WorkerPool* workerPool) :
-      WinMonitor(id, parentId, request, workerPool, MAX_BUFFER_SIZE)
+    WinMonitor::WinMonitor(const long long id, const long long parentId, threads::WorkerPool& workerPool, const Request& request) :
+      WinMonitor(id, parentId, workerPool, request, MAX_BUFFER_SIZE)
     {
     }
-
+        
     /**
      * \brief Create the Monitor that uses ReadDirectoryChanges
      *        This is the case where the id is the parent id.
@@ -38,50 +38,49 @@ namespace myoddweb
      * \param request details of the request.
      */
     WinMonitor::WinMonitor(const long long id, const Request& request) :
-      WinMonitor(id, id, request, nullptr, MAX_BUFFER_SIZE)
+      WinMonitor(id, new threads::WorkerPool(), request )
     {
+    }
+
+    /**
+     * \brief Create the Monitor that uses ReadDirectoryChanges
+     *        This is the case where the id is the parent id.
+     * \param id the unique id of this monitor
+     * \param workerPool the worker pool
+     * \param request details of the request.
+     */
+    WinMonitor::WinMonitor(const long long id, threads::WorkerPool* workerPool, const Request& request) :
+      WinMonitor(id, id, *workerPool, request)
+    {
+      _workerPool = workerPool;
     }
 
     /**
      * \brief Create the Monitor that uses ReadDirectoryChanges
      * \param id the unique id of this monitor
      * \param parentId the id of the owner of this monitor, (top level)
+     * \param workerPool the worker pool
      * \param request details of the request.
-     * \param workerPool the worker pool we will be using.
      * \param bufferLength the size of the buffer
      */
-    WinMonitor::WinMonitor(const long long id, const long long parentId, const Request& request, threads::WorkerPool* workerPool, const unsigned long bufferLength) :
-      Monitor(id, request),
+    WinMonitor::WinMonitor(const long long id, const long long parentId, threads::WorkerPool& workerPool, const Request& request, const unsigned long bufferLength) :
+      Monitor(id, workerPool, request),
+      _workerPool(nullptr),
       _directories(nullptr),
       _files(nullptr),
       _bufferLength(bufferLength),
-      _parentId( parentId ),
-      _parentWorkerPool( workerPool ),
-      _workerPool( nullptr)
+      _parentId( parentId )
     {
-      if( nullptr == _parentWorkerPool )
-      {
-        _workerPool = new threads::WorkerPool();
-      }
     }
 
     WinMonitor::~WinMonitor()
     {
       Stop();
 
+      // clear the worker
       delete _workerPool;
       _workerPool = nullptr;
     }
-
-    /**
-     * \brief get the worker pool
-     */
-    [[nodiscard]]
-    threads::WorkerPool& WinMonitor::WorkerPool() const
-    {
-      return _parentWorkerPool == nullptr ? *_workerPool : *_parentWorkerPool;
-    }
-
 
     /**
      * \brief process the collected events add/remove them.
@@ -113,6 +112,12 @@ namespace myoddweb
      */
     void WinMonitor::OnStop()
     {
+      // if we own the thread pool, stop it.
+      if (_workerPool != nullptr)
+      {
+        _workerPool->Stop();
+      }
+
       if (_directories != nullptr)
       {
         _directories->Stop();

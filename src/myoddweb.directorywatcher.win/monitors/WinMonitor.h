@@ -4,7 +4,6 @@
 #pragma once
 #include <Windows.h>
 #include "Monitor.h"
-#include <future>
 #include "win/Common.h"
 
 namespace myoddweb
@@ -13,12 +12,14 @@ namespace myoddweb
   {
     class WinMonitor : public Monitor
     {
+      WinMonitor(long long id, threads::WorkerPool* workerPool, const Request& request);
+
     public:
-      WinMonitor(long long id, long long parentId, const Request& request, threads::WorkerPool* workerPool);
       WinMonitor(long long id, const Request& request);
+      WinMonitor(long long id, long long parentId, threads::WorkerPool& workerPool, const Request& request);
 
     protected:
-      WinMonitor(long long id, long long parentId, const Request& request, threads::WorkerPool* workerPool, unsigned long bufferLength);
+      WinMonitor(long long id, long long parentId, threads::WorkerPool& workerPool, const Request& request, unsigned long bufferLength);
 
     public:
       virtual ~WinMonitor();
@@ -29,25 +30,14 @@ namespace myoddweb
 
       const long long& ParentId() const override;
 
-      /**
-       * \brief get the worker pool
-       */
-      [[nodiscard]]
-      threads::WorkerPool& WorkerPool() const override;
-
     private:
-      win::Common* _directories;
-      win::Common* _files;
-
       /**
-       * \brief the worker pool
-       */
+         * \brief the worker pool
+         */
       threads::WorkerPool* _workerPool;
 
-      /**
-       * \brief the worker pool
-       */
-      threads::WorkerPool* _parentWorkerPool;
+      win::Common* _directories;
+      win::Common* _files;
 
       const unsigned long _bufferLength;
 

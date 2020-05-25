@@ -16,17 +16,19 @@
 namespace myoddweb::directorywatcher
 {
   MultipleWinMonitor::MultipleWinMonitor(const long long id, const Request& request) :
-    Monitor(id, request),
-    _workerPool( nullptr )
+    MultipleWinMonitor( id, new threads::WorkerPool(), request )
+  {
+  }
+
+  MultipleWinMonitor::MultipleWinMonitor(const long long id, threads::WorkerPool* workerPool, const Request& request) :
+    Monitor(id, *workerPool, request),
+    _workerPool( workerPool )
   {
     // use a standar monitor for non recursive items.
     if (!request.Recursive())
     {
       throw std::invalid_argument("The multiple monitor must be recursive.");
     }
-
-    // create the worker pool
-    _workerPool = new threads::WorkerPool();
 
     // try and create the list of monitors.
     CreateMonitors(*_request );
@@ -36,6 +38,7 @@ namespace myoddweb::directorywatcher
   {
     Delete();
 
+    // dispose of the worker pool
     delete _workerPool;
     _workerPool = nullptr;
   }
@@ -56,13 +59,14 @@ namespace myoddweb::directorywatcher
   }
 
   /**
-   * \brief Start monitoring
+   * \brief Stop monitoring
    */
   void MultipleWinMonitor::OnStop()
   {
     // guard for multiple entry.
     MYODDWEB_LOCK(_lock);
 
+    // if we own the thread pool, stop it.
     if( _workerPool != nullptr )
     {
       _workerPool->Stop();
@@ -73,15 +77,6 @@ namespace myoddweb::directorywatcher
 
     // and the children
     Stop(_recursiveChildren);
-  }
-
-  /**
-       * \brief get the worker pool
-       */
-  [[nodiscard]]
-  threads::WorkerPool& MultipleWinMonitor::WorkerPool() const
-  {
-    return *_workerPool;
   }
 
   /**
@@ -168,8 +163,8 @@ namespace myoddweb::directorywatcher
     // so we have to add this path as a child.
     const auto id = GetNextId();
     const auto request = new Request(path, true, nullptr, 0);
-    auto child = new WinMonitor(id, ParentId(), *request, _workerPool);
-    _recursiveChildren.push_back(child);
+    auto child = new WinMonitor(id, ParentId(), WorkerPool(), *request );
+    _recursiveChildren.push_back(child); 
     child->Start();
 
     delete request;
@@ -500,14 +495,14 @@ namespace myoddweb::directorywatcher
     if (subPaths.empty() || TotalSize() > MYODDWEB_MAX_NUMBER_OF_SUBPATH)
     {
       // we will breach the depth
-      _recursiveChildren.push_back(new WinMonitor(id, ParentId(), parent, _workerPool));
+      _recursiveChildren.push_back(new WinMonitor(id, ParentId(), WorkerPool(), parent ));
       return;
     }
     
     // adding all the sub-paths will not breach the limit.
     // so we can add the parent, but non-recuresive.
     const auto request = new Request(parent.Path(), false, nullptr, 0);
-    _nonRecursiveParents.push_back(new WinMonitor(id, ParentId(), *request, _workerPool));
+    _nonRecursiveParents.push_back(new WinMonitor(id, ParentId(), WorkerPool(), *request ));
 
     // now try and add all the subpath
     for (const auto& path : subPaths)

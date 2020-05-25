@@ -10,8 +10,9 @@
 
 namespace myoddweb:: directorywatcher
 {
-  Monitor::Monitor(const __int64 id, const Request& request) :
+  Monitor::Monitor(const __int64 id, threads::WorkerPool& workerPool, const Request& request) :
     _id(id),
+    _workerPool( workerPool ),
     _eventCollector(nullptr),
     _callbackTimer(nullptr),
     _state(State::Stopped)
@@ -170,16 +171,6 @@ namespace myoddweb:: directorywatcher
 
       // done.
       return true;
-    }
-    catch (const std::exception& ex) {
-      _state = State::Stopped;
-      AddEventError(EventError::CannotStart);
-      return false;
-    }
-    catch (const std::string& ex) {
-      _state = State::Stopped;
-      AddEventError(EventError::CannotStart);
-      return false;
     }
     catch (...)
     {

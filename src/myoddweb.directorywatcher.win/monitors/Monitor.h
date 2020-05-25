@@ -17,7 +17,7 @@ namespace myoddweb
     class Monitor
     {
     public:
-      Monitor(__int64 id, const Request& request);
+      Monitor(__int64 id, threads::WorkerPool& workerPool, const Request& request);
       virtual ~Monitor();
 
       Monitor& operator=(Monitor&& other) = delete;
@@ -56,12 +56,20 @@ namespace myoddweb
        * \brief get the worker pool
        */
       [[nodiscard]]
-      virtual threads::WorkerPool& WorkerPool() const = 0;
+      threads::WorkerPool& WorkerPool() const
+      {
+        return _workerPool;
+      }
     protected:
       /**
        * \brief the unique monitor id.
        */
       const long long _id;
+
+      /**
+       * \brief the worker pool
+       */
+      threads::WorkerPool& _workerPool;
 
       /**
        * \brief the request we used to create the monitor.
