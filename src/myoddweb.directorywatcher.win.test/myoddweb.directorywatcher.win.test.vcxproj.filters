@@ -52,6 +52,18 @@
       <Filter>win\utils</Filter>
     </ClCompile>
     <ClCompile Include="MonitorsManagerEdge.cpp" />
+    <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Threads\CallbackWorker.cpp">
+      <Filter>win\utils\Threads</Filter>
+    </ClCompile>
+    <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Threads\Thread.cpp">
+      <Filter>win\utils\Threads</Filter>
+    </ClCompile>
+    <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Threads\Worker.cpp">
+      <Filter>win\utils\Threads</Filter>
+    </ClCompile>
+    <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Threads\WorkerPool.cpp">
+      <Filter>win\utils\Threads</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -119,6 +131,21 @@
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Wait.h">
       <Filter>win\utils</Filter>
     </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Threads\CallbackWorker.h">
+      <Filter>win\utils\Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Threads\Thread.h">
+      <Filter>win\utils\Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Threads\WaitResult.h">
+      <Filter>win\utils\Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Threads\Worker.h">
+      <Filter>win\utils\Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Threads\WorkerPool.h">
+      <Filter>win\utils\Threads</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="win">
@@ -138,6 +165,9 @@
     </Filter>
     <Filter Include="win\google\src">
       <UniqueIdentifier>{06de64de-ba19-41a8-90ab-44f92b6a9389}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="win\utils\Threads">
+      <UniqueIdentifier>{fde8e96b-ce07-4599-986c-c41340acd90f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -8,8 +8,9 @@ using myoddweb::directorywatcher::WinMonitor;
 using myoddweb::directorywatcher::Request;
 
 TEST(Data, BufferLenghValueIsSaved) {
-  const auto r = Request( L"c:\\", true, nullptr, 0);
-  const WinMonitor wm( 1, 2, r );
+  auto pool = myoddweb::directorywatcher::threads::WorkerPool();
+  const auto request = Request( L"c:\\", true, nullptr, 0);
+  const WinMonitor wm( 1, 2, pool, request );
   auto fnc = Data::DataCallbackFunction();
   const Data md(wm, 
     FILE_NOTIFY_CHANGE_FILE_NAME,
@@ -20,8 +21,9 @@ TEST(Data, BufferLenghValueIsSaved) {
 }
 
 TEST(Data, DirectoryHandleIsNullByDefault) {
-  const auto r = Request(L"c:\\", true, nullptr, 0);
-  const WinMonitor wm(1, 2, r);
+  auto pool = myoddweb::directorywatcher::threads::WorkerPool();
+  const auto request = Request(L"c:\\", true, nullptr, 0);
+  const WinMonitor wm(1, 2, pool, request );
   auto fnc = Data::DataCallbackFunction();
   const Data md(wm, FILE_NOTIFY_CHANGE_FILE_NAME, false, fnc, 100);
   ASSERT_EQ(nullptr, md.DirectoryHandle());
