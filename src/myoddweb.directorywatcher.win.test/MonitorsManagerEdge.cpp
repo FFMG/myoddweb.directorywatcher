@@ -38,6 +38,7 @@ TEST_P(RecursiveAndNonRecursive, TwoWatchersOnTheSameFolder) {
   for (auto i = 0; i < number; ++i)
   {
     auto _ = helper->AddFile();
+    Wait::Delay(1);
   }
 
   // wait a little

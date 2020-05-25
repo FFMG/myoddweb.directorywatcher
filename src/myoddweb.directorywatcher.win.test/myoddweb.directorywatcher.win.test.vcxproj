@@ -58,6 +58,7 @@
     <ClCompile Include="MonitorsManagerTestHelper.cpp" />
     <ClCompile Include="MonitorsManagerTestsDelete.cpp" />
     <ClCompile Include="RequestTest.cpp" />
+    <ClCompile Include="WorkerPoolTest.cpp" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\Base.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\Callbacks.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\Monitor.h" />

@@ -59,7 +59,7 @@ namespace myoddweb
         /**
          * \brief stop the running thread and wait
          */
-        WaitResult StopAndWait( long long timeout );
+        virtual WaitResult StopAndWait( long long timeout );
 
       private:
         /**

@@ -76,6 +76,11 @@ namespace myoddweb
          */
         void Stop() override;
 
+        /**
+         * \brief stop the running thread and wait
+         */
+        WaitResult StopAndWait(long long timeout) override;
+
       protected:
         /**
          * \brief called when the worker thread is about to start
@@ -118,6 +123,12 @@ namespace myoddweb
          * \param workers the workers we are wanting to stop
          */
         void ProcessWorkersWaitingToStop( std::vector<Worker*>& workers );
+
+        /**
+         * \brief process a worker that has been completed.
+         * \param worker the workers we are wanting to stop
+         */
+        void ProcessWorkerWaitingToStop( Worker& worker);
 
         /**
          * \brief stop a single worker and wait for it to complete

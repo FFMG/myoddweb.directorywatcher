@@ -69,7 +69,7 @@ namespace myoddweb::directorywatcher
     // if we own the thread pool, stop it.
     if( _workerPool != nullptr )
     {
-      _workerPool->Stop();
+      _workerPool->StopAndWait( MYODDWEB_WAITFOR_WORKER_COMPLETION );
     }
 
     // stop the parents

@@ -59,8 +59,8 @@ namespace myoddweb :: directorywatcher :: threads
   }
 
   /**
-   * \brief wait a little bit for all the workers to finish
-   *        if the worker does not exist we just return that it is complete.
+   * \brief wait for all the workers to complete.
+   *        but if they are not stopped then we will timeout
    * \param timeout the number of ms we want to wait for the workers to complete.
    * \return either timeout of complete if the threads completed.
    */
@@ -71,25 +71,37 @@ namespace myoddweb :: directorywatcher :: threads
       // start those that have yet to start
       ProcessWorkersWaitingToStart();
 
-      // assume we are done
-      auto status = WaitResult::complete;
+      // make a copy of all the running workers.
+      auto runningWorkers = CloneRunningWorkers();
+      std::vector<Worker*> remove;
 
-      // make a copy of our running workers those are the ones we want to stop.
-      // anything else that is added afterward is not part of what we are waiting for.
-      const auto runningWorkers = CloneRunningWorkers();
-      for (auto worker : runningWorkers)
-      {
-        // if one of them fails then we can say that there was a timeout.
-        if (WaitResult::complete != WaitFor(*worker, timeout))
+      // send an update for all of them at the same time
+      std::recursive_mutex lock;
+      std::for_each(
+        std::execution::par_unseq,
+        runningWorkers.begin(),
+        runningWorkers.end(),
+        [&](auto&& item)
         {
-          status = WaitResult::timeout;
+          Wait::SpinUntil([&]()
+            {
+              if (!item->Completed())
+              {
+                return false;
+              }
+              auto guard = Lock(lock);
+              remove.push_back(item);
+              return true;
+            }, timeout);
         }
-      }
+      );
 
-      // finally remove those workers from our running workers
-      RemoveWorkerFromRunningWorkers(runningWorkers);
+      // if we found anything to be removed we need to process them.
+      ProcessWorkersWaitingToStop(remove);
 
-      return status;
+      // if we removed them all then we completed them all
+      // otherwise it means that we didn't complete them all and we timed out.
+      return remove.size() == runningWorkers.size() ? WaitResult::complete : WaitResult::timeout;
     }
     catch( ... )
     {
@@ -108,10 +120,8 @@ namespace myoddweb :: directorywatcher :: threads
   {
     try
     {
-      // remove the worker that might be in out list
-      // eithet waiting to start and/or was not removed properly
-      // this will prevent it from starting.
-      RemoveWorkerFromWorkersWaitingToStart(worker);
+      // start those that have yet to start
+      ProcessWorkersWaitingToStart();
 
       // if the worker started between the prvious line and this line
       // it will now be in our list ... or it will not be here at all.
@@ -125,9 +135,16 @@ namespace myoddweb :: directorywatcher :: threads
         return WaitResult::complete;
       }
 
-      // stop it now and remove it from our list.
-      // return the status of the stop.
-      return StopAndRemoveWorker(worker, timeout);
+      return
+        Wait::SpinUntil([&]()
+          {
+            if (!worker.Completed())
+            {
+              return false;
+            }
+            ProcessWorkerWaitingToStop(worker);
+            return true;
+          }, timeout) ? WaitResult::complete : WaitResult::timeout;
     }
     catch( ... )
     {
@@ -198,6 +215,31 @@ namespace myoddweb :: directorywatcher :: threads
       {
         AddToRunningWorkers(*worker);
       }
+    }
+  }
+
+  /**
+   * \brief process a worker that has been completed.
+   * \param worker the workers we are wanting to stop
+   */
+  void WorkerPool::ProcessWorkerWaitingToStop(Worker& worker)
+  {
+    // this worker might already have been deleted /removed
+    // if it was then we cannot try and remove it again.
+    try
+    {
+      // those workers are no longer running
+      RemoveWorkerFromRunningWorkers(worker);
+
+      // call workend for all of them.
+      if (worker.Completed())
+      {
+        worker.WorkerEnd();
+      }
+    }
+    catch (...)
+    {
+      // @todo we need to log this somewhere.
     }
   }
 
@@ -376,7 +418,26 @@ namespace myoddweb :: directorywatcher :: threads
   }
   #pragma endregion
 
-  #pragma region Worker Abstract functions
+  #pragma region Worker Abstract/derived functions
+  /**
+   * \brief stop the running thread and wait
+   */
+  WaitResult WorkerPool::StopAndWait( const long long timeout)
+  {
+    try
+    {
+      // make sure that we have started what needed to be started
+      ProcessWorkersWaitingToStart();
+
+      // then we can stop everything
+      return Worker::StopAndWait(timeout);
+    }
+    catch ( ... )
+    {
+      return WaitResult::timeout;
+    }
+  }
+
   /**
    * \brief non blocking call to instruct the thread to stop.
    */
@@ -388,10 +449,6 @@ namespace myoddweb :: directorywatcher :: threads
       // clone the current running workers.
       const auto runningWorkers = CloneRunningWorkers();
 
-      // remove those workers
-      // because they are not working
-      RemoveWorkerFromRunningWorkers(runningWorkers);
-
       // stop all the workers.
       std::for_each(
         std::execution::par_unseq,
@@ -402,6 +459,10 @@ namespace myoddweb :: directorywatcher :: threads
           if (!item->Completed())
           {
             item->Stop();
+          }
+          else
+          {
+            ProcessWorkerWaitingToStop( *item );
           }
         }
       );
@@ -478,11 +539,19 @@ namespace myoddweb :: directorywatcher :: threads
       {
         // we will really stop if nothing else is running
         // and if we have nothing else waiting to run.
-        _mustStop = CloneRunningWorkers().empty() && CloneWorkersWaitingToStart().empty();
+        if( CloneRunningWorkers().empty() && CloneWorkersWaitingToStart().empty() )
+        {
+          return false;
+        }
       }
 
       // check if we must stop at all.
-      return !_mustStop;
+      // but we cannot stop if we still have workers that have not yet stopped.
+      if( _mustStop && CloneRunningWorkers().empty() )
+      {
+        return false;
+      }
+      return true;
     }
     catch (...)
     {
