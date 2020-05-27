@@ -19,11 +19,6 @@ namespace myoddweb
         Thread* _thread;
 
         /**
-         * \brief if we must stop our thread or not
-         */
-        bool _mustStop;
-
-        /**
          * \brief the lock for the running workers.
          */
         std::recursive_mutex _lockRunningWorkers;
@@ -67,6 +62,14 @@ namespace myoddweb
         WaitResult WaitFor(Worker& worker, long long timeout);
 
         /**
+         * \brief wait for an array of workers to complete.
+         * \param workers the workers we are waiting for.
+         * \param timeout how long we are waiting for.
+         * \return if any of them timed out.
+         */
+        WaitResult WaitFor( const std::vector<Worker*>& workers, long long timeout);
+
+        /**
          * \brief wait a little bit for all the workers to finish
          *        if the worker does not exist we just return that it is complete.
          * \param timeout the number of ms we want to wait for the workers to complete.
@@ -80,9 +83,32 @@ namespace myoddweb
         void Stop() override;
 
         /**
-         * \brief stop the running thread and wait
+         * \brief stop one of the worker
+         * \param worker the worker we are waiting for.
+         */
+        void Stop( Worker& worker );
+
+        /**
+         * \brief stop the running workers and wait
+         * \param timeout the number of ms we want to wait.
+         * \return the result of the wait
          */
         WaitResult StopAndWait(long long timeout) override;
+
+        /**
+         * \brief stop multiple workers and wait
+         * \param workers the workers we are waiting for.
+         * \param timeout the number of ms we want to wait for them.
+         * \return the result of the wait
+         */
+        WaitResult StopAndWait( const std::vector<Worker*>& workers, long long timeout);
+
+        /**
+         * \brief stop one of the worker and wait
+         * \param worker the worker we are waiting for.
+         * \param timeout the number of ms we want to wait.
+         */
+        WaitResult StopAndWait(Worker& worker, long long timeout);
 
       protected:
         /**
@@ -112,11 +138,6 @@ namespace myoddweb
         std::vector<Worker*> CloneRunningWorkers();
 
         /**
-         * \brief make a thread safe copy of the running workers.
-         */
-        std::vector<Worker*> CloneWorkersWaitingToStart();
-
-        /**
          * \brief start any workers that are pending.
          */
         void ProcessWorkersWaitingToStart();
@@ -128,32 +149,11 @@ namespace myoddweb
         void ProcessWorkersWaitingToStop( std::vector<Worker*>& workers );
 
         /**
-         * \brief process a worker that has been completed.
-         * \param worker the workers we are wanting to stop
-         */
-        void ProcessWorkerWaitingToStop( Worker& worker);
-
-        /**
-         * \brief stop a single worker and wait for it to complete
-         * \param worker the worker we are stopping
-         * \param timeout how long we want to wait for.
-         * \return either timeout or complete
-         */
-        WaitResult StopAndRemoveWorker( Worker& worker, long long timeout);
-
-        /**
-         * \brief remove a worker from our list of posible waiting workers.
-         *        we will obtain the lock to remove this item.
-         * \param worker the worker we are wanting to remove
-         */
-        void RemoveWorkerFromWorkersWaitingToStart( const Worker& worker );
-
-        /**
          * \brief remove a workers from our list of posible waiting workers.
          *        we will obtain the lock to remove those items.
-         * \param workers the worker we are wanting to remove
+         * \return the list of items removed.
          */
-        void RemoveWorkerFromWorkersWaitingToStart(const std::vector<Worker*>& workers);
+        std::vector<Worker*> RemoveWorkersFromWorkersWaitingToStart();
 
         /**
          * \brief remove a worker from our list of running workers.
@@ -166,8 +166,16 @@ namespace myoddweb
          * \brief remove workers from our list of running workers.
          *        we will obtain the lock to remove this items.
          * \param workers the workers we are wanting to remove
+         * \return the list of items removed.
          */
-        void RemoveWorkerFromRunningWorkers(const std::vector<Worker*>& workers);
+        std::vector<Worker*> RemoveWorkersFromRunningWorkers(const std::vector<Worker*>& workers);
+
+        /**
+         * \brief remove all the workers from our list of running workers.
+         *        we will obtain the lock to remove this items.
+         * \return the list of items removed.
+         */
+        std::vector<Worker*> RemoveWorkersFromRunningWorkers();
 
         /**
          * \brief remove a single worker from a collection of workers

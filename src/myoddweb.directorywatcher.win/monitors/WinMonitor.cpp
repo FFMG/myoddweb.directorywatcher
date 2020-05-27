@@ -117,8 +117,7 @@ namespace myoddweb
     void WinMonitor::OnStop()
     {
       // stop our worker and wait for it to complete.
-      WorkerPool().StopAndWait(*_directories, MYODDWEB_WAITFOR_WORKER_COMPLETION);
-      WorkerPool().StopAndWait(*_files, MYODDWEB_WAITFOR_WORKER_COMPLETION);
+      WorkerPool().StopAndWait({ _directories, _files }, MYODDWEB_WAITFOR_OPERATION_ABORTED_COMPLETION );
 
       delete _directories;
       _directories = nullptr;
