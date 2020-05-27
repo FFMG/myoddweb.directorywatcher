@@ -17,6 +17,18 @@ namespace myoddweb
     class Monitor
     {
     public:
+      /**
+       * The current monitor state
+       */
+      enum class State
+      {
+        unknown,
+        starting,
+        started,
+        stopping,
+        stopped
+      };
+
       Monitor(__int64 id, threads::WorkerPool& workerPool, const Request& request);
       virtual ~Monitor();
 
@@ -26,9 +38,13 @@ namespace myoddweb
       Monitor(const Monitor&) = delete;
       Monitor& operator=(const Monitor&) = delete;
 
+      [[nodiscard]]
       const long long& Id() const;
+      [[nodiscard]]
       const wchar_t* Path() const;
+      [[nodiscard]]
       bool Recursive() const;
+      [[nodiscard]]
       Collector& EventsCollector() const;
 
       /**
@@ -36,6 +52,7 @@ namespace myoddweb
        * \param maybe the path we are checking against.
        * \return if the given path is the same as our path.
        */
+      [[nodiscard]]
       bool IsPath(const std::wstring& maybe) const;
 
       /**
@@ -87,20 +104,10 @@ namespace myoddweb
       Timer* _callbackTimer;
 
       /**
-       * The current monitor state
-       */
-      enum class State
-      {
-        Starting,
-        Started,
-        Stopping,
-        Stopped
-      };
-
-      /**
        * \brief return if the current state is the same as the one we are after.
        * \param state the state we are checking against.
        */
+      [[nodiscard]]
       bool Is(State state) const;
 
       /**
@@ -122,7 +129,8 @@ namespace myoddweb
       virtual void OnStart() = 0;
       virtual void OnStop() = 0;
 
-      [[nodiscard]] virtual const long long& ParentId() const = 0;
+      [[nodiscard]]
+      virtual const long long& ParentId() const = 0;
 
     private:
       /**

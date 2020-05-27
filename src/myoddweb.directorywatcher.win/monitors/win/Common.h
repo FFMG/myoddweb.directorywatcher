@@ -30,11 +30,7 @@ namespace myoddweb
         Common& operator=(const Common&) = delete;
         Common& operator=(Common&&) = delete;
 
-      public:
         virtual ~Common();
-
-        virtual bool Start();
-        void Stop() override;
 
       protected:
         // invalid handle wait
@@ -48,31 +44,18 @@ namespace myoddweb
          * \brief Get the notification filter.
          * \return the notification filter
          */
+        [[nodiscard]]
         virtual unsigned long GetNotifyFilter() const = 0;
 
         void DataCallbackFunction(unsigned char* pBufferBk) const;
 
       private:
-        void StopAndResetThread();
-
         void ProcessNotificationFromBackup(const unsigned char* pBuffer) const;
 
         /**
          * \brief send a request for the data class to read for a single file change.
          */
         void Read() const;
-
-        /**
-         * \brief check if we have to stop the current work.
-         * \return bool if we have to stop or not.
-         */
-        bool MustStop() const;
-
-        /**
-         * \brief if this value is true, then we will force a stop.
-         *        this includes all the looks and so on.
-         */
-        bool _mustStop;
 
         /**
          * \brief all the data used by the monitor.
@@ -93,11 +76,6 @@ namespace myoddweb
          * \brief the callback function.
          */
         Data::DataCallbackFunction* _function;
-
-        /**
-         * \brief start the worker thread
-         */
-        void StartWorkerThread();
 
       protected:
         /**

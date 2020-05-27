@@ -20,6 +20,11 @@
   }
 #endif
 
+#ifdef _DEBUG
+  #include <iostream>
+  #define MYODDWEB_OUT( what ) std::cout << what << std::endl; 
+#endif
+
 namespace myoddweb
 {
   namespace directorywatcher

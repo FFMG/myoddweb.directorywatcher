@@ -17,7 +17,6 @@ namespace myoddweb ::directorywatcher :: win
     const unsigned long bufferLength
   ) :
       _invalidHandleWait(0),
-      _mustStop(false),
       _data(nullptr),
       _parent(parent),
       _bufferLength(bufferLength),
@@ -27,83 +26,12 @@ namespace myoddweb ::directorywatcher :: win
 
   Common::~Common()
   {
-    StopAndResetThread();
     Common::Stop();
   }
 
   /**
-   * \brief https://docs.microsoft.com/en-gb/windows/desktop/api/winbase/nf-winbase-readdirectorychangesexw
-   * \return success or not.
+   * \brief start all the workers.
    */
-  bool Common::Start()
-  {
-    MYODDWEB_PROFILE_FUNCTION();
-
-    // close everything
-    Stop();
-
-    // start the worker thread
-    // in turn it will start the reading.
-    StartWorkerThread();
-
-    return true;
-  }
-
-  /**
-   * \brief Close all the handles, delete pointers and reset all the values.
-   */
-  void Common::Stop()
-  {
-    // tell everybody to stop...
-    _mustStop = true;
-  }
-
-  /**
-   * \brief Stop the worker thread, wait for it to complete and then delete it.
-   */
-  void Common::StopAndResetThread()
-  {
-    MYODDWEB_PROFILE_FUNCTION();
-    try
-    {
-      // tell everybody to stop...
-      _mustStop = true;
-
-      // we can now looking for changes.
-      _parent.WorkerPool().WaitFor(*this, MYODDWEB_WAITFOR_WORKER_COMPLETION);
-    }
-    catch( ... )
-    {
-      // log here
-    }
-  }
-
-  /**
-   * \brief Start the worker thread so we can monitor for events.
-   */
-  void Common::StartWorkerThread()
-  {
-    MYODDWEB_PROFILE_FUNCTION();
-
-    // stop the old one... if any
-    StopAndResetThread();
-
-    // we must no longer stop
-    _mustStop = false;
-
-    // we can now looking for changes.
-    _parent.WorkerPool().Add( *this );
-  }
-
-  /**
-   * \brief check if we have to stop the current work.
-   * \return bool if we have to stop or not.
-   */
-  bool Common::MustStop() const
-  {
-    return _mustStop;
-  }
-
   bool Common::OnWorkerStart()
   {
     // create the function
@@ -139,7 +67,7 @@ namespace myoddweb ::directorywatcher :: win
    * \param fElapsedTimeMilliseconds the amount of time since the last time we made this call.
    * \return true if we want to continue or false if we want to end the thread
    */
-  bool Common::OnWorkerUpdate(float fElapsedTimeMilliseconds)
+  bool Common::OnWorkerUpdate( const float fElapsedTimeMilliseconds)
   {
     if (MustStop())
     {
@@ -154,6 +82,11 @@ namespace myoddweb ::directorywatcher :: win
       {
         // reset the wait time.
         _invalidHandleWait = 0;
+
+        if (MustStop())
+        {
+          return false;
+        }
 
         // try to re-open
         if (_data->TryReopen())
@@ -171,6 +104,9 @@ namespace myoddweb ::directorywatcher :: win
     return !MustStop();
   }
 
+  /**
+   * \brief complete all the data collection
+   */
   void Common::OnWorkerEnd()
   {
     if (nullptr != _data)

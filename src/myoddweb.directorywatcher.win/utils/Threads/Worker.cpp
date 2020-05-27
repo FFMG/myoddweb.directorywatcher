@@ -10,12 +10,15 @@ namespace myoddweb::directorywatcher::threads
 {
   Worker::Worker() :
     _started(false),
-    _completed(false)
+    _completed(false),
+    _muststop( false )
   {
     // set he current time point
     _timePoint1 = std::chrono::system_clock::now();
     _timePoint2 = _timePoint1;
   }
+
+  Worker::~Worker() = default;
 
   /**
    * \brief if the thread has completed or not.
@@ -28,9 +31,9 @@ namespace myoddweb::directorywatcher::threads
   }
 
   /**
- * \brief If the worker has started or not.
- * \return if the worker is still running.
- */
+   * \brief If the worker has started or not.
+   * \return if the worker is still running.
+   */
   [[nodiscard]]
   bool Worker::Started() const
   {
@@ -38,9 +41,27 @@ namespace myoddweb::directorywatcher::threads
   }
 
   /**
+    * \brief If the worker has been told to stop or not.
+    * \return if the worker must stop.
+    */
+  [[nodiscard]]
+  bool Worker::MustStop() const
+  {
+    return _muststop;
+  }
+
+  /**
+   * \brief non blocking call to instruct the thread to stop.
+   */
+  void Worker::Stop()
+  {
+    _muststop = true;
+  }
+
+  /**
    * \brief Function called to run the thread.
    */
-  void Worker::Launch()
+  void Worker::Start()
   {
     // start the thread, if it returns false
     // then we will get out.
@@ -79,7 +100,6 @@ namespace myoddweb::directorywatcher::threads
       // wait for it
       if (false == Wait::SpinUntil([&]
         {
-          MYODDWEB_ALERTABLE_SLEEP;
           return Completed();
         },
         timeout))
@@ -98,7 +118,7 @@ namespace myoddweb::directorywatcher::threads
 
   /**
    * \brief called when the thread is starting
-       *        this should not block anything
+   *        this should not block anything
    */
   bool Worker::WorkerStart()
   {
@@ -152,6 +172,12 @@ namespace myoddweb::directorywatcher::threads
           const std::chrono::duration<float, std::milli> elapsedTime = _timePoint2 - _timePoint1;
           _timePoint1 = _timePoint2;
           const auto fElapsedTimeMilliseconds = elapsedTime.count();
+
+          // were we told to stop?
+          if( _muststop )
+          {
+            break;
+          }
 
           // call the derived class.
           if (!OnWorkerUpdate(fElapsedTimeMilliseconds))

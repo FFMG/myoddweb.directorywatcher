@@ -5,6 +5,7 @@
 #include <string>
 
 #include "../utils/Instrumentor.h"
+#include "Base.h"
 #include "win/Directories.h"
 #include "win/Files.h"
 
@@ -98,13 +99,16 @@ namespace myoddweb
     {
       MYODDWEB_PROFILE_FUNCTION();
 
-      // start monitoring the directories
+      // create the directories monitor
       _directories = new win::Directories(*this, _bufferLength);
-      _directories->Start();
 
-      // and then the files.
+      // and then the files monitor.
       _files = new win::Files(*this, _bufferLength);
-      _files->Start();
+
+      // add them all to the worker pool.
+      // so they can start when ready.
+      WorkerPool().Add(*_directories);
+      WorkerPool().Add(*_files);
     }
 
     /**
@@ -112,24 +116,14 @@ namespace myoddweb
      */
     void WinMonitor::OnStop()
     {
-      // if we own the thread pool, stop it.
-      if (_workerPool != nullptr)
-      {
-        _workerPool->Stop();
-      }
+      // stop our worker and wait for it to complete.
+      WorkerPool().StopAndWait(*_directories, MYODDWEB_WAITFOR_WORKER_COMPLETION);
+      WorkerPool().StopAndWait(*_files, MYODDWEB_WAITFOR_WORKER_COMPLETION);
 
-      if (_directories != nullptr)
-      {
-        _directories->Stop();
-        delete _directories;
-      }
+      delete _directories;
       _directories = nullptr;
-
-      if (_files != nullptr)
-      {
-        _files->Stop();
-        delete _files;
-      }
+            
+      delete _files;
       _files = nullptr;
     }
 

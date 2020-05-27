@@ -46,7 +46,13 @@ namespace myoddweb::directorywatcher::threads
    */
   Thread::~Thread()
   {
+    // wait for the thread to complete.
     Wait();
+
+    // we do not clear the parent here
+    // as we did not create it.
+
+    // clean up our worker if we used it.
     delete _localWorker;
     _localWorker = nullptr;
   }
@@ -58,9 +64,9 @@ namespace myoddweb::directorywatcher::threads
   void Thread::CreateWorker(Worker* worker)
   {
 #ifdef MYODDWEB_USE_FUTURE
-    _future = new std::future<void>(std::async(std::launch::async, &Worker::Launch, worker));
+    _future = new std::future<void>(std::async(std::launch::async, &Worker::Start, worker));
 #else
-    _thread = new std::thread(&Worker::Launch, worker);
+    _thread = new std::thread(&Worker::Start, worker);
 #endif
 
     // save the parent worker.
@@ -74,26 +80,40 @@ namespace myoddweb::directorywatcher::threads
    */
   WaitResult Thread::WaitFor(const long long timeout)
   {
-    if (_parentWorker == nullptr || _parentWorker->Completed())
+    // wait for the worker to complete.
+    const auto result = WaitFor(_parentWorker, timeout);
+
+    // if we are complete then we can complete the thread.
+    if( result == WaitResult::complete)
+    {
+      Wait();
+    }
+    return result;
+  }
+
+  /**
+   * \brief wait a little bit for the thread to finish
+   * \param worker the worker we are waiting for.
+   * \param timeout the number of ms we want to wait for the thread to complete.
+   * \return either timeout of complete if the thread completed.
+   */
+  WaitResult Thread::WaitFor(Worker* worker, const long long timeout)
+  {
+    if (worker == nullptr || worker->Completed())
     {
       return WaitResult::complete;
     }
 
-    auto status = WaitResult::complete;
     if (!Wait::SpinUntil([&]
       {
         MYODDWEB_ALERTABLE_SLEEP;
-        return _parentWorker == nullptr || _parentWorker->Completed();
+        return worker->Completed();
       },
       timeout))
     {
-      status = WaitResult::timeout;
+      return WaitResult::timeout;
     }
-
-    // then wait for the thread itself to complete
-    // when the constructor is called we will clean it up.
-
-    return status;
+    return WaitResult::complete;
   }
 
   /**

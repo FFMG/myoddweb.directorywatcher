@@ -8,9 +8,8 @@ namespace myoddweb
 {
   namespace directorywatcher
   {
-    class Timer : public threads::Worker
+    class Timer final : public threads::Worker
     {
-      bool _mustStop;
       threads::TCallback _function;
       const long long _delayTimeMilliseconds;
       float _elapsedTimeMilliseconds;
@@ -18,7 +17,6 @@ namespace myoddweb
     public:
       explicit Timer(threads::TCallback function, const long long delayTimeMilliseconds)
         :
-        _mustStop( false ),
         _function(std::move(function)),
         _delayTimeMilliseconds( delayTimeMilliseconds),
         _elapsedTimeMilliseconds(0)
@@ -30,11 +28,6 @@ namespace myoddweb
         Timer::Stop();
       }
 
-      void Stop() override
-      {
-        _mustStop = true;
-      }
-
       /**
        * \brief Give the worker a chance to do something in the loop
        *        Workers can do _all_ the work at once and simply return false
@@ -44,7 +37,7 @@ namespace myoddweb
        */
       bool OnWorkerUpdate( const float fElapsedTimeMilliseconds) override
       {
-        if( _mustStop )
+        if( MustStop() )
         {
           return false;
         }
@@ -53,7 +46,7 @@ namespace myoddweb
         _elapsedTimeMilliseconds += fElapsedTimeMilliseconds;
         if( _elapsedTimeMilliseconds < _delayTimeMilliseconds)
         {
-          return true;
+          return !MustStop();
         }
 
         //  restart the timer.
@@ -62,7 +55,7 @@ namespace myoddweb
         // run the function
         _function();
 
-        return !_mustStop;
+        return !MustStop();
       }
     };
   }

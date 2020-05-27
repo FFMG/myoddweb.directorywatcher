@@ -11,12 +11,10 @@ namespace myoddweb
   {
     namespace win
     {
-      class Directories : public Common
+      class Directories final : public Common
       {
       public:
         Directories(Monitor& parent, unsigned long bufferLength);
-
-      public:
         virtual ~Directories() = default;
 
       protected:

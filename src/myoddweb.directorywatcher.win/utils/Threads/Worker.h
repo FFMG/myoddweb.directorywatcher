@@ -19,6 +19,7 @@ namespace myoddweb
       {
         bool _started;
         bool _completed;
+        bool _muststop;
         std::vector<std::exception> _exceptions;
 
         /**
@@ -33,7 +34,7 @@ namespace myoddweb
         Worker& operator=(const Worker&) = delete;
 
         explicit Worker();
-        virtual ~Worker() = default;
+        virtual ~Worker();
 
         /**
          * \brief if the thread has completed or not.
@@ -50,14 +51,21 @@ namespace myoddweb
         bool Started() const;
 
         /**
+         * \brief If the worker has been told to stop or not.
+         * \return if the worker must stop.
+         */
+        [[nodiscard]]
+        bool MustStop() const;
+
+        /**
          * \brief Function called to run the thread.
          */
-        void Launch();
+        void Start();
 
         /**
          * \brief non blocking call to instruct the thread to stop.
          */
-        virtual void Stop() = 0;
+        virtual void Stop();
 
         /**
          * \brief stop the running thread and wait
@@ -96,6 +104,10 @@ namespace myoddweb
          * \return true if we want to continue or false if we want to end the thread
          */
         virtual bool OnWorkerUpdate(float fElapsedTimeMilliseconds) = 0;
+
+        /**
+         * \brief called when nthe thread has completed
+         */
         virtual void OnWorkerEnd() {};
       };
     }

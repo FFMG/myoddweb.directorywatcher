@@ -18,15 +18,15 @@ namespace myoddweb:: directorywatcher:: win
     const unsigned long bufferLength
     )
     :
-    _recursive( recursive ),
     _notifyFilter(notifyFilter),
+    _recursive(recursive),
     _dataCallbackFunction( dataCallbackFunction ),
     _bufferLength(bufferLength),
     _hDirectory(nullptr),
     _buffer(nullptr),
-    _monitor(monitor),
     _operationAborted( false ),
-    _state( State::Unknown )
+    _state(Monitor::State::unknown ),
+    _monitor(monitor)
   {
     // prepapre the buffer that will receive our data
     // create the buffer if needed.
@@ -71,7 +71,7 @@ namespace myoddweb:: directorywatcher:: win
 
     // reflect that we are now stopping.
     // from now on we should not be processing any messages.
-    _state = State::Stopping;
+    _state = Monitor::State::stopping;
 
     try
     {
@@ -90,7 +90,7 @@ namespace myoddweb:: directorywatcher:: win
     }
 
     // we are now stopped.
-    _state = State::Stopped;
+    _state = Monitor::State::stopped;
   }
 
   /**
@@ -127,7 +127,9 @@ namespace myoddweb:: directorywatcher:: win
       // if `CancelIoEx` returns zero then it means that either the handle
       // and/or the OVERLAPPED pointer could not be found.
       // \see https://docs.microsoft.com/en-us/windows/win32/fileio/cancelioex-func
-      if (0 != ::CancelIoEx(_hDirectory, Overlapped()))
+
+      const auto cancel = ::CancelIoEx(_hDirectory, Overlapped());
+      if (0 != cancel)
       {
         // then wait a little for the operation to be cancelled.
         Wait::SpinUntil([&]
@@ -138,8 +140,7 @@ namespace myoddweb:: directorywatcher:: win
             // messages out of sequence.
             MYODDWEB_ALERTABLE_SLEEP;
             return _operationAborted == true;
-          }, MYODDWEB_WAITFOR_IO_COMPLETION
-        );
+          }, MYODDWEB_WAITFOR_IO_COMPLETION);
       }
       ::CloseHandle(_hDirectory);
     }
@@ -304,7 +305,7 @@ namespace myoddweb:: directorywatcher:: win
     }
 
     // are we started?
-    if (_state == State::Started)
+    if (_state == Monitor::State::started)
     {
       // we arelady started
       return true;
@@ -341,7 +342,7 @@ namespace myoddweb:: directorywatcher:: win
     }
 
     // we are now open
-    _state = State::Started;
+    _state = Monitor::State::started;
 
     // check if it all worked.
     return true;

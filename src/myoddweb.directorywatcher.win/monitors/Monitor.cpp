@@ -15,7 +15,7 @@ namespace myoddweb:: directorywatcher
     _workerPool( workerPool ),
     _eventCollector(nullptr),
     _callbackTimer(nullptr),
-    _state(State::Stopped)
+    _state(State::stopped)
   {
     _eventCollector = new Collector();
     _request = new Request(request);
@@ -111,7 +111,7 @@ namespace myoddweb:: directorywatcher
   {
     MYODDWEB_PROFILE_FUNCTION();
 
-    if (!Is(State::Started))
+    if (!Is(State::started))
     {
       return 0;
     }
@@ -132,6 +132,7 @@ namespace myoddweb:: directorywatcher
    */
   bool Monitor::Is(const State state) const
   {
+    MYODDWEB_PROFILE_FUNCTION();
     return _state == state;
   }
 
@@ -141,7 +142,7 @@ namespace myoddweb:: directorywatcher
    */
   bool Monitor::Start()
   {
-    if (Is(State::Started))
+    if (Is(State::started))
     {
       return true;
     }
@@ -150,13 +151,13 @@ namespace myoddweb:: directorywatcher
     MYODDWEB_LOCK(_lock);
 
     // are we already started?
-    if( Is(State::Started))
+    if( Is(State::started))
     {
       return true;
     }
 
     // we are starting
-    _state = State::Starting;
+    _state = State::starting;
 
     try
     {
@@ -167,14 +168,14 @@ namespace myoddweb:: directorywatcher
       StartCallBack();
 
       // all good
-      _state = State::Started;
+      _state = State::started;
 
       // done.
       return true;
     }
     catch (...)
     {
-      _state = State::Stopped;
+      _state = State::stopped;
       AddEventError(EventError::CannotStart);
       return false;
     }
@@ -196,8 +197,7 @@ namespace myoddweb:: directorywatcher
       return;
     }
 
-    _callbackTimer->Stop();
-    WorkerPool().WaitFor( *_callbackTimer, MYODDWEB_WAITFOR_WORKER_COMPLETION);
+    _callbackTimer->StopAndWait( MYODDWEB_WAITFOR_WORKER_COMPLETION );
     delete _callbackTimer;
     _callbackTimer = nullptr;
   }
@@ -235,11 +235,17 @@ namespace myoddweb:: directorywatcher
   {
     MYODDWEB_PROFILE_FUNCTION();
 
+    // check that we are ready
+    if (!Is(State::started))
+    {
+      return;
+    }
+
     // guard for multiple entry.
     MYODDWEB_LOCK(_lock);
 
     // check that we are ready
-    if (!Is(State::Started))
+    if (!Is(State::started))
     {
       return;
     }
@@ -289,7 +295,7 @@ namespace myoddweb:: directorywatcher
   {
     MYODDWEB_PROFILE_FUNCTION();
 
-    if (Is(State::Stopped))
+    if (Is(State::stopped))
     {
       return;
     }
@@ -298,13 +304,13 @@ namespace myoddweb:: directorywatcher
     MYODDWEB_LOCK(_lock);
 
     // are we stopped already?
-    if( Is(State::Stopped))
+    if( Is(State::stopped))
     {
       return;
     }
 
     // we are stopping
-    _state = State::Stopping;
+    _state = State::stopping;
 
     try
     {
@@ -315,11 +321,11 @@ namespace myoddweb:: directorywatcher
       OnStop();
 
       // we are now done
-      _state = State::Stopped;
+      _state = State::stopped;
     }
     catch(... )
     {
-      _state = State::Stopped;
+      _state = State::stopped;
       AddEventError(EventError::CannotStop);
     }
   }

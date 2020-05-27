@@ -11,6 +11,8 @@
 #ifdef _DEBUG
 #include <cassert>
 #endif
+#include <execution>
+
 #include "../utils/Instrumentor.h"
 
 namespace myoddweb::directorywatcher
@@ -66,17 +68,18 @@ namespace myoddweb::directorywatcher
     // guard for multiple entry.
     MYODDWEB_LOCK(_lock);
 
-    // if we own the thread pool, stop it.
-    if( _workerPool != nullptr )
-    {
-      _workerPool->StopAndWait( MYODDWEB_WAITFOR_WORKER_COMPLETION );
-    }
-
     // stop the parents
     Stop(_nonRecursiveParents);
 
     // and the children
     Stop(_recursiveChildren);
+
+    // if we own the thread pool, stop it.
+    if (_workerPool != nullptr)
+    {
+      _workerPool->StopAndWait(MYODDWEB_WAITFOR_WORKER_COMPLETION);
+    }
+
   }
 
   /**
@@ -95,26 +98,20 @@ namespace myoddweb::directorywatcher
    */
   void MultipleWinMonitor::OnGetEvents(std::vector<Event*>& events)
   {
-    // guard for multiple (re)entry.
-    MYODDWEB_LOCK(_lock);
-
     // now that we have the lock ... check if we have stopped.
-    if (!Is(State::Started))
+    if (!Is(State::started))
     {
       return;
     }
+
+    // guard for multiple (re)entry.
+    MYODDWEB_LOCK(_lock);
 
     // get the children events
     const auto childrentEvents = GetAndProcessChildEventsInLock();
 
     // then look for the parent events.
     const auto parentEvents = GetAndProcessParentEventsInLock();
-
-    // the events above us threads... so we need to check again
-    if (!Is(State::Started))
-    {
-      return;
-    }
 
     //  add the parents and the children
     events.insert(events.end(), childrentEvents.begin(), childrentEvents.end());
@@ -233,7 +230,7 @@ namespace myoddweb::directorywatcher
       try
       {
         // if we are stopped or stopping, there is nothing for us to do.
-        if (Is(State::Stopped) || Is(State::Stopping))
+        if (Is(State::stopped) || Is(State::stopping))
         {
           return events;
         }
@@ -325,7 +322,7 @@ namespace myoddweb::directorywatcher
     try
     {
       // if we are stopped or stopping, there is nothing for us to do.
-      if (Is(State::Stopped) || Is(State::Stopping))
+      if (Is(State::stopped) || Is(State::stopping))
       {
         return {};
       }
@@ -362,32 +359,14 @@ namespace myoddweb::directorywatcher
       return;
     }
 
-    auto ts = std::vector<threads::Thread*>();
-    try
-    {
-      for (auto it = container.begin(); it != container.end(); ++it)
+    std::for_each(
+      std::execution::par_unseq,
+      container.begin(),
+      container.end(),
+      [&](auto&& item) 
       {
-        try
-        {
-          const auto callback = std::bind( &Monitor::Stop, *it );
-          ts.push_back( new threads::Thread( callback ));
-        }
-        catch (...)
-        {
-          // @todo we need to log this somewhere.
-        }
-      }
-    
-      for( auto it = ts.begin(); it != ts.end(); ++it )
-      {
-        (*it)->WaitFor(MYODDWEB_WAITFOR_WORKER_COMPLETION);
-        delete (*it);
-      }
-    }
-    catch (...)
-    {
-      // @todo we need to log this somewhere.
-    }
+        item->Stop();
+      });
   }
 
   /**
@@ -475,7 +454,7 @@ namespace myoddweb::directorywatcher
   void MultipleWinMonitor::CreateMonitors(const Request& parent )
   {
     // if we are stopping, then we cannot go further.
-    if (Is(State::Stopping))
+    if (Is(State::stopping))
     {
       return;
     }

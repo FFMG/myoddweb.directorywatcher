@@ -12,12 +12,10 @@ namespace myoddweb
   {
     namespace win
     {
-      class Files : public Common
+      class Files final : public Common
       {
       public:
         Files( Monitor& parent, unsigned long bufferLength);
-
-      public:
         virtual ~Files() = default;
 
       private:

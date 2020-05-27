@@ -15,6 +15,7 @@ namespace myoddweb
         TCallback _function;
       public:
         explicit CallbackWorker(TCallback function);
+        virtual ~CallbackWorker() = default;
 
       protected:
         bool OnWorkerUpdate(float fElapsedTimeMilliseconds) override;

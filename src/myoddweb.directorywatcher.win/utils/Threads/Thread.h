@@ -16,9 +16,20 @@ namespace myoddweb
     {
       typedef std::function<void()> TCallback;
 
+      /**
+       * \brief worker thread that either uses std::thread or std::future depending on settings.
+       *        if uses a worker so we can manage when a game is started/stopped.
+       */
       class Thread final
       {
+        /**
+         * \brief the worker we created when the called passed us only a function.
+         */
         Worker* _localWorker;
+
+        /**
+         * \brief the worker that the user passed us.
+         */
         Worker* _parentWorker;
 
 #ifdef MYODDWEB_USE_FUTURE
@@ -51,6 +62,11 @@ namespace myoddweb
          */
         explicit Thread(Worker& worker);
         ~Thread();
+
+        /**
+         * \brief wait for the thread to complete.
+         *        this will never expire.
+         */
         void Wait();
 
         /**
@@ -59,6 +75,15 @@ namespace myoddweb
          * \return either timeout of complete if the thread completed.
          */
         WaitResult WaitFor(long long timeout);
+
+      private:
+        /**
+         * \brief wait a little bit for the thread to finish
+         * \param worker the worker we are waiting for.
+         * \param timeout the number of ms we want to wait for the thread to complete.
+         * \return either timeout of complete if the thread completed.
+         */
+        static WaitResult WaitFor(Worker* worker, long long timeout);
       };
     }
   }

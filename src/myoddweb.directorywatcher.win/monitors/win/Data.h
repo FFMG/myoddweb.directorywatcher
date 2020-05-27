@@ -11,16 +11,8 @@ namespace myoddweb
   {
     namespace win
     {
-      class Data
+      class Data final
       {
-        enum class State
-        {
-          Unknown,
-          Stopped,
-          Stopping,
-          Started
-        };
-
       public:
         /**
          * \brief callback function when we get a notification.
@@ -101,9 +93,10 @@ namespace myoddweb
          * \brief return true if we are in the process of stopping
          *        or if we have stopped already.
          */
+        [[nodiscard]]
         bool IsStoppedOrStopping() const 
         {
-          return _state == State::Stopped || _state == State::Stopping;
+          return _state == Monitor::State::stopped || _state == Monitor::State::stopping;
         }
 
         /**
@@ -151,7 +144,7 @@ namespace myoddweb
         /**
          * \brief our current state
          */
-        Data::State _state;
+        Monitor::State _state;
 
         /**
          * \brief flag to indicate that we received the operation aborted message

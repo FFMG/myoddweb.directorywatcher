@@ -75,7 +75,12 @@ namespace myoddweb
       };
     }
   }
-  #define MYODDWEB_LOCK(mutex) LockDebug g##__LINE__(mutex, __FUNCSIG__ );
+  #define MYODDWEB_LOCK(mutex) \
+std::string o = "Waiting Lock: ";\
+  o += __FUNCSIG__;\
+  o += "\n";\
+  OutputDebugStringA(o.c_str());\
+  LockDebug g##__LINE__(mutex, __FUNCSIG__ );
 #else
   #define MYODDWEB_LOCK(mutex) Lock g##__LINE__(mutex);
 #endif 
