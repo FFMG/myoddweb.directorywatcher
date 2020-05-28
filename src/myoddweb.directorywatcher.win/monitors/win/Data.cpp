@@ -132,15 +132,23 @@ namespace myoddweb:: directorywatcher:: win
       if (0 != cancel)
       {
         // then wait a little for the operation to be cancelled.
-        Wait::SpinUntil([&]
+        for (;;)
+        {
+          if (!Wait::SpinUntil([&]
+            {
+              // wait a little to ensure that the aborted message is given.
+              // we will return as soon as the message is recived.
+              // if we do not wait for the abort message, we might get other
+              // messages out of sequence.
+              MYODDWEB_YIELD();
+              return _operationAborted == true;
+            }, MYODDWEB_WAITFOR_OPERATION_ABORTED_COMPLETION))
           {
-            // wait a little to ensure that the aborted message is given.
-            // we will return as soon as the message is recived.
-            // if we do not wait for the abort message, we might get other
-            // messages out of sequence.
-            MYODDWEB_ALERTABLE_SLEEP;
-            return _operationAborted == true;
-          }, MYODDWEB_WAITFOR_IO_COMPLETION);
+            MYODDWEB_OUT("Timeout waiting operation aborted message!\n");
+            continue;
+          }
+          break;
+        }
       }
       ::CloseHandle(_hDirectory);
     }
@@ -376,7 +384,7 @@ namespace myoddweb:: directorywatcher:: win
    * \return success or not
    */
   bool Data::Start()
-  {        
+  {
     // no need for a double lock.
     MYODDWEB_LOCK(_lock);
     if (IsStoppedOrStopping())
@@ -391,7 +399,6 @@ namespace myoddweb:: directorywatcher:: win
     {
       return false;
     }
-
     // we are done here.
     return true;
   }

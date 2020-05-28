@@ -106,7 +106,7 @@ namespace myoddweb::directorywatcher::threads
 
     if (!Wait::SpinUntil([&]
       {
-        MYODDWEB_ALERTABLE_SLEEP;
+        MYODDWEB_YIELD();
         return worker->Completed();
       },
       timeout))

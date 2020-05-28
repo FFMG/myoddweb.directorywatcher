@@ -2,27 +2,19 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #pragma once
-#if defined(_WIN32)
-  #include <Windows.h>
 
-  // sleep a bit, we must be alertable so we can pass/receive messages.
-  #define MYODDWEB_ALERTABLE_SLEEP                  \
-  {                                                 \
-    ::SleepEx(MYODDWEB_ALERTABLE_SLEEP_TIME, true); \
-  }
-#else
-  #include <chrono>
-  #include <thread>
+// create a variable
+#define MYODDWEB_VAR(z) line##z##var
+#define MYODDWEB_DEC(x) MYODDWEB_VAR(x)
 
-  #define MYODDWEB_ALERTABLE_SLEEP                                                          \
-  {                                                                                         \
-    std::this_thread::sleep_for(std::chrono::milliseconds(MYODDWEB_ALERTABLE_SLEEP_TIME));  \
-  }
-#endif
+#define MYODDWEB_YIELD()      \
+{                             \
+  Wait::YieldOnce();          \
+}
 
 #ifdef _DEBUG
   #include <iostream>
-  #define MYODDWEB_OUT( what ) std::cout << what << std::endl; 
+  #define MYODDWEB_OUT( what ) std::cout << (what); 
 #endif
 
 namespace myoddweb
@@ -40,12 +32,7 @@ namespace myoddweb
      *        because the thread pool managed more than one thread this number can be lower
      */
     constexpr auto MYODDWEB_MIN_THREADPOOL_SLEEP = 5;
-
-    /**
-     * \brief How long we want to 'sleep' waiting for an IO alert
-     */
-    constexpr auto MYODDWEB_ALERTABLE_SLEEP_TIME = 1;
-
+    
     /** 
      * \brief similar to the call above, but this puts our thread to sleep
      *        completely, giving other threads a change to process data.
@@ -71,6 +58,11 @@ namespace myoddweb
      *        we stop the watcher.
      */
     constexpr auto MYODDWEB_WAITFOR_IO_COMPLETION = 1000;
+
+    /**
+     * \brief how long was want to wait for the aborted windows to complete.
+     */
+    constexpr auto MYODDWEB_WAITFOR_OPERATION_ABORTED_COMPLETION = 15000;
 
     /**
      * \brief how long we want to wait for the various threads to complete.
