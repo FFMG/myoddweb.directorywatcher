@@ -49,7 +49,14 @@ namespace myoddweb
         return SpinUntilThreadComplete(thread, milliseconds);
       }
 
+      /**
+       * \brief yield 
+       */
+      static void YieldOnce();
+
     private:
+      static std::atomic<int> _yieldCounter;
+
       /**
        * \brief the conditional lock
        */
