@@ -87,6 +87,7 @@ namespace myoddweb::directorywatcher::threads
   {
     try
     {
+
       // then wait for it to complete.
       if (!Started() || Completed())
       {
@@ -131,7 +132,13 @@ namespace myoddweb::directorywatcher::threads
     _started = true;
     try
     {
-      return OnWorkerStart();
+      if (!OnWorkerStart())
+      {
+        // because the worker failed to start this is now 'completed'
+        _completed = true;
+        return false;
+      }
+      return true;
     }
     catch (const std::exception& e)
     {
@@ -187,7 +194,7 @@ namespace myoddweb::directorywatcher::threads
           }
 
           // sleep a bit, we must be alertable so we can pass/receive messages.
-          MYODDWEB_ALERTABLE_SLEEP;
+          MYODDWEB_YIELD();
 
           // we now need to slow the thread down a little more
           if (count % concurentThreadsSupported != 0)
