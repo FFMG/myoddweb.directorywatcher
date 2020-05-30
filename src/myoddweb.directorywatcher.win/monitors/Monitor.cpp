@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 #include <Windows.h>
 #include "Monitor.h"
-#include "../utils/Lock.h"
 #include "../utils/Io.h"
 #include "../utils/Instrumentor.h"
 #include "Base.h"
@@ -14,8 +13,7 @@ namespace myoddweb:: directorywatcher
     _id(id),
     _workerPool( workerPool ),
     _eventCollector(nullptr),
-    _callbackTimer(nullptr),
-    _state(State::stopped)
+    _callbackTimer(nullptr)
   {
     _eventCollector = new Collector();
     _request = new Request(request);
@@ -127,69 +125,85 @@ namespace myoddweb:: directorywatcher
   }
 
   /**
-   * \brief return if the current state is the same as the one we are after.
-   * \param state the state we are checking against.
-   */
-  bool Monitor::Is(const State state) const
-  {
-    MYODDWEB_PROFILE_FUNCTION();
-    return _state == state;
-  }
-
-  /**
    * \brief Start the monitoring, if needed.
    * \return success or not.
    */
-  bool Monitor::Start()
+  bool Monitor::OnWorkerStart()
   {
-    if (Is(State::started))
-    {
-      return true;
-    }
-
-    // guard for multiple entry.
-    MYODDWEB_LOCK(_lock);
-
     // are we already started?
     if( Is(State::started))
     {
       return true;
     }
 
-    // we are starting
-    _state = State::starting;
-
     try
     {
-      // derived class to start
-      OnStart();
-
       // start the callback after we started everything
       StartCallBack();
-
-      // all good
-      _state = State::started;
 
       // done.
       return true;
     }
     catch (...)
     {
-      _state = State::stopped;
       AddEventError(EventError::CannotStart);
       return false;
     }
   }
 
   /**
-   * \brief Stop the callback timer to we can stop publishing.
+   * \brief Give the worker a chance to do something in the loop
+   *        Workers can do _all_ the work at once and simply return false
+   *        or if they have a tight look they can return true until they need to come out.
+   * \param fElapsedTimeMilliseconds the amount of time since the last time we made this call.
+   * \return true if we want to continue or false if we want to end the thread
    */
-  void Monitor::StopCallBack()
+  bool Monitor::OnWorkerUpdate( const float fElapsedTimeMilliseconds)
+  {
+    return !MustStop();
+  }
+
+  /**
+   * \brief stop the worker
+   */
+  void Monitor::OnStop()
+  {
+    // we can now stop us.
+    Worker::OnStop();
+
+    // stop the callback
+    StopCallBack();
+  }
+
+  /**
+   * \brief Stop the monitoring if needed.
+   */
+  void Monitor::OnWorkerEnd()
   {
     MYODDWEB_PROFILE_FUNCTION();
 
-    // guard for multiple entry.
-    MYODDWEB_LOCK(_lock);
+    try
+    {
+      // wait for the timer to end ... then close it.
+      while (threads::WaitResult::complete != WorkerPool().WaitFor(*_callbackTimer, MYODDWEB_WAITFOR_WORKER_COMPLETION))
+      {
+        MYODDWEB_OUT("Timeout waiting to complete callback timer!\n");
+      }
+      delete _callbackTimer;
+      _callbackTimer = nullptr;
+    }
+    catch (...)
+    {
+      AddEventError(EventError::CannotStop);
+    }
+  }
+
+  /**
+   * \brief Stop the callback timer to we can stop publishing.
+   */
+  void Monitor::StopCallBack() const
+  {
+    MYODDWEB_PROFILE_FUNCTION();
 
     // do we have a callback to stop?
     if (_callbackTimer == nullptr)
@@ -197,9 +211,8 @@ namespace myoddweb:: directorywatcher
       return;
     }
 
-    _callbackTimer->StopAndWait( MYODDWEB_WAITFOR_WORKER_COMPLETION );
-    delete _callbackTimer;
-    _callbackTimer = nullptr;
+    // stop the call back worker.
+    WorkerPool().Stop(*_callbackTimer);
   }
 
   /**
@@ -234,15 +247,6 @@ namespace myoddweb:: directorywatcher
   void Monitor::PublishEvents()
   {
     MYODDWEB_PROFILE_FUNCTION();
-
-    // check that we are ready
-    if (!Is(State::started))
-    {
-      return;
-    }
-
-    // guard for multiple entry.
-    MYODDWEB_LOCK(_lock);
 
     // check that we are ready
     if (!Is(State::started))
@@ -285,48 +289,6 @@ namespace myoddweb:: directorywatcher
       // we are done with the event
       // so we can get rid of it.
       delete event;
-    }
-  }
-
-  /**
-   * \brief Stop the monitoring if needed.
-   */
-  void Monitor::Stop()
-  {
-    MYODDWEB_PROFILE_FUNCTION();
-
-    if (Is(State::stopped))
-    {
-      return;
-    }
-
-    // guard for multiple entry.
-    MYODDWEB_LOCK(_lock);
-
-    // are we stopped already?
-    if( Is(State::stopped))
-    {
-      return;
-    }
-
-    // we are stopping
-    _state = State::stopping;
-
-    try
-    {
-      // we have to kill the callback timer
-      StopCallBack();
-
-      // then do the stop
-      OnStop();
-
-      // we are now done
-      _state = State::stopped;
-    }
-    catch(... )
-    {
-      _state = State::stopped;
-      AddEventError(EventError::CannotStop);
     }
   }
 

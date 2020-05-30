@@ -14,21 +14,9 @@ namespace myoddweb
 {
   namespace directorywatcher
   {
-    class Monitor
+    class Monitor : public threads::Worker
     {
     public:
-      /**
-       * The current monitor state
-       */
-      enum class State
-      {
-        unknown,
-        starting,
-        started,
-        stopping,
-        stopped
-      };
-
       Monitor(__int64 id, threads::WorkerPool& workerPool, const Request& request);
       virtual ~Monitor();
 
@@ -66,9 +54,6 @@ namespace myoddweb
       void AddRenameEvent(const std::wstring& newFileName, const std::wstring& oldFilename, bool isFile) const;
       void AddEventError(EventError error) const;
 
-      bool Start();
-      void Stop();
-
       /**
        * \brief get the worker pool
        */
@@ -77,7 +62,33 @@ namespace myoddweb
       {
         return _workerPool;
       }
+
     protected:
+      /**
+       * \brief called when the worker is ready to start
+       *        return false if you do not wish to start the worker.
+       */
+      bool OnWorkerStart() override;
+
+      /**
+       * \brief stop the worker
+       */
+      void OnStop() override;
+
+      /**
+       * \brief Give the worker a chance to do something in the loop
+       *        Workers can do _all_ the work at once and simply return false
+       *        or if they have a tight look they can return true until they need to come out.
+       * \param fElapsedTimeMilliseconds the amount of time since the last time we made this call.
+       * \return true if we want to continue or false if we want to end the thread
+       */
+      bool OnWorkerUpdate(float fElapsedTimeMilliseconds) override;
+
+      /**
+       * \brief called when the worker has completed
+       */
+      void OnWorkerEnd() override;
+
       /**
        * \brief the unique monitor id.
        */
@@ -104,13 +115,6 @@ namespace myoddweb
       Timer* _callbackTimer;
 
       /**
-       * \brief return if the current state is the same as the one we are after.
-       * \param state the state we are checking against.
-       */
-      [[nodiscard]]
-      bool Is(State state) const;
-
-      /**
        * \brief get all the events and send them over to the callback.
        */
       void PublishEvents();
@@ -123,25 +127,12 @@ namespace myoddweb
       /**
        * \brief Stop the callback timer to we can stop publishing.
        */
-      void StopCallBack();
+      void StopCallBack() const;
 
       virtual void OnGetEvents(std::vector<Event*>& events) = 0;
-      virtual void OnStart() = 0;
-      virtual void OnStop() = 0;
 
       [[nodiscard]]
       virtual const long long& ParentId() const = 0;
-
-    private:
-      /**
-       * \brief this is the current state.
-       */
-      State _state;
-
-      /**
-       * \brief the locks so we can add data.
-       */
-      std::recursive_mutex _lock;
     };
   }
 }

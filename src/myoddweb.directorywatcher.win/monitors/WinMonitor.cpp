@@ -29,17 +29,6 @@ namespace myoddweb:: directorywatcher
     WinMonitor(id, parentId, workerPool, request, MAX_BUFFER_SIZE)
   {
   }
-      
-  /**
-   * \brief Create the Monitor that uses ReadDirectoryChanges
-   *        This is the case where the id is the parent id.
-   * \param id the unique id of this monitor
-   * \param request details of the request.
-   */
-  WinMonitor::WinMonitor(const long long id, const Request& request) :
-    WinMonitor(id, new threads::WorkerPool(), request )
-  {
-  }
 
   /**
    * \brief Create the Monitor that uses ReadDirectoryChanges
@@ -48,10 +37,9 @@ namespace myoddweb:: directorywatcher
    * \param workerPool the worker pool
    * \param request details of the request.
    */
-  WinMonitor::WinMonitor(const long long id, threads::WorkerPool* workerPool, const Request& request) :
-    WinMonitor(id, id, *workerPool, request)
+  WinMonitor::WinMonitor(const long long id, threads::WorkerPool& workerPool, const Request& request) :
+    WinMonitor(id, id, workerPool, request)
   {
-    _workerPool = workerPool;
   }
 
   /**
@@ -64,7 +52,6 @@ namespace myoddweb:: directorywatcher
    */
   WinMonitor::WinMonitor(const long long id, const long long parentId, threads::WorkerPool& workerPool, const Request& request, const unsigned long bufferLength) :
     Monitor(id, workerPool, request),
-    _workerPool(nullptr),
     _directories(nullptr),
     _files(nullptr),
     _bufferLength(bufferLength),
@@ -74,11 +61,15 @@ namespace myoddweb:: directorywatcher
 
   WinMonitor::~WinMonitor()
   {
-    Stop();
+  }
 
-    // clear the worker
-    delete _workerPool;
-    _workerPool = nullptr;
+  /**
+   * \brief get the id of the parent, the owner of all the monitors.
+   * \return the parent id.
+   */
+  const long long& WinMonitor::ParentId() const
+  {
+    return _parentId;
   }
 
   /**
@@ -90,48 +81,100 @@ namespace myoddweb:: directorywatcher
     //  nothing to do
   }
 
-  /**
-   * \brief Start monitoring
-   */
-  void WinMonitor::OnStart()
+  void WinMonitor::OnStop()
   {
-    MYODDWEB_PROFILE_FUNCTION();
+    // we can now stop us.
+    Monitor::OnStop();
 
-    // create the directories monitor
-    _directories = new win::Directories(*this, _bufferLength);
-
-    // and then the files monitor.
-    _files = new win::Files(*this, _bufferLength);
-
-    // add the files as well as the directories to the worker pool.
-    WorkerPool().Add({ _directories, _files });
+    // stop the files and directory
+    if (_directories != nullptr)
+    {
+      _directories->Stop();
+    }
+    if (_files != nullptr)
+    {
+      _files->Stop();
+    }
   }
 
   /**
-   * \brief Stop monitoring
+   * \brief called when the worker is ready to start
+   *        return false if you do not wish to start the worker.
    */
-  void WinMonitor::OnStop()
+  bool WinMonitor::OnWorkerStart()
   {
-    // stop our worker and wait for it to complete.
-    while (threads::WaitResult::complete != WorkerPool().StopAndWait({ _directories, _files }, MYODDWEB_WAITFOR_WORKER_COMPLETION))
+    MYODDWEB_PROFILE_FUNCTION();
+    try
     {
-      MYODDWEB_YIELD();
-      MYODDWEB_OUT("Timeout waiting to complete WinMonitor!\n");
-    }
+      // create the directories monitor
+      _directories = new win::Directories(*this, _bufferLength);
 
+      // add the files as well as the directories to the worker pool.
+      if( !_directories->Start() )
+      {
+        delete _directories;
+        _directories = nullptr;
+        return false;
+      }
+
+      // and then the files monitor.
+      _files = new win::Files(*this, _bufferLength);
+
+      if( !_files->Start() )
+      {
+        _directories->Stop();
+        delete _directories;
+        _directories = nullptr;
+
+        delete _files;
+        _files = nullptr;
+
+        return false;
+      }
+    
+      // all done
+      return Monitor::OnWorkerStart();
+    }
+    catch( ... )
+    {
+      return false;
+    }
+  }
+
+  /**
+   * \brief Give the worker a chance to do something in the loop
+   *        Workers can do _all_ the work at once and simply return false
+   *        or if they have a tight look they can return true until they need to come out.
+   * \param fElapsedTimeMilliseconds the amount of time since the last time we made this call.
+   * \return true if we want to continue or false if we want to end the thread
+   */
+  bool WinMonitor::OnWorkerUpdate( const float fElapsedTimeMilliseconds )
+  {
+    MYODDWEB_PROFILE_FUNCTION();
+    try
+    {
+      if (!MustStop())
+      {
+        _directories->Update();
+        _files->Update();
+      }
+    }
+    catch( ... )
+    {
+      // @todo log exception
+    }
+    return Monitor::OnWorkerUpdate(fElapsedTimeMilliseconds);
+  }
+
+  /**
+   * \brief called when the worker has completed
+   */
+  void WinMonitor::OnWorkerEnd()
+  {
     delete _directories;
     _directories = nullptr;
           
     delete _files;
     _files = nullptr;
-  }
-
-  /**
-   * \brief get the id of the parent, the owner of all the monitors.
-   * \return the parent id.
-   */
-  const long long& WinMonitor::ParentId() const
-  {
-    return _parentId;
   }
 }

@@ -17,14 +17,8 @@
 
 namespace myoddweb::directorywatcher
 {
-  MultipleWinMonitor::MultipleWinMonitor(const long long id, const Request& request) :
-    MultipleWinMonitor( id, new threads::WorkerPool(), request )
-  {
-  }
-
-  MultipleWinMonitor::MultipleWinMonitor(const long long id, threads::WorkerPool* workerPool, const Request& request) :
-    Monitor(id, *workerPool, request),
-    _workerPool( workerPool )
+  MultipleWinMonitor::MultipleWinMonitor(const long long id, threads::WorkerPool& workerPool, const Request& request) :
+    Monitor(id, workerPool, request)
   {
     // use a standar monitor for non recursive items.
     if (!request.Recursive())
@@ -39,47 +33,6 @@ namespace myoddweb::directorywatcher
   MultipleWinMonitor::~MultipleWinMonitor()
   {
     Delete();
-
-    // dispose of the worker pool
-    delete _workerPool;
-    _workerPool = nullptr;
-  }
-
-  /**
-   * \brief Start monitoring
-   */
-  void MultipleWinMonitor::OnStart()
-  {
-    // guard for multiple entry.
-    MYODDWEB_LOCK(_lock);
-
-    // start the parents
-    Start(_nonRecursiveParents);
-
-    // and the children
-    Start(_recursiveChildren);
-  }
-
-  /**
-   * \brief Stop monitoring
-   */
-  void MultipleWinMonitor::OnStop()
-  {
-    // guard for multiple entry.
-    MYODDWEB_LOCK(_lock);
-
-    // stop the parents
-    Stop(_nonRecursiveParents);
-
-    // and the children
-    Stop(_recursiveChildren);
-
-    // if we own the thread pool, stop it.
-    if (_workerPool != nullptr)
-    {
-      _workerPool->StopAndWait(MYODDWEB_WAITFOR_WORKER_COMPLETION);
-    }
-
   }
 
   /**
@@ -121,6 +74,61 @@ namespace myoddweb::directorywatcher
     std::sort(events.begin(), events.end(), Collector::SortByTimeMillisecondsUtc);
   }
 
+#pragma region Woker functions
+  void MultipleWinMonitor::OnStop()
+  {
+    Monitor::OnStop();
+
+    // stop the parents
+    Stop(_nonRecursiveParents);
+
+    // and the children
+    Stop(_recursiveChildren);
+  }
+
+  /**
+   * \brief called when the worker is ready to start
+   *        return false if you do not wish to start the worker.
+   */
+  bool MultipleWinMonitor::OnWorkerStart()
+  {
+    try
+    {
+      // start the parents
+      Start(_nonRecursiveParents);
+
+      // and the children
+      Start(_recursiveChildren);
+
+      return Monitor::OnWorkerStart();
+    }
+    catch( ... )
+    {
+      return false;
+    }
+  }
+
+  /**
+   * \brief Give the worker a chance to do something in the loop
+   *        Workers can do _all_ the work at once and simply return false
+   *        or if they have a tight look they can return true until they need to come out.
+   * \param fElapsedTimeMilliseconds the amount of time since the last time we made this call.
+   * \return true if we want to continue or false if we want to end the thread
+   */
+  bool MultipleWinMonitor::OnWorkerUpdate(float fElapsedTimeMilliseconds)
+  {
+    return Monitor::OnWorkerUpdate( fElapsedTimeMilliseconds );
+  }
+
+  /**
+   * \brief called when the worker has completed
+   */
+  void MultipleWinMonitor::OnWorkerEnd()
+  {
+    Monitor::OnWorkerEnd();
+  }
+#pragma endregion
+
 #pragma region Private Functions
   /**
    * \brief look for a possible child with a matching path.
@@ -160,9 +168,11 @@ namespace myoddweb::directorywatcher
     // so we have to add this path as a child.
     const auto id = GetNextId();
     const auto request = new Request(path, true, nullptr, 0);
-    auto child = new WinMonitor(id, ParentId(), WorkerPool(), *request );
+    const auto child = new WinMonitor(id, ParentId(), WorkerPool(), *request );
     _recursiveChildren.push_back(child); 
-    child->Start();
+
+    // add the child.
+    WorkerPool().Add( *child );
 
     delete request;
   }
@@ -351,22 +361,21 @@ namespace myoddweb::directorywatcher
     * \brief Stop all the monitors
     * \param container the vector of monitors.
     */
-  void MultipleWinMonitor::Stop(const std::vector<Monitor*>& container)
+  void MultipleWinMonitor::Stop(std::vector<Monitor*>& container)
   {
-    const auto numThreads = container.size();
-    if (numThreads == 0)
-    {
-      return;
-    }
-
+    MYODDWEB_PROFILE_FUNCTION();
     std::for_each(
-      std::execution::par_unseq,
+      std::execution::par,
       container.begin(),
       container.end(),
-      [&](auto&& item) 
+      [&](auto&& item)
       {
-        item->Stop();
-      });
+        WorkerPool().Stop(*item);
+      }
+    );
+
+    // we can now stop us.
+    Monitor::Stop();
   }
 
   /**
@@ -376,10 +385,15 @@ namespace myoddweb::directorywatcher
   void MultipleWinMonitor::Start(const std::vector<Monitor*>& container)
   {
     MYODDWEB_PROFILE_FUNCTION();
-    for( auto worker : container )
-    {
-      worker->Start();
-    }
+    std::for_each(
+      std::execution::par,
+      container.begin(),
+      container.end(),
+      [&](auto&& item)
+      {
+        WorkerPool().Add( *item );
+      }
+    );
   }
 
   /**
@@ -387,9 +401,6 @@ namespace myoddweb::directorywatcher
    */
   void MultipleWinMonitor::Delete()
   {
-    // stop everything
-    Monitor::Stop();
-
     // guard for multiple entry.
     MYODDWEB_LOCK(_lock);
 

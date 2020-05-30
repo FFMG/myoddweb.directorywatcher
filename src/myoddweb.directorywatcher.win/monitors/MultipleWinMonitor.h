@@ -11,10 +11,8 @@ namespace myoddweb
   {
     class MultipleWinMonitor final : public Monitor
     {
-      MultipleWinMonitor(long long id, threads::WorkerPool* workerPool, const Request& request);
-
     public:
-      MultipleWinMonitor(long long id, const Request& request);
+      MultipleWinMonitor(long long id, threads::WorkerPool& workerPool, const Request& request);
       virtual ~MultipleWinMonitor();
 
       MultipleWinMonitor& operator=(MultipleWinMonitor&& other) = delete;
@@ -23,18 +21,35 @@ namespace myoddweb
       MultipleWinMonitor(const MultipleWinMonitor&) = delete;
       MultipleWinMonitor& operator=(const MultipleWinMonitor&) = delete;
 
-      void OnStart() override;
-      void OnStop() override;
       void OnGetEvents(std::vector<Event*>& events) override;
-      
+
+      [[nodiscard]]
       const long long& ParentId() const override;
 
-    private:
-      /**
-       * \brief the worker pool
-       */
-      threads::WorkerPool* _workerPool;
+      void OnStop() override;
 
+    protected:
+      /**
+       * \brief called when the worker is ready to start
+       *        return false if you do not wish to start the worker.
+       */
+      bool OnWorkerStart() override;
+
+      /**
+       * \brief Give the worker a chance to do something in the loop
+       *        Workers can do _all_ the work at once and simply return false
+       *        or if they have a tight look they can return true until they need to come out.
+       * \param fElapsedTimeMilliseconds the amount of time since the last time we made this call.
+       * \return true if we want to continue or false if we want to end the thread
+       */
+      bool OnWorkerUpdate(float fElapsedTimeMilliseconds) override;
+
+      /**
+       * \brief called when the worker has completed
+       */
+      void OnWorkerEnd() override;
+
+    private:
       /**
        * \brief the locks so we can add data.
        */
@@ -65,6 +80,7 @@ namespace myoddweb
        * \brief get the next available id.
        * \return the next usable id.
        */
+      [[nodiscard]]
       long TotalSize() const;
 
       /**
@@ -107,6 +123,7 @@ namespace myoddweb
        * \brief process the children events
        * \rerturn events the events we will be adding to
        */
+      [[nodiscard]]
       std::vector<Event*> GetAndProcessChildEventsInLock() const;
 
       /**
@@ -121,6 +138,7 @@ namespace myoddweb
        * \param path the path we are looking for.
        * \return if we find it, the iterator of the child monitor.
        */
+      [[nodiscard]]
       std::vector<Monitor*>::const_iterator FindChild(const std::wstring& path) const;
 
       /**
@@ -133,13 +151,13 @@ namespace myoddweb
        * \brief Stop all the monitors
        * \param container the vector of monitors.
        */
-      static void Stop(const std::vector<Monitor*>& container);
+      void Stop( std::vector<Monitor*>& container);
 
       /**
        * \brief Start all the monitors
        * \param container the vector of monitors.
        */
-      static void Start(const std::vector<Monitor*>& container);
+      void Start(const std::vector<Monitor*>& container);
     };
   }
 }
