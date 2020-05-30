@@ -72,9 +72,16 @@ namespace myoddweb
     constexpr auto MYODDWEB_WAITFOR_WORKER_COMPLETION = 5000;
 
     /**
-     * \brief if this macro is defined we will use std::futures
-     *        otherwise we will use std::thread
+     * \brief the type of worker we are using
+     *        1 = std::thread
+     *        2 = std::future
      */
-    //#define MYODDWEB_USE_FUTURE 1
+    constexpr auto MYODDWEB_WORKER_TYPE = 1;
+
+    /**
+     * \brief how often we want to check for 'over-full' containers.
+     *        we will delete events that are older than this number.
+     */
+    constexpr auto MYODDWEB_MAX_EVENT_AGE = 5000;
   }
 }

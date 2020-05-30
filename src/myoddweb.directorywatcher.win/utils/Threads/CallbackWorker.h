@@ -17,14 +17,13 @@ namespace myoddweb
         explicit CallbackWorker(TCallback function);
         virtual ~CallbackWorker() = default;
 
+        CallbackWorker(const CallbackWorker&) = delete;
+        CallbackWorker(CallbackWorker&&) = delete;
+        CallbackWorker&& operator=(CallbackWorker&&) = delete;
+        const CallbackWorker& operator=(const CallbackWorker&) = delete;
+
       protected:
         bool OnWorkerUpdate(float fElapsedTimeMilliseconds) override;
-
-        /**
-         * \brief non blocking call to instruct the thread to stop.
-         *        this derived class does not do anything so we will stop rightaway.
-         */
-        void Stop() override{}
       };
     }
   }

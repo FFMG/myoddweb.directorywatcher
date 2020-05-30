@@ -4,6 +4,8 @@
 #pragma once
 #include <thread>
 #include <functional>
+#include <future>
+
 
 #include "WaitResult.h"
 #include "Worker.h"
@@ -32,11 +34,9 @@ namespace myoddweb
          */
         Worker* _parentWorker;
 
-#ifdef MYODDWEB_USE_FUTURE
         std::future<void>* _future;
-#else
         std::thread* _thread;
-#endif
+
         void CreateWorker(Worker* worker);
 
         /**
@@ -62,6 +62,13 @@ namespace myoddweb
          */
         explicit Thread(Worker& worker);
         ~Thread();
+
+        /**
+         * \brief if the thread is completed or not.
+         * \return if completed or not
+         */
+        [[nodiscard]]
+        bool Completed() const;
 
         /**
          * \brief wait for the thread to complete.

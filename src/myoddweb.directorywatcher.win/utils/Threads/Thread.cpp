@@ -13,11 +13,8 @@ namespace myoddweb::directorywatcher::threads
   Thread::Thread() :
     _localWorker(nullptr),
     _parentWorker(nullptr),
-#ifdef MYODDWEB_USE_FUTURE
     _future(nullptr),
-#else
     _thread(nullptr)
-#endif
   {
 
   }
@@ -58,17 +55,62 @@ namespace myoddweb::directorywatcher::threads
   }
 
   /**
+   * \brief if the thread is completed or not.
+   * \return if completed or not
+   */
+  bool Thread::Completed() const
+  {
+    // if the values are null then we are done
+    if( nullptr == _parentWorker )
+    {
+      return false;
+    }
+
+    switch (MYODDWEB_WORKER_TYPE)
+    {
+    case 1:
+      if( nullptr == _thread )
+      {
+        return false;
+      }
+      break;
+
+    case 2:
+      if (nullptr == _future)
+      {
+        return false;
+      }
+      break;
+
+    default:
+      throw std::exception("Unknown worker type!");
+    }
+
+    // otherwise return if the parent is compelted or not.
+    return _parentWorker->Completed();
+  }
+
+
+  /**
    * \brief create the runner either with future/thread
    * \param worker the runner that we want to start working with.
    */
   void Thread::CreateWorker(Worker* worker)
   {
-#ifdef MYODDWEB_USE_FUTURE
-    _future = new std::future<void>(std::async(std::launch::async, &Worker::Start, worker));
-#else
-    _thread = new std::thread(&Worker::Start, worker);
-#endif
+    switch (MYODDWEB_WORKER_TYPE)
+    {
+    case 1:
+      _thread = new std::thread(&Worker::Start, worker);
+      break;
 
+    case 2:
+      _future = new std::future<void>( std::async(std::launch::async, &Worker::Start, worker));
+      break;
+
+    default:
+      throw std::exception("Unknown worker type!");
+    }
+    
     // save the parent worker.
     _parentWorker = worker;
   }
@@ -121,15 +163,20 @@ namespace myoddweb::directorywatcher::threads
    */
   void Thread::Wait()
   {
-#ifdef MYODDWEB_USE_FUTURE
     if (_future != nullptr)
     {
-      (*_future).wait();
+      try
+      {
+        (*_future).wait();
+      }
+      catch (...)
+      {
+      }
     }
     // the future should have ended now
     delete _future;
     _future = nullptr;
-#else
+
     if (_thread != nullptr)
     {
       try
@@ -138,11 +185,9 @@ namespace myoddweb::directorywatcher::threads
       }
       catch (...)
       {
-        
       }
     }
     delete _thread;
     _thread = nullptr;
-#endif
   }
 }
