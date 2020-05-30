@@ -4,14 +4,13 @@
 #include "Worker.h"
 #include <thread>
 #include "../../monitors/Base.h"
+#include "../Instrumentor.h"
 #include "../Wait.h"
 
 namespace myoddweb::directorywatcher::threads
 {
   Worker::Worker() :
-    _started(false),
-    _completed(false),
-    _muststop( false )
+    _state( State::unknown )
   {
     // set he current time point
     _timePoint1 = std::chrono::system_clock::now();
@@ -21,13 +20,23 @@ namespace myoddweb::directorywatcher::threads
   Worker::~Worker() = default;
 
   /**
+   * \brief Check if the current state is the one we are after given one
+   * \param state the state we want to check for.
+   * \return if the state is the one we are checking
+   */
+  bool Worker::Is(const State& state) const
+  {
+    return _state == state;
+  }
+
+  /**
    * \brief if the thread has completed or not.
    * \return if the thread is still running.
    */
   [[nodiscard]]
   bool Worker::Completed() const
   {
-    return _completed;
+    return Is(State::complete );
   }
 
   /**
@@ -37,7 +46,7 @@ namespace myoddweb::directorywatcher::threads
   [[nodiscard]]
   bool Worker::Started() const
   {
-    return _started;
+    return Is(State::started);
   }
 
   /**
@@ -47,7 +56,7 @@ namespace myoddweb::directorywatcher::threads
   [[nodiscard]]
   bool Worker::MustStop() const
   {
-    return _muststop;
+    return Is(State::stopped) || Is(State::stopping ) || Is(State::complete);
   }
 
   /**
@@ -55,7 +64,23 @@ namespace myoddweb::directorywatcher::threads
    */
   void Worker::Stop()
   {
-    _muststop = true;
+    MYODDWEB_PROFILE_FUNCTION();
+
+    // was it called already?
+    // or are we trying to cal it after we are all done?
+    if(Is(State::stopped) || Is(State::stopping) || Is(State::complete ))
+    {
+      return;
+    }
+
+    // we are stopping
+    _state = State::stopping;
+
+    // call the derived function
+    OnStop();
+
+    // we are done
+    _state = State::stopped;
   }
 
   /**
@@ -67,7 +92,6 @@ namespace myoddweb::directorywatcher::threads
     // then we will get out.
     if (!WorkerStart())
     {
-      _completed = true;
       return;
     }
 
@@ -87,6 +111,7 @@ namespace myoddweb::directorywatcher::threads
   {
     try
     {
+      MYODDWEB_YIELD();
 
       // then wait for it to complete.
       if (!Started() || Completed())
@@ -123,53 +148,41 @@ namespace myoddweb::directorywatcher::threads
    */
   bool Worker::WorkerStart()
   {
-    // the thread is not completed.
-    _completed = false;
-
-    // the thread has started work.
-    // we could argue that this flag should be set
-    // after `OnWorkerStart()` but this is technically all part of the same thread.
-    _started = true;
+    // we are stopping
+    _state = State::starting;
     try
     {
       if (!OnWorkerStart())
       {
-        // because the worker failed to start this is now 'completed'
-        _completed = true;
+        // we could not even start, so we are stopped.
+        _state = State::stopped;
         return false;
       }
+
+      // the thread has started work.
+      // we could argue that this flag should be set
+      // after `OnWorkerStart()` but this is technically all part of the same thread.
+      _state = State::started;
+
+      // we are done
       return true;
     }
-    catch (const std::exception& e)
+    catch (...)
     {
-      _exceptions.push_back(e);
-      return false;
-    }
-    catch ( ... )
-    {
+      _exceptions.push_back(std::current_exception());
       return false;
     }
   }
 
   /**
    * \brief the main body of the thread runner
-   *        this function will run until the end of the thread.
+   *        this function will run until the worker wants to exist.
    */
   void Worker::WorkerRun()
   {
     try
     {
-      auto concurentThreadsSupported = std::thread::hardware_concurrency();
-      if (0 == concurentThreadsSupported)
-      {
-        concurentThreadsSupported = 1;
-      }
-
-      // the amount of time we want to put our thread to sleep
-      // so we do not cause a tight loop to burn the CPU.
-      const auto threadSleep = std::chrono::milliseconds(MYODDWEB_MIN_THREADPOOL_SLEEP);
-
-      auto count = 0;
+      // loop forever until we have to get out.
       for (;;)
       {
         try
@@ -180,32 +193,29 @@ namespace myoddweb::directorywatcher::threads
           _timePoint1 = _timePoint2;
           const auto fElapsedTimeMilliseconds = elapsedTime.count();
 
+          // make sure that we yield to other thread
+          // from time to time.
+          MYODDWEB_YIELD();
+
           // were we told to stop?
-          if( _muststop )
+          if (Is(State::stopped) || Is(State::complete))
           {
             break;
           }
 
-          // call the derived class.
+          // if we are busy stopping ... but not stoped, we do not want to break
+          // out of the loop just yet as we are still busy
+          // but we do not want to call update anymore.
+          if( Is(State::stopping))
+          {
+            continue;
+          }
+
+          // call the dupdate call now.
           if (!OnWorkerUpdate(fElapsedTimeMilliseconds))
           {
             // we are done
             break;
-          }
-
-          // sleep a bit, we must be alertable so we can pass/receive messages.
-          MYODDWEB_YIELD();
-
-          // we now need to slow the thread down a little more
-          if (count % concurentThreadsSupported != 0)
-          {
-            std::this_thread::sleep_for(threadSleep);
-            ++count;
-          }
-          else
-          {
-            std::this_thread::yield();
-            count = 1;
           }
         }
         catch( ... )
@@ -214,13 +224,9 @@ namespace myoddweb::directorywatcher::threads
         }
       }
     }
-    catch (const std::exception& e)
+    catch (...)
     {
-      _exceptions.push_back(e);
-    }
-    catch ( ... )
-    {
-      // log it
+      _exceptions.push_back(std::current_exception());
     }
   }
 
@@ -232,18 +238,29 @@ namespace myoddweb::directorywatcher::threads
   {
     try
     {
+      // whatever happens we can call the 'stop' call now
+      // if that call was made earlier, (to cause us to break out of the Update loop), it will be ignored
+      // depending on the state, so it does not harm to call it again
+      Stop();
+
+      // because of where we are, we have to wait for the work to complete.
+      // we cannot do the workend until the state is actually stopped.
+      if (!Is(State::stopped))
+      {
+        Wait::SpinUntil([=] { return _state == State::stopped; }, -1);
+      }
+
+      // the worker has now stopped, so we can call the blocking call
+      // to give the worker a chance to finish/dispose everything that needs to be disposed.
       OnWorkerEnd();
     }
-    catch (const std::exception& e)
+    catch (...)
     {
-      _exceptions.push_back( e );
-    }
-    catch ( ... )
-    {
-      // log it
+      _exceptions.push_back(std::current_exception());
     }
 
     // whatever happens, we have now completed
-    _completed = true;
+    // nothing else can happen after this.
+    _state = State::complete;
   }
 }

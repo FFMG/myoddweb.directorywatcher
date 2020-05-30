@@ -2,6 +2,7 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #pragma once
+#include <atomic>
 #include <chrono>
 #include <exception>
 #include <vector>
@@ -17,10 +18,20 @@ namespace myoddweb
       class WorkerPool;
       class Worker
       {
-        bool _started;
-        bool _completed;
-        bool _muststop;
-        std::vector<std::exception> _exceptions;
+      public:
+        enum class State
+        {
+          unknown,
+          starting,
+          started,
+          stopping,
+          stopped,
+          complete
+        };
+
+      private:
+        std::atomic<State> _state;
+        std::vector<std::exception_ptr> _exceptions;
 
         /**
          * \brief The timers used to calculate the elapsed time.
@@ -65,7 +76,7 @@ namespace myoddweb
         /**
          * \brief non blocking call to instruct the thread to stop.
          */
-        virtual void Stop();
+        void Stop();
 
         /**
          * \brief stop the running thread and wait
@@ -94,6 +105,18 @@ namespace myoddweb
       protected:
         friend WorkerPool;
 
+        /**
+         * \brief Check if the current state is the one we are after given one
+         * \param state the state we want to check for.
+         * \return if the state is the one we are checking
+         */
+        [[nodiscard]]
+        bool Is(const State& state) const;
+
+        /**
+         * \brief called when the worker is ready to start
+         *        return false if you do not wish to start the worker.
+         */
         virtual bool OnWorkerStart() { return true; };
 
         /**
@@ -106,9 +129,14 @@ namespace myoddweb
         virtual bool OnWorkerUpdate(float fElapsedTimeMilliseconds) = 0;
 
         /**
-         * \brief called when nthe thread has completed
+         * \brief called when the worker has completed
          */
         virtual void OnWorkerEnd() {};
+
+        /**
+         * \brief called when stop is called.
+         */
+        virtual void OnStop() { };
       };
     }
   }

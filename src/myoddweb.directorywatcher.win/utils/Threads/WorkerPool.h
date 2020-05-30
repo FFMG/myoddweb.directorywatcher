@@ -11,7 +11,7 @@ namespace myoddweb
   {
     namespace threads
     {
-      class WorkerPool : public Worker
+      class WorkerPool final : protected Worker
       {
         /**
          * \brief the current thread handle, if we have one.
@@ -24,9 +24,14 @@ namespace myoddweb
         std::recursive_mutex _lockRunningWorkers;
 
         /**
-         * \brief the workers that are waiting to start;
+         * \brief lock for the the workers that are waiting to start;
          */
         std::recursive_mutex _lockWorkersWaitingToStart;
+
+        /**
+         * \brief lock for the workers that are waiting to end
+         */
+        std::recursive_mutex _lockThreadsWaitingToEnd;
 
         /**
          * \brief the workers that have yet to be started
@@ -34,7 +39,12 @@ namespace myoddweb
         std::vector<Worker*> _workersWaitingToStart;
 
         /**
-         * \brief all our runners.
+         * \brief the workers lock that we are waiting to end.
+         */
+        std::vector<Thread*> _threadsWaitingToEnd;
+
+        /**
+         * \brief all our workers that are currently running.
          */
         std::vector<Worker*> _runningWorkers;
 
@@ -42,6 +52,7 @@ namespace myoddweb
         WorkerPool(const WorkerPool&) = delete;
         WorkerPool(WorkerPool&&) = delete;
         const WorkerPool& operator=(const WorkerPool&) = delete;
+        const WorkerPool& operator=(const WorkerPool&&) = delete;
 
         WorkerPool();
         virtual ~WorkerPool();
@@ -51,6 +62,12 @@ namespace myoddweb
          * \param worker the worker we are trying to add.
          */
         void Add(Worker& worker);
+
+        /**
+         * \brief add multiple workers at once
+         * \param workers the workers we are adding.
+         */
+        void Add( const std::vector<Worker*>& workers );
 
         /**
          * \brief wait a little bit for a worker to finish
@@ -80,13 +97,19 @@ namespace myoddweb
         /**
          * \brief non blocking call to instruct the thread to stop.
          */
-        void Stop() override;
+        void OnStop() override;
 
         /**
          * \brief stop one of the worker
          * \param worker the worker we are waiting for.
          */
         void Stop( Worker& worker );
+
+        /**
+         * \brief stop multiple workers
+         * \param workers the workers we are waiting for.
+         */
+        void Stop( std::vector<Worker*>& workers);
 
         /**
          * \brief stop the running workers and wait
@@ -112,6 +135,11 @@ namespace myoddweb
 
       protected:
         /**
+         * \brief check if we stop or not.
+         */
+        bool CheckIfMustStop();
+
+        /**
          * \brief called when the worker thread is about to start
          */
         bool OnWorkerStart() override;
@@ -133,6 +161,16 @@ namespace myoddweb
 
       private:
         /**
+         * \brief Give the worker a chance to do something in the loop
+         *        Workers can do _all_ the work at once and simply return false
+         *        or if they have a tight look they can return true until they need to come out.
+         * \param worker the worker we are managing.
+         * \param fElapsedTimeMilliseconds the amount of time since the last time we made this call.
+         * \return true if we want to continue or false if we want to end the thread
+         */
+        bool WorkerUpdate(Worker& worker, float fElapsedTimeMilliseconds);
+
+        /**
          * \brief make a thread safe copy of the running workers.
          */
         std::vector<Worker*> CloneRunningWorkers();
@@ -143,10 +181,20 @@ namespace myoddweb
         void ProcessWorkersWaitingToStart();
 
         /**
+         * \brief wait for any workers that are stopping.
+         */
+        void ProcessThreadsWaitingToEnd();
+
+        /**
+         * \brief start any workers that are stopping.
+         */
+        void ProcessThreadsAndWorkersWaiting();
+
+        /**
          * \brief process workers that has indicated the need to stop.
          * \param workers the workers we are wanting to stop
          */
-        void ProcessWorkersWaitingToStop( std::vector<Worker*>& workers );
+        void ProcessWorkersWaitingToEnd( std::vector<Worker*>& workers );
 
         /**
          * \brief remove a workers from our list of posible waiting workers.
@@ -185,10 +233,10 @@ namespace myoddweb
         static void RemoveWorker(std::vector<Worker*>& container, const Worker& item);
 
         /**
-         * \brief add a single worker to a list of workers that are waiting to start.
-         * \param worker the worker we want to add.
+         * \brief add workers to a list of workers that are waiting to start.
+         * \param workers the worker we want to add.
          */
-        void AddToWorkersWaitingToStart(Worker& worker);
+        void AddToWorkersWaitingToStart( const std::vector<Worker*>& workers);
 
         /**
          * \brief add this worker to our list of running workers
