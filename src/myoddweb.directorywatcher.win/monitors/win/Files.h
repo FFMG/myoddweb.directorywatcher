@@ -18,18 +18,17 @@ namespace myoddweb
         Files( Monitor& parent, unsigned long bufferLength);
         virtual ~Files() = default;
 
-      private:
-        /**
-         * \brief prevent copies.
-         */
         Files(const Files&) = delete;
+        Files(Files&&) = delete;
         Files& operator=(const Files&) = delete;
+        Files& operator=(Files&&) = delete;
 
       protected:
         /**
          * Get the notification filter.
          * \return the notification filter
          */
+        [[nodiscard]]
         unsigned long GetNotifyFilter() const override;
 
         /**
@@ -38,6 +37,7 @@ namespace myoddweb
          * \param path the file we are checking.
          * \return if the string given is a file or not.
          */
+        [[nodiscard]]
         bool IsFile(EventAction action, const std::wstring& path) const override;
       };
     }

@@ -17,11 +17,17 @@ namespace myoddweb
         Directories(Monitor& parent, unsigned long bufferLength);
         virtual ~Directories() = default;
 
+        Directories(const Directories&) = delete;
+        Directories(Directories&&) = delete;
+        Directories& operator=(const Directories&) = delete;
+        Directories& operator=(Directories&&) = delete;
+
       protected:
         /**
          * Get the notification filter.
          * \return the notification filter
          */
+        [[nodiscard]]
         unsigned long GetNotifyFilter() const override;
 
         /**
@@ -30,6 +36,7 @@ namespace myoddweb
          * \param path the file we are checking.
          * \return if the string given is a file or not.
          */
+        [[nodiscard]]
         bool IsFile(EventAction action, const std::wstring& path) const override;
       };
     }

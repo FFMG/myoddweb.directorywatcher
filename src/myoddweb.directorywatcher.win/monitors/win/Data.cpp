@@ -6,6 +6,7 @@
 #include "Data.h"
 #include "../../utils/Lock.h"
 #include "../../utils/Instrumentor.h"
+#include "../../utils/Wait.h"
 #include "../Base.h"
 
 namespace myoddweb:: directorywatcher:: win
@@ -20,12 +21,12 @@ namespace myoddweb:: directorywatcher:: win
     :
     _notifyFilter(notifyFilter),
     _recursive(recursive),
+    _state(Monitor::State::unknown ),
+    _operationAborted( false ),
     _dataCallbackFunction( dataCallbackFunction ),
-    _bufferLength(bufferLength),
     _hDirectory(nullptr),
     _buffer(nullptr),
-    _operationAborted( false ),
-    _state(Monitor::State::unknown ),
+    _bufferLength(bufferLength),
     _monitor(monitor)
   {
     // prepapre the buffer that will receive our data

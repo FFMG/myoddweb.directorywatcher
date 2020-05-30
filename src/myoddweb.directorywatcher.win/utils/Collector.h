@@ -2,6 +2,7 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #pragma once
+#include <atomic>
 #include <string>
 #include <vector>
 #include <mutex>
@@ -53,9 +54,10 @@ namespace myoddweb
       const short _maxCleanupAgeMilliseconds;
 
       /**
-       * The next time we want to check for cleanup
+       * \brief The next time we want to check for cleanup
+       *        We will be using an atomic variable to make sure that it is thread safe.
        */
-      long long _nextCleanupTimeCheck = 0;
+      std::atomic<long long> _nextCleanupTimeCheck = 0;
 
       /**
        * \brief cleanup the vector if our internal counter has being reached.

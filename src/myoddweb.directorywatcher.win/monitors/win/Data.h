@@ -44,13 +44,15 @@ namespace myoddweb
         /**
          * \brief Check if the handle is valid
          */
-        [[nodiscard]] bool IsValidHandle() const;
+        [[nodiscard]]
+        bool IsValidHandle() const;
 
         /**
          * \brief get the directory handle, if we have one.
          * \return the handle
          */
-        [[nodiscard]] void* DirectoryHandle() const;
+        [[nodiscard]]
+        void* DirectoryHandle() const;
 
         /**
          * \brief set the directory handle
@@ -68,13 +70,15 @@ namespace myoddweb
          * \brief get the current buffer
          * \return the void* buffer.
          */
-        [[nodiscard]] void* Buffer() const;
+        [[nodiscard]]
+        void* Buffer() const;
 
         /**
          * \brief get the buffer length
          * \return the buffer length
          */
-        [[nodiscard]] unsigned long BufferLength() const;
+        [[nodiscard]]
+        unsigned long BufferLength() const;
 
         /**
          * \brief Get pointer to our overlapped data.
@@ -128,7 +132,8 @@ namespace myoddweb
          * \param ulSize the max number of bytes we want to copy
          * \return the cloned data.
          */
-        [[nodiscard]] unsigned char* Clone(unsigned long ulSize);
+        [[nodiscard]]
+        unsigned char* Clone(unsigned long ulSize);
 
         /**
          * \brief what we wish to be notified about
