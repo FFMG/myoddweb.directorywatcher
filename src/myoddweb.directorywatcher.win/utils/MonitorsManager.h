@@ -68,6 +68,11 @@ namespace myoddweb
       static MonitorsManager* _instance;
       static MonitorsManager* Instance();
 
+      /**
+       * \brief the pool of workers that will manage all our work.
+       */
+      threads::WorkerPool* _workersPool;
+
       typedef std::unordered_map<long long, Monitor*> MonitorMap;
       MonitorMap _monitors;
     };

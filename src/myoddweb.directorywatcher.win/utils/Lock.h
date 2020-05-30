@@ -33,7 +33,7 @@ namespace myoddweb
   *        1 -is looking for deadlock
   *        2- is full logging
   */
-#define MYODDWEB_DEBUG_LOG 1
+#define MYODDWEB_DEBUG_LOG 0
 #else
 #define MYODDWEB_DEBUG_LOG 0
 #endif // DEBUG
@@ -64,7 +64,7 @@ namespace myoddweb
             {
               const auto stop = std::chrono::high_resolution_clock::now();
               const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-              const long long d = duration.count();
+              const auto d = duration.count();
               if (d > slowLock)
               {
                 std::stringstream ss;
@@ -113,12 +113,12 @@ namespace myoddweb
       protected:
         void LogStart() const
         {
-          const auto o = "Lock Out: " + _functionSig +"\n";
+          const auto o = "Lock In: " + _functionSig +"\n";
           MYODDWEB_OUT(o.c_str());
         }
         void LogEnd() const
         {
-          const auto o = "Lock In: " + _functionSig + "\n";
+          const auto o = "Lock Out: " + _functionSig + "\n";
           MYODDWEB_OUT(o.c_str());
         }
       };
@@ -130,9 +130,11 @@ namespace myoddweb
   #if MYODDWEB_DEBUG_LOG == 1 
     #define MYODDWEB_LOCK(mutex) LockTry MYODDWEB_DEC(__LINE__)(mutex, __FUNCSIG__);
   #elif MYODDWEB_DEBUG_LOG == 2
-    #define MYODDWEB_LOCK(mutex)                                  \
-    const auto o = "Lock Wait: " + std::string(__FUNCSIG__) +"\n";\
-    MYODDWEB_OUT(o.c_str());                                      \
+    #define MYODDWEB_LOCK(mutex)                                      \
+    {                                                                 \
+      const auto o = "Lock Wait: " + std::string(__FUNCSIG__) + "\n"; \
+      MYODDWEB_OUT(o.c_str());                                        \
+    }                                                                 \
     LockDebug MYODDWEB_DEC(__LINE__)(mutex, __FUNCSIG__ );
   #endif
 #else

@@ -14,15 +14,23 @@ namespace myoddweb
     MonitorsManager* MonitorsManager::_instance = nullptr;
     std::recursive_mutex MonitorsManager::_lock;
 
-    MonitorsManager::MonitorsManager()
+    MonitorsManager::MonitorsManager() :
+      _workersPool( nullptr )
     {
       // initialize random seed:
       // The downcast (and potential data loss) doesn't matter 
       // since we're only using it to seed the RNG
       srand(static_cast<unsigned int>(time(nullptr)));
+
+      // create the worker pool
+      _workersPool = new threads::WorkerPool();
     }
 
-    MonitorsManager::~MonitorsManager() = default;
+    MonitorsManager::~MonitorsManager()
+    {
+      delete _workersPool;
+      _workersPool = nullptr;
+    }
 
     /**
      * \brief try and get the current instance of monitor manager.
@@ -146,11 +154,11 @@ namespace myoddweb
           Monitor* monitor;
           if (request.Recursive())
           {
-            monitor = new MultipleWinMonitor(id, request);
+            monitor = new MultipleWinMonitor(id, *_workersPool, request);
           }
           else
           {
-            monitor = new WinMonitor(id, request);
+            monitor = new WinMonitor(id, *_workersPool, request);
           }
 
           // add it to the ilist
@@ -189,8 +197,8 @@ namespace myoddweb
           return nullptr;
         }
 
-        // and start monitoring for changes.
-        monitor->Start();
+        // just add our monitor...
+        _workersPool->Add( *monitor );
 
         // and return the monitor we created.
         return monitor;
@@ -229,7 +237,10 @@ namespace myoddweb
         }
 
         // stop everything
-        monitor->second->Stop();
+        while(threads::WaitResult::complete != _workersPool->StopAndWait( *monitor->second, MYODDWEB_WAITFOR_WORKER_COMPLETION ))
+        {
+          MYODDWEB_OUT("Timeout while waiting for worker to complete.\n");
+        }
 
         try
         {
