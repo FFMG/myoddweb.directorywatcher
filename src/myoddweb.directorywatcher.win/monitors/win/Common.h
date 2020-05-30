@@ -15,7 +15,7 @@ namespace myoddweb
   {
     namespace win
     {
-      class Common : public threads::Worker
+      class Common
       {
       protected:
         Common(Monitor& parent, unsigned long bufferLength);
@@ -32,13 +32,12 @@ namespace myoddweb
 
         virtual ~Common();
 
+        bool Start();
+        void Update();
+        void Stop();
       protected:
         // invalid handle wait
         int _invalidHandleWait;
-
-        bool OnWorkerStart() override;
-        bool OnWorkerUpdate(float fElapsedTimeMilliseconds) override;
-        void OnWorkerEnd() override;
 
         /**
          * \brief Get the notification filter.
@@ -84,6 +83,7 @@ namespace myoddweb
          * \param path the file we are checking.
          * \return if the string given is a file or not.
          */
+        [[nodiscard]]
         virtual bool IsFile(EventAction action, const std::wstring& path) const;
       };
     }

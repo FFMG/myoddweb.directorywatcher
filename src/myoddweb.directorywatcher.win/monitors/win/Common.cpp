@@ -24,15 +24,9 @@ namespace myoddweb ::directorywatcher :: win
   {
   }
 
-  Common::~Common()
-  {
-    Common::Stop();
-  }
+  Common::~Common() = default;
 
-  /**
-   * \brief start all the workers.
-   */
-  bool Common::OnWorkerStart()
+  bool Common::Start()
   {
     // create the function
     _function = new Data::DataCallbackFunction(std::bind(&Common::DataCallbackFunction, this, std::placeholders::_1));
@@ -62,16 +56,12 @@ namespace myoddweb ::directorywatcher :: win
     return true;
   }
 
-  /**
-   * \brief Give the worker a chance to do something in the loop
-   * \param fElapsedTimeMilliseconds the amount of time since the last time we made this call.
-   * \return true if we want to continue or false if we want to end the thread
-   */
-  bool Common::OnWorkerUpdate( const float fElapsedTimeMilliseconds)
+  void Common::Update()
   {
-    if (MustStop())
+    // check if we have stoped
+    if( nullptr == _data)
     {
-      return false;
+      return;
     }
 
     if (!_data->IsValidHandle())
@@ -82,11 +72,6 @@ namespace myoddweb ::directorywatcher :: win
       {
         // reset the wait time.
         _invalidHandleWait = 0;
-
-        if (MustStop())
-        {
-          return false;
-        }
 
         // try to re-open
         if (_data->TryReopen())
@@ -101,13 +86,12 @@ namespace myoddweb ::directorywatcher :: win
       // The handle is good, so we can reset the value
       _invalidHandleWait = 0;
     }
-    return !MustStop();
   }
 
   /**
    * \brief complete all the data collection
    */
-  void Common::OnWorkerEnd()
+  void Common::Stop()
   {
     if (nullptr != _data)
     {
@@ -198,12 +182,6 @@ namespace myoddweb ::directorywatcher :: win
       auto pRecord = (FILE_NOTIFY_INFORMATION*)pBuffer;
       for (;;)
       {
-        // get out now if needed
-        if (MustStop())
-        {
-          break;
-        }
-
         // get the filename
         const auto wFilename = std::wstring(pRecord->FileName, pRecord->FileNameLength / sizeof(wchar_t));
         switch (pRecord->Action)
