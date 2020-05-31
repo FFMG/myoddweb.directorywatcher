@@ -121,7 +121,6 @@
     <ClInclude Include="utils\Threads\WaitResult.h" />
     <ClInclude Include="utils\Threads\Worker.h" />
     <ClInclude Include="utils\Threads\WorkerPool.h" />
-    <ClInclude Include="utils\Timer.h" />
     <ClInclude Include="utils\Wait.h" />
     <ClInclude Include="watcher.h" />
   </ItemGroup>

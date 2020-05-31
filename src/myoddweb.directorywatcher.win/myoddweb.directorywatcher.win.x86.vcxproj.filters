@@ -59,9 +59,6 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="watcher.h" />
-    <ClInclude Include="utils\Timer.h">
-      <Filter>utilities</Filter>
-    </ClInclude>
     <ClInclude Include="utils\Collector.h">
       <Filter>utilities</Filter>
     </ClInclude>

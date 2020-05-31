@@ -113,9 +113,6 @@
     <ClInclude Include="utils\Request.h">
       <Filter>utils</Filter>
     </ClInclude>
-    <ClInclude Include="utils\Timer.h">
-      <Filter>utils</Filter>
-    </ClInclude>
     <ClInclude Include="resource.h" />
     <ClInclude Include="utils\Instrumentor.h">
       <Filter>utils</Filter>
