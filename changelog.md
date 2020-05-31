@@ -10,6 +10,8 @@ Notable changes
 
 ### Changed
 
+- Changed the default number of threads from unlimited to a max of 200, (in reality only about 50)
+
 ### Fixed
 
 ### Removed
