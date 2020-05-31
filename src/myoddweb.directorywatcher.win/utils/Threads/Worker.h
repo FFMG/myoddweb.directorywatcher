@@ -102,6 +102,12 @@ namespace myoddweb
          */
         void WorkerEnd();
 
+        /**
+         * \brief calculate the elapsed time since the last time this call was made
+         * \return float the elapsed time in milliseconds.
+         */
+        float CalculateElapsedTimeMilliseconds();
+
       protected:
         friend WorkerPool;
 

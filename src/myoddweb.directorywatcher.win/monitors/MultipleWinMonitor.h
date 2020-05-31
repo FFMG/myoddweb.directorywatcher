@@ -151,13 +151,13 @@ namespace myoddweb
        * \brief Stop all the monitors
        * \param container the vector of monitors.
        */
-      void Stop( std::vector<Monitor*>& container);
+      void Stop( std::vector<Monitor*>& container) const;
 
       /**
        * \brief Start all the monitors
        * \param container the vector of monitors.
        */
-      void Start(const std::vector<Monitor*>& container);
+      void Start(const std::vector<Monitor*>& container) const;
     };
   }
 }

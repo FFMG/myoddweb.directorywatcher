@@ -14,7 +14,9 @@
 
 #ifdef _DEBUG
   #include <iostream>
-  #define MYODDWEB_OUT( what ) std::cout << (what); 
+  #define MYODDWEB_OUT( what ) std::cout << (what);
+#else
+  #define MYODDWEB_OUT
 #endif
 
 namespace myoddweb

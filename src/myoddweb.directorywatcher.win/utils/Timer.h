@@ -43,13 +43,13 @@ namespace myoddweb
 
         // check if we are ready.
         _elapsedTimeMilliseconds += fElapsedTimeMilliseconds;
-        if( _elapsedTimeMilliseconds < _delayTimeMilliseconds)
+        if( _elapsedTimeMilliseconds < static_cast<float>(_delayTimeMilliseconds))
         {
           return !MustStop();
         }
 
         //  restart the timer.
-        _elapsedTimeMilliseconds = 0;
+        _elapsedTimeMilliseconds -= static_cast<float>(_delayTimeMilliseconds);
 
         // run the function
         _function();

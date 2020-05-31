@@ -106,9 +106,9 @@ namespace myoddweb
         std::stringstream ss;
 
         ss << "{";
-        ss << "\"cat\":\"function\",";
+        ss << R"("cat":"function",)";
         ss << "\"dur\":" << (result.End - result.Start) << ',';
-        ss << "\"name\":\"" << name << "\",";
+        ss << R"("name":")" << name << "\",";
         ss << "\"ph\":\"X\",";
         ss << "\"pid\":0,";
         ss << "\"tid\":" << result.ThreadID << ',';

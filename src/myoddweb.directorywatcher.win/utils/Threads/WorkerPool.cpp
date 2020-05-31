@@ -156,7 +156,7 @@ namespace myoddweb :: directorywatcher :: threads
     MYODDWEB_PROFILE_FUNCTION();
     try
     {
-      // start those that have yet to start
+      // make sure that we have started/stopped everything
       ProcessThreadsAndWorkersWaiting();
 
       // make a copy of all the running workers.
@@ -181,8 +181,6 @@ namespace myoddweb :: directorywatcher :: threads
               remove.push_back(item);
               return true;
             }, timeout);
-          MYODDWEB_YIELD();
-          std::this_thread::yield();
         }
       );
 
@@ -229,7 +227,6 @@ namespace myoddweb :: directorywatcher :: threads
             MYODDWEB_LOCK(lock);
             status = result;
           }
-          MYODDWEB_YIELD();
           std::this_thread::yield();
         }
       );
@@ -274,12 +271,8 @@ namespace myoddweb :: directorywatcher :: threads
       return
         Wait::SpinUntil([&]()
           {
-            //  make sure that all are alerted.
-            MYODDWEB_YIELD();
-
             // if it is complete, no need to remove it from our list of workers
             // it will be picked up by the next Update( ... ) call
-
             return worker.Completed();
           }, timeout) ? WaitResult::complete : WaitResult::timeout;
     }
@@ -322,17 +315,34 @@ namespace myoddweb :: directorywatcher :: threads
     // remove it from our list
     RemoveWorkerFromRunningWorkers(worker);
 
-    // the worker wants to end so we can complete the thread
-    // because this is a blocking call, we do not want to wait for it
-    // otherwise it will block us all.
-    MYODDWEB_LOCK(_lockThreadsWaitingToEnd);
-    const auto end = new Thread([&] { worker.WorkerEnd(); });
-    _threadsWaitingToEnd.push_back(end);
-    
+    // queue this worker now.
+    QueueWorkerEnd(worker);
+
     // we are done with this worker.
     return false;
   }
 
+  /**
+   * \brief queue a worker to the end thread
+   * \param worker the worker we want to end.
+   */
+  void WorkerPool::QueueWorkerEnd(Worker& worker)
+  {
+    // the worker wants to end so we can complete the thread
+    // because this is a blocking call, we do not want to wait for it
+    // otherwise it will block us all.
+    MYODDWEB_LOCK(_lockThreadsWaitingToEnd);
+
+    // create a new thread
+    const auto end = new Thread([&] { worker.WorkerEnd(); });
+
+    // and add it to the queue.
+    _threadsWaitingToEnd.push_back(end);
+  }
+
+  /**
+   * \brief start any workers and thread that need to be started/removed.
+   */
   void WorkerPool::ProcessThreadsAndWorkersWaiting()
   {
     MYODDWEB_PROFILE_FUNCTION();
@@ -428,17 +438,11 @@ namespace myoddweb :: directorywatcher :: threads
 
       // call workend for all of them.
       std::for_each(
-        std::execution::par,
         workers.begin(),
         workers.end(),
         [&](auto&& item)
         {
-          if (!item->Completed() )
-          {
-            item->WorkerEnd();
-          }
-          MYODDWEB_YIELD();
-          std::this_thread::yield();
+          QueueWorkerEnd(*item);
         }
       );
     }
@@ -621,7 +625,6 @@ namespace myoddweb :: directorywatcher :: threads
         [&](auto&& item)
         {
           StopAndWait(*item, timeout );
-          MYODDWEB_YIELD();
           std::this_thread::yield();
         }
       );
@@ -654,7 +657,7 @@ namespace myoddweb :: directorywatcher :: threads
       ProcessThreadsAndWorkersWaiting();
 
       // clone the current running workers.
-      auto runningWorkers = CloneRunningWorkers();
+      const auto runningWorkers = CloneRunningWorkers();
 
       Stop( runningWorkers );
 
@@ -671,7 +674,7 @@ namespace myoddweb :: directorywatcher :: threads
    * \brief stop multiple workers
    * \param workers the workers we are waiting for.
    */
-  void WorkerPool::Stop(std::vector<Worker*>& workers)
+  void WorkerPool::Stop(const std::vector<Worker*>& workers)
   {
     MYODDWEB_PROFILE_FUNCTION();
     // tell everybody to stop
@@ -680,19 +683,12 @@ namespace myoddweb :: directorywatcher :: threads
       // make sure that we have started what needed to be started
       ProcessThreadsAndWorkersWaiting();
 
-      // clone the current running workers.
-      auto runningWorkers = CloneRunningWorkers();
-
-      // stop all the workers.
-      std::for_each(
-        std::execution::par,
-        workers.begin(),
-        workers.end(),
-        [&](auto&& item)
-        {
-          Stop(*item);
-        }
-      );
+      // stop all the workers, no need for parallel call
+      // the stop function is non blocking.
+      for( auto worker : workers )
+      {
+        Stop( *worker );
+      }
     }
     catch (...)
     {
@@ -791,7 +787,6 @@ namespace myoddweb :: directorywatcher :: threads
             // on of them stopped, so we need to check if we need to stop or not.
             checkIfContinueWithNextEvent = true;
           }
-          MYODDWEB_YIELD();
         }
       );
 

@@ -187,12 +187,6 @@ namespace myoddweb::directorywatcher::threads
       {
         try
         {
-          // update and calculate the elapsed time.
-          _timePoint2 = std::chrono::system_clock::now();
-          const std::chrono::duration<float, std::milli> elapsedTime = _timePoint2 - _timePoint1;
-          _timePoint1 = _timePoint2;
-          const auto fElapsedTimeMilliseconds = elapsedTime.count();
-
           // make sure that we yield to other thread
           // from time to time.
           MYODDWEB_YIELD();
@@ -212,7 +206,7 @@ namespace myoddweb::directorywatcher::threads
           }
 
           // call the dupdate call now.
-          if (!OnWorkerUpdate(fElapsedTimeMilliseconds))
+          if (!OnWorkerUpdate( CalculateElapsedTimeMilliseconds() ))
           {
             // we are done
             break;
@@ -220,7 +214,7 @@ namespace myoddweb::directorywatcher::threads
         }
         catch( ... )
         {
-          // log it?
+          _exceptions.push_back(std::current_exception());
         }
       }
     }
@@ -228,6 +222,19 @@ namespace myoddweb::directorywatcher::threads
     {
       _exceptions.push_back(std::current_exception());
     }
+  }
+
+  /**
+   * \brief calculate the elapsed time since the last time this call was made
+   * \return float the elapsed time in milliseconds.
+   */
+  float Worker::CalculateElapsedTimeMilliseconds()
+  {
+    // update and calculate the elapsed time.
+    _timePoint2 = std::chrono::system_clock::now();
+    const std::chrono::duration<float, std::milli> elapsedTime = _timePoint2 - _timePoint1;
+    _timePoint1 = _timePoint2;
+    return elapsedTime.count();
   }
 
   /**
@@ -247,7 +254,11 @@ namespace myoddweb::directorywatcher::threads
       // we cannot do the workend until the state is actually stopped.
       if (!Is(State::stopped))
       {
-        Wait::SpinUntil([=] { return _state == State::stopped; }, -1);
+        Wait::SpinUntil([=]
+        {
+          return _state == State::stopped;
+        }, 
+        -1);
       }
 
       // the worker has now stopped, so we can call the blocking call

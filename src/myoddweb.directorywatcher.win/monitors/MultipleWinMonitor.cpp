@@ -361,39 +361,20 @@ namespace myoddweb::directorywatcher
     * \brief Stop all the monitors
     * \param container the vector of monitors.
     */
-  void MultipleWinMonitor::Stop(std::vector<Monitor*>& container)
+  void MultipleWinMonitor::Stop(std::vector<Monitor*>& container) const
   {
     MYODDWEB_PROFILE_FUNCTION();
-    std::for_each(
-      std::execution::par,
-      container.begin(),
-      container.end(),
-      [&](auto&& item)
-      {
-        WorkerPool().Stop(*item);
-      }
-    );
-
-    // we can now stop us.
-    Monitor::Stop();
+    WorkerPool().Stop( {container.begin(), container.end()});
   }
 
   /**
    * \brief Start all the monitors
    * \param container the vector of monitors.
    */
-  void MultipleWinMonitor::Start(const std::vector<Monitor*>& container)
+  void MultipleWinMonitor::Start(const std::vector<Monitor*>& container) const
   {
     MYODDWEB_PROFILE_FUNCTION();
-    std::for_each(
-      std::execution::par,
-      container.begin(),
-      container.end(),
-      [&](auto&& item)
-      {
-        WorkerPool().Add( *item );
-      }
-    );
+    WorkerPool().Add({ container.begin(), container.end() });
   }
 
   /**
