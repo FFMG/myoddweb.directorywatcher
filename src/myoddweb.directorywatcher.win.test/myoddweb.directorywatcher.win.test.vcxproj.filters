@@ -65,6 +65,9 @@
       <Filter>win\utils\Threads</Filter>
     </ClCompile>
     <ClCompile Include="WorkerPoolTest.cpp" />
+    <ClCompile Include="..\myoddweb.directorywatcher.win\monitors\EventsPublisher.cpp">
+      <Filter>win\monitors</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -146,6 +149,9 @@
     </ClInclude>
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Threads\WorkerPool.h">
       <Filter>win\utils\Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\EventsPublisher.h">
+      <Filter>win\monitors</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

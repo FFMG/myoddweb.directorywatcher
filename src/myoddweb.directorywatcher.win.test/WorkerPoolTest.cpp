@@ -9,16 +9,16 @@ using myoddweb::directorywatcher::Wait;
 
 TEST(WorkPool, DefaultValues) {
   {
-    const auto pool = ::WorkerPool();
+    const auto pool = ::WorkerPool( 10 );
     EXPECT_FALSE( pool.Started());
   }
   {
-    const auto pool = ::WorkerPool();
+    const auto pool = ::WorkerPool(10);
     EXPECT_FALSE(pool.Completed());
   }
 }
 
-class TestWorker : public ::Worker
+class TestWorker final : public ::Worker
 {
 public:
   const int _maxUpdate = 0;
@@ -32,7 +32,7 @@ public:
   {
   }
 
-  void Stop() override { ++_stop; }
+  void OnStop() override { ++_stop; }
   bool OnWorkerStart() override
   {
     ++_startCalled;
@@ -56,7 +56,7 @@ TEST(WorkPool, StartIsCalledExactlyOnce) {
   {
     auto worker1 = TestWorker();
     auto worker2 = TestWorker();
-    auto pool = ::WorkerPool();
+    auto pool = ::WorkerPool(10);
     pool.Add(worker1);
     pool.Add(worker2);
 
@@ -73,7 +73,7 @@ TEST(WorkPool, EndIsCalledExactlyOnce) {
   {
     auto worker1 = TestWorker();
     auto worker2 = TestWorker();
-    auto pool = ::WorkerPool();
+    auto pool = ::WorkerPool(10);
     pool.Add(worker1);
     pool.Add(worker2);
 
@@ -91,7 +91,7 @@ TEST(WorkPool, NumberOfTimesUpdatesIsCalled) {
     auto worker1 = TestWorker(5);
     auto worker2 = TestWorker(6);
 
-    auto pool = ::WorkerPool();
+    auto pool = ::WorkerPool(10);
     pool.Add( worker1 );
     pool.Add( worker2 );
 
@@ -110,7 +110,7 @@ TEST(WorkPool, WaitingForAWorkerThatIsNotOurs) {
     auto worker1 = TestWorker(5);
     auto worker2 = TestWorker(1);
 
-    auto pool = ::WorkerPool();
+    auto pool = ::WorkerPool(10);
     pool.Add(worker1);
 
     // we are not going to stop it
@@ -127,7 +127,7 @@ TEST(WorkPool, WaitingForAWorkerThatIsNotOurs) {
 
 TEST(WorkPool, WaitUntiWhenNoWorker ) {
   {
-    auto pool = ::WorkerPool();
+    auto pool = ::WorkerPool(10);
 
     // we are not going to stop it
     // we just waiting for it to complete.
@@ -142,7 +142,7 @@ TEST(WorkPool, WaitForASingleItem) {
   {
     auto worker1 = TestWorker(3);
 
-    auto pool = ::WorkerPool();
+    auto pool = ::WorkerPool(10);
     pool.Add(worker1);
 
     // we are not going to stop it
@@ -160,7 +160,7 @@ TEST(WorkPool, StopAndWait) {
     auto worker1 = TestWorker(5000);
     auto worker2 = TestWorker(6000);
 
-    auto pool = ::WorkerPool();
+    auto pool = ::WorkerPool(10);
     pool.Add(worker1);
     pool.Add(worker2);
 

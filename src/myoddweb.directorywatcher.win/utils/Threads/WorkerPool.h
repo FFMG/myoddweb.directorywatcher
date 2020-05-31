@@ -7,7 +7,7 @@
 
 namespace myoddweb:: directorywatcher:: threads
 {
-  class WorkerPool final : protected Worker
+  class WorkerPool final : public Worker
   {
     /**
      * \brief the current thread handle, if we have one.

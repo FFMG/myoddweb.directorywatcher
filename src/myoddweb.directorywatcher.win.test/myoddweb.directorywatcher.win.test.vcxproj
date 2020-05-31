@@ -49,6 +49,7 @@
     <IntDir>$(SolutionDir)intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <ItemGroup>
+    <ClCompile Include="..\myoddweb.directorywatcher.win\monitors\EventsPublisher.cpp" />
     <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Threads\CallbackWorker.cpp" />
     <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Threads\Thread.cpp" />
     <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Threads\Worker.cpp" />
@@ -61,6 +62,7 @@
     <ClCompile Include="WorkerPoolTest.cpp" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\Base.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\Callbacks.h" />
+    <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\EventsPublisher.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\Monitor.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\MultipleWinMonitor.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\WinMonitor.h" />
