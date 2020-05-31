@@ -95,6 +95,7 @@
   <ItemGroup>
     <ClInclude Include="monitors\Base.h" />
     <ClInclude Include="monitors\Callbacks.h" />
+    <ClInclude Include="monitors\EventsPublisher.h" />
     <ClInclude Include="monitors\Monitor.h" />
     <ClInclude Include="monitors\MultipleWinMonitor.h" />
     <ClInclude Include="monitors\WinMonitor.h" />
@@ -125,6 +126,7 @@
     <ClInclude Include="watcher.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="monitors\EventsPublisher.cpp" />
     <ClCompile Include="monitors\Monitor.cpp" />
     <ClCompile Include="monitors\MultipleWinMonitor.cpp" />
     <ClCompile Include="monitors\WinMonitor.cpp" />

@@ -8,7 +8,7 @@
 #include "../utils/Collector.h"
 #include "../utils/Request.h"
 #include "../utils/Threads/WorkerPool.h"
-#include "../utils/Timer.h"
+#include "EventsPublisher.h"
 
 namespace myoddweb
 {
@@ -112,22 +112,12 @@ namespace myoddweb
       /**
        * \brief how often we want to check for new events.
        */
-      Timer* _callbackTimer;
-
-      /**
-       * \brief get all the events and send them over to the callback.
-       */
-      void PublishEvents();
+      EventsPublisher* _publisher;
 
       /**
        * \brief Start the callback timer so we can publish events.
        */
-      void StartCallBack();
-
-      /**
-       * \brief Stop the callback timer to we can stop publishing.
-       */
-      void StopCallBack() const;
+      void StartEventsPublisher();
 
       virtual void OnGetEvents(std::vector<Event*>& events) = 0;
 

@@ -13,7 +13,7 @@ namespace myoddweb:: directorywatcher
     _id(id),
     _workerPool( workerPool ),
     _eventCollector(nullptr),
-    _callbackTimer(nullptr)
+    _publisher(nullptr)
   {
     _eventCollector = new Collector();
     _request = new Request(request);
@@ -27,8 +27,8 @@ namespace myoddweb:: directorywatcher
     delete _eventCollector;
     _eventCollector = nullptr;
 
-    delete _callbackTimer;
-    _callbackTimer = nullptr;
+    delete _publisher;
+    _publisher = nullptr;
   }
 
   /**
@@ -139,7 +139,7 @@ namespace myoddweb:: directorywatcher
     try
     {
       // start the callback after we started everything
-      StartCallBack();
+      StartEventsPublisher();
 
       // done.
       return true;
@@ -160,6 +160,10 @@ namespace myoddweb:: directorywatcher
    */
   bool Monitor::OnWorkerUpdate( const float fElapsedTimeMilliseconds)
   {
+    if( _publisher != nullptr )
+    {
+      _publisher->Update(fElapsedTimeMilliseconds);
+    }
     return !MustStop();
   }
 
@@ -170,9 +174,6 @@ namespace myoddweb:: directorywatcher
   {
     // we can now stop us.
     Worker::OnStop();
-
-    // stop the callback
-    StopCallBack();
   }
 
   /**
@@ -184,13 +185,8 @@ namespace myoddweb:: directorywatcher
 
     try
     {
-      // wait for the timer to end ... then close it.
-      while (threads::WaitResult::complete != WorkerPool().WaitFor(*_callbackTimer, MYODDWEB_WAITFOR_WORKER_COMPLETION))
-      {
-        MYODDWEB_OUT("Timeout waiting to complete callback timer!\n");
-      }
-      delete _callbackTimer;
-      _callbackTimer = nullptr;
+      delete _publisher;
+      _publisher = nullptr;
     }
     catch (...)
     {
@@ -199,31 +195,15 @@ namespace myoddweb:: directorywatcher
   }
 
   /**
-   * \brief Stop the callback timer to we can stop publishing.
-   */
-  void Monitor::StopCallBack() const
-  {
-    MYODDWEB_PROFILE_FUNCTION();
-
-    // do we have a callback to stop?
-    if (_callbackTimer == nullptr)
-    {
-      return;
-    }
-
-    // stop the call back worker.
-    WorkerPool().Stop(*_callbackTimer);
-  }
-
-  /**
     * \brief Start the callback timer so we can publish events.
     */
-  void Monitor::StartCallBack()
+  void Monitor::StartEventsPublisher()
   {
     MYODDWEB_PROFILE_FUNCTION();
 
     // whatever we are doing, we need to kill the current timer.
-    StopCallBack();
+    delete _publisher;
+    _publisher = nullptr;
 
     // null is allowed
     if (nullptr == _request->Callback())
@@ -237,59 +217,8 @@ namespace myoddweb:: directorywatcher
       return;
     }
 
-    _callbackTimer = new Timer( std::bind( &Monitor::PublishEvents, this),_request->CallbackRateMs());
-    WorkerPool().Add(*_callbackTimer);
-  }
-
-  /**
-   * \brief get all the events and send them over to the callback.
-   */
-  void Monitor::PublishEvents()
-  {
-    MYODDWEB_PROFILE_FUNCTION();
-
-    // check that we are ready
-    if (!Is(State::started))
-    {
-      return;
-    }
-
-    // get the events.
-    auto events = std::vector<Event*>();
-    if (0 == GetEvents(events))
-    {
-      return;
-    }
-
-    // then call the callback
-    for (auto it = events.begin(); it != events.end(); ++it)
-    {
-      const auto& event = (*it);
-      try
-      {
-        if (nullptr != _request->Callback())
-        {
-          _request->Callback()(
-            ParentId(),
-            event->IsFile,
-            event->Name,
-            event->OldName,
-            event->Action,
-            event->Error,
-            event->TimeMillisecondsUtc
-          );
-        }
-      }
-      catch( ... )
-      {
-        // the callback did something wrong!
-        // we should log it somewhere.
-      }
-
-      // we are done with the event
-      // so we can get rid of it.
-      delete event;
-    }
+    // create the new publisher.
+    _publisher = new EventsPublisher( *this, ParentId(), _request->Callback(), _request->CallbackRateMs() );
   }
 
   /**

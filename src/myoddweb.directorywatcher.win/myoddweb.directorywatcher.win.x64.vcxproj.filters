@@ -51,6 +51,9 @@
     <ClCompile Include="utils\Threads\WorkerPool.cpp">
       <Filter>utils\Threads</Filter>
     </ClCompile>
+    <ClCompile Include="monitors\EventsPublisher.cpp">
+      <Filter>monitors</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -134,6 +137,9 @@
     </ClInclude>
     <ClInclude Include="utils\Threads\WaitResult.h">
       <Filter>utils\Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="monitors\EventsPublisher.h">
+      <Filter>monitors</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
