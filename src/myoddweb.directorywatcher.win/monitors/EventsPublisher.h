@@ -25,5 +25,12 @@ namespace myoddweb::directorywatcher
      * \brief get the events.
      */
     void GetEvents() const;
+
+    /**
+     * \brief check if the time has now elapsed.
+     * \param fElapsedTimeMilliseconds the number of ms since the last time we checked.
+     * \return if the time has elapsed and we can continue.
+     */
+    bool HasElapsed(float fElapsedTimeMilliseconds);
   };
 }

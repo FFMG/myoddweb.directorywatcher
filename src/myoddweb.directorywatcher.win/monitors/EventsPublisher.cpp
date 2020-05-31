@@ -20,17 +20,33 @@ namespace myoddweb::directorywatcher
 
   }
 
-  void EventsPublisher::Update(const float fElapsedTimeMilliseconds)
+  /**
+   * \brief check if the time has now elapsed.
+   * \param fElapsedTimeMilliseconds the number of ms since the last time we checked.
+   * \return if the time has elapsed and we can continue.
+   */
+  bool EventsPublisher::HasElapsed( const float fElapsedTimeMilliseconds)
   {
-    // check if we are ready.
     _elapsedTimeMilliseconds += fElapsedTimeMilliseconds;
     if (_elapsedTimeMilliseconds < static_cast<float>(_delayTimeMilliseconds))
     {
-      return;
+      return false;
     }
 
     //  restart the timer.
-    _elapsedTimeMilliseconds -= static_cast<float>(_delayTimeMilliseconds);
+    while (_elapsedTimeMilliseconds > static_cast<float>(_delayTimeMilliseconds)) {
+      _elapsedTimeMilliseconds -= static_cast<float>(_delayTimeMilliseconds);
+    }
+    return true;
+  }
+
+  void EventsPublisher::Update(const float fElapsedTimeMilliseconds)
+  {
+    // check if we are ready.
+    if( !HasElapsed(fElapsedTimeMilliseconds))
+    {
+      return;
+    }
 
     // get the events
     GetEvents();

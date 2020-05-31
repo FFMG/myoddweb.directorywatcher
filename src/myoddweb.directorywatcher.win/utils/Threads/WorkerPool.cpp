@@ -11,8 +11,9 @@
 
 namespace myoddweb :: directorywatcher :: threads
 {
-  WorkerPool::WorkerPool() :
-    _thread(nullptr)
+  WorkerPool::WorkerPool( const long long throttleElapsedTimeMilliseconds) :
+    _thread(nullptr),
+    _throttleElapsedTimeMilliseconds(throttleElapsedTimeMilliseconds)
   {
   }
 
@@ -296,6 +297,28 @@ namespace myoddweb :: directorywatcher :: threads
 
   #pragma region private functions
   /**
+   * \brief check if the time has now elapsed.
+   * \param givenElapsedTimeMilliseconds the number of ms since the last time we checked.
+   * \param actualElapsedTimeMilliseconds the number of ms that has expired since our last check.
+   * \return if the time has elapsed and we can continue.
+   */
+  bool WorkerPool::HasElapsed(float givenElapsedTimeMilliseconds, float& actualElapsedTimeMilliseconds)
+  {
+    _elapsedTimeMilliseconds += givenElapsedTimeMilliseconds;
+    actualElapsedTimeMilliseconds = _elapsedTimeMilliseconds;
+    if (_elapsedTimeMilliseconds < static_cast<float>(_throttleElapsedTimeMilliseconds))
+    {
+      return false;
+    }
+
+    //  restart the timer.
+    while (_elapsedTimeMilliseconds > static_cast<float>(_throttleElapsedTimeMilliseconds)) {
+      _elapsedTimeMilliseconds -= static_cast<float>(_throttleElapsedTimeMilliseconds);
+    }
+    return true;
+  }
+
+  /**
    * \brief Give the worker a chance to do something in the loop
    *        Workers can do _all_ the work at once and simply return false
    *        or if they have a tight look they can return true until they need to come out.
@@ -432,7 +455,7 @@ namespace myoddweb :: directorywatcher :: threads
    * \brief process workers that has indicated the need to stop.
    * \param workers the workers we are wanting to stop
    */
-  void WorkerPool::ProcessWorkersWaitingToEnd(std::vector<Worker*>& workers)
+  void WorkerPool::ProcessWorkersWaitingToEnd( const std::vector<Worker*>& workers)
   {
     MYODDWEB_PROFILE_FUNCTION();
     if(workers.empty())
@@ -527,9 +550,11 @@ namespace myoddweb :: directorywatcher :: threads
   {
     MYODDWEB_LOCK(_lockRunningWorkers);
     // make a copy of the list
-    const auto clone = std::vector<Worker*>{ _runningWorkers };
+    const auto clone = _runningWorkers;
 
     // clear that list
+    // we do not want to use `shrink_to_fit` as the reserved value
+    // will probably be reused.
     _runningWorkers.clear();
 
     // return the copy of the list.
@@ -569,11 +594,35 @@ namespace myoddweb :: directorywatcher :: threads
    */
   void WorkerPool::AddToWorkersWaitingToStart(const std::vector<Worker*>& workers)
   {
+    MYODDWEB_LOCK(_lockRunningWorkers);
     MYODDWEB_LOCK(_lockWorkersWaitingToStart);
+    std::vector<Worker*> uniqueWorkers;
+    uniqueWorkers.reserve(workers.size());
     for (auto worker : workers)
     {
-      AddWorker(_workersWaitingToStart, *worker);
+      // make sure that we do not add duplicates to our starting list.
+      // and also in our running list
+      // if we prevent duplicates here, then we will prevent duplicates in our working list
+      const auto it1 = std::find(std::begin(_workersWaitingToStart), std::end(_workersWaitingToStart), worker);
+      if (it1 != _workersWaitingToStart.end())
+      {
+        // it is already waiting to start.
+        return;
+      }
+
+      const auto it2 = std::find(std::begin(_runningWorkers), std::end(_runningWorkers), worker);
+      if (it2 != _runningWorkers.end())
+      {
+        // it is already running.
+        return;
+      }
+
+      // this item was not found either running or about to start
+      uniqueWorkers.push_back(worker);
     }
+
+    // we can now add those workers to our list of workers.
+    AddWorkers(_workersWaitingToStart, uniqueWorkers);
   }
 
   /**
@@ -595,15 +644,26 @@ namespace myoddweb :: directorywatcher :: threads
   {
     try
     {
-      // make sure that we do not add duplicates.
-      const auto it = std::find(std::begin(container), std::end(container), &item);
-      if( it != container.end() )
-      {
-        return;
-      }
-      container.push_back( &item );
+      container.emplace_back( &item );
     }
     catch( ... )
+    {
+      //  @TODO: Log somewhere
+    }
+  }
+
+  /**
+   * \brief had a worker to the container
+   * \param container the container we are adding to
+   * \param items the workers we want to add.
+   */
+  void WorkerPool::AddWorkers(std::vector<Worker*>& container, const std::vector<Worker*>& items)
+  {
+    try
+    {
+      container.insert(std::end(container), std::begin(items), std::end(items));
+    }
+    catch (...)
     {
       //  @TODO: Log somewhere
     }
@@ -778,6 +838,15 @@ namespace myoddweb :: directorywatcher :: threads
       // make sure all the ones waiting to start have started
       ProcessThreadsAndWorkersWaiting();
 
+      // the actual elapsed time expired
+      float actualElapsedTimeMilliseconds;
+
+      // check if the elapsed time is more than what we want.
+      if( !HasElapsed(fElapsedTimeMilliseconds, actualElapsedTimeMilliseconds) )
+      {
+        return CheckIfMustStop();
+      }
+
       // take all the running workers and remove them from the list
       // from now on, we will be managing them.
       auto runningWorkers = RemoveWorkersFromRunningWorkers();
@@ -795,7 +864,7 @@ namespace myoddweb :: directorywatcher :: threads
         runningWorkers.end(),
         [&](auto&& item)
         {
-          if (!WorkerUpdate(*item, fElapsedTimeMilliseconds))
+          if (!WorkerUpdate(*item, actualElapsedTimeMilliseconds))
           {
             MYODDWEB_LOCK(lock);
 

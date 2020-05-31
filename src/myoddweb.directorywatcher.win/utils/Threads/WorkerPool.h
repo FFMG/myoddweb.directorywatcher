@@ -15,6 +15,16 @@ namespace myoddweb:: directorywatcher:: threads
     Thread* _thread;
 
     /**
+     * \brief how often we want to limit this.
+     */
+    const long long _throttleElapsedTimeMilliseconds;
+
+    /**
+     * \brief the elapsed time since the last time we checked this
+     */
+    float _elapsedTimeMilliseconds = 0;
+
+    /**
      * \brief the lock for the running workers.
      */
     std::recursive_mutex _lockRunningWorkers;
@@ -50,7 +60,7 @@ namespace myoddweb:: directorywatcher:: threads
     const WorkerPool& operator=(const WorkerPool&) = delete;
     const WorkerPool& operator=(const WorkerPool&&) = delete;
 
-    WorkerPool();
+    WorkerPool(long long throttleElapsedTimeMilliseconds);
     virtual ~WorkerPool();
 
     /**
@@ -157,6 +167,14 @@ namespace myoddweb:: directorywatcher:: threads
 
   private:
     /**
+     * \brief check if the time has now elapsed.
+     * \param givenElapsedTimeMilliseconds the number of ms since the last time we checked.
+     * \param actualElapsedTimeMilliseconds the number of ms that has expired since our last check.
+     * \return if the time has elapsed and we can continue.
+     */
+    bool HasElapsed( float givenElapsedTimeMilliseconds, float& actualElapsedTimeMilliseconds);
+
+    /**
      * \brief queue a worker to the end thread
      * \param worker the worker we want to end.
      */
@@ -196,7 +214,7 @@ namespace myoddweb:: directorywatcher:: threads
      * \brief process workers that has indicated the need to stop.
      * \param workers the workers we are wanting to stop
      */
-    void ProcessWorkersWaitingToEnd( std::vector<Worker*>& workers );
+    void ProcessWorkersWaitingToEnd( const std::vector<Worker*>& workers );
 
     /**
      * \brief remove a workers from our list of posible waiting workers.
@@ -252,5 +270,12 @@ namespace myoddweb:: directorywatcher:: threads
      * \param item the worker we want to add.
      */
     static void AddWorker(std::vector<Worker*>& container, Worker& item);
+
+    /**
+     * \brief had a worker to the container
+     * \param container the container we are adding to
+     * \param items the workers we want to add.
+     */
+    static void AddWorkers(std::vector<Worker*>& container, const std::vector<Worker*>& items);
   };
 }

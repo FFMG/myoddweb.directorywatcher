@@ -23,7 +23,7 @@ namespace myoddweb
       srand(static_cast<unsigned int>(time(nullptr)));
 
       // create the worker pool
-      _workersPool = new threads::WorkerPool();
+      _workersPool = new threads::WorkerPool( MYODDWEB_WORKERPOOL_THROTTLE );
     }
 
     MonitorsManager::~MonitorsManager()
