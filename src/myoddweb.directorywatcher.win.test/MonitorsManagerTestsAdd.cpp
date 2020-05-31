@@ -34,6 +34,27 @@ TEST(MonitorsManagerAdd, SimpleStartAndStop) {
   EXPECT_NO_THROW(::MonitorsManager::Stop(id));
 }
 
+TEST(MonitorsManagerAdd, StoppingWhenWeNeverStarted) {
+
+  // do nothing ...
+  // and stop something that was never started.
+  EXPECT_NO_THROW(::MonitorsManager::Stop(42));
+}
+
+TEST(MonitorsManagerAdd, StoppingWhatWasNeverStarted) {
+
+  const auto request = ::Request(L"c:\\", false, nullptr, 0);
+  const auto id = ::MonitorsManager::Start(request);
+
+  // do nothing ...
+
+  // stop the wrong one
+  EXPECT_NO_THROW(::MonitorsManager::Stop(id + 1));
+
+  // stop the correct one
+  EXPECT_NO_THROW(::MonitorsManager::Stop(id));
+}
+
 TEST(MonitorsManagerAdd, StartStopThenAddFileToFolder) {
     // create the helper.
     auto helper = new MonitorsManagerTestHelper();
@@ -97,6 +118,9 @@ TEST_P(ValidateNumberOfItemAdded, CallbackWhenFileIsAdded) {
   const auto request = ::Request(helper->Folder(), recursive, function, TEST_TIMEOUT);
   const auto id = ::MonitorsManager::Start(request);
   Add(id, helper);
+
+  // wait for the thread to get started
+  Wait::Delay(TEST_TIMEOUT_WAIT);
     
   for (auto i = 0; i < number; ++i)
   {
@@ -130,6 +154,9 @@ TEST_P(ValidateNumberOfItemAdded, CallbackWhenFolderIsAdded) {
   const auto request = ::Request(helper->Folder(), recursive, function, TEST_TIMEOUT);
   const auto id = ::MonitorsManager::Start(request);
   Add(id, helper);
+
+  // wait for the thread to get started
+  Wait::Delay(TEST_TIMEOUT_WAIT);
 
   for (auto i = 0; i < number; ++i)
   {

@@ -383,6 +383,27 @@ namespace myoddweb :: directorywatcher :: threads
   {
     MYODDWEB_PROFILE_FUNCTION();
 
+    // do we have _anything_ at all to do?
+    // if we have no thread, there is no way we could be ending.
+    if( nullptr == _thread)
+    {
+      return;
+    }
+
+    // if we are still in "unknown state" then it means we have not even started yet.
+    // so before we go anywhere, we have to wait for the thread to start.
+    if( !_thread->Started() )
+    {
+      if( !Wait::SpinUntil( [&]
+      {
+        return _thread->Started();
+      }, MYODDWEB_WAITFOR_WORKER_COMPLETION ) )
+      {
+        MYODDWEB_OUT("Unable to start Thread!");
+        return;
+      }
+    }
+
     // all the workers waiting to start
     ProcessWorkersWaitingToStart();
 

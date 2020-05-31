@@ -34,6 +34,9 @@ TEST_P(RecursiveAndNonRecursive, TwoWatchersOnTheSameFolder) {
   Add(id1, helper);
   Add(id2, helper);
 
+  // wait for the thread to get started
+  Wait::Delay(TEST_TIMEOUT_WAIT);
+
   const auto number = 10;
   for (auto i = 0; i < number; ++i)
   {
@@ -72,6 +75,9 @@ TEST_P(RecursiveAndNonRecursive, TwoWatchersOnTwoSeparateFolders) {
 
   Add(id1, helper1);
   Add(id2, helper2);
+
+  // wait for the thread to get started
+  Wait::Delay(TEST_TIMEOUT_WAIT);
 
   // just add a file
   const auto number = 10;

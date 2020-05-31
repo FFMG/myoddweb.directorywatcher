@@ -2,6 +2,7 @@
 #include "../myoddweb.directorywatcher.win/utils/Threads/WorkerPool.h"
 #include "../myoddweb.directorywatcher.win/utils/Threads/Worker.h"
 #include "../myoddweb.directorywatcher.win/utils/Wait.h"
+#include "MonitorsManagerTestHelper.h"
 
 using myoddweb::directorywatcher::threads::WorkerPool;
 using myoddweb::directorywatcher::threads::Worker;
@@ -77,6 +78,9 @@ TEST(WorkPool, EndIsCalledExactlyOnce) {
     pool.Add(worker1);
     pool.Add(worker2);
 
+    // wait for the thread to get started
+    Wait::Delay(TEST_TIMEOUT_WAIT);
+
     // even if we wait a tiny bit, we still start
     pool.WaitFor(100);
 
@@ -94,6 +98,9 @@ TEST(WorkPool, NumberOfTimesUpdatesIsCalled) {
     auto pool = ::WorkerPool(10);
     pool.Add( worker1 );
     pool.Add( worker2 );
+
+    // wait for the thread to get started
+    Wait::Delay(TEST_TIMEOUT_WAIT);
 
     // we are not going to stop it
     // we just waiting for it to complete.

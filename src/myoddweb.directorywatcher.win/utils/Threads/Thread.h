@@ -34,10 +34,26 @@ namespace myoddweb
          */
         Worker* _parentWorker;
 
+        /**
+         * \brief the future we will be using, (if we are using a future)
+         */
         std::future<void>* _future;
+
+        /**
+         * \brief the thread we will be using, (if we are using a thread)
+         */
         std::thread* _thread;
 
-        void CreateWorker(Worker* worker);
+        /**
+         * \brief create the tread/future we will be running the worker with.
+         * \param worker the worker we want to run
+         */
+        void CreateWorkerRunner(Worker* worker);
+
+        /**
+         * \brief start running the worker.
+         */
+        void Start();
 
         /**
          * \brief the common constructor, private as used to set default values.
@@ -69,6 +85,13 @@ namespace myoddweb
          */
         [[nodiscard]]
         bool Completed() const;
+
+        /**
+         * \brief if the thread is started or not.
+         * \return if started or not
+         */
+        [[nodiscard]]
+        bool Started() const;
 
         /**
          * \brief wait for the thread to complete.

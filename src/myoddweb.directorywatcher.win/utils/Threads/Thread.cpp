@@ -26,7 +26,7 @@ namespace myoddweb::directorywatcher::threads
   Thread::Thread(const TCallback& function) : Thread()
   {
     _localWorker = new CallbackWorker(function);
-    CreateWorker(_localWorker);
+    CreateWorkerRunner(_localWorker);
   }
 
   /**
@@ -35,7 +35,7 @@ namespace myoddweb::directorywatcher::threads
    */
   Thread::Thread(Worker& worker) : Thread()
   {
-    CreateWorker(&worker);
+    CreateWorkerRunner(&worker);
   }
 
   /**
@@ -92,27 +92,80 @@ namespace myoddweb::directorywatcher::threads
 
 
   /**
-   * \brief create the runner either with future/thread
-   * \param worker the runner that we want to start working with.
+   * \brief if the thread is started or not.
+   * \return if completed or not
    */
-  void Thread::CreateWorker(Worker* worker)
+  bool Thread::Started() const
   {
+    // if the values are null then we are done
+    if (nullptr == _parentWorker)
+    {
+      return false;
+    }
+
     switch (MYODDWEB_WORKER_TYPE)
     {
     case 1:
-      _thread = new std::thread(&Worker::Start, worker);
+      if (nullptr == _thread)
+      {
+        return false;
+      }
       break;
 
     case 2:
-      _future = new std::future<void>( std::async(std::launch::async, &Worker::Start, worker));
+      if (nullptr == _future)
+      {
+        return false;
+      }
       break;
 
     default:
       throw std::exception("Unknown worker type!");
     }
-    
+
+    // otherwise return if the parent is started or not.
+    return _parentWorker->Started();
+  }
+
+  /**
+   * \brief create the runner either with future/thread
+   * \param worker the runner that we want to start working with.
+   */
+  void Thread::CreateWorkerRunner(Worker* worker)
+  {
     // save the parent worker.
     _parentWorker = worker;
+
+    switch (MYODDWEB_WORKER_TYPE)
+    {
+    case 1:
+      _thread = new std::thread(&Thread::Start, this);
+      break;
+
+    case 2:
+      _future = new std::future<void>( std::async(std::launch::async, &Thread::Start, this));
+      break;
+
+    default:
+      throw std::exception("Unknown worker type!");
+    }
+  }
+
+  /**
+   * \brief start running the worker.
+   */
+  void Thread::Start()
+  {
+    // we can now start
+    try
+    {
+      // we can assume we are started
+      _parentWorker->Start();
+    }
+    catch( ... )
+    {
+      
+    }
   }
 
   /**

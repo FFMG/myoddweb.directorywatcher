@@ -68,7 +68,7 @@ namespace myoddweb::directorywatcher::threads
   [[nodiscard]]
   bool Worker::Started() const
   {
-    return Is(State::started);
+    return !Is(State::unknown);
   }
 
   /**
