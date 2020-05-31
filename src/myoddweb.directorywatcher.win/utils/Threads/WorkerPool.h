@@ -141,11 +141,6 @@ namespace myoddweb:: directorywatcher:: threads
 
   protected:
     /**
-     * \brief check if we stop or not.
-     */
-    bool CheckIfMustStop();
-
-    /**
      * \brief called when the worker thread is about to start
      */
     bool OnWorkerStart() override;
@@ -166,6 +161,29 @@ namespace myoddweb:: directorywatcher:: threads
     void OnWorkerEnd() override;
 
   private:
+    /**
+     * \brief check if we stop or not.
+     */
+    bool CanStopWorkerpoolUpdates();
+
+    /**
+     * \brief if the running worker container is empty or not.
+     * \return if we still have running workers or not
+     */
+    bool IsRunningWorkerContainerEmpty();
+
+    /**
+     * \brief if the worker waiting to start container is empty or not.
+     * \return if we still have workers waiting to start or not
+     */
+    bool IsWorkersWaitingToStartContainerEmpty();
+
+    /**
+     * \brief if the threads waiting to end container is empty or not.
+     * \return if we still have threads waiting to end or not
+     */
+    bool IsThreadWaitingToEndContainerEmpty();
+
     /**
      * \brief check if the time has now elapsed.
      * \param givenElapsedTimeMilliseconds the number of ms since the last time we checked.
@@ -188,7 +206,7 @@ namespace myoddweb:: directorywatcher:: threads
      * \param fElapsedTimeMilliseconds the amount of time since the last time we made this call.
      * \return true if we want to continue or false if we want to end the thread
      */
-    bool WorkerUpdate(Worker& worker, float fElapsedTimeMilliseconds);
+    bool WorkerUpdateOnce(Worker& worker, float fElapsedTimeMilliseconds);
 
     /**
      * \brief make a thread safe copy of the running workers.

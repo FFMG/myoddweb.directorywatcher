@@ -112,6 +112,13 @@ namespace myoddweb
         friend WorkerPool;
 
         /**
+         * \brief call the update cycle once only, if we return false the it will be the last one
+         * \param fElapsedTimeMilliseconds the number of ms since the last call.
+         * \return true if we want to continue, false otherwise.
+         */
+        bool WorkerUpdateOnce(float fElapsedTimeMilliseconds);
+
+        /**
          * \brief Check if the current state is the one we are after given one
          * \param state the state we want to check for.
          * \return if the state is the one we are checking
@@ -143,6 +150,12 @@ namespace myoddweb
          * \brief called when stop is called.
          */
         virtual void OnStop() { };
+
+        /**
+         * \brief make sure that all operations are safely completed.
+         *        does not throw an exception
+         */
+        virtual void CompleteAllOperations() noexcept;
       };
     }
   }

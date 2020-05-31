@@ -19,6 +19,8 @@ namespace myoddweb :: directorywatcher :: threads
 
   WorkerPool::~WorkerPool()
   {
+    Worker::CompleteAllOperations();
+
     // wait for the thread to complete.
     if (_thread != nullptr)
     {
@@ -326,7 +328,7 @@ namespace myoddweb :: directorywatcher :: threads
    * \param fElapsedTimeMilliseconds the amount of time since the last time we made this call.
    * \return true if we want to continue or false if we want to end the thread
    */
-  bool WorkerPool::WorkerUpdate(Worker& worker, const float fElapsedTimeMilliseconds)
+  bool WorkerPool::WorkerUpdateOnce(Worker& worker, const float fElapsedTimeMilliseconds)
   {
     //  if we are complete, just remove us and stop processing
     if (worker.Completed())
@@ -338,7 +340,7 @@ namespace myoddweb :: directorywatcher :: threads
 
     // then call the worker update
     // if we return true then we want to continue.
-    if (worker.OnWorkerUpdate(fElapsedTimeMilliseconds))
+    if (worker.WorkerUpdateOnce(fElapsedTimeMilliseconds))
     {
       // this worker is still running
       // so we can add it back to the list of running workers
@@ -402,6 +404,7 @@ namespace myoddweb :: directorywatcher :: threads
 
     // check the ones that are complete and remove them once done.
     auto clone = std::vector<Thread*>();
+    clone.reserve(_threadsWaitingToEnd.size());
     for (auto thread : _threadsWaitingToEnd)
     {
       if( thread->Completed() )
@@ -410,7 +413,7 @@ namespace myoddweb :: directorywatcher :: threads
         delete thread;
         continue;
       }
-      clone.push_back(thread);
+      clone.emplace_back(thread);
     }
 
     // copy the updated thread.
@@ -726,9 +729,8 @@ namespace myoddweb :: directorywatcher :: threads
       // make sure that we have started what needed to be started
       ProcessThreadsAndWorkersWaiting();
 
-      // clone the current running workers.
+      // we have to make sure that all the running workers are stopped.
       const auto runningWorkers = CloneRunningWorkers();
-
       Stop( runningWorkers );
 
       // set the stop flag here.
@@ -844,7 +846,7 @@ namespace myoddweb :: directorywatcher :: threads
       // check if the elapsed time is more than what we want.
       if( !HasElapsed(fElapsedTimeMilliseconds, actualElapsedTimeMilliseconds) )
       {
-        return CheckIfMustStop();
+        return !CanStopWorkerpoolUpdates();
       }
 
       // take all the running workers and remove them from the list
@@ -864,7 +866,7 @@ namespace myoddweb :: directorywatcher :: threads
         runningWorkers.end(),
         [&](auto&& item)
         {
-          if (!WorkerUpdate(*item, actualElapsedTimeMilliseconds))
+          if (!WorkerUpdateOnce(*item, actualElapsedTimeMilliseconds))
           {
             MYODDWEB_LOCK(lock);
 
@@ -879,52 +881,83 @@ namespace myoddweb :: directorywatcher :: threads
       // there is not point in waiting for ever
       if (!checkIfContinueWithNextEvent)
       {
-        return !MustStop();
+        // if we are here then we know we have workers
+        // still active so we don't need to check any further
+        return true;
       }
 
-      // check if we must stop
-      return CheckIfMustStop();
+      // we either had no working workers
+      // or we removed at least one of them
+      // so we need to check all the others.
+      return !CanStopWorkerpoolUpdates();
     }
     catch (...)
     {
       // save the exception
       _exceptions.push_back(std::current_exception());
-      return !MustStop();
+      return !CanStopWorkerpoolUpdates();
     }
+  }
+
+  /**
+ * \brief if the running worker container is empty or not.
+ */
+  bool WorkerPool::IsRunningWorkerContainerEmpty()
+  {
+    // if we have one of more running worker left, then we have to continue
+    MYODDWEB_LOCK(_lockRunningWorkers);
+    return _runningWorkers.empty();
+  }
+
+  /**
+ * \brief if the worker waiting to start container is empty or not.
+ * \return if we still have workers waiting to start or not
+ */
+  bool WorkerPool::IsWorkersWaitingToStartContainerEmpty()
+  {
+    // if we have one or more waiting to start then we have to continiue, (unless told to stop)
+    MYODDWEB_LOCK(_lockWorkersWaitingToStart);
+    return _workersWaitingToStart.empty();
+  }
+
+  /**
+   * \brief if the threads waiting to end container is empty or not.
+   * \return if we still have threads waiting to end or not
+   */
+  bool WorkerPool::IsThreadWaitingToEndContainerEmpty()
+  {
+    MYODDWEB_LOCK(_lockThreadsWaitingToEnd);
+    return _threadsWaitingToEnd.empty();
   }
 
   /**
    * \brief check if we stop or not.
    */
-  bool WorkerPool::CheckIfMustStop()
+  bool WorkerPool::CanStopWorkerpoolUpdates()
   {
-    // if we have one of more running worker left, then we have to continue
-    MYODDWEB_LOCK(_lockRunningWorkers);
-    if (!_runningWorkers.empty())
+    if( !IsRunningWorkerContainerEmpty() )
     {
-      // we still have running workers.
-      return !MustStop();
+      // we still have running workers so we cannot stop.
+      return false;
     }
 
     // if we have one or more waiting to start then we have to continiue, (unless told to stop)
-    MYODDWEB_LOCK(_lockWorkersWaitingToStart);
-    if (!_workersWaitingToStart.empty())
+    if (!IsWorkersWaitingToStartContainerEmpty() )
     {
-      //  we have workers waiting to start
-      return !MustStop();
+      //  we have workers waiting to start so we cannot stop.
+      return false;
     }
 
     // do we have any threads waiting to end?
-    MYODDWEB_LOCK(_lockThreadsWaitingToEnd);
-    if( !_threadsWaitingToEnd.empty() )
+    if( !IsThreadWaitingToEndContainerEmpty() )
     {
-      //  we have workers waiting to end
-      return !MustStop();
+      //  we have workers waiting to end so we cannot stop.
+      return false;
     }
 
-    // we have no running workers and we have no pending worker
+    // we have no running workers, no ending threads and we have no pending worker
     // so we have not more work to do, we can stop
-    return false;
+    return true;
   }
 
   /**
@@ -937,14 +970,12 @@ namespace myoddweb :: directorywatcher :: threads
     try
     {
       // remove all the worker and use the list all at once
-      const auto runningWorkers = RemoveWorkersFromRunningWorkers();
-
-      for (;;)
+      // those will need to be completed now so they have to be removed
+      auto runningWorkers = RemoveWorkersFromRunningWorkers();
+      for (; !runningWorkers.empty();)
       {
-        // assume that all is done
-        auto status = WaitResult::complete;
-
-        // stop and wait all of them 
+        // stop and wait all of them
+        std::vector<Worker*> timeOutWorkers;
         std::recursive_mutex lock;
         std::for_each(
           std::execution::par,
@@ -954,17 +985,17 @@ namespace myoddweb :: directorywatcher :: threads
           {
             // stop this worker and wait
             // we cannot end the workpool until the are done.
-            const auto result = item->StopAndWait(MYODDWEB_WAITFOR_WORKER_COMPLETION);
+            const auto result = StopAndWait(*item, MYODDWEB_WAITFOR_WORKER_COMPLETION);
             if (WaitResult::complete != result)
             {
-              status = result;
+              MYODDWEB_LOCK(lock);
+              timeOutWorkers.push_back( item );
             }
           }
         );
-        if( status == WaitResult::complete )
-        {
-          break;
-        }
+
+        // copy over whatever we might have left.
+        runningWorkers = timeOutWorkers;
       }
     }
     catch (...)

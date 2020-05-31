@@ -17,7 +17,29 @@ namespace myoddweb::directorywatcher::threads
     _timePoint2 = _timePoint1;
   }
 
-  Worker::~Worker() = default;
+  Worker::~Worker()
+  {
+    Worker::CompleteAllOperations();
+  }
+
+  /**
+ * \brief make sure that all operations are safely completed.
+ *        does not throw an exception
+ */
+  void Worker::CompleteAllOperations() noexcept
+  {
+    try
+    {
+      if (_state != State::complete) 
+      {
+        Worker::StopAndWait(-1);
+      }
+    }
+    catch (...)
+    {
+
+    }
+  }
 
   /**
    * \brief Check if the current state is the one we are after given one
@@ -114,13 +136,25 @@ namespace myoddweb::directorywatcher::threads
       MYODDWEB_YIELD();
 
       // then wait for it to complete.
-      if (!Started() || Completed())
+      switch (_state)
       {
-        // stopped already or not ever running
+      case State::unknown:
+      case State::starting:
+      case State::complete:
+        // we have not really started
         return WaitResult::complete;
-      }
 
-      // stop it
+      case State::started:
+      case State::stopping:
+      case State::stopped:
+        // we have to wait for it to complete.
+        break;
+
+      default:
+        throw std::exception("Unknown state!");
+      }
+ 
+      // stop it, (maybe again)
       Stop();
 
       // wait for it
@@ -155,7 +189,7 @@ namespace myoddweb::directorywatcher::threads
       if (!OnWorkerStart())
       {
         // we could not even start, so we are stopped.
-        _state = State::stopped;
+        _state = State::complete;
         return false;
       }
 
@@ -191,24 +225,9 @@ namespace myoddweb::directorywatcher::threads
           // from time to time.
           MYODDWEB_YIELD();
 
-          // were we told to stop?
-          if (Is(State::stopped) || Is(State::complete))
+          // update once only.
+          if( !WorkerUpdateOnce(CalculateElapsedTimeMilliseconds()) )
           {
-            break;
-          }
-
-          // if we are busy stopping ... but not stoped, we do not want to break
-          // out of the loop just yet as we are still busy
-          // but we do not want to call update anymore.
-          if( Is(State::stopping))
-          {
-            continue;
-          }
-
-          // call the dupdate call now.
-          if (!OnWorkerUpdate( CalculateElapsedTimeMilliseconds() ))
-          {
-            // we are done
             break;
           }
         }
@@ -222,6 +241,33 @@ namespace myoddweb::directorywatcher::threads
     {
       _exceptions.push_back(std::current_exception());
     }
+  }
+
+  /**
+   * \brief call the update cycle once only, if we return false the it will be the last one
+   * \param fElapsedTimeMilliseconds the number of ms since the last call.
+   * \return true if we want to continue, false otherwise.
+   */
+  bool Worker::WorkerUpdateOnce(const float fElapsedTimeMilliseconds)
+  {
+    if (Is(State::stopped) || Is(State::complete))
+    {
+      // we have either stopped or the state it complete
+      // we have to break out of the loop.
+      return false;
+    }
+
+    // if we are busy stopping ... but not stoped, we do not want to break
+    // out of the loop just yet as we are still busy
+    // but we do not want to call update anymore.
+    if (Is(State::stopping))
+    {
+      return true;
+    }
+
+    // call the update now.
+    // if it returns false we will break out of the update look.
+    return OnWorkerUpdate( fElapsedTimeMilliseconds);
   }
 
   /**
