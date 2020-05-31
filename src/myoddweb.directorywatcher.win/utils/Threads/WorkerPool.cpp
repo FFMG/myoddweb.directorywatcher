@@ -68,8 +68,10 @@ namespace myoddweb :: directorywatcher :: threads
       // all done
       return status;
     }
-    catch( ... )
+    catch (...)
     {
+      // save the exception
+      _exceptions.push_back(std::current_exception());
       return WaitResult::timeout;
     }
   }
@@ -102,6 +104,8 @@ namespace myoddweb :: directorywatcher :: threads
     }
     catch (...)
     {
+      // save the exception
+      _exceptions.push_back(std::current_exception());
       return WaitResult::timeout;
     }
   }
@@ -141,7 +145,8 @@ namespace myoddweb :: directorywatcher :: threads
     }
     catch (...)
     {
-      // log somewhere
+      // save the exception
+      _exceptions.push_back(std::current_exception());
     }
   }
 
@@ -191,8 +196,10 @@ namespace myoddweb :: directorywatcher :: threads
       // otherwise it means that we didn't complete them all and we timed out.
       return remove.size() == runningWorkers.size() ? WaitResult::complete : WaitResult::timeout;
     }
-    catch( ... )
+    catch (...)
     {
+      // save the exception
+      _exceptions.push_back(std::current_exception());
       return WaitResult::timeout;
     }
   }
@@ -236,6 +243,8 @@ namespace myoddweb :: directorywatcher :: threads
     }
     catch (...)
     {
+      // save the exception
+      _exceptions.push_back(std::current_exception());
       return WaitResult::timeout;
     }
   }
@@ -276,8 +285,10 @@ namespace myoddweb :: directorywatcher :: threads
             return worker.Completed();
           }, timeout) ? WaitResult::complete : WaitResult::timeout;
     }
-    catch( ... )
+    catch (...)
     {
+      // save the exception
+      _exceptions.push_back(std::current_exception());
       return WaitResult::timeout;
     }
   }
@@ -437,18 +448,15 @@ namespace myoddweb :: directorywatcher :: threads
       RemoveWorkersFromRunningWorkers(workers);
 
       // call workend for all of them.
-      std::for_each(
-        workers.begin(),
-        workers.end(),
-        [&](auto&& item)
-        {
-          QueueWorkerEnd(*item);
-        }
-      );
+      for (auto worker : workers)
+      {
+        QueueWorkerEnd(*worker);
+      }
     }
     catch (...)
     {
-      // @todo we need to log this somewhere.
+      // save the exception
+      _exceptions.push_back(std::current_exception());
     }
   }
   #pragma endregion
@@ -638,8 +646,10 @@ namespace myoddweb :: directorywatcher :: threads
           return Completed();
         }, timeout) ? WaitResult::complete : Worker::StopAndWait(timeout);
     }
-    catch ( ... )
+    catch (...)
     {
+      // save the exception
+      _exceptions.push_back(std::current_exception());
       return WaitResult::timeout;
     }
   }
@@ -666,7 +676,8 @@ namespace myoddweb :: directorywatcher :: threads
     }
     catch (...)
     {
-      // @todo we need to log this somewhere.
+      // save the exception
+      _exceptions.push_back(std::current_exception());
     }
   }
 
@@ -692,7 +703,8 @@ namespace myoddweb :: directorywatcher :: threads
     }
     catch (...)
     {
-      // @todo we need to log this somewhere.
+      // save the exception
+      _exceptions.push_back(std::current_exception());
     }
   }
 
@@ -721,7 +733,8 @@ namespace myoddweb :: directorywatcher :: threads
     }
     catch (...)
     {
-      // @todo we need to log this somewhere.
+      // save the exception
+      _exceptions.push_back(std::current_exception());
     }
   }
 
@@ -744,6 +757,8 @@ namespace myoddweb :: directorywatcher :: threads
     }
     catch (...)
     {
+      // save the exception
+      _exceptions.push_back(std::current_exception());
       return false;
     }
   }
@@ -803,6 +818,8 @@ namespace myoddweb :: directorywatcher :: threads
     }
     catch (...)
     {
+      // save the exception
+      _exceptions.push_back(std::current_exception());
       return !MustStop();
     }
   }
@@ -883,7 +900,8 @@ namespace myoddweb :: directorywatcher :: threads
     }
     catch (...)
     {
-      // @todo we need to log this somewhere.
+      // save the exception
+      _exceptions.push_back(std::current_exception());
     }
   }
   #pragma endregion 
