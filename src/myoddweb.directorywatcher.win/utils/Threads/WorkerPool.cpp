@@ -702,12 +702,7 @@ namespace myoddweb :: directorywatcher :: threads
 
       // set the stop flag here.
       // and we want to wait a little for ourself to complete
-      Worker::Stop();
-
-      return Wait::SpinUntil([&]()
-        {
-          return Completed();
-        }, timeout) ? WaitResult::complete : Worker::StopAndWait(timeout);
+      return Worker::StopAndWait( timeout );
     }
     catch (...)
     {

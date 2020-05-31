@@ -32,7 +32,7 @@ namespace myoddweb::directorywatcher::threads
     {
       if (_state != State::complete) 
       {
-        Worker::StopAndWait(-1);
+        StopAndWait(-1);
       }
     }
     catch (...)

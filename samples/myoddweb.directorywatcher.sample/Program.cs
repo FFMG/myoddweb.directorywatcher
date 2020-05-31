@@ -3,12 +3,13 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace myoddweb.directorywatcher.sample
 {
   internal class Program
   {
-    private static void Main()
+    private static async Task Main()
     {
       try
       {
@@ -16,33 +17,47 @@ namespace myoddweb.directorywatcher.sample
         Console.WriteLine("Press Ctrl+C to stop the monitors.");
 
         // start the monitor.
-        using (var watch = new Watcher())
+        for (var i = 0; i < 10; ++i)
         {
-          var drvs = System.IO.DriveInfo.GetDrives();
-          foreach (var drv in drvs)
-          {
-            if (drv.DriveType == System.IO.DriveType.Fixed)
-            {
-              watch.Add(new Request(drv.Name, true));
-            }
-          }
-
-          // prepare the console watcher so we can output pretty messages.
-          var _ = new ConsoleWatch(watch);
-
-          // start watching
-          watch.Start();
-
-          // listen for the Ctrl+C 
-          WaitForCtrlC();
-
-          // stop everything.
-          watch.Stop();
+          await RunWatcherAsync().ConfigureAwait(false);
+          Console.WriteLine("-------------------------------------------------------");
         }
+
+        Console.WriteLine("All done.");
+        Console.WriteLine("Press Ctrl+C to stop to exit.");
+
+        WaitForCtrlC();
       }
       catch (Exception ex)
       {
         WriteException(ex);
+      }
+    }
+
+    private static async Task RunWatcherAsync()
+    {
+      using (var watch = new Watcher())
+      {
+        var drvs = System.IO.DriveInfo.GetDrives();
+        foreach (var drv in drvs)
+        {
+          if (drv.DriveType == System.IO.DriveType.Fixed)
+          {
+            watch.Add(new Request(drv.Name, true));
+          }
+        }
+
+        // prepare the console watcher so we can output pretty messages.
+        var _ = new ConsoleWatch(watch);
+
+        // start watching
+        watch.Start();
+
+        // listen for the Ctrl+C 
+        await Task.Delay(5000).ConfigureAwait(false);
+
+        // stop everything.
+        watch.Stop();
       }
     }
 
