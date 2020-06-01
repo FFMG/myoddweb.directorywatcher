@@ -7,5 +7,10 @@ namespace myoddweb.directorywatcher.interfaces
 {
   public interface IWatcher3 : IWatcher2, IDisposable
   {
+    /// <summary>
+    /// If the watcher is ready or not.
+    /// </summary>
+    /// <returns></returns>
+    bool Ready();
   }
 }

@@ -28,6 +28,10 @@ namespace myoddweb.directorywatcher.utils.Helper
     [return: MarshalAs(UnmanagedType.Bool)]
     public delegate bool Stop([In, MarshalAs(UnmanagedType.U8)] Int64 id);
 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public delegate bool Ready();
+
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     public delegate int Callback(
       [MarshalAs(UnmanagedType.I8)] long id,

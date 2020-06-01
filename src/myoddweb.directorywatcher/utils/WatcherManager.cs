@@ -235,6 +235,8 @@ namespace myoddweb.directorywatcher.utils
     public abstract bool Stop(long id);
 
     public abstract long GetEvents(long id, out IList<IEvent> events);
+
+    public abstract bool Ready();
     #endregion
   }
 }

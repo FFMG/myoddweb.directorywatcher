@@ -150,6 +150,11 @@ namespace myoddweb.directorywatcher.utils
     {
       return _helper.Stop( id );
     }
+
+    public override bool Ready()
+    {
+      return _helper.Ready();
+    }
     #endregion
   }
 }

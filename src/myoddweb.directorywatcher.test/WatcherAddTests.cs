@@ -37,6 +37,10 @@ namespace myoddweb.directorywatcher.test
             return Task.CompletedTask;
           };
         watcher.Start();
+
+        //we then need to wait a bit for all the workers to have started.
+        SpinWait.SpinUntil(() => watcher.Ready() );
+
         for (var i = 0; i < numberToAdd; ++i)
         {
           // create an empty file
@@ -45,7 +49,7 @@ namespace myoddweb.directorywatcher.test
         }
 
         // give a bit of time
-        _ = SpinWait.SpinUntil( () => numberAdded >= numberToAdd, numberToAdd * 1000 );
+        SpinWait.SpinUntil( () => numberAdded >= numberToAdd, numberToAdd * 1000 );
       }
       Assert.AreEqual(numberToAdd, numberAdded);
     }
