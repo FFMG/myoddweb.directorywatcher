@@ -75,9 +75,9 @@ namespace myoddweb::directorywatcher
   }
 
 #pragma region Woker functions
-  void MultipleWinMonitor::OnStop()
+  void MultipleWinMonitor::OnWorkerStop()
   {
-    Monitor::OnStop();
+    Monitor::OnWorkerStop();
 
     // stop the parents
     Stop(_nonRecursiveParents);
@@ -364,7 +364,7 @@ namespace myoddweb::directorywatcher
   void MultipleWinMonitor::Stop(std::vector<Monitor*>& container) const
   {
     MYODDWEB_PROFILE_FUNCTION();
-    WorkerPool().Stop( {container.begin(), container.end()});
+    WorkerPool().StopWorkers( {container.begin(), container.end()});
   }
 
   /**

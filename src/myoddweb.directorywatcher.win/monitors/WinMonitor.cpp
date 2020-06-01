@@ -81,10 +81,10 @@ namespace myoddweb:: directorywatcher
     //  nothing to do
   }
 
-  void WinMonitor::OnStop()
+  void WinMonitor::OnWorkerStop()
   {
     // we can now stop us.
-    Monitor::OnStop();
+    Monitor::OnWorkerStop();
 
     // stop the files and directory
     if (_directories != nullptr)

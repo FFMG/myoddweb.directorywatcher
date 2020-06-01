@@ -26,7 +26,7 @@ namespace myoddweb
       [[nodiscard]]
       const long long& ParentId() const override;
 
-      void OnStop() override;
+      void OnWorkerStop() override;
 
     protected:
       /**

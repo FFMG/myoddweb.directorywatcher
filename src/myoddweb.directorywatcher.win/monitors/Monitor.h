@@ -73,7 +73,7 @@ namespace myoddweb
       /**
        * \brief stop the worker
        */
-      void OnStop() override;
+      void OnWorkerStop() override;
 
       /**
        * \brief Give the worker a chance to do something in the loop

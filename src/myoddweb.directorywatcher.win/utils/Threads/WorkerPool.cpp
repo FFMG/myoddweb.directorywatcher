@@ -74,7 +74,7 @@ namespace myoddweb :: directorywatcher :: threads
     catch (...)
     {
       // save the exception
-      _exceptions.push_back(std::current_exception());
+      SaveCurrentException();
       return WaitResult::timeout;
     }
   }
@@ -108,7 +108,7 @@ namespace myoddweb :: directorywatcher :: threads
     catch (...)
     {
       // save the exception
-      _exceptions.push_back(std::current_exception());
+      SaveCurrentException();
       return WaitResult::timeout;
     }
   }
@@ -149,7 +149,7 @@ namespace myoddweb :: directorywatcher :: threads
     catch (...)
     {
       // save the exception
-      _exceptions.push_back(std::current_exception());
+      SaveCurrentException();
     }
   }
 
@@ -202,7 +202,7 @@ namespace myoddweb :: directorywatcher :: threads
     catch (...)
     {
       // save the exception
-      _exceptions.push_back(std::current_exception());
+      SaveCurrentException();
       return WaitResult::timeout;
     }
   }
@@ -247,7 +247,7 @@ namespace myoddweb :: directorywatcher :: threads
     catch (...)
     {
       // save the exception
-      _exceptions.push_back(std::current_exception());
+      SaveCurrentException();
       return WaitResult::timeout;
     }
   }
@@ -291,7 +291,7 @@ namespace myoddweb :: directorywatcher :: threads
     catch (...)
     {
       // save the exception
-      _exceptions.push_back(std::current_exception());
+      SaveCurrentException();
       return WaitResult::timeout;
     }
   }
@@ -503,7 +503,7 @@ namespace myoddweb :: directorywatcher :: threads
     catch (...)
     {
       // save the exception
-      _exceptions.push_back(std::current_exception());
+      SaveCurrentException();
     }
   }
   #pragma endregion
@@ -728,7 +728,7 @@ namespace myoddweb :: directorywatcher :: threads
     catch (...)
     {
       // save the exception
-      _exceptions.push_back(std::current_exception());
+      SaveCurrentException();
       return WaitResult::timeout;
     }
   }
@@ -736,7 +736,7 @@ namespace myoddweb :: directorywatcher :: threads
   /**
    * \brief non blocking call to instruct the thread to stop.
    */
-  void WorkerPool::OnStop()
+  void WorkerPool::OnWorkerStop()
   {
     MYODDWEB_PROFILE_FUNCTION();
     // tell everybody to stop
@@ -747,15 +747,12 @@ namespace myoddweb :: directorywatcher :: threads
 
       // we have to make sure that all the running workers are stopped.
       const auto runningWorkers = CloneRunningWorkers();
-      Stop( runningWorkers );
-
-      // set the stop flag here.
-      Worker::OnStop();
+      StopWorkers( runningWorkers );
     }
     catch (...)
     {
       // save the exception
-      _exceptions.push_back(std::current_exception());
+      SaveCurrentException();
     }
   }
 
@@ -763,7 +760,7 @@ namespace myoddweb :: directorywatcher :: threads
    * \brief stop multiple workers
    * \param workers the workers we are waiting for.
    */
-  void WorkerPool::Stop(const std::vector<Worker*>& workers)
+  void WorkerPool::StopWorkers(const std::vector<Worker*>& workers)
   {
     MYODDWEB_PROFILE_FUNCTION();
     // tell everybody to stop
@@ -776,13 +773,13 @@ namespace myoddweb :: directorywatcher :: threads
       // the stop function is non blocking.
       for( auto worker : workers )
       {
-        Stop( *worker );
+        StopWorker( *worker );
       }
     }
     catch (...)
     {
       // save the exception
-      _exceptions.push_back(std::current_exception());
+      SaveCurrentException();
     }
   }
 
@@ -790,7 +787,7 @@ namespace myoddweb :: directorywatcher :: threads
    * \brief non blocking call to instruct the a single worker to stop
    * \param worker the worker we wish to stop.
    */
-  void WorkerPool::Stop(Worker& worker)
+  void WorkerPool::StopWorker(Worker& worker)
   {
     MYODDWEB_PROFILE_FUNCTION();
     // tell everybody to stop
@@ -812,7 +809,7 @@ namespace myoddweb :: directorywatcher :: threads
     catch (...)
     {
       // save the exception
-      _exceptions.push_back(std::current_exception());
+      SaveCurrentException();
     }
   }
 
@@ -836,7 +833,7 @@ namespace myoddweb :: directorywatcher :: threads
     catch (...)
     {
       // save the exception
-      _exceptions.push_back(std::current_exception());
+      SaveCurrentException();
       return false;
     }
   }
@@ -910,7 +907,7 @@ namespace myoddweb :: directorywatcher :: threads
     catch (...)
     {
       // save the exception
-      _exceptions.push_back(std::current_exception());
+      SaveCurrentException();
       return !CanStopWorkerpoolUpdates();
     }
   }
@@ -1017,7 +1014,7 @@ namespace myoddweb :: directorywatcher :: threads
     catch (...)
     {
       // save the exception
-      _exceptions.push_back(std::current_exception());
+      SaveCurrentException();
     }
   }
   #pragma endregion 

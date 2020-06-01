@@ -68,7 +68,7 @@ namespace myoddweb::directorywatcher::threads
   [[nodiscard]]
   bool Worker::Started() const
   {
-    return !Is(State::unknown);
+    return !Is(State::unknown) && !Completed();
   }
 
   /**
@@ -88,6 +88,15 @@ namespace myoddweb::directorywatcher::threads
   {
     MYODDWEB_PROFILE_FUNCTION();
 
+    // if the state is unknown it means we never even started
+    // there is nothing for us to do here.
+    if (Is(State::unknown))
+    {
+      // we are done
+      _state = State::complete;
+      return;
+    }
+
     // was it called already?
     // or are we trying to cal it after we are all done?
     if(Is(State::stopped) || Is(State::stopping) || Is(State::complete ))
@@ -99,7 +108,7 @@ namespace myoddweb::directorywatcher::threads
     _state = State::stopping;
 
     // call the derived function
-    OnStop();
+    OnWorkerStop();
 
     // we are done
     _state = State::stopped;
@@ -203,7 +212,7 @@ namespace myoddweb::directorywatcher::threads
     }
     catch (...)
     {
-      _exceptions.push_back(std::current_exception());
+      SaveCurrentException();
       return false;
     }
   }
@@ -233,13 +242,13 @@ namespace myoddweb::directorywatcher::threads
         }
         catch( ... )
         {
-          _exceptions.push_back(std::current_exception());
+          SaveCurrentException();
         }
       }
     }
     catch (...)
     {
-      _exceptions.push_back(std::current_exception());
+      SaveCurrentException();
     }
   }
 
@@ -313,11 +322,20 @@ namespace myoddweb::directorywatcher::threads
     }
     catch (...)
     {
-      _exceptions.push_back(std::current_exception());
+      SaveCurrentException();
     }
 
     // whatever happens, we have now completed
     // nothing else can happen after this.
     _state = State::complete;
+  }
+
+  /**
+   * \brief save the current exception
+   */
+  void Worker::SaveCurrentException()
+  {
+    // log the error
+    // const auto ptr = std::current_exception();
   }
 }

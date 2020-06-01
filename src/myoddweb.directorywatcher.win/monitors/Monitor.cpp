@@ -170,10 +170,9 @@ namespace myoddweb:: directorywatcher
   /**
    * \brief stop the worker
    */
-  void Monitor::OnStop()
+  void Monitor::OnWorkerStop()
   {
-    // we can now stop us.
-    Worker::OnStop();
+    // nothing to do here
   }
 
   /**

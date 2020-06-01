@@ -3,9 +3,9 @@
 #include "../myoddweb.directorywatcher.win/utils/Threads/Worker.h"
 #include "../myoddweb.directorywatcher.win/utils/Wait.h"
 #include "MonitorsManagerTestHelper.h"
+#include "WorkerHelper.h"
 
 using myoddweb::directorywatcher::threads::WorkerPool;
-using myoddweb::directorywatcher::threads::Worker;
 using myoddweb::directorywatcher::Wait;
 
 TEST(WorkPool, DefaultValues) {
@@ -19,44 +19,10 @@ TEST(WorkPool, DefaultValues) {
   }
 }
 
-class TestWorker final : public ::Worker
-{
-public:
-  const int _maxUpdate = 0;
-  int _updateCalled = 0;
-  int _startCalled = 0;
-  int _endCalled = 0;
-  int _stop = 0;
-
-  TestWorker( const int maxUpdate = 5) :
-    _maxUpdate( maxUpdate )
-  {
-  }
-
-  void OnStop() override { ++_stop; }
-  bool OnWorkerStart() override
-  {
-    ++_startCalled;
-    return true;
-  }
-  void OnWorkerEnd() override
-  {
-    ++_endCalled;
-  }
-  bool OnWorkerUpdate(float fElapsedTimeMilliseconds) override
-  {
-    if( _stop > 0 )
-    {
-      return false;
-    }
-    return ++_updateCalled < _maxUpdate;
-  }
-};
-
 TEST(WorkPool, StartIsCalledExactlyOnce) {
   {
-    auto worker1 = TestWorker();
-    auto worker2 = TestWorker();
+    auto worker1 = TestWorker(1);
+    auto worker2 = TestWorker(1);
     auto pool = ::WorkerPool(10);
     pool.Add(worker1);
     pool.Add(worker2);
@@ -72,8 +38,8 @@ TEST(WorkPool, StartIsCalledExactlyOnce) {
 
 TEST(WorkPool, EndIsCalledExactlyOnce) {
   {
-    auto worker1 = TestWorker();
-    auto worker2 = TestWorker();
+    auto worker1 = TestWorker(1);
+    auto worker2 = TestWorker(1);
     auto pool = ::WorkerPool(10);
     pool.Add(worker1);
     pool.Add(worker2);
@@ -112,24 +78,23 @@ TEST(WorkPool, NumberOfTimesUpdatesIsCalled) {
   }
 }
 
-TEST(WorkPool, WaitingForAWorkerThatIsNotOurs) {
-  {
-    auto worker1 = TestWorker(5);
-    auto worker2 = TestWorker(1);
+TEST(WorkPool, WaitingForAWorkerThatIsNotOurs)
+{
+  auto worker1 = TestWorker(5);
+  auto worker2 = TestWorker(1);
 
-    auto pool = ::WorkerPool(10);
-    pool.Add(worker1);
+  auto pool = ::WorkerPool(10);
+  pool.Add(worker1);
 
-    // we are not going to stop it
-    // we just waiting for it to complete.
-    const auto status = pool.WaitFor(worker2, 10000);
+  // we are not going to stop it
+  // we just waiting for it to complete.
+  const auto status = pool.WaitFor(worker2, 10000);
 
-    EXPECT_EQ(myoddweb::directorywatcher::threads::WaitResult::complete, status);
-    EXPECT_EQ(1, worker1._startCalled);
+  EXPECT_EQ(myoddweb::directorywatcher::threads::WaitResult::complete, status);
+  EXPECT_EQ(1, worker1._startCalled);
 
-    // but our start was never called.
-    EXPECT_EQ(0, worker2._startCalled);
-  }
+  // but our start was never called.
+  EXPECT_EQ(0, worker2._startCalled);
 }
 
 TEST(WorkPool, WaitUntiWhenNoWorker ) {
@@ -189,4 +154,33 @@ TEST(WorkPool, StopAndWait) {
     EXPECT_EQ(1, worker1._endCalled);
     EXPECT_EQ(1, worker2._endCalled);
   }
+}
+
+TEST(WorkPool, CheckHasStarted)
+{
+  auto worker1 = TestWorker(5);
+  auto worker2 = TestWorker(1);
+
+  auto pool = ::WorkerPool(10);
+  pool.Add(worker1);
+
+  // probably has not started
+  EXPECT_FALSE(pool.Started());
+
+  // wait a little
+  if( !Wait::SpinUntil( [&]
+  {
+    return pool.Started();
+  }, TEST_TIMEOUT))
+  {
+    GTEST_FATAL_FAILURE_("Unable to start pool");
+  }
+
+  // just complete the test.
+  if( myoddweb::directorywatcher::threads::WaitResult::complete != pool.StopAndWait(TEST_TIMEOUT) )
+  {
+    GTEST_FATAL_FAILURE_("Unable to complete pool");
+  }
+
+  EXPECT_FALSE(pool.Started());
 }

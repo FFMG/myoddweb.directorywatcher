@@ -103,19 +103,19 @@ namespace myoddweb:: directorywatcher:: threads
     /**
      * \brief non blocking call to instruct the thread to stop.
      */
-    void OnStop() override;
+    void OnWorkerStop() override;
 
     /**
      * \brief stop one of the worker
      * \param worker the worker we are waiting for.
      */
-    void Stop( Worker& worker );
+    void StopWorker( Worker& worker );
 
     /**
      * \brief stop multiple workers
      * \param workers the workers we are waiting for.
      */
-    void Stop( const std::vector<Worker*>& workers);
+    void StopWorkers( const std::vector<Worker*>& workers);
 
     /**
      * \brief stop the running workers and wait

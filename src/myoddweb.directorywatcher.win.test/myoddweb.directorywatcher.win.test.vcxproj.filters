@@ -68,6 +68,7 @@
     <ClCompile Include="..\myoddweb.directorywatcher.win\monitors\EventsPublisher.cpp">
       <Filter>win\monitors</Filter>
     </ClCompile>
+    <ClCompile Include="WorkerTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -153,6 +154,7 @@
     <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\EventsPublisher.h">
       <Filter>win\monitors</Filter>
     </ClInclude>
+    <ClInclude Include="WorkerHelper.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="win">
