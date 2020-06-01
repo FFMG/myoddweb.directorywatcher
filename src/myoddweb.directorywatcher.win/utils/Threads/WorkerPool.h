@@ -57,10 +57,11 @@ namespace myoddweb:: directorywatcher:: threads
   public:
     WorkerPool(const WorkerPool&) = delete;
     WorkerPool(WorkerPool&&) = delete;
+    WorkerPool() = delete;
     const WorkerPool& operator=(const WorkerPool&) = delete;
     const WorkerPool& operator=(const WorkerPool&&) = delete;
 
-    WorkerPool(long long throttleElapsedTimeMilliseconds);
+    explicit WorkerPool(long long throttleElapsedTimeMilliseconds);
     virtual ~WorkerPool();
 
     /**
