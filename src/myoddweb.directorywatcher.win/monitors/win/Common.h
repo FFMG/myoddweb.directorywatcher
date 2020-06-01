@@ -33,12 +33,9 @@ namespace myoddweb
         virtual ~Common();
 
         bool Start();
-        void Update();
+        void Update() const;
         void Stop();
       protected:
-        // invalid handle wait
-        int _invalidHandleWait;
-
         /**
          * \brief Get the notification filter.
          * \return the notification filter
@@ -49,12 +46,13 @@ namespace myoddweb
         void DataCallbackFunction(unsigned char* pBufferBk) const;
 
       private:
-        void ProcessNotificationFromBackup(const unsigned char* pBuffer) const;
-
         /**
-         * \brief send a request for the data class to read for a single file change.
+         * \brief start monitoring the given folder.
+         * \return if we managed to start the monitoring or not.
          */
-        void Read() const;
+        bool CreateAndStartData();
+
+        void ProcessNotificationFromBackup(const unsigned char* pBuffer) const;
 
         /**
          * \brief all the data used by the monitor.

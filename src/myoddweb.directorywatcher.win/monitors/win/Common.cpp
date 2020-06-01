@@ -16,7 +16,6 @@ namespace myoddweb ::directorywatcher :: win
     Monitor& parent,
     const unsigned long bufferLength
   ) :
-      _invalidHandleWait(0),
       _data(nullptr),
       _parent(parent),
       _bufferLength(bufferLength),
@@ -27,6 +26,11 @@ namespace myoddweb ::directorywatcher :: win
   Common::~Common() = default;
 
   bool Common::Start()
+  {
+    return CreateAndStartData();
+  }
+
+  bool Common::CreateAndStartData()
   {
     // create the function
     _function = new Data::DataCallbackFunction(std::bind(&Common::DataCallbackFunction, this, std::placeholders::_1));
@@ -39,24 +43,11 @@ namespace myoddweb ::directorywatcher :: win
     // create the data
     _data = new Data(_parent, notifyFilter, _parent.Recursive(), *_function, _bufferLength);
 
-    // try and open the directory
-    // if it is open already then nothing should happen here.
-    if (!_data->Open())
-    {
-      // we could not access this
-      _parent.AddEventError(EventError::Access);
-      return false;
-    }
-
-    // reset the handle wait.
-    _invalidHandleWait = 0;
-
-    // start reading.
-    Read();
-    return true;
+    // then start monitoring
+    return _data->StartMonitoring();
   }
 
-  void Common::Update()
+  void Common::Update() const
   {
     // check if we have stoped
     if( nullptr == _data)
@@ -64,28 +55,8 @@ namespace myoddweb ::directorywatcher :: win
       return;
     }
 
-    if (!_data->IsValidHandle())
-    {
-      // wait a little bit longer.
-      _invalidHandleWait += MYODDWEB_MIN_THREAD_SLEEP;
-      if (_invalidHandleWait >= MYODDWEB_INVALID_HANDLE_SLEEP)
-      {
-        // reset the wait time.
-        _invalidHandleWait = 0;
-
-        // try to re-open
-        if (_data->TryReopen())
-        {
-          // try to read.
-          Read();
-        }
-      }
-    }
-    else
-    {
-      // The handle is good, so we can reset the value
-      _invalidHandleWait = 0;
-    }
+    // ensure that the data is still valid
+    _data->CheckStillValid();
   }
 
   /**
@@ -96,7 +67,7 @@ namespace myoddweb ::directorywatcher :: win
     if (nullptr != _data)
     {
       // if we are here... we can release the data
-      _data->Close();
+      _data->StopMonitoring();
     }
 
     // clear the data.
@@ -108,28 +79,6 @@ namespace myoddweb ::directorywatcher :: win
     _function = nullptr;
   }
 
-  /**
-   * \brief Start the read process
-   */
-  void Common::Read() const
-  {
-    MYODDWEB_PROFILE_FUNCTION();
-
-    if (!_data->IsValidHandle())
-    {
-      return;
-    }
-
-    // start the read now.
-    if (!_data->Start())
-    {
-      // we could not create the monitoring
-      // so we might as well get out now.
-      _parent.AddEventError(EventError::Access);
-      _data->Close();
-    }
-  }
-
   /***
    * \brief The async callback function for ReadDirectoryChangesW
    */
@@ -137,22 +86,9 @@ namespace myoddweb ::directorywatcher :: win
   {
     MYODDWEB_PROFILE_FUNCTION();
 
-    // Get the new read issued as fast as possible. The documentation
-    // says that the original OVERLAPPED structure will not be used
-    // again once the completion routine is called.
-    Read();
-
-    // If the buffer overflows, the entire contents of the buffer are discarded, 
-    // the lpBytesReturned parameter contains zero, and the ReadDirectoryChangesW function 
-    // fails with the error code ERROR_NOTIFY_ENUM_DIR.
-    if (nullptr == pBufferBk)
-    {
-      return;
-    }
-
     // we cloned the data and restarted the read
     // so we can now process the data
-    // @todo this should be moved to a thread.
+    // @todo this should be moved to the worker pool.
     ProcessNotificationFromBackup(pBufferBk);
   }
 
