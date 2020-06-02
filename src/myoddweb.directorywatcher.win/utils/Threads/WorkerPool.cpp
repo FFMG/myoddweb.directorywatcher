@@ -399,7 +399,7 @@ namespace myoddweb :: directorywatcher :: threads
         return _thread->Started();
       }, MYODDWEB_WAITFOR_WORKER_COMPLETION ) )
       {
-        MYODDWEB_OUT("Unable to start Thread!");
+        MYODDWEB_OUT("Unable to start Thread!\n");
         return;
       }
     }
@@ -563,6 +563,27 @@ namespace myoddweb :: directorywatcher :: threads
       RemoveWorker(_runningWorkers, *worker);
     }
     return std::vector<Worker*>(workers);
+  }
+
+  /**
+   * \brief remove all the threads that are waiting to end.
+   *        we will obtain the lock to remove this items.
+   * \return the list of items removed.
+   */
+  std::vector<Thread*> WorkerPool::RemoveThreadsFromWorkersWaitingToEnd()
+  {
+    MYODDWEB_LOCK(_lockThreadsWaitingToEnd);
+
+    // copy the list
+    const auto clone = _threadsWaitingToEnd;
+
+    // clear that list
+    // we do not want to use `shrink_to_fit` as the reserved value
+    // will probably be reused.
+    _threadsWaitingToEnd.clear();
+
+    // return the copy of the list.
+    return clone;
   }
 
   /**
@@ -870,7 +891,6 @@ namespace myoddweb :: directorywatcher :: threads
       // unless of course we have no running worker left
       // then in that case we will need to check
       auto checkIfContinueWithNextEvent = runningWorkers.empty();
-      std::recursive_mutex lock;
 
       // send an update for all of them at the same time
       std::for_each(
@@ -881,9 +901,9 @@ namespace myoddweb :: directorywatcher :: threads
         {
           if (!WorkerUpdateOnce(*item, actualElapsedTimeMilliseconds))
           {
-            MYODDWEB_LOCK(lock);
-
             // on of them stopped, so we need to check if we need to stop or not.
+            // boolean assignments are atomic so we do not need a lock
+            // by the time we read the data no threads will be updating it.
             checkIfContinueWithNextEvent = true;
           }
         }
@@ -982,39 +1002,103 @@ namespace myoddweb :: directorywatcher :: threads
     MYODDWEB_PROFILE_FUNCTION();
     try
     {
-      // remove all the worker and use the list all at once
-      // those will need to be completed now so they have to be removed
-      auto runningWorkers = RemoveWorkersFromRunningWorkers();
-      for (; !runningWorkers.empty();)
-      {
-        // stop and wait all of them
-        std::vector<Worker*> timeOutWorkers;
-        std::recursive_mutex lock;
-        std::for_each(
-          std::execution::par,
-          runningWorkers.begin(),
-          runningWorkers.end(),
-          [&](auto&& item)
-          {
-            // stop this worker and wait
-            // we cannot end the workpool until the are done.
-            const auto result = StopAndWait(*item, MYODDWEB_WAITFOR_WORKER_COMPLETION);
-            if (WaitResult::complete != result)
-            {
-              MYODDWEB_LOCK(lock);
-              timeOutWorkers.push_back( item );
-            }
-          }
-        );
+      // finish all the work of the running workers.
+      WorkerEndRunningWorkers();
 
-        // copy over whatever we might have left.
-        runningWorkers = timeOutWorkers;
-      }
+      // finally we have to wait for all the worker threads to complete
+      WorkerEndThreadsWaitingToEnd();
     }
     catch (...)
     {
       // save the exception
       SaveCurrentException();
+    }
+  }
+
+  /**
+   * \brief complete all the running workers
+   */
+  void WorkerPool::WorkerEndRunningWorkers()
+  {
+    // remove all the worker and use the list all at once
+    // those will need to be completed now so they have to be removed
+    auto runningWorkers = RemoveWorkersFromRunningWorkers();
+    for (; !runningWorkers.empty();)
+    {
+MYODDWEB_OUT("Some running workers\n");
+      // stop and wait all of them
+      std::vector<Worker*> timeOutWorkers;
+      std::recursive_mutex lock;
+      std::for_each(
+        std::execution::par,
+        runningWorkers.begin(),
+        runningWorkers.end(),
+        [&](auto&& item)
+        {
+          // stop this worker and wait
+          // we cannot end the workpool until the are done.
+          const auto result = StopAndWait(*item, MYODDWEB_WAITFOR_WORKER_COMPLETION);
+          if (WaitResult::complete != result)
+          {
+            MYODDWEB_LOCK(lock);
+            timeOutWorkers.push_back(item);
+          }
+        }
+      );
+
+      // copy over whatever we might have left.
+      // so we can wait for them to complete.
+      runningWorkers = timeOutWorkers;
+
+      // then also add what new workers might have now arrived.
+      const auto newRunningWorkers = RemoveWorkersFromRunningWorkers();
+      runningWorkers.insert(runningWorkers.end(), newRunningWorkers.begin(), newRunningWorkers.end());
+    }
+  }
+
+  /**
+   * \brief complete all the end threads.
+   */
+  void WorkerPool::WorkerEndThreadsWaitingToEnd()
+  {
+    // remove all the worker and use the list all at once
+    // those will need to be completed now so they have to be removed
+    auto runningThreads = RemoveThreadsFromWorkersWaitingToEnd();
+    for (; !runningThreads.empty();)
+    {
+MYODDWEB_OUT("Some running threads\n");
+      // stop and wait all of them
+      std::vector<Thread*> timeOutWorkers;
+      std::recursive_mutex lock;
+      std::for_each(
+        std::execution::par,
+        runningThreads.begin(),
+        runningThreads.end(),
+        [&](auto&& item)
+        {
+          // stop this worker and wait
+          // we cannot end the workpool until the are done.
+          const auto result = item->WaitFor( MYODDWEB_WAITFOR_WORKER_COMPLETION);
+          if (WaitResult::complete != result)
+          {
+            MYODDWEB_LOCK(lock);
+            timeOutWorkers.push_back(item);
+          }
+          else
+          {
+            // this item is complete and can now be deletd.
+            delete item;
+          }
+        }
+      );
+
+      // copy over whatever we might have left.
+      // so we can wait for them to complete.
+      runningThreads = timeOutWorkers;
+
+      // then also add what new workers might have now arrived.
+      const auto newRunningThreads = RemoveThreadsFromWorkersWaitingToEnd();
+      runningThreads.insert(runningThreads.end(), newRunningThreads.begin(), newRunningThreads.end());
     }
   }
   #pragma endregion 
