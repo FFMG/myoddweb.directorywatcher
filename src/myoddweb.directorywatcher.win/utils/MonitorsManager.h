@@ -31,6 +31,12 @@ namespace myoddweb
        * \return if we managed to remove it or not.
        */
       static bool Stop(long long id);
+
+      /**
+       * \brief If the monitor manager is ready or not.
+       * \return if it is ready or not.
+       */
+      static bool Ready();
       
     protected:
       /**

@@ -7,6 +7,7 @@ Notable changes
 ### Added
 
 - Added worker pool to [limit the number thread](https://github.com/FFMG/myoddweb.directorywatcher/issues/8)
+- Added `Ready()` to interface so we can ask if/when the system is ready to monitor files/folders.
 
 ### Changed
 

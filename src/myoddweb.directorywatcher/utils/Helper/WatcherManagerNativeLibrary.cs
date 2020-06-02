@@ -7,6 +7,11 @@ namespace myoddweb.directorywatcher.utils.Helper
   internal class WatcherManagerNativeLibrary
   {
     /// <summary>
+    /// If the watch manager is ready or not.
+    /// </summary>
+    private Delegates.Ready _ready;
+
+    /// <summary>
     /// The delegate to start a request.
     /// </summary>
     private Delegates.Start _start;
@@ -33,13 +38,9 @@ namespace myoddweb.directorywatcher.utils.Helper
       {
         throw new ArgumentNullException(nameof(library));
       }
-      if (callback == null)
-      {
-        throw new ArgumentNullException(nameof(callback));
-      }
 
       _handle = CreatePtrFromFileSystem( library );
-      _callback = callback;
+      _callback = callback ?? throw new ArgumentNullException(nameof(callback));
     }
 
     ~WatcherManagerNativeLibrary()
@@ -109,6 +110,15 @@ namespace myoddweb.directorywatcher.utils.Helper
         _stop = Get<Delegates.Stop>("Stop");
       }
       return _stop(id);
+    }
+
+    public bool Ready()
+    {
+      if (_ready == null)
+      {
+        _ready = Get<Delegates.Ready>("Ready");
+      }
+      return _ready();
     }
   }
 }

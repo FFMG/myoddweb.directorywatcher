@@ -85,6 +85,42 @@ namespace myoddweb
     }
 
     /**
+     * \brief If the monitor manager is ready or not.
+     * \return if it is ready or not.
+     */
+    bool MonitorsManager::Ready()
+    {
+      MYODDWEB_PROFILE_FUNCTION();
+      MYODDWEB_LOCK(_lock);
+
+      // if we do not have an instance... then we have nothing.
+      if (_instance == nullptr)
+      {
+        return false;
+      }
+
+      // if we have no worker pool ... we have nothing.
+      if( _instance->_workersPool == nullptr || !_instance->_workersPool->Started() )
+      {
+        return false;
+      }
+
+      // yield once
+      MYODDWEB_YIELD();
+
+      for( const auto monitor : Instance()->_monitors )
+      {
+        if( !monitor.second->Started() )
+        {
+          return false;
+        }
+      }
+
+      // if we are here they are all ready
+      return true;
+    }
+
+    /**
      * \brief Try and remove a monitror by id
      * \param id the id of the monitor we want to stop
      * \return if we managed to remove it or not.

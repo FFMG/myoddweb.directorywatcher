@@ -245,6 +245,30 @@ namespace myoddweb.directorywatcher
     }
 
     /// <inheritdoc />
+    public bool Ready()
+    {
+      // we cannot check what has been disposed.
+      CheckDisposed();
+
+      try
+      {
+        // do we have anything to do ... or are we even able to work?
+        return _watcherManager?.Ready() ?? false;
+      }
+      finally
+      {
+        // regadless what happned we have now started
+        // in case the user calls start before adding anything at all.
+
+        // flag that this has started.
+        _started = true;
+
+        // cancel the task
+        _eventsSource = new CancellationTokenSource();
+      }
+    }
+
+    /// <inheritdoc />
     public bool Start()
     {
       // we cannot start what has been disposed.
