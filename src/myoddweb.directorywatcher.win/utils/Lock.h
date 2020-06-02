@@ -4,13 +4,11 @@
 #pragma once
 #include <mutex>
 
-#include "../monitors/Base.h"
-
 namespace myoddweb
 {
   namespace directorywatcher
   {
-#ifdef _DEBUG
+#if MYODDWEB_DEBUG_LOG
     class Lock
 #else
     class Lock final
@@ -18,7 +16,18 @@ namespace myoddweb
     {
     public:
       explicit Lock(std::recursive_mutex& lock);
+
+#if MYODDWEB_DEBUG_LOG
       virtual ~Lock();
+#else
+      ~Lock(); 
+#endif
+
+      Lock() = delete;
+      Lock(const Lock&) = delete;
+      Lock(Lock&&) = delete;
+      const Lock& operator=(const Lock&) = delete;
+      Lock& operator=(const Lock&&) = delete;
 
     private:
       std::recursive_mutex& _lock;
@@ -39,6 +48,11 @@ namespace myoddweb
 #endif // DEBUG
   
 #if MYODDWEB_DEBUG_LOG
+  #if !defined(_DEBUG)
+    #error "You cannot use debug log in release mode!"
+  #endif
+
+  #include "../monitors/Base.h"
   #include <utility>
   #include "windows.h"
   #include <debugapi.h>

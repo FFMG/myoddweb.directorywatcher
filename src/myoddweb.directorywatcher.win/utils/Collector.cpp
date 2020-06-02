@@ -6,6 +6,7 @@
 #include "Lock.h"
 #include "Io.h"
 #include "Instrumentor.h"
+#include "../monitors/Base.h"
 
 namespace myoddweb:: directorywatcher
 {
