@@ -24,6 +24,7 @@ namespace myoddweb:: directorywatcher:: threads
      */
     float _elapsedTimeMilliseconds = 0;
 
+    #pragma region Locks
     /**
      * \brief the lock for the running workers.
      */
@@ -38,7 +39,9 @@ namespace myoddweb:: directorywatcher:: threads
      * \brief lock for the workers that are waiting to end
      */
     std::recursive_mutex _lockThreadsWaitingToEnd;
+    #pragma endregion 
 
+    #pragma region Worker/Threads containers
     /**
      * \brief the workers that have yet to be started
      */
@@ -53,6 +56,7 @@ namespace myoddweb:: directorywatcher:: threads
      * \brief all our workers that are currently running.
      */
     std::vector<Worker*> _runningWorkers;
+    #pragma endregion
 
   public:
     WorkerPool(const WorkerPool&) = delete;

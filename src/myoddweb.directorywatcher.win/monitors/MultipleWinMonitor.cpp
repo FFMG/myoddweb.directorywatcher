@@ -364,7 +364,10 @@ namespace myoddweb::directorywatcher
   void MultipleWinMonitor::Stop(std::vector<Monitor*>& container) const
   {
     MYODDWEB_PROFILE_FUNCTION();
-    WorkerPool().StopWorkers( {container.begin(), container.end()});
+    for (auto worker : container)
+    {
+      WorkerPool().StopWorker( *worker );
+    }
   }
 
   /**
@@ -374,7 +377,10 @@ namespace myoddweb::directorywatcher
   void MultipleWinMonitor::Start(const std::vector<Monitor*>& container) const
   {
     MYODDWEB_PROFILE_FUNCTION();
-    WorkerPool().Add({ container.begin(), container.end() });
+    for (auto worker : container)
+    {
+      WorkerPool().Add(*worker);
+    }
   }
 
   /**

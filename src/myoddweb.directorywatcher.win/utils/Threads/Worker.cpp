@@ -5,6 +5,7 @@
 #include <thread>
 #include "../../monitors/Base.h"
 #include "../Instrumentor.h"
+#include "../Lock.h"
 #include "../Wait.h"
 
 namespace myoddweb::directorywatcher::threads
@@ -195,6 +196,9 @@ namespace myoddweb::directorywatcher::threads
     _state = State::starting;
     try
     {
+      // grab the lock not because we are doing anything, but because _we_ might be in the middle of an update
+      MYODDWEB_LOCK(_lockState);
+
       if (!OnWorkerStart())
       {
         // we could not even start, so we are stopped.
@@ -233,6 +237,9 @@ namespace myoddweb::directorywatcher::threads
           // make sure that we yield to other thread
           // from time to time.
           MYODDWEB_YIELD();
+
+          // grab the lock not because we are doing anything, but because _we_ might be in the middle of an update
+          MYODDWEB_LOCK(_lockState);
 
           // update once only.
           if( !WorkerUpdateOnce(CalculateElapsedTimeMilliseconds()) )
@@ -300,6 +307,9 @@ namespace myoddweb::directorywatcher::threads
   {
     try
     {
+      // grab the lock not because we are doing anything, but because _we_ might be in the middle of an update
+      MYODDWEB_LOCK(_lockState);
+
       // whatever happens we can call the 'stop' call now
       // if that call was made earlier, (to cause us to break out of the Update loop), it will be ignored
       // depending on the state, so it does not harm to call it again

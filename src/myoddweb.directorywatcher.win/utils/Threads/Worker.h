@@ -4,8 +4,9 @@
 #pragma once
 #include <atomic>
 #include <chrono>
-#include <exception>
+#include <mutex>
 
+#include "../../monitors/Base.h"
 #include "WaitResult.h"
 
 namespace myoddweb:: directorywatcher:: threads
@@ -31,6 +32,12 @@ namespace myoddweb:: directorywatcher:: threads
      * \brief The timers used to calculate the elapsed time.
      */
     std::chrono::time_point<std::chrono::system_clock> _timePoint1, _timePoint2;
+
+    /**
+     * \brief This lock is used when we are inside the main update function
+     *        This will prevent worker end.
+     */
+    std::recursive_mutex _lockState;
 
   public:
     Worker(const Worker&) = delete;
@@ -145,7 +152,10 @@ namespace myoddweb:: directorywatcher:: threads
      *        this is to allow our workers a chance to dispose of data
      *        
      */
-    virtual void OnWorkerEnd() = 0;
+    virtual void OnWorkerEnd()
+    {
+      MYODDWEB_OUT("Wtf\n");
+    }
 
     /**
      * \brief called when stop is called.

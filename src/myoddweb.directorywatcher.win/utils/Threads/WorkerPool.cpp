@@ -759,10 +759,11 @@ namespace myoddweb :: directorywatcher :: threads
    */
   void WorkerPool::OnWorkerStop()
   {
-    MYODDWEB_PROFILE_FUNCTION();
-    // tell everybody to stop
     try
     {
+      MYODDWEB_PROFILE_FUNCTION();
+
+      // tell everybody to stop
       // make sure that we have started what needed to be started
       ProcessThreadsAndWorkersWaiting();
 
@@ -999,9 +1000,10 @@ namespace myoddweb :: directorywatcher :: threads
    */
   void WorkerPool::OnWorkerEnd()
   {
-    MYODDWEB_PROFILE_FUNCTION();
     try
     {
+      MYODDWEB_PROFILE_FUNCTION();
+
       // finish all the work of the running workers.
       WorkerEndRunningWorkers();
 
