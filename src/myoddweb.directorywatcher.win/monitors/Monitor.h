@@ -17,7 +17,7 @@ namespace myoddweb
     class Monitor : public threads::Worker
     {
     public:
-      Monitor(__int64 id, threads::WorkerPool& workerPool, const Request& request);
+      Monitor( __int64 id, threads::WorkerPool& workerPool, const Request& request);
       virtual ~Monitor();
 
       Monitor& operator=(Monitor&& other) = delete;
@@ -73,7 +73,7 @@ namespace myoddweb
       /**
        * \brief stop the worker
        */
-      void OnStop() override;
+      void OnWorkerStop() override;
 
       /**
        * \brief Give the worker a chance to do something in the loop

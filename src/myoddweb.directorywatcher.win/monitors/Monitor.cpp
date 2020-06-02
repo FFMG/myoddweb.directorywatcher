@@ -9,7 +9,8 @@
 
 namespace myoddweb:: directorywatcher
 {
-  Monitor::Monitor(const __int64 id, threads::WorkerPool& workerPool, const Request& request) :
+  Monitor::Monitor( const __int64 id, threads::WorkerPool& workerPool, const Request& request) :
+    Worker(),
     _id(id),
     _workerPool( workerPool ),
     _eventCollector(nullptr),
@@ -170,10 +171,9 @@ namespace myoddweb:: directorywatcher
   /**
    * \brief stop the worker
    */
-  void Monitor::OnStop()
+  void Monitor::OnWorkerStop()
   {
-    // we can now stop us.
-    Worker::OnStop();
+    // nothing to do here
   }
 
   /**
@@ -181,10 +181,11 @@ namespace myoddweb:: directorywatcher
    */
   void Monitor::OnWorkerEnd()
   {
-    MYODDWEB_PROFILE_FUNCTION();
-
     try
     {
+      MYODDWEB_PROFILE_FUNCTION();
+
+      // clean the publisher
       delete _publisher;
       _publisher = nullptr;
     }

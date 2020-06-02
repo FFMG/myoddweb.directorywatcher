@@ -108,6 +108,9 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFolderIsDeleted) {
   const auto id = ::MonitorsManager::Start(request);
   Add(id, helper);
 
+  // wait for the thread to get started
+  Wait::Delay(TEST_TIMEOUT_WAIT);
+
   auto folders = std::vector<std::wstring>();
   for (auto i = 0; i < number; ++i)
   {

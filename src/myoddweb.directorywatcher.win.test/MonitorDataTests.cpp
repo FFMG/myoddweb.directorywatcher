@@ -8,7 +8,7 @@ using myoddweb::directorywatcher::WinMonitor;
 using myoddweb::directorywatcher::Request;
 
 TEST(Data, BufferLenghValueIsSaved) {
-  auto pool = myoddweb::directorywatcher::threads::WorkerPool();
+  auto pool = myoddweb::directorywatcher::threads::WorkerPool(10);
   const auto request = Request( L"c:\\", true, nullptr, 0);
   const WinMonitor wm( 1, 2, pool, request );
   auto fnc = Data::DataCallbackFunction();
@@ -21,7 +21,7 @@ TEST(Data, BufferLenghValueIsSaved) {
 }
 
 TEST(Data, DirectoryHandleIsNullByDefault) {
-  auto pool = myoddweb::directorywatcher::threads::WorkerPool();
+  auto pool = myoddweb::directorywatcher::threads::WorkerPool(10);
   const auto request = Request(L"c:\\", true, nullptr, 0);
   const WinMonitor wm(1, 2, pool, request );
   auto fnc = Data::DataCallbackFunction();

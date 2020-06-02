@@ -7,7 +7,7 @@
 
 namespace myoddweb:: directorywatcher:: threads
 {
-  class WorkerPool final : protected Worker
+  class WorkerPool final : public Worker
   {
     /**
      * \brief the current thread handle, if we have one.
@@ -24,6 +24,7 @@ namespace myoddweb:: directorywatcher:: threads
      */
     float _elapsedTimeMilliseconds = 0;
 
+    #pragma region Locks
     /**
      * \brief the lock for the running workers.
      */
@@ -38,7 +39,9 @@ namespace myoddweb:: directorywatcher:: threads
      * \brief lock for the workers that are waiting to end
      */
     std::recursive_mutex _lockThreadsWaitingToEnd;
+    #pragma endregion 
 
+    #pragma region Worker/Threads containers
     /**
      * \brief the workers that have yet to be started
      */
@@ -53,6 +56,7 @@ namespace myoddweb:: directorywatcher:: threads
      * \brief all our workers that are currently running.
      */
     std::vector<Worker*> _runningWorkers;
+    #pragma endregion
 
   public:
     WorkerPool(const WorkerPool&) = delete;
@@ -103,19 +107,19 @@ namespace myoddweb:: directorywatcher:: threads
     /**
      * \brief non blocking call to instruct the thread to stop.
      */
-    void OnStop() override;
+    void OnWorkerStop() override;
 
     /**
      * \brief stop one of the worker
      * \param worker the worker we are waiting for.
      */
-    void Stop( Worker& worker );
+    void StopWorker( Worker& worker );
 
     /**
      * \brief stop multiple workers
      * \param workers the workers we are waiting for.
      */
-    void Stop( const std::vector<Worker*>& workers);
+    void StopWorkers( const std::vector<Worker*>& workers);
 
     /**
      * \brief stop the running workers and wait
@@ -161,6 +165,16 @@ namespace myoddweb:: directorywatcher:: threads
     void OnWorkerEnd() override;
 
   private:
+    /**
+     * \brief complete all the running workers
+     */
+    void WorkerEndRunningWorkers();
+
+    /**
+     * \brief complete all the end threads.
+     */
+    void WorkerEndThreadsWaitingToEnd();
+
     /**
      * \brief check if we stop or not.
      */
@@ -245,8 +259,9 @@ namespace myoddweb:: directorywatcher:: threads
      * \brief remove a worker from our list of running workers.
      *        we will obtain the lock to remove this item.
      * \param worker the worker we are wanting to remove
+     * \return if the item was removed or not.
      */
-    void RemoveWorkerFromRunningWorkers(const Worker& worker);
+    bool RemoveWorkerFromRunningWorkers(const Worker& worker);
 
     /**
      * \brief remove workers from our list of running workers.
@@ -264,11 +279,19 @@ namespace myoddweb:: directorywatcher:: threads
     std::vector<Worker*> RemoveWorkersFromRunningWorkers();
 
     /**
+     * \brief remove all the threads that are waiting to end.
+     *        we will obtain the lock to remove this items.
+     * \return the list of items removed.
+     */
+    std::vector<Thread*> RemoveThreadsFromWorkersWaitingToEnd();
+
+    /**
      * \brief remove a single worker from a collection of workers
      * \param container the collection of workers.
      * \param item the worker we want t remove
+     * \return if the worker was found and removed
      */
-    static void RemoveWorker(std::vector<Worker*>& container, const Worker& item);
+    static bool RemoveWorker(std::vector<Worker*>& container, const Worker& item);
 
     /**
      * \brief add workers to a list of workers that are waiting to start.

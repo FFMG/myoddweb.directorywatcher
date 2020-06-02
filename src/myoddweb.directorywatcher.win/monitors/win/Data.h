@@ -37,9 +37,22 @@ namespace myoddweb
         Data& operator=(Data&& other) = delete;
 
         /**
+         * \brief start monitoring the given folder.
+         * \return if we managed to start the monitoring or not.
+         */
+        bool StartMonitoring();
+
+        /**
          * \brief Clear all the data
          */
-        void Close();
+        void StopMonitoring();
+
+        /**
+         * \brief check that he current handle is still valie
+         *        if not then we will close the connection.
+         */
+        void CheckStillValid();
+      private:
 
         /**
          * \brief Check if the handle is valid
@@ -48,23 +61,10 @@ namespace myoddweb
         bool IsValidHandle() const;
 
         /**
-         * \brief get the directory handle, if we have one.
-         * \return the handle
-         */
-        [[nodiscard]]
-        void* DirectoryHandle() const;
-
-        /**
          * \brief set the directory handle
          * \return if success or not.
          */
-        bool Open();
-
-        /**
-         * \brief if there was a problem, try re-open the file.
-         * \return if success or not.
-         */
-        bool TryReopen();
+        bool OpenDirectoryHandle();
 
         /**
          * \brief get the current buffer
@@ -86,22 +86,12 @@ namespace myoddweb
          */
         LPOVERLAPPED Overlapped();
 
-        /**
-         * \brief start monitoring a given folder.
-         * \return success or not
-         */
-        bool Start();
-
       private:
         /**
-         * \brief return true if we are in the process of stopping
-         *        or if we have stopped already.
+         * \brief the number of times we had an invalid handle.
+         *        after a certain count we will close this.
          */
-        [[nodiscard]]
-        bool IsStoppedOrStopping() const 
-        {
-          return _state == Monitor::State::stopped || _state == Monitor::State::stopping;
-        }
+        int _invalidHandleWait;
 
         /**
          * \brief start monitoring a given folder.
@@ -133,7 +123,7 @@ namespace myoddweb
          * \return the cloned data.
          */
         [[nodiscard]]
-        unsigned char* Clone(unsigned long ulSize);
+        unsigned char* Clone(unsigned long ulSize) const;
 
         /**
          * \brief what we wish to be notified about
@@ -145,11 +135,6 @@ namespace myoddweb
          * \brief if this is a recursive monitoring or not.
          */
         const bool _recursive;
-
-        /**
-         * \brief our current state
-         */
-        Monitor::State _state;
 
         /**
          * \brief flag to indicate that we received the operation aborted message
@@ -187,11 +172,6 @@ namespace myoddweb
          * \brief the path
          */
         const Monitor& _monitor;
-
-        /**
-         * \brief the locks so we can add data.
-         */
-        std::recursive_mutex _lock;
 
         /**
          * \brief the overlapped

@@ -4,7 +4,6 @@
 #include <cstring>
 #include <utility>
 #include "Data.h"
-#include "../../utils/Lock.h"
 #include "../../utils/Instrumentor.h"
 #include "../../utils/Wait.h"
 #include "../Base.h"
@@ -19,9 +18,9 @@ namespace myoddweb:: directorywatcher:: win
     const unsigned long bufferLength
     )
     :
+    _invalidHandleWait(0),
     _notifyFilter(notifyFilter),
     _recursive(recursive),
-    _state(Monitor::State::unknown ),
     _operationAborted( false ),
     _dataCallbackFunction( dataCallbackFunction ),
     _hDirectory(nullptr),
@@ -36,7 +35,7 @@ namespace myoddweb:: directorywatcher:: win
 
   Data::~Data()
   {
-    Close();
+    StopMonitoring();
   }
 
   /**
@@ -60,20 +59,8 @@ namespace myoddweb:: directorywatcher:: win
   /**
    * \brief Clear all the data and close all connections handles.
    */
-  void Data::Close()
+  void Data::StopMonitoring()
   {
-    // no need for double lock as closes are not called
-    // that often or at least they should not be.
-    MYODDWEB_LOCK(_lock);
-    if (IsStoppedOrStopping())
-    {
-      return;
-    }
-
-    // reflect that we are now stopping.
-    // from now on we should not be processing any messages.
-    _state = Monitor::State::stopping;
-
     try
     {
       // close the handle 
@@ -89,9 +76,6 @@ namespace myoddweb:: directorywatcher:: win
     {
       // @todo log this
     }
-
-    // we are now stopped.
-    _state = Monitor::State::stopped;
   }
 
   /**
@@ -99,7 +83,7 @@ namespace myoddweb:: directorywatcher:: win
    */
   void Data::ClearHandle()
   {
-    //  is it open?
+    // is it valid?
     if (!IsValidHandle())
     {
       // make sure that the handle is null
@@ -108,15 +92,11 @@ namespace myoddweb:: directorywatcher:: win
       return;
     }
 
-    // get the lock and check again
-    MYODDWEB_LOCK(_lock);
-    if (!IsValidHandle())
-    {
-      // make sure that the handle is null
-      // as it couls also be 0xffffff
-      _hDirectory = nullptr;
-      return;
-    }
+    // quick switch... so we don't come back here.
+    // yes, there is a chance that we might indeed come back again
+    // but it does prevent having a 'valid' handle while we are closing.
+    const auto oldHandle = _hDirectory;
+    _hDirectory = nullptr;
 
     try
     {
@@ -129,7 +109,7 @@ namespace myoddweb:: directorywatcher:: win
       // and/or the OVERLAPPED pointer could not be found.
       // \see https://docs.microsoft.com/en-us/windows/win32/fileio/cancelioex-func
 
-      const auto cancel = ::CancelIoEx(_hDirectory, Overlapped());
+      const auto cancel = ::CancelIoEx(oldHandle, Overlapped());
       if (0 != cancel)
       {
         // then wait a little for the operation to be cancelled.
@@ -151,7 +131,7 @@ namespace myoddweb:: directorywatcher:: win
           break;
         }
       }
-      ::CloseHandle(_hDirectory);
+      ::CloseHandle(oldHandle);
     }
     catch (...)
     {
@@ -159,10 +139,11 @@ namespace myoddweb:: directorywatcher:: win
       //   If the application is running under a debugger, the function will throw an exception if it receives either a handle value that is not valid or a pseudo-
       //   handle value. This can happen if you close a handle twice, or if you call CloseHandle on a handle returned by the FindFirstFile function instead of 
       //   calling the FindClose function.
+      MYODDWEB_OUT("Ignore: Error waiting operation aborted message\n");
+      _operationAborted = true;
     }
 
     // the directory is closed.
-    _hDirectory = nullptr;
   }
 
   /**
@@ -175,11 +156,6 @@ namespace myoddweb:: directorywatcher:: win
       return;
     }
 
-    MYODDWEB_LOCK(_lock);
-    if (_buffer == nullptr)
-    {
-      return;
-    }
     delete[] _buffer;
     _buffer = nullptr;
   }
@@ -189,7 +165,6 @@ namespace myoddweb:: directorywatcher:: win
    */
   void Data::ClearOverlapped()
   {
-    MYODDWEB_LOCK(_lock);
     memset(&_overlapped, 0, sizeof(OVERLAPPED));
   }
 
@@ -200,15 +175,6 @@ namespace myoddweb:: directorywatcher:: win
   bool Data::IsValidHandle() const
   {
     return _hDirectory != nullptr && _hDirectory != INVALID_HANDLE_VALUE;
-  }
-
-  /**
-   * \brief get the directory handle, if we have one.
-   * \return the handle
-   */
-  void* Data::DirectoryHandle() const
-  {
-    return _hDirectory;
   }
 
   /**
@@ -244,7 +210,7 @@ namespace myoddweb:: directorywatcher:: win
    * \param ulSize the max numberof bytes we want to copy
    * \return the cloned data.
    */
-  unsigned char* Data::Clone(const unsigned long ulSize)
+  unsigned char* Data::Clone(const unsigned long ulSize) const
   {
     // if the size if more than we can offer we need to prevent an overflow.
     if (ulSize > _bufferLength)
@@ -254,11 +220,7 @@ namespace myoddweb:: directorywatcher:: win
 
     // create the clone
     const auto pBuffer = new unsigned char[ulSize];
-
-    // use the lock to prevent buffer from going away 
-    // while we are busy working here.
-    MYODDWEB_LOCK(_lock);
-    if (_buffer == nullptr || IsStoppedOrStopping() )
+    if (_buffer == nullptr )
     {
       return nullptr;
     }
@@ -270,53 +232,16 @@ namespace myoddweb:: directorywatcher:: win
     return pBuffer;
   }
 
-  /**
-   * \brief if there was a problem, try re-open the file.
-   * \return if success or not.
-   */
-  bool Data::TryReopen()
-  {
-    try
-    {
-      // close if needed
-      if (IsValidHandle())
-      {
-        Close();
-      }
-
-      // make sure that the handle is ready for reopen
-      _hDirectory = nullptr;
-
-      // or get out.
-      return Open();
-    }
-    catch( ... )
-    {
-      // this did not work.
-      return false;
-    }
-  }
 
   /**
    * \brief set the directory handle
    * \return if success or not.
    */
-  bool Data::Open( )
+  bool Data::OpenDirectoryHandle( )
   {
-    // no need to worry about double lock
-    MYODDWEB_LOCK(_lock);
-
     // check if this was done already
-    // we cannot use IsOpen() as INVALID_HANDLE_VALUE would cause a return false.
-    if (DirectoryHandle() != nullptr)
+    if (IsValidHandle())
     {
-      return DirectoryHandle() != INVALID_HANDLE_VALUE;
-    }
-
-    // are we started?
-    if (_state == Monitor::State::started)
-    {
-      // we arelady started
       return true;
     }
 
@@ -350,9 +275,6 @@ namespace myoddweb:: directorywatcher:: win
       return false;
     }
 
-    // we are now open
-    _state = Monitor::State::started;
-
     // check if it all worked.
     return true;
   }
@@ -367,9 +289,9 @@ namespace myoddweb:: directorywatcher:: win
     // prepare all the values
     PrepareForRead();
 
-    return
-    ::ReadDirectoryChangesW(
-      DirectoryHandle(),
+    // do the actual read.
+    if( ::ReadDirectoryChangesW(
+      _hDirectory,
       Buffer(),
       BufferLength(),
       _recursive,
@@ -377,30 +299,13 @@ namespace myoddweb:: directorywatcher:: win
       nullptr,                // bytes returned, (not used here as we are async)
       Overlapped(),           // buffer with our information
       &FileIoCompletionRoutine
-    ) == 1;
-  }
-
-  /**
-   * \brief start monitoring a given folder.
-   * \return success or not
-   */
-  bool Data::Start()
-  {
-    // no need for a double lock.
-    MYODDWEB_LOCK(_lock);
-    if (IsStoppedOrStopping())
+    ) != 1 )
     {
-      // we stopped or we are stopping
+      // we could not create the monitoring
+      _monitor.AddEventError(EventError::Access);
+      StopMonitoring();
       return false;
     }
-
-    // start the very first read notification
-    // then every time we get a message we will read again.
-    if( !BeginRead() )
-    {
-      return false;
-    }
-    // we are done here.
     return true;
   }
 
@@ -457,7 +362,7 @@ namespace myoddweb:: directorywatcher:: win
       break;
 
     case ERROR_ACCESS_DENIED:
-      Close();
+      StopMonitoring();
       _monitor.AddEventError(EventError::Access);
       return;
 
@@ -476,7 +381,17 @@ namespace myoddweb:: directorywatcher:: win
   {
     if (dwNumberOfBytesTransfered == 0)
     {
+      // Get the new read issued as fast as possible. The documentation
+      // says that the original OVERLAPPED structure will not be used
+      // again once the completion routine is called.
+      BeginRead();
+
+      // If the buffer overflows, the entire contents of the buffer are discarded, 
+      // the lpBytesReturned parameter contains zero, and the ReadDirectoryChangesW function 
+      // fails with the error code ERROR_NOTIFY_ENUM_DIR.
       _dataCallbackFunction(nullptr);
+
+      // we are done
       return;
     }
 
@@ -484,7 +399,70 @@ namespace myoddweb:: directorywatcher:: win
     // the structure is padded to 16 bytes.
     _ASSERTE(dwNumberOfBytesTransfered >= offsetof(FILE_NOTIFY_INFORMATION, FileName) + sizeof(WCHAR));
 
+    // clone the data now
+    const auto clone = Clone(dwNumberOfBytesTransfered);
+
+    // Get the new read issued as fast as possible. The documentation
+    // says that the original OVERLAPPED structure will not be used
+    // again once the completion routine is called.
+    BeginRead();
+
     // call the derived function to handle this.
-    _dataCallbackFunction( Clone(dwNumberOfBytesTransfered) );
+    _dataCallbackFunction( clone );
+  }
+
+  /**
+   * \brief start monitoring the given folder.
+   * \return if we managed to start the monitoring or not.
+   */
+  bool Data::StartMonitoring()
+  {
+    // try and open the directory
+    // if it is open already then nothing should happen here.
+    if (!OpenDirectoryHandle())
+    {
+      // we could not access this
+      _monitor.AddEventError(EventError::Access);
+      return false;
+    }
+
+    // reset the handle wait.
+    _invalidHandleWait = 0;
+
+    // start reading.
+    BeginRead();
+    return true;
+  }
+
+  /**
+   * \brief check that he current handle is still valie
+   *        if not then we will close the connection.
+   */
+  void Data::CheckStillValid()
+  {
+    if (IsValidHandle())
+    {
+      // The handle is good, so we can reset the value
+      _invalidHandleWait = 0;
+      return;
+    }
+
+    // wait a little bit longer.
+    _invalidHandleWait += MYODDWEB_MIN_THREAD_SLEEP;
+    if (_invalidHandleWait < MYODDWEB_INVALID_HANDLE_SLEEP)
+    {
+      // we need to wait a little longer before we re-open
+      return;
+    }
+
+    // we already know that the handle is not valid
+    _hDirectory = nullptr;
+
+    // we will reopen, so reset the wait time.
+    _invalidHandleWait = 0;
+
+    // try open again, if this does not work then it is fine
+    // because we have reset the timer
+    StartMonitoring();
   }
 }

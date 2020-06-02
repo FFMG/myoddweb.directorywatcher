@@ -49,6 +49,7 @@
     <IntDir>$(SolutionDir)intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <ItemGroup>
+    <ClCompile Include="..\myoddweb.directorywatcher.win\monitors\EventsPublisher.cpp" />
     <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Threads\CallbackWorker.cpp" />
     <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Threads\Thread.cpp" />
     <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Threads\Worker.cpp" />
@@ -59,8 +60,10 @@
     <ClCompile Include="MonitorsManagerTestsDelete.cpp" />
     <ClCompile Include="RequestTest.cpp" />
     <ClCompile Include="WorkerPoolTest.cpp" />
+    <ClCompile Include="WorkerTest.cpp" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\Base.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\Callbacks.h" />
+    <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\EventsPublisher.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\Monitor.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\MultipleWinMonitor.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\monitors\WinMonitor.h" />
@@ -98,6 +101,7 @@
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Wait.h" />
     <ClInclude Include="MonitorsManagerTestHelper.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="WorkerHelper.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Collector.cpp">
@@ -142,7 +146,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>true</MinimalRebuild>
+      <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
@@ -160,7 +164,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>X64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>true</MinimalRebuild>
+      <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>

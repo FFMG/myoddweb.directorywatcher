@@ -2,9 +2,9 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #include "Worker.h"
-#include <thread>
 #include "../../monitors/Base.h"
 #include "../Instrumentor.h"
+#include "../Lock.h"
 #include "../Wait.h"
 
 namespace myoddweb::directorywatcher::threads
@@ -68,7 +68,7 @@ namespace myoddweb::directorywatcher::threads
   [[nodiscard]]
   bool Worker::Started() const
   {
-    return Is(State::started);
+    return !Is(State::unknown) && !Completed();
   }
 
   /**
@@ -88,6 +88,15 @@ namespace myoddweb::directorywatcher::threads
   {
     MYODDWEB_PROFILE_FUNCTION();
 
+    // if the state is unknown it means we never even started
+    // there is nothing for us to do here.
+    if (Is(State::unknown))
+    {
+      // we are done
+      _state = State::complete;
+      return;
+    }
+
     // was it called already?
     // or are we trying to cal it after we are all done?
     if(Is(State::stopped) || Is(State::stopping) || Is(State::complete ))
@@ -99,7 +108,7 @@ namespace myoddweb::directorywatcher::threads
     _state = State::stopping;
 
     // call the derived function
-    OnStop();
+    OnWorkerStop();
 
     // we are done
     _state = State::stopped;
@@ -186,6 +195,9 @@ namespace myoddweb::directorywatcher::threads
     _state = State::starting;
     try
     {
+      // grab the lock not because we are doing anything, but because _we_ might be in the middle of an update
+      MYODDWEB_LOCK(_lockState);
+
       if (!OnWorkerStart())
       {
         // we could not even start, so we are stopped.
@@ -203,7 +215,7 @@ namespace myoddweb::directorywatcher::threads
     }
     catch (...)
     {
-      _exceptions.push_back(std::current_exception());
+      SaveCurrentException();
       return false;
     }
   }
@@ -225,6 +237,9 @@ namespace myoddweb::directorywatcher::threads
           // from time to time.
           MYODDWEB_YIELD();
 
+          // grab the lock not because we are doing anything, but because _we_ might be in the middle of an update
+          MYODDWEB_LOCK(_lockState);
+
           // update once only.
           if( !WorkerUpdateOnce(CalculateElapsedTimeMilliseconds()) )
           {
@@ -233,13 +248,13 @@ namespace myoddweb::directorywatcher::threads
         }
         catch( ... )
         {
-          _exceptions.push_back(std::current_exception());
+          SaveCurrentException();
         }
       }
     }
     catch (...)
     {
-      _exceptions.push_back(std::current_exception());
+      SaveCurrentException();
     }
   }
 
@@ -291,6 +306,9 @@ namespace myoddweb::directorywatcher::threads
   {
     try
     {
+      // grab the lock not because we are doing anything, but because _we_ might be in the middle of an update
+      MYODDWEB_LOCK(_lockState);
+
       // whatever happens we can call the 'stop' call now
       // if that call was made earlier, (to cause us to break out of the Update loop), it will be ignored
       // depending on the state, so it does not harm to call it again
@@ -313,11 +331,20 @@ namespace myoddweb::directorywatcher::threads
     }
     catch (...)
     {
-      _exceptions.push_back(std::current_exception());
+      SaveCurrentException();
     }
 
     // whatever happens, we have now completed
     // nothing else can happen after this.
     _state = State::complete;
+  }
+
+  /**
+   * \brief save the current exception
+   */
+  void Worker::SaveCurrentException()
+  {
+    // log the error
+    // const auto ptr = std::current_exception();
   }
 }

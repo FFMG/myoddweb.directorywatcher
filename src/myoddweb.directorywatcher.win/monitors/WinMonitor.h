@@ -36,7 +36,7 @@ namespace myoddweb
       /**
        * \brief the non blocking stop function
        */
-      void OnStop() override;
+      void OnWorkerStop() override;
 
       /**
        * \brief called when the worker is ready to start

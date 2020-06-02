@@ -16,21 +16,48 @@ namespace myoddweb.directorywatcher.sample
         Console.WriteLine(Environment.Is64BitProcess ? "x64 version" : "x86 version");
         Console.WriteLine("Press Ctrl+C to stop the monitors.");
 
-        // start the monitor.
-        for (var i = 0; i < 10; ++i)
-        {
-          await RunWatcherAsync().ConfigureAwait(false);
-          Console.WriteLine("-------------------------------------------------------");
-        }
+        // // start the monitor.
+        // for (var i = 0; i < 10; ++i)
+        // {
+        //   await RunWatcherAsync().ConfigureAwait(false);
+        //   Console.WriteLine("-------------------------------------------------------");
+        // }
+        // Console.WriteLine("All done.");
+        // Console.WriteLine("Press Ctrl+C to stop to exit.");
+        // WaitForCtrlC();
 
-        Console.WriteLine("All done.");
-        Console.WriteLine("Press Ctrl+C to stop to exit.");
-
-        WaitForCtrlC();
+        RunAndWait();
       }
       catch (Exception ex)
       {
         WriteException(ex);
+      }
+    }
+
+    private static void RunAndWait()
+    {
+      using (var watch = new Watcher())
+      {
+        var drvs = System.IO.DriveInfo.GetDrives();
+        foreach (var drv in drvs)
+        {
+          if (drv.DriveType == System.IO.DriveType.Fixed)
+          {
+            watch.Add(new Request(drv.Name, true));
+          }
+        }
+
+        // prepare the console watcher so we can output pretty messages.
+        var _ = new ConsoleWatch(watch);
+
+        // start watching
+        watch.Start();
+
+        Console.WriteLine("Press Ctrl+C to stop to exit.");
+        WaitForCtrlC();
+
+        // stop everything.
+        watch.Stop();
       }
     }
 

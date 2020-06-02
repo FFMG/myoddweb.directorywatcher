@@ -18,7 +18,7 @@
 namespace myoddweb::directorywatcher
 {
   MultipleWinMonitor::MultipleWinMonitor(const long long id, threads::WorkerPool& workerPool, const Request& request) :
-    Monitor(id, workerPool, request)
+    Monitor( id, workerPool, request)
   {
     // use a standar monitor for non recursive items.
     if (!request.Recursive())
@@ -75,9 +75,9 @@ namespace myoddweb::directorywatcher
   }
 
 #pragma region Woker functions
-  void MultipleWinMonitor::OnStop()
+  void MultipleWinMonitor::OnWorkerStop()
   {
-    Monitor::OnStop();
+    Monitor::OnWorkerStop();
 
     // stop the parents
     Stop(_nonRecursiveParents);
@@ -125,6 +125,7 @@ namespace myoddweb::directorywatcher
    */
   void MultipleWinMonitor::OnWorkerEnd()
   {
+    MYODDWEB_PROFILE_FUNCTION();
     Monitor::OnWorkerEnd();
   }
 #pragma endregion
@@ -364,7 +365,10 @@ namespace myoddweb::directorywatcher
   void MultipleWinMonitor::Stop(std::vector<Monitor*>& container) const
   {
     MYODDWEB_PROFILE_FUNCTION();
-    WorkerPool().Stop( {container.begin(), container.end()});
+    for (auto worker : container)
+    {
+      WorkerPool().StopWorker( *worker );
+    }
   }
 
   /**
@@ -374,7 +378,10 @@ namespace myoddweb::directorywatcher
   void MultipleWinMonitor::Start(const std::vector<Monitor*>& container) const
   {
     MYODDWEB_PROFILE_FUNCTION();
-    WorkerPool().Add({ container.begin(), container.end() });
+    for (auto worker : container)
+    {
+      WorkerPool().Add(*worker);
+    }
   }
 
   /**
