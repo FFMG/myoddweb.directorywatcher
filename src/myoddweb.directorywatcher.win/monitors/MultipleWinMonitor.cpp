@@ -18,7 +18,7 @@
 namespace myoddweb::directorywatcher
 {
   MultipleWinMonitor::MultipleWinMonitor(const long long id, threads::WorkerPool& workerPool, const Request& request) :
-    Monitor(id, workerPool, request)
+    Monitor( id, workerPool, request)
   {
     // use a standar monitor for non recursive items.
     if (!request.Recursive())
@@ -125,6 +125,7 @@ namespace myoddweb::directorywatcher
    */
   void MultipleWinMonitor::OnWorkerEnd()
   {
+    MYODDWEB_PROFILE_FUNCTION();
     Monitor::OnWorkerEnd();
   }
 #pragma endregion

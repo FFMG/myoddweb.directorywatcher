@@ -17,7 +17,7 @@ namespace myoddweb
     class Monitor : public threads::Worker
     {
     public:
-      Monitor(__int64 id, threads::WorkerPool& workerPool, const Request& request);
+      Monitor( __int64 id, threads::WorkerPool& workerPool, const Request& request);
       virtual ~Monitor();
 
       Monitor& operator=(Monitor&& other) = delete;

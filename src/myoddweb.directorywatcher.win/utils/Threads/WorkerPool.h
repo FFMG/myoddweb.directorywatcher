@@ -259,8 +259,9 @@ namespace myoddweb:: directorywatcher:: threads
      * \brief remove a worker from our list of running workers.
      *        we will obtain the lock to remove this item.
      * \param worker the worker we are wanting to remove
+     * \return if the item was removed or not.
      */
-    void RemoveWorkerFromRunningWorkers(const Worker& worker);
+    bool RemoveWorkerFromRunningWorkers(const Worker& worker);
 
     /**
      * \brief remove workers from our list of running workers.
@@ -288,8 +289,9 @@ namespace myoddweb:: directorywatcher:: threads
      * \brief remove a single worker from a collection of workers
      * \param container the collection of workers.
      * \param item the worker we want t remove
+     * \return if the worker was found and removed
      */
-    static void RemoveWorker(std::vector<Worker*>& container, const Worker& item);
+    static bool RemoveWorker(std::vector<Worker*>& container, const Worker& item);
 
     /**
      * \brief add workers to a list of workers that are waiting to start.

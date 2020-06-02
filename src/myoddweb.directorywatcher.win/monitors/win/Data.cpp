@@ -83,7 +83,7 @@ namespace myoddweb:: directorywatcher:: win
    */
   void Data::ClearHandle()
   {
-    //  is it open?
+    // is it valid?
     if (!IsValidHandle())
     {
       // make sure that the handle is null
@@ -92,14 +92,11 @@ namespace myoddweb:: directorywatcher:: win
       return;
     }
 
-    // get the lock and check again
-    if (!IsValidHandle())
-    {
-      // make sure that the handle is null
-      // as it couls also be 0xffffff
-      _hDirectory = nullptr;
-      return;
-    }
+    // quick switch... so we don't come back here.
+    // yes, there is a chance that we might indeed come back again
+    // but it does prevent having a 'valid' handle while we are closing.
+    const auto oldHandle = _hDirectory;
+    _hDirectory = nullptr;
 
     try
     {
@@ -112,7 +109,7 @@ namespace myoddweb:: directorywatcher:: win
       // and/or the OVERLAPPED pointer could not be found.
       // \see https://docs.microsoft.com/en-us/windows/win32/fileio/cancelioex-func
 
-      const auto cancel = ::CancelIoEx(_hDirectory, Overlapped());
+      const auto cancel = ::CancelIoEx(oldHandle, Overlapped());
       if (0 != cancel)
       {
         // then wait a little for the operation to be cancelled.
@@ -134,7 +131,7 @@ namespace myoddweb:: directorywatcher:: win
           break;
         }
       }
-      ::CloseHandle(_hDirectory);
+      ::CloseHandle(oldHandle);
     }
     catch (...)
     {
@@ -142,10 +139,11 @@ namespace myoddweb:: directorywatcher:: win
       //   If the application is running under a debugger, the function will throw an exception if it receives either a handle value that is not valid or a pseudo-
       //   handle value. This can happen if you close a handle twice, or if you call CloseHandle on a handle returned by the FindFirstFile function instead of 
       //   calling the FindClose function.
+      MYODDWEB_OUT("Ignore: Error waiting operation aborted message\n");
+      _operationAborted = true;
     }
 
     // the directory is closed.
-    _hDirectory = nullptr;
   }
 
   /**

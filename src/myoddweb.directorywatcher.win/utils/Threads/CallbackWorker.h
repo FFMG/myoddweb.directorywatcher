@@ -40,14 +40,13 @@ namespace myoddweb:: directorywatcher:: threads
     /**
      * \brief called when the worker has completed
      *        this is to allow our workers a chance to dispose of data
-     *
      */
-    void OnWorkerEnd() override {}
+    void OnWorkerEnd() override;
 
     /**
      * \brief called when stop is called.
      *        this is to allow our derived workers to stop
      */
-    void OnWorkerStop() override {}
+    void OnWorkerStop() override;
   };
 }

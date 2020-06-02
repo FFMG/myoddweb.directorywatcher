@@ -51,7 +51,7 @@ namespace myoddweb:: directorywatcher
    * \param bufferLength the size of the buffer
    */
   WinMonitor::WinMonitor(const long long id, const long long parentId, threads::WorkerPool& workerPool, const Request& request, const unsigned long bufferLength) :
-    Monitor(id, workerPool, request),
+    Monitor( id, workerPool, request),
     _directories(nullptr),
     _files(nullptr),
     _bufferLength(bufferLength),
@@ -59,9 +59,7 @@ namespace myoddweb:: directorywatcher
   {
   }
 
-  WinMonitor::~WinMonitor()
-  {
-  }
+  WinMonitor::~WinMonitor() = default;
 
   /**
    * \brief get the id of the parent, the owner of all the monitors.
@@ -171,6 +169,9 @@ namespace myoddweb:: directorywatcher
    */
   void WinMonitor::OnWorkerEnd()
   {
+    MYODDWEB_PROFILE_FUNCTION();
+    Monitor::OnWorkerEnd();
+
     delete _directories;
     _directories = nullptr;
           

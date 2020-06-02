@@ -6,12 +6,12 @@
 #include "../Lock.h"
 #include "../Wait.h"
 #include <execution>
-
 #include "../Instrumentor.h"
 
 namespace myoddweb :: directorywatcher :: threads
 {
   WorkerPool::WorkerPool( const long long throttleElapsedTimeMilliseconds) :
+    Worker(),
     _thread(nullptr),
     _throttleElapsedTimeMilliseconds(throttleElapsedTimeMilliseconds)
   {
@@ -349,6 +349,7 @@ namespace myoddweb :: directorywatcher :: threads
     }
 
     // remove it from our list
+    // this worker was probably removed by the caller function
     RemoveWorkerFromRunningWorkers(worker);
 
     // queue this worker now.
@@ -370,7 +371,10 @@ namespace myoddweb :: directorywatcher :: threads
     MYODDWEB_LOCK(_lockThreadsWaitingToEnd);
 
     // create a new thread
-    const auto end = new Thread([&] { worker.WorkerEnd(); });
+    const auto end = new Thread([&]
+    {
+      worker.WorkerEnd();
+    });
 
     // and add it to the queue.
     _threadsWaitingToEnd.push_back(end);
@@ -492,10 +496,10 @@ namespace myoddweb :: directorywatcher :: threads
     try
     {
       // those workers are no longer running
-      RemoveWorkersFromRunningWorkers(workers);
+      const auto actualWorkers = RemoveWorkersFromRunningWorkers(workers);
 
       // call workend for all of them.
-      for (auto worker : workers)
+      for (auto worker : actualWorkers )
       {
         QueueWorkerEnd(*worker);
       }
@@ -543,11 +547,12 @@ namespace myoddweb :: directorywatcher :: threads
    * \brief remove a worker from our list of running workers.
    *        we will obtain the lock to remove this item.
    * \param worker the worker we are wanting to remove
+   * \return if the item was removed or not.
    */
-  void WorkerPool::RemoveWorkerFromRunningWorkers(const Worker& worker)
+  bool WorkerPool::RemoveWorkerFromRunningWorkers(const Worker& worker)
   {
     MYODDWEB_LOCK(_lockRunningWorkers);
-    RemoveWorker(_runningWorkers, worker);
+    return RemoveWorker(_runningWorkers, worker);
   }
 
   /**
@@ -558,11 +563,17 @@ namespace myoddweb :: directorywatcher :: threads
   std::vector<Worker*> WorkerPool::RemoveWorkersFromRunningWorkers(const std::vector<Worker*>& workers)
   {
     MYODDWEB_LOCK(_lockRunningWorkers);
+    auto clone = std::vector<Worker*>();
+    clone.reserve(workers.size());
     for (const auto worker : workers)
     {
-      RemoveWorker(_runningWorkers, *worker);
+      if( !RemoveWorker(_runningWorkers, *worker) )
+      {
+        continue;
+      }
+      clone.push_back(worker);
     }
-    return std::vector<Worker*>(workers);
+    return clone;
   }
 
   /**
@@ -610,9 +621,11 @@ namespace myoddweb :: directorywatcher :: threads
    * \brief remove a single worker from a collection of workers
    * \param container the collection of workers.
    * \param item the worker we want t remove
+   * \return if the worker was found and removed
    */
-  void WorkerPool::RemoveWorker(std::vector<Worker*>& container, const Worker& item)
+  bool WorkerPool::RemoveWorker(std::vector<Worker*>& container, const Worker& item)
   {
+    auto removed = false;
     for (;;)
     {
       try
@@ -622,6 +635,7 @@ namespace myoddweb :: directorywatcher :: threads
         {
           break;
         }
+        removed = true;
         container.erase(it);
       }
       catch( ... )
@@ -629,6 +643,7 @@ namespace myoddweb :: directorywatcher :: threads
         //  @TODO: Log somewhere
       }
     }
+    return removed;
   }
   #pragma endregion 
 
@@ -738,7 +753,6 @@ namespace myoddweb :: directorywatcher :: threads
         [&](auto&& item)
         {
           StopAndWait(*item, timeout );
-          std::this_thread::yield();
         }
       );
 
