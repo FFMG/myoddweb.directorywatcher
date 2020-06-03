@@ -154,7 +154,6 @@ namespace myoddweb:: directorywatcher:: threads
      */
     virtual void OnWorkerEnd()
     {
-      MYODDWEB_OUT("Wtf\n");
     }
 
     /**

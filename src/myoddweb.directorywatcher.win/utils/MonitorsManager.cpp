@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 #include "MonitorsManager.h"
 #include "Lock.h"
+#include "../utils/Wait.h"
 #include "../monitors/Base.h"
 #include "../monitors/WinMonitor.h"
 #include "../monitors/MultipleWinMonitor.h"

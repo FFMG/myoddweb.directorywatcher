@@ -5,7 +5,6 @@
 #include <condition_variable>
 #include <functional>
 #include <future>
-
 #include "Threads/Thread.h"
 
 namespace myoddweb
@@ -39,12 +38,12 @@ namespace myoddweb
       static bool SpinUntil(std::function<bool()> condition, long long milliseconds);
 
       template <typename T>
-      static bool SpinUntil( std::future<T>& future, long long milliseconds)
+      static bool SpinUntil( std::future<T>& future, const long long milliseconds)
       {
         return SpinUntilFutureComplete(future, milliseconds);
       }
 
-      static bool SpinUntil(threads::Thread& thread, long long milliseconds)
+      static bool SpinUntil(threads::Thread& thread, const long long milliseconds)
       {
         return SpinUntilThreadComplete(thread, milliseconds);
       }

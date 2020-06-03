@@ -3,8 +3,6 @@
 // See the LICENSE file in the project root for more information.
 #pragma once
 
-#include "../utils/Wait.h"
-
 // create a variable
 #define MYODDWEB_VAR(z) line##z##var
 #define MYODDWEB_DEC(x) MYODDWEB_VAR(x)
