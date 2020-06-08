@@ -47,7 +47,7 @@ namespace myoddweb
 #define MYODDWEB_DEBUG_LOG 0
 #endif // DEBUG
   
-#if MYODDWEB_DEBUG_LOG
+#if MYODDWEB_DEBUG_LOG == 2
   #if !defined(_DEBUG)
     #error "You cannot use debug log in release mode!"
   #endif
@@ -142,15 +142,17 @@ namespace myoddweb
   // 1- looking for deadlock
   // 2- full log
   #if MYODDWEB_DEBUG_LOG == 1 
-    #define MYODDWEB_LOCK(mutex) LockTry MYODDWEB_DEC(__LINE__)(mutex, __FUNCSIG__);
+    #define MYODDWEB_LOCK(mut) LockTry MYODDWEB_DEC(__LINE__)(mut, __FUNCSIG__);
   #elif MYODDWEB_DEBUG_LOG == 2
-    #define MYODDWEB_LOCK(mutex)                                      \
+    #define MYODDWEB_LOCK(mut)                                      \
     {                                                                 \
       const auto o = "Lock Wait: " + std::string(__FUNCSIG__) + "\n"; \
       MYODDWEB_OUT(o.c_str());                                        \
     }                                                                 \
-    LockDebug MYODDWEB_DEC(__LINE__)(mutex, __FUNCSIG__ );
+    LockDebug MYODDWEB_DEC(__LINE__)(mut, __FUNCSIG__ );
   #endif
+#elseif MYODDWEB_DEBUG_LOG == 1
+  #define MYODDWEB_LOCK(mut) Lock MYODDWEB_DEC(__LINE__)(mut);
 #else
-  #define MYODDWEB_LOCK(mutex) Lock MYODDWEB_DEC(__LINE__)(mutex);
+  #define MYODDWEB_LOCK(mut)  const std::lock_guard<std::mutex> MYODDWEB_DEC(__LINE__)(mut);
 #endif 
