@@ -2,7 +2,7 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #pragma once
-#include <mutex>
+#include "../monitors/Base.h"
 
 namespace myoddweb
 {
@@ -15,7 +15,7 @@ namespace myoddweb
 #endif
     {
     public:
-      explicit Lock(std::recursive_mutex& lock);
+      explicit Lock(MYODDWEB_MUTEX& lock);
 
 #if MYODDWEB_DEBUG_LOG
       virtual ~Lock();
@@ -30,7 +30,7 @@ namespace myoddweb
       Lock& operator=(const Lock&&) = delete;
 
     private:
-      std::recursive_mutex& _lock;
+      MYODDWEB_MUTEX& _lock;
     };
   }
 }
@@ -65,7 +65,7 @@ namespace myoddweb
       class LockTry
       {
       public:
-        explicit LockTry(std::recursive_mutex& lock, std::string functionSig) :
+        explicit LockTry(MYODDWEB_MUTEX& lock, std::string functionSig) :
           _functionSig(std::move(functionSig)),
           _lock( lock )
         {
@@ -108,13 +108,13 @@ namespace myoddweb
 
       protected:
         std::string _functionSig;
-        std::recursive_mutex& _lock;
+        MYODDWEB_MUTEX& _lock;
       };
 
       class LockDebug final : public LockTry
       {
       public:
-        explicit LockDebug(std::recursive_mutex& lock, std::string functionSig) :
+        explicit LockDebug(MYODDWEB_MUTEX& lock, std::string functionSig) :
           LockTry(lock, std::move(functionSig))
         {
           LogStart();

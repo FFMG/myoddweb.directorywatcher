@@ -53,7 +53,7 @@ namespace myoddweb
       /**
        * \brief the locks so we can add data.
        */
-      std::recursive_mutex _lock;
+      MYODDWEB_MUTEX _lock;
 
       /**
        * \brief the non recursive parents, we will monitor new folder for those.

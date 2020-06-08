@@ -14,7 +14,7 @@ namespace myoddweb
   namespace directorywatcher
   {
     MonitorsManager* MonitorsManager::_instance = nullptr;
-    std::recursive_mutex MonitorsManager::_lock;
+    MYODDWEB_MUTEX MonitorsManager::_lock;
 
     MonitorsManager::MonitorsManager() :
       _workersPool( nullptr )

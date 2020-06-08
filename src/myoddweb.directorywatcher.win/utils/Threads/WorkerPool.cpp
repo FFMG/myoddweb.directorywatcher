@@ -50,7 +50,7 @@ namespace myoddweb :: directorywatcher :: threads
       ProcessThreadsAndWorkersWaiting();
 
       // then go around trying to lock th
-      std::recursive_mutex lock;
+      MYODDWEB_MUTEX lock;
       auto status = WaitResult::complete;
       // send an update for all of them at the same time
       std::for_each(
@@ -172,7 +172,7 @@ namespace myoddweb :: directorywatcher :: threads
       std::vector<Worker*> remove;
 
       // send an update for all of them at the same time
-      std::recursive_mutex lock;
+      MYODDWEB_MUTEX lock;
       std::for_each(
         std::execution::par,
         runningWorkers.begin(),
@@ -222,7 +222,7 @@ namespace myoddweb :: directorywatcher :: threads
       ProcessThreadsAndWorkersWaiting();
 
       // then go around trying to lock th
-      std::recursive_mutex lock;
+      MYODDWEB_MUTEX lock;
       auto status = WaitResult::complete;
       // send an update for all of them at the same time
       std::for_each(
@@ -1044,7 +1044,7 @@ namespace myoddweb :: directorywatcher :: threads
 MYODDWEB_OUT("Some running workers\n");
       // stop and wait all of them
       std::vector<Worker*> timeOutWorkers;
-      std::recursive_mutex lock;
+      MYODDWEB_MUTEX lock;
       std::for_each(
         std::execution::par,
         runningWorkers.begin(),
@@ -1085,7 +1085,7 @@ MYODDWEB_OUT("Some running workers\n");
 MYODDWEB_OUT("Some running threads\n");
       // stop and wait all of them
       std::vector<Thread*> timeOutWorkers;
-      std::recursive_mutex lock;
+      MYODDWEB_MUTEX lock;
       std::for_each(
         std::execution::par,
         runningThreads.begin(),

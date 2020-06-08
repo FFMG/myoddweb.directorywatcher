@@ -68,7 +68,7 @@ namespace myoddweb
       static long long GetId();
 
       // The file lock
-      static std::recursive_mutex _lock;
+      static MYODDWEB_MUTEX _lock;
 
       // the singleton
       static MonitorsManager* _instance;

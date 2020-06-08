@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 #include <mutex>
+
+#include "../monitors/Base.h"
 #include "EventAction.h"
 #include "EventInformation.h"
 #include "Event.h"
@@ -73,7 +75,7 @@ namespace myoddweb
       /**
        * \brief the locks so we can add data.
        */
-      std::recursive_mutex _lock;
+      MYODDWEB_MUTEX _lock;
 
       /**
        * \brief the events list

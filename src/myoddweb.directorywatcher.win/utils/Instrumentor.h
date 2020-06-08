@@ -9,6 +9,7 @@
 #include <fstream>
 #include <vector>
 #include <mutex>
+#include "../monitors/Base.h"
 
 /**
  * \brief how often we want to flush log data to disk.
@@ -40,7 +41,7 @@ namespace myoddweb
       InstrumentationSession* _currentSession;
       std::ofstream _outputStream;
       uint32_t _profileCount;
-      std::recursive_mutex _lock;
+      MYODDWEB_MUTEX _lock;
       std::vector<ProfileResult> _msgs;
       const uint32_t _maxPacketSize;
     public:

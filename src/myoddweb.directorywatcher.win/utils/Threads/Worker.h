@@ -37,7 +37,7 @@ namespace myoddweb:: directorywatcher:: threads
      * \brief This lock is used when we are inside the main update function
      *        This will prevent worker end.
      */
-    std::recursive_mutex _lockState;
+    MYODDWEB_MUTEX _lockState;
 
   public:
     Worker(const Worker&) = delete;
