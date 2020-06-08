@@ -365,7 +365,7 @@ namespace myoddweb:: directorywatcher
     MYODDWEB_LOCK(_lock);
 
     // add it.
-    _currentEvents->push_back(event);
+    _currentEvents->emplace_back(event);
 
     // update the internal counter.
     if(_nextCleanupTimeCheck == 0 )

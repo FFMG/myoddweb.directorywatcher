@@ -186,7 +186,7 @@ namespace myoddweb :: directorywatcher :: threads
                 return false;
               }
               MYODDWEB_LOCK(lock);
-              remove.push_back(item);
+              remove.emplace_back(item);
               return true;
             }, timeout);
         }
@@ -377,7 +377,7 @@ namespace myoddweb :: directorywatcher :: threads
     });
 
     // and add it to the queue.
-    _threadsWaitingToEnd.push_back(end);
+    _threadsWaitingToEnd.emplace_back(end);
   }
 
   /**
@@ -571,7 +571,7 @@ namespace myoddweb :: directorywatcher :: threads
       {
         continue;
       }
-      clone.push_back(worker);
+      clone.emplace_back(worker);
     }
     return clone;
   }
@@ -678,7 +678,7 @@ namespace myoddweb :: directorywatcher :: threads
       }
 
       // this item was not found either running or about to start
-      uniqueWorkers.push_back(worker);
+      uniqueWorkers.emplace_back(worker);
     }
 
     // we can now add those workers to our list of workers.
@@ -1057,7 +1057,7 @@ MYODDWEB_OUT("Some running workers\n");
           if (WaitResult::complete != result)
           {
             MYODDWEB_LOCK(lock);
-            timeOutWorkers.push_back(item);
+            timeOutWorkers.emplace_back(item);
           }
         }
       );
@@ -1098,7 +1098,7 @@ MYODDWEB_OUT("Some running threads\n");
           if (WaitResult::complete != result)
           {
             MYODDWEB_LOCK(lock);
-            timeOutWorkers.push_back(item);
+            timeOutWorkers.emplace_back(item);
           }
           else
           {

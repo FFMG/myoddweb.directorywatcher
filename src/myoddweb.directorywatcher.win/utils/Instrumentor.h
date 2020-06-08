@@ -74,7 +74,7 @@ namespace myoddweb
         _lock.lock();
         try
         {
-          _msgs.push_back(result);
+          _msgs.emplace_back(result);
           if (static_cast<uint32_t>(_msgs.size()) > _maxPacketSize)
           {
             FlushInLock();

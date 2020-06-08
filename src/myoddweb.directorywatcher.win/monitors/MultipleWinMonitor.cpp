@@ -170,7 +170,7 @@ namespace myoddweb::directorywatcher
     const auto id = GetNextId();
     const auto request = new Request(path, true, nullptr, 0);
     const auto child = new WinMonitor(id, ParentId(), WorkerPool(), *request );
-    _recursiveChildren.push_back(child); 
+    _recursiveChildren.emplace_back(child); 
 
     // add the child.
     WorkerPool().Add( *child );
@@ -480,7 +480,7 @@ namespace myoddweb::directorywatcher
     // adding all the sub-paths will not breach the limit.
     // so we can add the parent, but non-recuresive.
     const auto request = new Request(parent.Path(), false, nullptr, 0);
-    _nonRecursiveParents.push_back(new WinMonitor(id, ParentId(), WorkerPool(), *request ));
+    _nonRecursiveParents.emplace_back(new WinMonitor(id, ParentId(), WorkerPool(), *request ));
 
     // now try and add all the subpath
     for (const auto& path : subPaths)
