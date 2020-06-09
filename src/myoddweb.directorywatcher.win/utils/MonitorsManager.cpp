@@ -129,18 +129,18 @@ namespace myoddweb
     bool MonitorsManager::Stop(const long long id)
     {
       MYODDWEB_PROFILE_FUNCTION();
-      MYODDWEB_LOCK(_lock);
-
-      // if we do not have an instance... then we have nothing.
-      if (_instance == nullptr)
-      {
-        return false;
-      }
-
       try
       {
+        MYODDWEB_LOCK(_lock);
+
+        // if we do not have an instance... then we have nothing.
+        if (_instance == nullptr)
+        {
+          return false;
+        }
+
         // try and remove it.
-        const auto result = Instance()->StopAndDelete(id);
+        const auto result = Instance()->StopAndDeleteWithLock(id);
 
         // delete our instance if we are the last one
         if (Instance()->_monitors.empty())
@@ -247,7 +247,8 @@ namespace myoddweb
         // remove the one we just added.
         if (monitor != nullptr)
         {
-          StopAndDelete(monitor->Id());
+          MYODDWEB_LOCK(_lock);
+          StopAndDeleteWithLock(monitor->Id());
         }
 
         // and return null.
@@ -256,15 +257,13 @@ namespace myoddweb
     }
 
     /**
-     * \brief Stop and remove a monitor
-     *        We will delete the monitor as well.
-     * \param id the item we want to delete
-     * \return success or not.
+     * \brief stop a monitor and then get rid of it if needed, we will assume we have the lock.
+     * \paramn id the id we want to delete.
+     * \return false if there was a problem or if it does not exist.
      */
-    bool MonitorsManager::StopAndDelete(const long long id)
+    bool MonitorsManager::StopAndDeleteWithLock(const long long id)
     {
       MYODDWEB_PROFILE_FUNCTION();
-      MYODDWEB_LOCK(_lock);
       try
       {
         const auto monitor = _monitors.find(id);

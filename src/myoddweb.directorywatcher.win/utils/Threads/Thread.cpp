@@ -154,7 +154,7 @@ namespace myoddweb::directorywatcher::threads
   /**
    * \brief start running the worker.
    */
-  void Thread::Start()
+  void Thread::Start() const
   {
     // we can now start
     try

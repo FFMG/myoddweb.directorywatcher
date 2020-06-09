@@ -54,11 +54,11 @@ namespace myoddweb
       Monitor* CreateAndddToList(const Request& request);
 
       /**
-       * \brief stop a monitor and then get rid of it.
+       * \brief stop a monitor and then get rid of it if needed, we will assume we have the lock.
        * \paramn id the id we want to delete.
        * \return false if there was a problem or if it does not exist.
        */
-      bool StopAndDelete(long long id);
+      bool StopAndDeleteWithLock(long long id);
 
       /**
        * \brief Get a random id
