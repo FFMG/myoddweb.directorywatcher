@@ -152,6 +152,9 @@ namespace myoddweb
     LockDebug MYODDWEB_DEC(__LINE__)(mut, __FUNCSIG__ );
   #endif
 #elseif MYODDWEB_DEBUG_LOG == 1
+  #if !defined(_DEBUG)
+    #error "You cannot use debug log in release mode!"
+  #endif
   #define MYODDWEB_LOCK(mut) Lock MYODDWEB_DEC(__LINE__)(mut);
 #else
   #define MYODDWEB_LOCK(mut)  const std::lock_guard<std::mutex> MYODDWEB_DEC(__LINE__)(mut);
