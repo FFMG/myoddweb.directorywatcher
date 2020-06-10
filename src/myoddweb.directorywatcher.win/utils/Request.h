@@ -2,123 +2,122 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #pragma once
-#include <string>
 #include "../monitors/Callbacks.h"
 
-namespace myoddweb
+namespace myoddweb:: directorywatcher
 {
-  namespace directorywatcher
+  /**
+   * \brief unmannaged implementation of IRequest
+   */
+  class Request
   {
     /**
-     * \brief unmannaged implementation of IRequest
+     * \brief private constructor prevent empty requests.
      */
-    class Request
-    {
-    protected:
-      Request() :
-        _path(nullptr),
-        _recursive(false),
-        _callback(nullptr),
-        _callbackRateMs(0)
-      {
-      }
+    Request();
 
-    public:
-      Request(const wchar_t* path, const bool recursive, const EventCallback& callback, const long long callbackRateMs) :
-        Request()
-      {
-        Assign(path, recursive, callback, callbackRateMs);
-      }
-      
-      Request(const Request& request) :
-        Request()
-      {
-        Assign(request);
-      }
+  public:
+    /**
+     * \brief copy constructor
+     */
+    Request(const Request& request);
 
-      ~Request()
-      {
-        CleanPath();
-      }
+    /**
+     * \brief create from a parent request, (no callback)
+     * \param path the path being watched.
+     * \param recursive if the request is recursive or not.
+     */
+    Request(const wchar_t* path, bool recursive);
+    ~Request();
 
-      // prevent assignment
-      const Request& operator=(const Request& request) = delete;
+    // prevent assignment + move
+    Request(Request&&) = delete;
+    const Request& operator=(const Request& ) = delete;
+    const Request&& operator=(Request&& ) = delete;
 
-    private :
-      void CleanPath()
-      {
-        if (_path == nullptr)
-        {
-          return;
-        }
-        delete[] _path;
-        _path = nullptr;
-      }
+  private :
+    /**
+     * \brief Dispose all the values.
+     */
+    void Dispose();
 
-      void Assign(const Request& request )
-      {
-        if (this == &request)
-        {
-          return;
-        }
-        Assign( request._path, request._recursive, request._callback, request._callbackRateMs );
-      }
+    /**
+     * \brief assin a request
+     */
+    void Assign(const Request& request);
 
-      void Assign(const wchar_t* path, const bool recursive, const EventCallback& callback, const long long callbackRateMs)
-      {
-        // clean up
-        CleanPath();
+    /**
+     * \brief assign request values
+     */
+    void Assign(const wchar_t* path, bool recursive, const EventCallback& callback, long long callbackRateMs);
 
-        _callback = callback;
-        _callbackRateMs = callbackRateMs;
-        _recursive = recursive;
+  public:
+    /**
+     * \brief access the path
+     */
+    [[nodiscard]]
+    const wchar_t* Path() const;
 
-        if (path != nullptr)
-        {
-          auto l = wcslen(path);
-          _path = new wchar_t[ l+1];
-          wmemset(_path, L'\0', l+1);
-          wcscpy_s(_path, l+1, path );
-        }        
-      }
+    /**
+     * \breif check if the request is recursive or not
+     */
+    [[nodiscard]]
+    bool Recursive() const;
 
-    public:
-      const wchar_t* Path() const {
-        return _path;
-      }
+    /**
+     * \brief the events callback
+     * \return the event callback
+     */
+    [[nodiscard]]
+    const EventCallback& CallbackEvents() const;
 
-      const bool Recursive() const {
-        return _recursive;
-      }
+    /**
+     * \brief the stats of the monitor 
+     */
+    [[nodiscard]]
+    const StatsCallback& CallbackStats() const;
 
-      const EventCallback& Callback() const {
-        return _callback;
-      }
+    /**
+     * \brief how often we want to check for callbacks
+     */
+    [[nodiscard]]
+    long long EventsCallbackRateMilliseconds() const;
 
-      long long CallbackRateMs() const {
-        return _callbackRateMs;
-      }
+    /**
+     * \brief how often we want to check for stats
+     */
+    [[nodiscard]]
+    long long StatsCallbackRateMilliseconds() const;
 
-    private:
-      /**
-       * \brief the path of the folder we will be monitoring
-       */
-      wchar_t* _path;
+  private:
+    /**
+     * \brief the path of the folder we will be monitoring
+     */
+    wchar_t* _path;
 
-      /**
-       * \brief if we are recursively monitoring or not.
-       */
-      bool _recursive;
+    /**
+     * \brief if we are recursively monitoring or not.
+     */
+    bool _recursive;
 
-      /**
-       * \brief the callback even we want to call from time to time.
-       */
-      EventCallback _callback;
-      
-      /**
-       * How often we wish to callback
-       */
-      long long _callbackRateMs;
-    };
-  }
+    /**
+     * \brief the callback even we want to call from time to time.
+     */
+    EventCallback _eventsCallback;
+
+    /**
+     * \brief the callback even we want to call from time to time.
+     */
+    StatsCallback _statsCallback;
+
+    /**
+     * How often we wish to callback events
+     */
+    long long _eventsCallbackRateMs;
+
+    /**
+     * How often we wish to callback stats
+     */
+    long long _statsCallbackRateMs;
+  };
 }

@@ -207,19 +207,19 @@ namespace myoddweb:: directorywatcher
     _publisher = nullptr;
 
     // null is allowed
-    if (nullptr == _request->Callback())
+    if (nullptr == _request->CallbackEvents())
     {
       return;
     }
 
     // zero are allowed.
-    if (0 == _request->CallbackRateMs())
+    if (0 == _request->EventsCallbackRateMilliseconds())
     {
       return;
     }
 
     // create the new publisher.
-    _publisher = new EventsPublisher( *this, ParentId(), _request->Callback(), _request->CallbackRateMs() );
+    _publisher = new EventsPublisher( *this, ParentId(), _request->CallbackEvents(), _request->EventsCallbackRateMilliseconds() );
   }
 
   /**

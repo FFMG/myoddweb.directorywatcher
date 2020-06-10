@@ -7,6 +7,10 @@
 namespace myoddweb:: directorywatcher
 {
   /**
+   */
+  extern "C" { __declspec(dllexport) bool SetConfig(const Request& request); }
+
+  /**
    * \brief Start watching a folder
    * \param request The request containing info about the item we are watching.
    * \return The id of the created request or -ve otherwise

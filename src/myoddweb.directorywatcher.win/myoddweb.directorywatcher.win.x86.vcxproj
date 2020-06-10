@@ -141,6 +141,7 @@
     <ClCompile Include="utils\Io.cpp" />
     <ClCompile Include="utils\Lock.cpp" />
     <ClCompile Include="utils\MonitorsManager.cpp" />
+    <ClCompile Include="utils\Request.cpp" />
     <ClCompile Include="utils\Threads\CallbackWorker.cpp" />
     <ClCompile Include="utils\Threads\Thread.cpp" />
     <ClCompile Include="utils\Threads\Worker.cpp" />

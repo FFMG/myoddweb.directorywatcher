@@ -18,7 +18,11 @@ namespace myoddweb::directorywatcher
   public:
     explicit EventsPublisher(Monitor& monitor, long long id,  const EventCallback& callback, long long delayTimeMilliseconds);
 
-    void Update(const float fElapsedTimeMilliseconds);
+    /**
+     * \brief called at various intervals.
+     * \param fElapsedTimeMilliseconds the number of ms since the last update
+     */
+    void Update(float fElapsedTimeMilliseconds);
 
   private:
     /**
