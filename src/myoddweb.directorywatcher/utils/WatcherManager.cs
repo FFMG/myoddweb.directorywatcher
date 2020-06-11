@@ -236,6 +236,8 @@ namespace myoddweb.directorywatcher.utils
 
     public abstract long GetEvents(long id, out IList<IEvent> events);
 
+    public abstract bool GetStatistics(long id, out IStatistics statistics);
+    
     public abstract bool Ready();
     #endregion
   }

@@ -31,6 +31,11 @@ namespace myoddweb.directorywatcher
     private CancellationTokenSource _eventsSource;
 
     /// <summary>
+    /// All the running statistics tasks
+    /// </summary>
+    private CancellationTokenSource _statisticsSource;
+
+    /// <summary>
     /// The parent watcher source
     /// </summary>
     private readonly CancellationTokenSource _watcherSource = new CancellationTokenSource();
@@ -38,7 +43,12 @@ namespace myoddweb.directorywatcher
     /// <summary>
     /// This is the task that always waits for events to run.
     /// </summary>
-    private readonly Task _task;
+    private readonly Task _eventsTask;
+
+    /// <summary>
+    /// The long running statistics taks
+    /// </summary>
+    private readonly Task _statisticsTask;
 
     /// <summary>
     /// If we started work or not.
@@ -72,6 +82,8 @@ namespace myoddweb.directorywatcher
     /// <inheritdoc />
     public event WatcherEvent<IEventError> OnErrorAsync;
 
+    /// <inheritdoc />
+    public event WatcherEvent<IStatistics> OnStatisticsAsync;
     #endregion
 
     public Watcher()
@@ -88,7 +100,10 @@ namespace myoddweb.directorywatcher
 #endif
 
       // start the task that will forever be looking for events.
-      _task = ProcessEventsAsync();
+      _eventsTask = ProcessEventsAsync();
+
+      // then run all the statistics task
+      _statisticsTask = ProcessStatisticsAsync();
 
       // we have not disposed
       _disposed = false;
@@ -135,8 +150,10 @@ namespace myoddweb.directorywatcher
 
         // and dispose...
         _eventsSource?.Dispose();
+        _statisticsSource?.Dispose();
         _watcherSource?.Dispose();
-        _task.Dispose();
+        _eventsTask.Dispose();
+        _statisticsTask.Dispose();
         _watcherManager?.Dispose();
       }
       finally
@@ -160,17 +177,18 @@ namespace myoddweb.directorywatcher
     {
       // are we running?
       _eventsSource?.Cancel();
+      _statisticsSource?.Cancel();
       _watcherSource?.Cancel();
 
-      // wait for the task to end.
-      _task.Wait();
+      // wait for all the tasks to end
+      Task.WaitAll(_eventsTask, _statisticsTask);
 
       // flag that this has stoped.
       _started = false;
     }
 #endregion
 
-#region IWatcher1/IWatcher2/IWatcher3
+    #region IWatcher1/IWatcher2/IWatcher3
     /// <inheritdoc />
     public long Start(IRequest request)
     {
@@ -236,15 +254,6 @@ namespace myoddweb.directorywatcher
     }
 
     /// <inheritdoc />
-    public long GetEvents(long id, out IList<IEvent> events)
-    {
-      // we cannot get any more events if we have disposed.
-      CheckDisposed();
-
-      return _watcherManager.GetEvents(id, out events);
-    }
-
-    /// <inheritdoc />
     public bool Ready()
     {
       // we cannot check what has been disposed.
@@ -263,8 +272,9 @@ namespace myoddweb.directorywatcher
         // flag that this has started.
         _started = true;
 
-        // cancel the task
+        // the cancellation sources
         _eventsSource = new CancellationTokenSource();
+        _statisticsSource = new CancellationTokenSource();
       }
     }
 
@@ -329,8 +339,9 @@ namespace myoddweb.directorywatcher
         // flag that this has started.
         _started = true;
 
-        // cancel the task
+        // the cancellation task sources
         _eventsSource = new CancellationTokenSource();
+        _statisticsSource = new CancellationTokenSource();
       }
     }
 
@@ -358,6 +369,46 @@ namespace myoddweb.directorywatcher
     }
 
     /// <inheritdoc />
+    public bool GetStatistics( long id, out IStatistics statistics)
+    {
+      // we cannot get the events if we disposed.
+      CheckDisposed();
+
+      // we cannot get any more events if we have disposed.
+      CheckDisposed();
+
+      return _watcherManager.GetStatistics(id, out statistics);
+    }
+
+    /// <inheritdoc />
+    public long GetStatistics( out IList<IStatistics> statistics)
+    {
+      // we cannot get the events if we disposed.
+      CheckDisposed();
+
+      var allStatistics = new List<IStatistics>();
+      foreach (var id in _processedRequests.Select(r => r.Key).ToArray())
+      {
+        if (GetStatistics(id, out var currentStatistics))
+        {
+          allStatistics.Add(currentStatistics);
+        }
+      }
+
+      statistics = allStatistics;
+      return allStatistics.Count;
+    }
+
+    /// <inheritdoc />
+    public long GetEvents(long id, out IList<IEvent> events)
+    {
+      // we cannot get any more events if we have disposed.
+      CheckDisposed();
+
+      return _watcherManager.GetEvents(id, out events);
+    }
+
+    /// <inheritdoc />
     public long GetEvents(out IList<IEvent> events)
     {
       // we cannot get the events if we disposed.
@@ -375,50 +426,30 @@ namespace myoddweb.directorywatcher
       events = allEvents;
       return allEvents.Count;
     }
-#endregion
+    #endregion
 
-#region Private functions
-    private Task CreateProcessEvent(IEvent e, CancellationToken token)
+    #region Private functions
+    private Task ProcessEvent(IEvent e, CancellationToken token)
     {
       // do we have an error.
       if (e.Error != EventError.None)
       {
-        if (OnErrorAsync != null)
-        {
-          return Task.Run(() => OnErrorAsync?.Invoke(new utils.EventError(e.Error, e.DateTimeUtc), token), token);
-        }
-        return Task.FromResult(false);
+        return OnErrorAsync != null ? Task.Run(() => OnErrorAsync?.Invoke(new utils.EventError(e.Error, e.DateTimeUtc), token), token) : Task.FromResult(false);
       }
 
       switch (e.Action)
       {
         case EventAction.Added:
-          if (OnAddedAsync != null)
-          {
-            return Task.Run(() => OnAddedAsync?.Invoke(new FileSystemEvent(e), token), token);
-          }
-          return Task.FromResult(false);
+          return OnAddedAsync != null ? Task.Run(() => OnAddedAsync?.Invoke(new FileSystemEvent(e), token), token) : Task.FromResult(false);
 
         case EventAction.Removed:
-          if (OnRemovedAsync != null)
-          {
-            return Task.Run(() => OnRemovedAsync?.Invoke(new FileSystemEvent(e), token), token);
-          }
-          return Task.FromResult(false);
+          return OnRemovedAsync != null ? Task.Run(() => OnRemovedAsync?.Invoke(new FileSystemEvent(e), token), token) : Task.FromResult(false);
 
         case EventAction.Touched:
-          if (OnTouchedAsync != null)
-          {
-            return Task.Run(() => OnTouchedAsync?.Invoke(new FileSystemEvent(e), token), token);
-          }
-          return Task.FromResult(false);
+          return OnTouchedAsync != null ? Task.Run(() => OnTouchedAsync?.Invoke(new FileSystemEvent(e), token), token) : Task.FromResult(false);
 
         case EventAction.Renamed:
-          if (OnRenamedAsync != null)
-          {
-            return Task.Run(() => OnRenamedAsync?.Invoke(new RenamedFileSystemEvent(e), token), token);
-          }
-          return Task.FromResult(false);
+          return OnRenamedAsync != null ? Task.Run(() => OnRenamedAsync?.Invoke(new RenamedFileSystemEvent(e), token), token) : Task.FromResult(false);
 
         default:
           throw new NotSupportedException($"Received an unknown Action: {e.Action:G}");
@@ -432,7 +463,7 @@ namespace myoddweb.directorywatcher
     /// <param name="maxNumTasks"></param>
     /// <param name="token"></param>
     /// <returns></returns>
-    private IEnumerable<Task> CreateProcessEvents( IEnumerable<IEvent> events, int maxNumTasks, CancellationToken token)
+    private IEnumerable<Task> ProcessEvents( IEnumerable<IEvent> events, int maxNumTasks, CancellationToken token)
     {
       // the created events.
       var tasks = new List<Task>(maxNumTasks);
@@ -442,7 +473,11 @@ namespace myoddweb.directorywatcher
       {
         try
         {
-          tasks.Add(CreateProcessEvent(e, token));
+          var task = ProcessEvent(e, token);
+          if (!task.IsCompleted)
+          {
+            tasks.Add( task );
+          }
         }
         catch
         {
@@ -453,6 +488,123 @@ namespace myoddweb.directorywatcher
         }
       }
       return tasks;
+    }
+
+    /// <summary>
+    /// Process a list of statistics and send them all to the various observers.
+    /// </summary>
+    /// <param name="statistics"></param>
+    /// <param name="maxNumTasks"></param>
+    /// <param name="statisticsSourceToken"></param>
+    /// <returns></returns>
+    private IEnumerable<Task> ProcessStatistics(IEnumerable<IStatistics> statistics, int maxNumTasks, CancellationToken statisticsSourceToken)
+    {
+      // the created statistics.
+      var tasks = new List<Task>(maxNumTasks);
+
+      // then call the various stats.
+      foreach (var statistic in statistics)
+      {
+        try
+        {
+          var task = OnStatisticsAsync != null
+            ? Task.Run(() => OnStatisticsAsync?.Invoke(statistic, statisticsSourceToken), statisticsSourceToken)
+            : Task.FromResult(false);
+          if (!task.IsCompleted)
+          {
+            tasks.Add(task);
+          }
+        }
+        catch
+        {
+          if (OnErrorAsync != null)
+          {
+            tasks.Add(Task.Run(() => OnErrorAsync(new utils.EventError(EventError.General, DateTime.UtcNow), statisticsSourceToken), statisticsSourceToken));
+          }
+        }
+      }
+      return tasks;
+    }
+
+    /// <summary>
+    /// Long running task to get all the statistics
+    /// </summary>
+    /// <returns></returns>
+    private async Task<bool> ProcessStatisticsAsync()
+    {
+      //  how big we want to allow the list of tasks to be.
+      // before we 'clean' the completed list.
+      const int maxNumTasks = 1028;
+
+      // the list of tasks .
+      var tasks = new List<Task>(maxNumTasks);
+      try
+      {
+        // loop around while we process events.
+        while (!_watcherSource.IsCancellationRequested)
+        {
+          try
+          {
+            // no point in doing anything until we are all done.
+            if (_statisticsSource?.IsCancellationRequested ?? true)
+            {
+              continue;
+            }
+
+            // get all the events
+            if (GetStatistics(out var statistics) <= 0)
+            {
+              continue;
+            }
+
+            // process all the events.
+            tasks.AddRange(ProcessStatistics(statistics, maxNumTasks, _statisticsSource.Token));
+
+            // create the tasks that are complete.
+            if (tasks.Count > maxNumTasks)
+            {
+              tasks.RemoveAll(t => t.IsCompleted);
+            }
+          }
+          catch (Exception e)
+          {
+            if (e is OperationCanceledException oc)
+            {
+              if (oc.CancellationToken == _statisticsSource?.Token)
+              {
+                // we just cancelled the events token
+                continue;
+              }
+
+              if (oc.CancellationToken == _watcherSource.Token)
+              {
+                // we cancelled the entire watcher.
+                break;
+              }
+            }
+          }
+          finally
+          {
+            // wait ... a little.
+            await Task.Delay(10, _watcherSource.Token).ConfigureAwait(false);
+          }
+        }
+      }
+      catch (OperationCanceledException e)
+      {
+        if (e.CancellationToken != _watcherSource.Token)
+        {
+          //  not my token
+          throw;
+        }
+      }
+      finally
+      {
+        // wait for all the tasks to complete.
+        tasks.RemoveAll(t => t.IsCompleted);
+        Task.WaitAll(tasks.ToArray());
+      }
+      return true;
     }
 
     /// <summary>
@@ -489,7 +641,7 @@ namespace myoddweb.directorywatcher
             }
 
             // process all the events.
-            tasks.AddRange( CreateProcessEvents(events, maxNumTasks, _eventsSource.Token ) );
+            tasks.AddRange( ProcessEvents(events, maxNumTasks, _eventsSource.Token ) );
 
             // create the tasks that are complete.
             if (tasks.Count > maxNumTasks)
@@ -551,6 +703,6 @@ namespace myoddweb.directorywatcher
       }
       return true;
     }
-#endregion
+    #endregion
   }
 }

@@ -328,16 +328,15 @@ namespace myoddweb:: directorywatcher:: win
       return;
     }
 
-    switch (dwErrorCode)
+    if(ERROR_SUCCESS != dwErrorCode)
     {
-    case ERROR_SUCCESS:// all good, continue;
-      data->ProcessRead(dwNumberOfBytesTransfered);
-      break;
-
-    default:
+      // some other error
       data->ProcessError(dwErrorCode);
-      break;
+      return;
     }
+
+    // success
+    data->ProcessRead(dwNumberOfBytesTransfered);
   }
 
   /**

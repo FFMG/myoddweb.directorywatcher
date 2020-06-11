@@ -13,7 +13,7 @@ namespace myoddweb.directorywatcher.utils.Helper
       [MarshalAs(UnmanagedType.I1)]
       public bool Recursive;
 
-      public Callback Callback;
+      public EventsCallback EventsCallback;
 
       [MarshalAs(UnmanagedType.I8)]
       public Int64 CallbackIntervalMs;
@@ -33,13 +33,21 @@ namespace myoddweb.directorywatcher.utils.Helper
     public delegate bool Ready();
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-    public delegate int Callback(
+    public delegate int EventsCallback(
       [MarshalAs(UnmanagedType.I8)] long id,
       [MarshalAs(UnmanagedType.Bool)] bool isFile,
       [MarshalAs(UnmanagedType.LPWStr)] string name,
       [MarshalAs(UnmanagedType.LPWStr)] string oldName,
       [MarshalAs(UnmanagedType.I4)] int action,
       [MarshalAs(UnmanagedType.I4)] int error,
-      [MarshalAs(UnmanagedType.I8)] long dateTimeUtc);
+      [MarshalAs(UnmanagedType.I8)] long dateTimeUtc
+    );
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    public delegate void StatisticsCallback(
+      [MarshalAs(UnmanagedType.I8)] long elapsedTime,
+      [MarshalAs(UnmanagedType.I8)] long numberOfEvents,
+      [MarshalAs(UnmanagedType.I8)] long actualNumberOfMonitors
+    );
   }
 }

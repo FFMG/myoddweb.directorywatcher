@@ -24,14 +24,19 @@ namespace myoddweb.directorywatcher.utils.Helper
     /// <summary>
     /// The callback function called from time to time when Events happen.
     /// </summary>
-    private readonly Delegates.Callback _callback;
+    private readonly Delegates.EventsCallback _eventsCallback;
+
+    /// <summary>
+    /// The callback function called from time to time when stats are updated
+    /// </summary>
+    private readonly Delegates.StatisticsCallback _statisticsCallback;
 
     /// <summary>
     /// The handle of the windows c++ dll ... if loaded.
     /// </summary>
     private readonly IntPtr _handle;
 
-    public WatcherManagerNativeLibrary(string library, Delegates.Callback callback)
+    public WatcherManagerNativeLibrary(string library, Delegates.EventsCallback eventsCallback, Delegates.StatisticsCallback statisticsCallback)
     {
       // some sanity checks.
       if( library == null )
@@ -40,7 +45,8 @@ namespace myoddweb.directorywatcher.utils.Helper
       }
 
       _handle = CreatePtrFromFileSystem( library );
-      _callback = callback ?? throw new ArgumentNullException(nameof(callback));
+      _eventsCallback = eventsCallback ?? throw new ArgumentNullException(nameof(eventsCallback));
+      _statisticsCallback = statisticsCallback ?? throw new ArgumentNullException(nameof(statisticsCallback));
     }
 
     ~WatcherManagerNativeLibrary()
@@ -95,7 +101,7 @@ namespace myoddweb.directorywatcher.utils.Helper
       {
         Recursive = request.Recursive,
         Path = request.Path,
-        Callback = _callback,
+        EventsCallback = _eventsCallback,
         CallbackIntervalMs = 50
       };
 
