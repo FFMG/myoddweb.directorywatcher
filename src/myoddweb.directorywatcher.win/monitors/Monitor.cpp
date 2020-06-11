@@ -13,10 +13,8 @@ namespace myoddweb:: directorywatcher
     Worker(),
     _id(id),
     _workerPool( workerPool ),
-    _eventCollector(nullptr),
     _publisher(nullptr)
   {
-    _eventCollector = new Collector();
     _request = new Request(request);
   }
 
@@ -25,9 +23,6 @@ namespace myoddweb:: directorywatcher
     delete _request;
     _request = nullptr;
 
-    delete _eventCollector;
-    _eventCollector = nullptr;
-
     delete _publisher;
     _publisher = nullptr;
   }
@@ -35,9 +30,9 @@ namespace myoddweb:: directorywatcher
   /**
    * \return get the data collector
    */
-  Collector& Monitor::EventsCollector() const
+  const Collector& Monitor::EventsCollector() const
   {
-    return *_eventCollector;
+    return _eventCollector;
   }
 
   /**
@@ -69,36 +64,36 @@ namespace myoddweb:: directorywatcher
 
   /**
    * \brief Add an event to our current log.
-   * \param action
-   * \param fileName
-   * \param isFile
+   * \param action the action that was performed, (added, deleted and so on)
+   * \param fileName the name of the file/directory
+   * \param isFile if it is a file or not
    */
-  void Monitor::AddEvent(const EventAction action, const std::wstring& fileName, const bool isFile) const
+  void Monitor::AddEvent(const EventAction action, const std::wstring& fileName, const bool isFile)
   {
     MYODDWEB_PROFILE_FUNCTION();
-    _eventCollector->Add(action, Path(), fileName, isFile, EventError::None);
+    _eventCollector.Add(action, Path(), fileName, isFile, EventError::None);
   }
 
   /**
    * \brief Add an event to our current log.
-   * \param newFileName
-   * \param oldFilename
-   * \param isFile
+   * \param newFileName the new name of the file/directory
+   * \param oldFilename the previous name
+   * \param isFile if this is a file or not.
    */
-  void Monitor::AddRenameEvent(const std::wstring& newFileName, const std::wstring& oldFilename, const bool isFile) const
+  void Monitor::AddRenameEvent(const std::wstring& newFileName, const std::wstring& oldFilename, const bool isFile)
   {
     MYODDWEB_PROFILE_FUNCTION();
-    _eventCollector->AddRename(Path(), newFileName, oldFilename, isFile, EventError::None );
+    _eventCollector.AddRename(Path(), newFileName, oldFilename, isFile, EventError::None );
   }
 
   /**
-   * \brief Add an error event to the list.
-   * \param error the error we want to add.
+   * \brief add an event error to the queue
+   * \param error the error event being added
    */
-  void Monitor::AddEventError(const EventError error) const
+  void Monitor::AddEventError(const EventError error)
   {
     MYODDWEB_PROFILE_FUNCTION();
-    _eventCollector->Add(EventAction::Unknown, Path(), L"", false, error );
+    _eventCollector.Add(EventAction::Unknown, Path(), L"", false, error );
   }
 
   /**
@@ -116,7 +111,7 @@ namespace myoddweb:: directorywatcher
     }
 
     // get the events we collected.
-    _eventCollector->GetEvents(events);
+    _eventCollector.GetEvents(events);
 
     // allow the base class to add/remove events.
     OnGetEvents(events);
@@ -181,10 +176,9 @@ namespace myoddweb:: directorywatcher
    */
   void Monitor::OnWorkerEnd()
   {
+    MYODDWEB_PROFILE_FUNCTION();
     try
     {
-      MYODDWEB_PROFILE_FUNCTION();
-
       // clean the publisher
       delete _publisher;
       _publisher = nullptr;

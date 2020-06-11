@@ -11,7 +11,7 @@
 namespace myoddweb:: directorywatcher:: win
 {
   Data::Data(
-    const Monitor& monitor, 
+    Monitor& monitor, 
     const unsigned long notifyFilter,
     const bool recursive,
     DataCallbackFunction& dataCallbackFunction,

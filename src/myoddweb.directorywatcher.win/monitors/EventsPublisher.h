@@ -16,7 +16,7 @@ namespace myoddweb::directorywatcher
     float _elapsedTimeMilliseconds;
 
   public:
-    explicit EventsPublisher(Monitor& monitor, long long id,  const EventCallback& callback, long long delayTimeMilliseconds);
+    explicit EventsPublisher(Monitor& monitor, long long id, const EventCallback& callback, long long delayTimeMilliseconds);
 
     /**
      * \brief called at various intervals.

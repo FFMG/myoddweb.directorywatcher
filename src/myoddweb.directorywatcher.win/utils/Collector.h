@@ -23,7 +23,7 @@ namespace myoddweb
     {
     public:
       Collector();
-      virtual ~Collector();
+      ~Collector();
 
     private:
       explicit Collector( short maxAgeMs );

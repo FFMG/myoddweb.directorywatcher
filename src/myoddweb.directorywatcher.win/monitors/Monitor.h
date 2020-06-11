@@ -33,7 +33,7 @@ namespace myoddweb
       [[nodiscard]]
       bool Recursive() const;
       [[nodiscard]]
-      Collector& EventsCollector() const;
+      const Collector& EventsCollector() const;
 
       /**
        * \brief check if a given path is the same as the given one.
@@ -50,9 +50,27 @@ namespace myoddweb
        */
       long long GetEvents(std::vector<Event*>& events);
 
-      void AddEvent(EventAction action, const std::wstring& fileName, bool isFile ) const;
-      void AddRenameEvent(const std::wstring& newFileName, const std::wstring& oldFilename, bool isFile) const;
-      void AddEventError(EventError error) const;
+      /**
+       * \brief Add an event to our current log.
+       * \param action the action that was performed, (added, deleted and so on)
+       * \param fileName the name of the file/directory
+       * \param isFile if it is a file or not
+       */
+      void AddEvent(EventAction action, const std::wstring& fileName, bool isFile );
+
+      /**
+       * \brief Add an event to our current log.
+       * \param newFileName the new name of the file/directory
+       * \param oldFilename the previous name
+       * \param isFile if this is a file or not.
+       */
+      void AddRenameEvent(const std::wstring& newFileName, const std::wstring& oldFilename, bool isFile);
+
+      /**
+       * \brief add an event error to the queue
+       * \param error the error event being added
+       */
+      void AddEventError(EventError error);
 
       /**
        * \brief get the worker pool
@@ -107,7 +125,7 @@ namespace myoddweb
       /**
        * \brief the current list of collected events.
        */
-      Collector* _eventCollector;
+      Collector _eventCollector;
 
       /**
        * \brief how often we want to check for new events.

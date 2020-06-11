@@ -7,15 +7,14 @@ namespace myoddweb:: directorywatcher
 {
   /**
    * \brief various statistics
+   * \param elapsedTime the number of ms since the last time this was called.
+   * \param numberOfEvents the number of events since the last time.
+   * \param actualNumberOfMonitors the actual number of sub-monitors.
    */
-  typedef int(__stdcall* StatsCallback)(
-    long long id,
-    bool isFile,
-    const wchar_t* name,
-    const wchar_t* oldName,
-    int action,
-    int error,
-    long long dateTimeUtc
+  typedef void(__stdcall* StatsCallback)(
+    long long elapsedTime,
+    long long numberOfEvents,
+    long long actualNumberOfMonitors
     );
 
   /**
