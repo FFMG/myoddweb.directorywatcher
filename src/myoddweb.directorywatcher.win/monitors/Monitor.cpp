@@ -200,20 +200,8 @@ namespace myoddweb:: directorywatcher
     delete _publisher;
     _publisher = nullptr;
 
-    // null is allowed
-    if (nullptr == _request->CallbackEvents())
-    {
-      return;
-    }
-
-    // zero are allowed.
-    if (0 == _request->EventsCallbackRateMilliseconds())
-    {
-      return;
-    }
-
     // create the new publisher.
-    _publisher = new EventsPublisher( *this, ParentId(), _request->CallbackEvents(), _request->EventsCallbackRateMilliseconds() );
+    _publisher = new EventsPublisher( *this, ParentId(), *_request );
   }
 
   /**

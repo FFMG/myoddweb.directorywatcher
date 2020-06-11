@@ -15,8 +15,13 @@ namespace myoddweb.directorywatcher.utils.Helper
 
       public EventsCallback EventsCallback;
 
+      public StatisticsCallback StatisticsCallback;
+
       [MarshalAs(UnmanagedType.I8)]
-      public Int64 CallbackIntervalMs;
+      public Int64 EventsCallbackIntervalMs;
+      
+      [MarshalAs(UnmanagedType.I8)]
+      public Int64 StatisticsCallbackIntervalMs;
     }
 
     // Delegate with function signature for the GetVersion function
@@ -45,9 +50,9 @@ namespace myoddweb.directorywatcher.utils.Helper
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     public delegate void StatisticsCallback(
-      [MarshalAs(UnmanagedType.I8)] long elapsedTime,
-      [MarshalAs(UnmanagedType.I8)] long numberOfEvents,
-      [MarshalAs(UnmanagedType.I8)] long actualNumberOfMonitors
+      [MarshalAs(UnmanagedType.I8)] long id,
+      [MarshalAs(UnmanagedType.R8)] double elapsedTime,
+      [MarshalAs(UnmanagedType.I8)] long numberOfEvents
     );
   }
 }

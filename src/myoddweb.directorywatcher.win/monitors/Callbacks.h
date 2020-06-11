@@ -11,10 +11,10 @@ namespace myoddweb:: directorywatcher
    * \param numberOfEvents the number of events since the last time.
    * \param actualNumberOfMonitors the actual number of sub-monitors.
    */
-  typedef void(__stdcall* StatsCallback)(
-    long long elapsedTime,
-    long long numberOfEvents,
-    long long actualNumberOfMonitors
+  typedef void(__stdcall* StatisticsCallback)(
+    long long id,
+    double elapsedTime,
+    long long numberOfEvents
     );
 
   /**

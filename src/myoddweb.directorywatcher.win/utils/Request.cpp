@@ -15,7 +15,7 @@ namespace myoddweb:: directorywatcher
     _eventsCallback(nullptr),
     _statsCallback(nullptr),
     _eventsCallbackRateMs(0),
-    _statsCallbackRateMs(0)
+    _statisticsCallbackRateMs(0)
   {
   }
 
@@ -27,7 +27,7 @@ namespace myoddweb:: directorywatcher
   Request::Request(const wchar_t* path, const bool recursive) :
     Request()
   {
-    Assign(path, recursive, nullptr, 0 );
+    Assign(path, recursive, nullptr, nullptr, 0, 0 );
   }
     
   Request::Request(const Request& request) :
@@ -63,19 +63,27 @@ namespace myoddweb:: directorywatcher
     {
       return;
     }
-    Assign( request._path, request._recursive, request._eventsCallback, request._eventsCallbackRateMs );
+    Assign( request._path, request._recursive, request._eventsCallback, request._statsCallback, request._eventsCallbackRateMs, request._statisticsCallbackRateMs );
   }
 
   /**
    * \brief assign request values
    */
-  void Request::Assign(const wchar_t* path, const bool recursive, const EventCallback& callback, const long long callbackRateMs)
+  void Request::Assign(
+    const wchar_t* path, 
+    const bool recursive, 
+    const EventCallback& eventsCallback,
+    const StatisticsCallback& statisticsCallback,
+    const long long eventsCallbackRateMs,
+    const long long statisticsCallbackRateMs)
   {
     // clean up
     Dispose();
 
-    _eventsCallback = callback;
-    _eventsCallbackRateMs = callbackRateMs;
+    _eventsCallback = eventsCallback;
+    _eventsCallbackRateMs = eventsCallbackRateMs;
+    _statsCallback = statisticsCallback;
+    _statisticsCallbackRateMs = statisticsCallbackRateMs;
     _recursive = recursive;
 
     if (path != nullptr)
@@ -119,7 +127,7 @@ namespace myoddweb:: directorywatcher
    * \brief the stats of the monitor
    */
   [[nodiscard]]
-  const StatsCallback& Request::CallbackStats() const
+  const StatisticsCallback& Request::CallbackStatistics() const
   {
     return _statsCallback;
   }
@@ -139,6 +147,6 @@ namespace myoddweb:: directorywatcher
   [[nodiscard]]
   long long Request::StatsCallbackRateMilliseconds() const
   {
-    return _statsCallbackRateMs;
+    return _statisticsCallbackRateMs;
   }
 }

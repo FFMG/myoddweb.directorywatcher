@@ -102,7 +102,9 @@ namespace myoddweb.directorywatcher.utils.Helper
         Recursive = request.Recursive,
         Path = request.Path,
         EventsCallback = _eventsCallback,
-        CallbackIntervalMs = 50
+        StatisticsCallback = _statisticsCallback,
+        EventsCallbackIntervalMs = 50,
+        StatisticsCallbackIntervalMs = 10000
       };
 
       // start

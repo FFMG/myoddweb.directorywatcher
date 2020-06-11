@@ -9,15 +9,55 @@
 
 namespace myoddweb::directorywatcher
 {
-  EventsPublisher::EventsPublisher(Monitor& monitor, const long long id, const EventCallback& callback, const long long delayTimeMilliseconds)
+  EventsPublisher::EventsPublisher(Monitor& monitor, const long long id, const Request& request)
     :
-    _monitor( monitor),
+    _monitor(monitor),
     _id(id),
-    _callback( callback),
-    _delayTimeMilliseconds( delayTimeMilliseconds),
-    _elapsedTimeMilliseconds(0)
+    _request(request),
+    _elapsedEventsTimeMilliseconds(0),
+    _elapsedStatisticsTimeMilliseconds(0)
   {
 
+  }
+
+  /**
+   * \brief return if we are using events or not
+   */
+  bool EventsPublisher::IsUsingEvents() const
+  {
+    // null is allowed
+    if (nullptr == _request.CallbackEvents())
+    {
+      return false;
+    }
+
+    // zero are allowed.
+    if (0 == _request.EventsCallbackRateMilliseconds())
+    {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * \brief return if we are using statistics or not
+   */
+  bool EventsPublisher::IsUsingStatistics() const
+  {
+    // null is allowed
+    if (nullptr == _request.CallbackStatistics())
+    {
+      return false;
+    }
+
+    // zero are allowed.
+    if (0 == _request.StatsCallbackRateMilliseconds())
+    {
+      return false;
+    }
+
+    // we are using it
+    return true;
   }
 
   /**
@@ -25,37 +65,130 @@ namespace myoddweb::directorywatcher
    * \param fElapsedTimeMilliseconds the number of ms since the last time we checked.
    * \return if the time has elapsed and we can continue.
    */
-  bool EventsPublisher::HasElapsed( const float fElapsedTimeMilliseconds)
+  bool EventsPublisher::HasEventsElapsed(const float fElapsedTimeMilliseconds)
   {
-    _elapsedTimeMilliseconds += fElapsedTimeMilliseconds;
-    if (_elapsedTimeMilliseconds < static_cast<float>(_delayTimeMilliseconds))
+    if( !IsUsingEvents())
+    {
+      return false;
+    }
+
+    _elapsedEventsTimeMilliseconds += fElapsedTimeMilliseconds;
+    if (_elapsedEventsTimeMilliseconds < static_cast<float>(_request.EventsCallbackRateMilliseconds()))
     {
       return false;
     }
 
     //  restart the timer.
-    while (_elapsedTimeMilliseconds > static_cast<float>(_delayTimeMilliseconds)) {
-      _elapsedTimeMilliseconds -= static_cast<float>(_delayTimeMilliseconds);
+    while (_elapsedEventsTimeMilliseconds > static_cast<float>(_request.EventsCallbackRateMilliseconds())) {
+      _elapsedEventsTimeMilliseconds -= static_cast<float>(_request.EventsCallbackRateMilliseconds());
     }
     return true;
   }
 
+  float EventsPublisher::HasStatisticsElapsed(const float fElapsedTimeMilliseconds)
+  {
+    // are we using stats?
+    if( !IsUsingStatistics())
+    {
+      return 0;
+    }
+
+    _elapsedStatisticsTimeMilliseconds += fElapsedTimeMilliseconds;
+    if (_elapsedStatisticsTimeMilliseconds < static_cast<float>(_request.StatsCallbackRateMilliseconds()))
+    {
+      return 0;
+    }
+
+    const auto actualElapsedTimeMilliseconds = _elapsedStatisticsTimeMilliseconds;
+
+    //  restart the timer.
+    while (_elapsedStatisticsTimeMilliseconds > static_cast<float>(_request.StatsCallbackRateMilliseconds())) {
+      _elapsedStatisticsTimeMilliseconds -= static_cast<float>(_request.StatsCallbackRateMilliseconds());
+    }
+    return actualElapsedTimeMilliseconds;
+  }
+
   void EventsPublisher::Update(const float fElapsedTimeMilliseconds)
   {
+    // first check the events
+    UpdateEvents(fElapsedTimeMilliseconds);
+
+    // then the stats
+    UpdateStatistics(fElapsedTimeMilliseconds);
+  }
+
+  /**
+   * \brief called at various intervals.
+   * \param fElapsedTimeMilliseconds the number of ms since the last update
+   */
+  void EventsPublisher::UpdateEvents(float fElapsedTimeMilliseconds)
+  {
     // check if we are ready.
-    if( !HasElapsed(fElapsedTimeMilliseconds))
+    if (!HasEventsElapsed(fElapsedTimeMilliseconds))
     {
       return;
     }
 
     // get the events
-    GetEvents();
+    PublishEvents();
   }
 
   /**
-   * \brief get all the events and send them over to the callback.
+   * \brief called at various intervals.
+   * \param fElapsedTimeMilliseconds the number of ms since the last update
    */
-  void EventsPublisher::GetEvents() const
+  void EventsPublisher::UpdateStatistics(float fElapsedTimeMilliseconds)
+  {
+    // check if we are ready.
+    const auto actualElapsedTimeMilliseconds = HasStatisticsElapsed(fElapsedTimeMilliseconds);
+    if (actualElapsedTimeMilliseconds == 0 )
+    {
+      return;
+    }
+
+    // get the events
+    PublishStatistics(actualElapsedTimeMilliseconds);
+  }
+
+  /**
+   * \brief get the events.
+   * \param actualElapsedTimeMilliseconds the number of ms since the last time we published
+   */
+  void EventsPublisher::PublishStatistics(const float actualElapsedTimeMilliseconds)
+  {
+    MYODDWEB_PROFILE_FUNCTION();
+    try
+    {
+      _request.CallbackStatistics()(
+        _id,
+        actualElapsedTimeMilliseconds,
+        _currentStatistics.numberOfEvents
+        );
+
+      // we are done with the stats
+      _currentStatistics = { 0 };
+    }
+    catch (...)
+    {
+      // the callback did something wrong!
+      // we should log it somewhere.
+    }
+  }
+
+  /**
+   * \brief update the stats with the given event
+   * \paranm event the event we will update the stats with
+   */
+  void EventsPublisher::UpdateStatistics(const Event& event)
+  {
+    ++_currentStatistics.numberOfEvents;
+  }
+
+
+  /**
+   * \brief publish all the events
+   */
+  void EventsPublisher::PublishEvents()
   {
     MYODDWEB_PROFILE_FUNCTION();
 
@@ -72,7 +205,8 @@ namespace myoddweb::directorywatcher
       const auto& event = (*it);
       try
       {
-        _callback(
+        // publish it
+        _request.CallbackEvents()(
           _id,
           event->IsFile,
           event->Name,
@@ -81,6 +215,9 @@ namespace myoddweb::directorywatcher
           event->Error,
           event->TimeMillisecondsUtc
           );
+
+        // update the stats
+        UpdateStatistics(*event);
       }
       catch (...)
       {

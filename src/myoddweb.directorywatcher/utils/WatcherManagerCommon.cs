@@ -23,13 +23,26 @@ namespace myoddweb.directorywatcher.utils
     #region Protected Methods
 
     protected void StatisticsCallback(
-      long elapsedTime,
-      long numberOfEvents,
-      long actualNumberOfMonitors
+      long id,
+      double elapsedTime,
+      long numberOfEvents
     )
     {
       lock (_idStats)
       {
+        if (!_idStats.ContainsKey(id))
+        {
+          _idStats[id] = new Statistics( id, elapsedTime, numberOfEvents);
+        }
+        else
+        {
+          var statistics = _idStats[id];
+          _idStats[id] = new Statistics(
+            id,
+            statistics.ElapsedTime+statistics.ElapsedTime,
+            statistics.NumberOfEvents + numberOfEvents
+            );
+        }
       }
     }
 
@@ -56,18 +69,22 @@ namespace myoddweb.directorywatcher.utils
     {
       lock (_idAndEvents)
       {
-        if (!_idAndEvents.ContainsKey(id))
-        {
-          _idAndEvents[id] = new List<IEvent>();
-        }
-        _idAndEvents[id].Add(new Event(
+        var e = new Event(
           isFile,
           name,
           oldName,
-          (EventAction)action,
-          (interfaces.EventError)error,
+          (EventAction) action,
+          (interfaces.EventError) error,
           DateTime.FromFileTimeUtc(dateTimeUtc)
-        ));
+        );
+        if (!_idAndEvents.ContainsKey(id))
+        {
+          _idAndEvents[id] = new List<IEvent>{e};
+        }
+        else
+        {
+          _idAndEvents[id].Add( e );
+        }
       }
       return 0;
     }
@@ -86,7 +103,7 @@ namespace myoddweb.directorywatcher.utils
         }
 
         statistics = _idStats[id];
-        _idAndEvents[id] = null;
+        _idStats.Remove(id);
 
         // the value coul be null
         return statistics != null;

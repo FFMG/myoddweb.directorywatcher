@@ -49,7 +49,7 @@ namespace myoddweb:: directorywatcher
     /**
      * \brief assign request values
      */
-    void Assign(const wchar_t* path, bool recursive, const EventCallback& callback, long long callbackRateMs);
+    void Assign(const wchar_t* path, bool recursive, const EventCallback& eventsCallback, const StatisticsCallback& statisticsCallback, long long eventsCallbackRateMs, long long statisticsCallbackRateMs);
 
   public:
     /**
@@ -75,7 +75,7 @@ namespace myoddweb:: directorywatcher
      * \brief the stats of the monitor 
      */
     [[nodiscard]]
-    const StatsCallback& CallbackStats() const;
+    const StatisticsCallback& CallbackStatistics() const;
 
     /**
      * \brief how often we want to check for callbacks
@@ -90,6 +90,12 @@ namespace myoddweb:: directorywatcher
     long long StatsCallbackRateMilliseconds() const;
 
   private:
+
+    /**
+     *   NB: THE ORDER OF THE VARIABLES IS IMPORTANT!
+     */
+
+
     /**
      * \brief the path of the folder we will be monitoring
      */
@@ -108,7 +114,7 @@ namespace myoddweb:: directorywatcher
     /**
      * \brief the callback even we want to call from time to time.
      */
-    StatsCallback _statsCallback;
+    StatisticsCallback _statsCallback;
 
     /**
      * How often we wish to callback events
@@ -118,6 +124,6 @@ namespace myoddweb:: directorywatcher
     /**
      * How often we wish to callback stats
      */
-    long long _statsCallbackRateMs;
+    long long _statisticsCallbackRateMs;
   };
 }

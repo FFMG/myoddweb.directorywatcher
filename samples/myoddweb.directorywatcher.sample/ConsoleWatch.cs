@@ -29,6 +29,16 @@ namespace myoddweb.directorywatcher.sample
       watch.OnRemovedAsync += OnRemovedAsync;
       watch.OnRenamedAsync += OnRenamedAsync;
       watch.OnTouchedAsync += OnTouchedAsync;
+      watch.OnStatisticsAsync += OnStatisticsAsync;
+    }
+
+    private async Task OnStatisticsAsync(IStatistics e, CancellationToken token)
+    {
+      await AddMessage(ConsoleColor.DarkYellow, DateTime.UtcNow, 
+        $"Id:{e.Id}\n"+
+        $"Number Of Events: {e.NumberOfEvents}\n"+
+        $"Elapsed Time: {e.ElapsedTime}", 
+        token).ConfigureAwait(false);
     }
 
     private async Task OnRenamedAsync(IRenamedFileSystemEvent rfse, CancellationToken token)
