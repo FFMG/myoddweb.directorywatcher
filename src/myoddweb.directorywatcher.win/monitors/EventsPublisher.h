@@ -80,13 +80,9 @@ namespace myoddweb::directorywatcher
     float HasStatisticsElapsed(float fElapsedTimeMilliseconds);
 
     /**
-     * \brief return if we are using events or not
+     * \brief make sure that all the stats values are up to date
+     *        if we are not collecting any information
      */
-    bool IsUsingEvents() const;
-
-    /**
-     * \brief return if we are using statistics or not
-     */
-    bool IsUsingStatistics() const;
+    void EnsureStatisticsAreUpToDateIfNotCollectingEvents();
   };
 }

@@ -21,53 +21,13 @@ namespace myoddweb::directorywatcher
   }
 
   /**
-   * \brief return if we are using events or not
-   */
-  bool EventsPublisher::IsUsingEvents() const
-  {
-    // null is allowed
-    if (nullptr == _request.CallbackEvents())
-    {
-      return false;
-    }
-
-    // zero are allowed.
-    if (0 == _request.EventsCallbackRateMilliseconds())
-    {
-      return false;
-    }
-    return true;
-  }
-
-  /**
-   * \brief return if we are using statistics or not
-   */
-  bool EventsPublisher::IsUsingStatistics() const
-  {
-    // null is allowed
-    if (nullptr == _request.CallbackStatistics())
-    {
-      return false;
-    }
-
-    // zero are allowed.
-    if (0 == _request.StatsCallbackRateMilliseconds())
-    {
-      return false;
-    }
-
-    // we are using it
-    return true;
-  }
-
-  /**
    * \brief check if the time has now elapsed.
    * \param fElapsedTimeMilliseconds the number of ms since the last time we checked.
    * \return if the time has elapsed and we can continue.
    */
   bool EventsPublisher::HasEventsElapsed(const float fElapsedTimeMilliseconds)
   {
-    if( !IsUsingEvents())
+    if( !_request.IsUsingEvents())
     {
       return false;
     }
@@ -88,7 +48,7 @@ namespace myoddweb::directorywatcher
   float EventsPublisher::HasStatisticsElapsed(const float fElapsedTimeMilliseconds)
   {
     // are we using stats?
-    if( !IsUsingStatistics())
+    if( !_request.IsUsingStatistics())
     {
       return 0;
     }
@@ -146,8 +106,46 @@ namespace myoddweb::directorywatcher
       return;
     }
 
-    // get the events
+    // we need to double check that events are indeed supported
+    // if not, then we need to do the updating ourselves.
+    EnsureStatisticsAreUpToDateIfNotCollectingEvents();
+
+    // then we can publish the stats
     PublishStatistics(actualElapsedTimeMilliseconds);
+  }
+
+  /**
+   * \brief make sure that all the stats values are up to date
+   *        if we are not collecting any information
+   */
+  void EventsPublisher::EnsureStatisticsAreUpToDateIfNotCollectingEvents()
+  {
+    // if we are collecting events, then things should be fine
+    // we cannot get events for the purpose of updating stats
+    // otherwiswe could loose events.
+    if (_request.IsUsingEvents())
+    {
+      return;
+    }
+
+    // other wise get all the events.
+    // and make sure that we update our stats accordingly.
+    auto events = std::vector<Event*>();
+    if (0 != _monitor.GetEvents(events))
+    {
+      // then call the callback
+      for (auto it = events.begin(); it != events.end(); ++it)
+      {
+        const auto& event = (*it);
+
+        // update the stats
+        UpdateStatistics(*event);
+
+        // we are done with the event
+        // so we can get rid of it.
+        delete event;
+      }
+    }
   }
 
   /**

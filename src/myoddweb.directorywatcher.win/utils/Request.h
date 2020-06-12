@@ -53,6 +53,18 @@ namespace myoddweb:: directorywatcher
 
   public:
     /**
+     * \brief return if we are using events or not
+     */
+    [[nodiscard]]
+    bool IsUsingEvents() const;
+
+    /**
+     * \brief return if we are using statistics or not
+     */
+    [[nodiscard]]
+    bool IsUsingStatistics() const;
+
+    /**
      * \brief access the path
      */
     [[nodiscard]]

@@ -149,4 +149,44 @@ namespace myoddweb:: directorywatcher
   {
     return _statisticsCallbackRateMs;
   }
+
+  /**
+   * \brief return if we are using events or not
+   */
+  bool Request::IsUsingEvents() const
+  {
+    // null is allowed
+    if (nullptr == CallbackEvents())
+    {
+      return false;
+    }
+
+    // zero are allowed.
+    if (0 == EventsCallbackRateMilliseconds())
+    {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * \brief return if we are using statistics or not
+   */
+  bool Request::IsUsingStatistics() const
+  {
+    // null is allowed
+    if (nullptr == CallbackStatistics())
+    {
+      return false;
+    }
+
+    // zero are allowed.
+    if (0 == StatsCallbackRateMilliseconds())
+    {
+      return false;
+    }
+
+    // we are using it
+    return true;
+  }
 }

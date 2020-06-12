@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Licensed to Florent Guelfucci under one or more agreements.
+// Florent Guelfucci licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+using System;
 using myoddweb.directorywatcher.interfaces;
 
 namespace myoddweb.directorywatcher
@@ -11,7 +14,7 @@ namespace myoddweb.directorywatcher
     /// <inheritdoc />
     public long EventsMilliseconds { get; }
 
-    public Rates(long statisticsMilliseconds, long eventsMilliseconds)
+    public Rates(long eventsMilliseconds, long statisticsMilliseconds = 0)
     {
       if (statisticsMilliseconds < 0)
       {
