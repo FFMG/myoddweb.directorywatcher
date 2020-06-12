@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using myoddweb.directorywatcher.utils;
 using myoddweb.directorywatcher.interfaces;
+using myoddweb.directorywatcher.utils.Helper;
 using EventError = myoddweb.directorywatcher.interfaces.EventError;
 
 namespace myoddweb.directorywatcher

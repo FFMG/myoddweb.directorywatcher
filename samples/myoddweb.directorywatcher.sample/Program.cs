@@ -43,7 +43,7 @@ namespace myoddweb.directorywatcher.sample
         {
           if (drv.DriveType == System.IO.DriveType.Fixed)
           {
-            watch.Add(new Request(drv.Name, true));
+            watch.Add(new Request(drv.Name, true, new Rates(10000, 10000)));
           }
         }
 

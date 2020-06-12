@@ -14,6 +14,7 @@ A fast and reliable File/Directory watcher for c#/c++ to replace the current .NE
 - No buffer limitations, (well there is, but we play nicely).
 - Try and remove duplicates, (where possible).
 - Deleted, (then re-created), are re-monitored.
+- Watcher statistics
 
 ## What it doesn't do
 
@@ -55,7 +56,7 @@ The current version of [File Watcher](https://docs.microsoft.com/en-us/dotnet/ap
 - UNC/Unix files are not supported, (in fact it causes `FileSystemWatcher` to take your system down).
 - Does not handle large volumes nicely.  
 
-## Example
+## Examples
 
 ### Simple Watch
 
@@ -195,4 +196,34 @@ When a file event is raised we send a `IFileSystemEvent` event.
     /// <param name="action"></param>
     /// <returns></returns>
     bool Is(EventAction action );
+```
+
+### Statistics
+
+You can get statistics at various intervals for the events being watched.
+
+All you need to do is add `Rates` to your watchers
+
+```csharp
+    using( var watch = new Watcher() )
+    {
+      // watch the folder with stats every 10000 ms
+      // a value of 0, (default), turns it off.
+      watch.Add(new Request("c:\\", true, new Rates(10000, 50 )));
+
+      // do something amazing with the statistics
+      // the values is `IStatistics` with a cancellation token
+      watch.OnStatisticsAsync += async (s, t) =>
+      {
+        // ..
+      };
+
+      // start watching
+      watch.Start();
+
+      // ... do some clever stuff.
+
+      // optional stop in this case
+      watch.Stop();
+    }
 ```

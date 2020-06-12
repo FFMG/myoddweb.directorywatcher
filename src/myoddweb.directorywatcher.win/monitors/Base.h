@@ -19,7 +19,7 @@
   #include <iostream>
   #define MYODDWEB_OUT( what ) std::cout << (what);
 #else
-  #define MYODDWEB_OUT
+  #define MYODDWEB_OUT( what )
 #endif
 
 namespace myoddweb:: directorywatcher

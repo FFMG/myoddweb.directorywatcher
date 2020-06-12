@@ -103,8 +103,8 @@ namespace myoddweb.directorywatcher.utils.Helper
         Path = request.Path,
         EventsCallback = _eventsCallback,
         StatisticsCallback = _statisticsCallback,
-        EventsCallbackIntervalMs = 50,
-        StatisticsCallbackIntervalMs = 10000
+        EventsCallbackIntervalMs = request.Rates.EventsMilliseconds,
+        StatisticsCallbackIntervalMs = request.Rates.StatisticsMilliseconds
       };
 
       // start

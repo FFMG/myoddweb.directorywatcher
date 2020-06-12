@@ -1,6 +1,6 @@
 ﻿using myoddweb.directorywatcher.interfaces;
 
-namespace myoddweb.directorywatcher.utils
+namespace myoddweb.directorywatcher.utils.Helper
 {
   internal class Statistics : IStatistics
   {
