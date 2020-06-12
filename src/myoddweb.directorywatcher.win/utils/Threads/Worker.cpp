@@ -5,6 +5,7 @@
 #include "../../monitors/Base.h"
 #include "../Instrumentor.h"
 #include "../Lock.h"
+#include "../Logger.h"
 #include "../Wait.h"
 
 namespace myoddweb::directorywatcher::threads
@@ -342,9 +343,19 @@ namespace myoddweb::directorywatcher::threads
   /**
    * \brief save the current exception
    */
-  void Worker::SaveCurrentException()
+  void Worker::SaveCurrentException() const
   {
-    // log the error
-    // const auto ptr = std::current_exception();
+    try {
+      const auto ptr = std::current_exception();
+      if (ptr) 
+      {
+        std::rethrow_exception(ptr);
+      }
+    }
+    catch (const std::exception& e) 
+    {
+      // log the error
+      Logger::Log(0, 0, L"Caught exception '%s'", e.what() );
+    }
   }
 }

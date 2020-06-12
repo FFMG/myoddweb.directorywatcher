@@ -94,8 +94,7 @@ namespace myoddweb::directorywatcher
   {
     try
     {
-      const auto count = (int)(_nonRecursiveParents.size() + _recursiveChildren.size());
-      Log( L"Started Multiple monitor with '%d' %s", count, L"monitorss" );
+      Log( L"Started Multiple monitor with '%d' monitors", _nonRecursiveParents.size() + _recursiveChildren.size());
 
       // start the parents
       Start(_nonRecursiveParents);

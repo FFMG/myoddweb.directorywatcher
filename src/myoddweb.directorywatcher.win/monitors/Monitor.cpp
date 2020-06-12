@@ -5,6 +5,7 @@
 #include "Monitor.h"
 #include "../utils/Io.h"
 #include "../utils/Instrumentor.h"
+#include "../utils/Logger.h"
 #include "Base.h"
 
 namespace myoddweb:: directorywatcher
@@ -226,22 +227,7 @@ namespace myoddweb:: directorywatcher
 
     va_list args;
     va_start(args, format);
-
-    const auto size = vswprintf(nullptr, 0, format, args);
-    if (size > 0)
-    {
-      const auto buffSize = size + 1;
-      const auto buf = new wchar_t[buffSize];
-      memset(buf, L'\0', buffSize);
-      vswprintf(buf, size, format, args);
-      _request.CallbackLogger()
-        (
-          ParentId(),
-          0,
-          buf
-          );
-      delete[] buf;
-    }
+    Logger::Log(_request.CallbackLogger(), ParentId(), 0, format, args);
     va_end(args);
   }
 }
