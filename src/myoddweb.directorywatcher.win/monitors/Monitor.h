@@ -26,12 +26,27 @@ namespace myoddweb
       Monitor(const Monitor&) = delete;
       Monitor& operator=(const Monitor&) = delete;
 
+      /**
+       * \brief the id of this monitor
+       */
       [[nodiscard]]
       const long long& Id() const;
+
+      /**
+       * \brief the patht that is being monitored.
+       */
       [[nodiscard]]
       const wchar_t* Path() const;
+
+      /**
+       * \brief If we are recursively checking this folder or not.
+       */
       [[nodiscard]]
       bool Recursive() const;
+
+      /**
+       * \brief the events collector.
+       */
       [[nodiscard]]
       const Collector& EventsCollector() const;
 
@@ -82,6 +97,7 @@ namespace myoddweb
       }
 
     protected:
+      #pragma region Worker overides
       /**
        * \brief called when the worker is ready to start
        *        return false if you do not wish to start the worker.
@@ -106,7 +122,9 @@ namespace myoddweb
        * \brief called when the worker has completed
        */
       void OnWorkerEnd() override;
+      #pragma endregion 
 
+      #pragma region Member Variables
       /**
        * \brief the unique monitor id.
        */
@@ -120,7 +138,7 @@ namespace myoddweb
       /**
        * \brief the request we used to create the monitor.
        */
-      const Request* _request;
+      const Request _request;
 
       /**
        * \brief the current list of collected events.
@@ -131,6 +149,7 @@ namespace myoddweb
        * \brief how often we want to check for new events.
        */
       EventsPublisher* _publisher;
+      #pragma endregion 
 
       /**
        * \brief Start the callback timer so we can publish events.
@@ -139,6 +158,9 @@ namespace myoddweb
 
       virtual void OnGetEvents(std::vector<Event*>& events) = 0;
 
+      /***
+       * \brief the parent id if we have one, otherwise the current id.
+       */
       [[nodiscard]]
       virtual const long long& ParentId() const = 0;
     };

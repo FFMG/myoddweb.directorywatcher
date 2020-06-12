@@ -98,20 +98,25 @@ namespace myoddweb
        * \brief a folder has been deleted, process it.
        * \param path the event being processed
        */
-      void ProcessEventDelete(const wchar_t* path );
+      void ProcessDeletedFolderInLock(const wchar_t* path );
 
       /**
        * \brief a folder has been added, process it.
        * \param path the event being processed
        */
-      void ProcessEventAdded(const wchar_t* path);
+      void ProcessAddedFolderInLock(const wchar_t* path);
 
       /**
        * \brief a folder has been renamed, process it.
        * \param path the event being processed
        * \param oldPath the old name being renamed.
        */
-      void ProcessEventRenamed(const wchar_t* path, const wchar_t* oldPath);
+      void ProcessRenamedFolderInLock(const wchar_t* path, const wchar_t* oldPath);
+
+      /**
+       * \brief remove all the folders that are no longer being monitored, (complete).
+       */
+      void RemoveCompletedFoldersInLock();
 
       /**
        * \brief process the parent events
@@ -139,7 +144,7 @@ namespace myoddweb
        * \return if we find it, the iterator of the child monitor.
        */
       [[nodiscard]]
-      std::vector<Monitor*>::const_iterator FindChild(const std::wstring& path) const;
+      std::vector<Monitor*>::const_iterator FindChildInLock(const std::wstring& path) const;
 
       /**
        * \brief Clear the container data

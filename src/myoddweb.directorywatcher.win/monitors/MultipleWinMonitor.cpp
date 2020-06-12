@@ -27,7 +27,7 @@ namespace myoddweb::directorywatcher
     }
 
     // try and create the list of monitors.
-    CreateMonitors(*_request );
+    CreateMonitors( _request );
   }
 
   MultipleWinMonitor::~MultipleWinMonitor()
@@ -136,7 +136,7 @@ namespace myoddweb::directorywatcher
    * \param path the path we are looking for.
    * \return if we find it, the iterator of the child monitor.
    */
-  std::vector<Monitor*>::const_iterator MultipleWinMonitor::FindChild(const std::wstring& path) const
+  std::vector<Monitor*>::const_iterator MultipleWinMonitor::FindChildInLock(const std::wstring& path) const
   {
     for (auto child = _recursiveChildren.begin();
       child != _recursiveChildren.end();
@@ -151,24 +151,47 @@ namespace myoddweb::directorywatcher
   }
 
   /**
+   * \brief remove all the folders that are no longer being monitored, (complete).
+   */
+  void MultipleWinMonitor::RemoveCompletedFoldersInLock()
+  {
+    for (auto it = _recursiveChildren.begin(); it != _recursiveChildren.end(); ++it)
+    {
+      // the monitor
+      const auto monitor = (*it);
+
+      if (!monitor->Completed())
+      {
+        continue;
+      }
+
+      // this item is complete, we can get rid of it.
+      delete monitor;
+      _recursiveChildren.erase(it);
+
+      // then we want to restart
+      it = _recursiveChildren.begin();
+    }
+  }
+
+  /**
    * \brief a folder has been added, process it.
    * \param path the event being processed
    */
-  void MultipleWinMonitor::ProcessEventAdded(const wchar_t* path)
+  void MultipleWinMonitor::ProcessAddedFolderInLock(const wchar_t* path)
   {
-
     if (path == nullptr)
     {
       return;
     }
 
-    // guard for multiple entry.
-    MYODDWEB_LOCK(_lock);
+    // cleanup folders
+    RemoveCompletedFoldersInLock();
 
     // a folder was added to this path
     // so we have to add this path as a child.
     const auto id = GetNextId();
-    const auto request = Request(path, true);
+    const auto request = Request(path, true, _request.EventsCallbackRateMilliseconds(), _request.StatsCallbackRateMilliseconds() );
     const auto child = new WinMonitor(id, ParentId(), WorkerPool(), request );
     _recursiveChildren.emplace_back(child); 
 
@@ -180,33 +203,33 @@ namespace myoddweb::directorywatcher
    * \brief a folder has been deleted, process it.
    * \param path the event being processed
    */
-  void MultipleWinMonitor::ProcessEventDelete(const wchar_t* path)
+  void MultipleWinMonitor::ProcessDeletedFolderInLock(const wchar_t* path)
   {
     if (nullptr == path)
     {
       return;
     }
 
-    // guard for multiple entry.
-    MYODDWEB_LOCK(_lock);
+    // cleanup folders
+    RemoveCompletedFoldersInLock();
 
     // the 'path' folder was removed.
     // so we have to remove it as well as all the child folders.
     // 'cause if it was removed ... then so were the others.
-    const auto child = FindChild(path);
+    const auto child = FindChildInLock(path);
     if (child == _recursiveChildren.end())
     {
       return;
     }
 
+    // the monitor
+    const auto monitor = (*child);
+
     // stop it...
-    (*child)->Stop();
+    monitor->Stop();
 
-    // delete it
-    delete (*child);
-
-    // remove it from the list.
-    _recursiveChildren.erase(child);
+    // we do not remove it here.
+    // we wait for it to stop in its own thread.
   }
 
   /**
@@ -214,13 +237,13 @@ namespace myoddweb::directorywatcher
    * \param path the event being processed
    * \param oldPath the old name being renamed.
    */
-  void MultipleWinMonitor::ProcessEventRenamed(const wchar_t* path, const wchar_t* oldPath)
+  void MultipleWinMonitor::ProcessRenamedFolderInLock(const wchar_t* path, const wchar_t* oldPath)
   {
     // add the new one
-    ProcessEventAdded(path);
+    ProcessAddedFolderInLock(path);
 
     // delete the old one
-    ProcessEventDelete(oldPath);
+    ProcessDeletedFolderInLock(oldPath);
   }
 
   /**
@@ -270,15 +293,15 @@ namespace myoddweb::directorywatcher
           switch (static_cast<EventAction>(levent->Action))
           {
           case EventAction::Added:
-            ProcessEventAdded(levent->Name);
+            ProcessAddedFolderInLock(levent->Name);
             break;
 
           case EventAction::Renamed:
-            ProcessEventRenamed(levent->Name, levent->OldName);
+            ProcessRenamedFolderInLock(levent->Name, levent->OldName);
             break;
 
           case EventAction::Removed:
-            ProcessEventAdded(levent->Name);
+            ProcessDeletedFolderInLock(levent->Name);
             break;
 
           default:
@@ -477,19 +500,16 @@ namespace myoddweb::directorywatcher
     
     // adding all the sub-paths will not breach the limit.
     // so we can add the parent, but non-recuresive.
-    const auto request = new Request(parent.Path(), false);
-    _nonRecursiveParents.emplace_back(new WinMonitor(id, ParentId(), WorkerPool(), *request ));
+    const auto request = Request(parent.Path(), false, parent.EventsCallbackRateMilliseconds(), parent.StatsCallbackRateMilliseconds());
+    _nonRecursiveParents.emplace_back(new WinMonitor(id, ParentId(), WorkerPool(), request ));
 
     // now try and add all the subpath
     for (const auto& path : subPaths)
     {
       // add one more to the list.
-      const auto subRequest = Request(path.c_str(), true);
+      const auto subRequest = Request(path.c_str(), true, parent.EventsCallbackRateMilliseconds(), parent.StatsCallbackRateMilliseconds());
       CreateMonitors( subRequest );
     }
-
-    // clean up the request.
-    delete request;
   }
 #pragma endregion
 }

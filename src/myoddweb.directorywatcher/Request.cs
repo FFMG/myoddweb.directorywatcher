@@ -23,7 +23,7 @@ namespace myoddweb.directorywatcher
     /// <param name="path">The path we want to watch</param>
     /// <param name="recursive">Recursively watch or not.</param>
     public Request(string path, bool recursive) : 
-      this( path, recursive, new Rates( 0, 50 ))
+      this( path, recursive, new Rates( 50, 0 ))
     {
     }
 

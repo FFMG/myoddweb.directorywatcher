@@ -90,8 +90,9 @@ namespace myoddweb:: directorywatcher
   constexpr auto MYODDWEB_WORKER_TYPE = 1;
 
   /**
-   * \brief how often we want to check for 'over-full' containers.
-   *        we will delete events that are older than this number.
+   * \brief a buffer time to ensure that we do not delete things in the container too quickly
+   *        yes, it might mean messages slightly older than what we want to keep
+   *        but it should not be that important
    */
-  constexpr auto MYODDWEB_MAX_EVENT_AGE = 5000;
+  constexpr auto MYODDWEB_MAX_EVENT_AGE_BUFFER = 1000;
 }

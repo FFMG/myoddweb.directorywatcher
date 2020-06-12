@@ -26,8 +26,10 @@ namespace myoddweb:: directorywatcher
      * \brief create from a parent request, (no callback)
      * \param path the path being watched.
      * \param recursive if the request is recursive or not.
+     * \param eventsCallbackRateMs how long we want to keep our events for.
+     * \param statisticsCallbackRateMs how long we want to keep stats data for.
      */
-    Request(const wchar_t* path, bool recursive);
+    Request(const wchar_t* path, bool recursive, long long eventsCallbackRateMs, long long statisticsCallbackRateMs);
     ~Request();
 
     // prevent assignment + move

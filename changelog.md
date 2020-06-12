@@ -20,6 +20,8 @@ Notable changes
 
 ### Fixed
 
+- When monitoring folders that were deleted we would not remove them and free memory
+
 ### Removed
 
 ## 0.1.7 - 03-01-2020

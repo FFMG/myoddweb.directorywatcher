@@ -13,16 +13,17 @@ namespace myoddweb:: directorywatcher
     Worker(),
     _id(id),
     _workerPool( workerPool ),
+    _request( request ),
+                      // we will keep data for as long as we need it, either the event time if not zero, (as it updates the stats)
+                      // otherwise we will set the time to the stats time
+                      // if both of them are zero then nothing will be collected
+    _eventCollector(request.EventsCallbackRateMilliseconds() == 0 ? request.StatsCallbackRateMilliseconds() : request.EventsCallbackRateMilliseconds()),
     _publisher(nullptr)
   {
-    _request = new Request(request);
   }
 
   Monitor::~Monitor()
   {
-    delete _request;
-    _request = nullptr;
-
     delete _publisher;
     _publisher = nullptr;
   }
@@ -36,8 +37,7 @@ namespace myoddweb:: directorywatcher
   }
 
   /**
-   * Get the id of the monitor
-   * @return __int64 the id
+   * \brief the id of this monitor
    */
   const long long& Monitor::Id() const
   {
@@ -45,21 +45,19 @@ namespace myoddweb:: directorywatcher
   }
 
   /**
-   * Get the current path.
-   * @return the path being checked.
+   * \brief the patht that is being monitored.
    */
   const wchar_t* Monitor::Path() const
   {
-    return _request->Path();
+    return _request.Path();
   }
 
   /**
-   * If this is a recursive monitor or not.
-   * @return if recursive or not.
+   * \brief If we are recursively checking this folder or not.
    */
   bool Monitor::Recursive() const
   {
-    return _request->Recursive();
+    return _request.Recursive();
   }
 
   /**
@@ -201,7 +199,7 @@ namespace myoddweb:: directorywatcher
     _publisher = nullptr;
 
     // create the new publisher.
-    _publisher = new EventsPublisher( *this, ParentId(), *_request );
+    _publisher = new EventsPublisher( *this, ParentId(), _request );
   }
 
   /**
@@ -211,6 +209,6 @@ namespace myoddweb:: directorywatcher
    */
   bool Monitor::IsPath(const std::wstring& maybe) const
   {
-    return Io::AreSameFolders(maybe, _request->Path());
+    return Io::AreSameFolders(maybe, _request.Path());
   }
 }

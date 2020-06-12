@@ -10,19 +10,16 @@
 
 namespace myoddweb:: directorywatcher
 {
-  Collector::Collector() :
-    Collector(MYODDWEB_MAX_EVENT_AGE)
-  {
-  }
-
   /**
-   * \brief 
-   * \param maxAgeMs the maximum amount of time we will be keeping an event for.
+   * \brief the comnstructor
+   * \param maxCleanupAgeMilliseconds the maximum amount of time we want the collector to keep data
+   *        this is only a GUIDE because the data is only cleanned when needed.
    */
-  Collector::Collector( const short maxAgeMs) :
-    _maxCleanupAgeMilliseconds( maxAgeMs ),
+  Collector::Collector( const long long maxCleanupAgeMilliseconds) :
+    _maxCleanupAgeMilliseconds(maxCleanupAgeMilliseconds ),
     _currentEvents(nullptr)
   {
+    // calculate the max age
     _currentEvents = new EventsInformation();
   }
 
@@ -91,6 +88,12 @@ namespace myoddweb:: directorywatcher
   void Collector::Add( const EventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName, const bool isFile, EventError error)
   {
     MYODDWEB_PROFILE_FUNCTION();
+
+    // if there is nothing to do ... just get out.
+    if( 0 == _maxCleanupAgeMilliseconds )
+    {
+      return;
+    }
 
     try
     {
@@ -372,7 +375,7 @@ namespace myoddweb:: directorywatcher
     {
       // when we want to check for the next cleanup
       // if the time is zero then we will use the event time + the max time.
-      _nextCleanupTimeCheck = event->TimeMillisecondsUtc + _maxCleanupAgeMilliseconds;
+      _nextCleanupTimeCheck = event->TimeMillisecondsUtc + (_maxCleanupAgeMilliseconds + MYODDWEB_MAX_EVENT_AGE_BUFFER);
     }
   }
 
@@ -405,7 +408,7 @@ namespace myoddweb:: directorywatcher
     MYODDWEB_LOCK(_lock);
 
     // get the current time.
-    const auto old = now - _maxCleanupAgeMilliseconds;
+    const auto old = now - (_maxCleanupAgeMilliseconds + MYODDWEB_MAX_EVENT_AGE_BUFFER);
     auto begin = _currentEvents->end();
     auto end = _currentEvents->end();
     for( auto it = _currentEvents->begin();; ++it )

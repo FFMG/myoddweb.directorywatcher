@@ -20,14 +20,16 @@ namespace myoddweb:: directorywatcher
   }
 
   /**
-   * \brief create from a parent request, (no callback)
-   * \param path the path being watched.
-   * \param recursive if the request is recursive or not.
-   */
-  Request::Request(const wchar_t* path, const bool recursive) :
+ * \brief create from a parent request, (no callback)
+ * \param path the path being watched.
+ * \param recursive if the request is recursive or not.
+ * \param eventsCallbackRateMs how long we want to keep our events for.
+ * \param statisticsCallbackRateMs how long we want to keep stats data for.
+ */
+  Request::Request(const wchar_t* path, bool recursive, const long long eventsCallbackRateMs, const long long statisticsCallbackRateMs) :
     Request()
   {
-    Assign(path, recursive, nullptr, nullptr, 0, 0 );
+    Assign(path, recursive, nullptr, nullptr, eventsCallbackRateMs, statisticsCallbackRateMs);
   }
     
   Request::Request(const Request& request) :
@@ -88,7 +90,7 @@ namespace myoddweb:: directorywatcher
 
     if (path != nullptr)
     {
-      auto l = wcslen(path);
+      const auto l = wcslen(path);
       _path = new wchar_t[ l+1];
       wmemset(_path, L'\0', l+1);
       wcscpy_s(_path, l+1, path );
