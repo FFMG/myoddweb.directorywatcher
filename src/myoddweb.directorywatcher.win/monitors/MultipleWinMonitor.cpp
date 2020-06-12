@@ -414,27 +414,36 @@ namespace myoddweb::directorywatcher
     MYODDWEB_LOCK(_lock);
 
     // delete the children
-    Delete(_recursiveChildren);
+    DeleteInLock(_recursiveChildren);
 
     // and the parents
-    Delete(_nonRecursiveParents);
+    DeleteInLock(_nonRecursiveParents);
   }
 
   /**
      * \brief Clear the container data
      * \param container the container we want to clear.
      */
-  void MultipleWinMonitor::Delete(std::vector<Monitor*>& container)
+  void MultipleWinMonitor::DeleteInLock(std::vector<Monitor*>& container)
   {
     try
     {
       // delete all the monitors.
-      for (auto it = container.begin(); it != container.end(); ++it)
+      for (const auto monitor : container )
       {
-        delete* it;
+#ifdef _DEBUG
+        // if this fires then you might have a problem here
+        // because of the way the monitor destructor wait
+        // we might deadlock depending when this function was called.
+        if( !monitor->Completed() )
+        {
+          MYODDWEB_OUT("Trying to dispose of monitor that is not yet complete! We might deadlock");
+        }
+#endif
+        delete monitor;
       }
 
-      // all done
+      // all done so we can clear all the constructor.
       container.clear();
     }
     catch (...)

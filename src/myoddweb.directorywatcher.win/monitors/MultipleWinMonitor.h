@@ -150,7 +150,7 @@ namespace myoddweb
        * \brief Clear the container data
        * \param container the container we want to clear.
        */
-      static void Delete(std::vector<Monitor*>& container);
+      static void DeleteInLock(std::vector<Monitor*>& container);
 
       /**
        * \brief Stop all the monitors
