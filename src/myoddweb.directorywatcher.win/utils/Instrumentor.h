@@ -207,7 +207,7 @@ namespace myoddweb::directorywatcher
    *        go to chrome://tracing/
    *        open Profile-Global.json
    */
-  #define MYODDWEB_PROFILE 1
+  #define MYODDWEB_PROFILE 0
 #else
   #define MYODDWEB_PROFILE 0
 #endif // DEBUG
