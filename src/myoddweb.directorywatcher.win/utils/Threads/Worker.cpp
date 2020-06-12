@@ -355,7 +355,7 @@ namespace myoddweb::directorywatcher::threads
     catch (const std::exception& e) 
     {
       // log the error
-      Logger::Log(0, 0, L"Caught exception '%s'", e.what() );
+      Logger::Log(0, 0, L"Caught exception '%hs'", e.what() );
     }
   }
 }
