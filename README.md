@@ -227,3 +227,31 @@ All you need to do is add `Rates` to your watchers
       watch.Stop();
     }
 ```
+
+### Logger
+
+You can watch for certain events
+
+```csharp
+    using( var watch = new Watcher() )
+    {
+      // watch the folder with stats every 10000 ms
+      // a value of 0, (default), turns it off.
+      watch.Add(new Request("c:\\", true ));
+
+      // do something amazing with the message
+      // the values is `ILoggerEvent` with a cancellation token
+      watch.OnLoggerAsync += async (e, t) =>
+      {
+        // ..
+      };
+
+      // start watching
+      watch.Start();
+
+      // ... do some clever stuff.
+
+      // optional stop in this case
+      watch.Stop();
+    }
+```

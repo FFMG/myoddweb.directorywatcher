@@ -12,6 +12,7 @@ Notable changes
   - Number of events
   - Number of milliseconds since last statistics
 - Added `IRates` interface to allow to control how often events are published.
+- Added simple logger so messages can be sent to the watcher event `OnLoggerAsync`
 
 ### Changed
 
