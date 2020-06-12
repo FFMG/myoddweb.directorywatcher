@@ -125,7 +125,7 @@ namespace myoddweb:: directorywatcher:: win
               return _operationAborted == true;
             }, MYODDWEB_WAITFOR_OPERATION_ABORTED_COMPLETION))
           {
-            MYODDWEB_OUT("Timeout waiting operation aborted message!\n");
+            _monitor.Log( L"Timeout waiting operation aborted message!" );
             continue;
           }
           break;
@@ -139,7 +139,7 @@ namespace myoddweb:: directorywatcher:: win
       //   If the application is running under a debugger, the function will throw an exception if it receives either a handle value that is not valid or a pseudo-
       //   handle value. This can happen if you close a handle twice, or if you call CloseHandle on a handle returned by the FindFirstFile function instead of 
       //   calling the FindClose function.
-      MYODDWEB_OUT("Ignore: Error waiting operation aborted message\n");
+      _monitor.Log( L"Ignore: Error waiting operation aborted message." );
       _operationAborted = true;
     }
 

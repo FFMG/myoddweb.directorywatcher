@@ -6,7 +6,7 @@ using myoddweb.directorywatcher.utils.Helper;
 
 namespace myoddweb.directorywatcher.utils
 {
-  internal class WatcherManagerLoadLibrary : WatcherManagerCommon
+  internal class WatcherManagerLoadLibrary : WatcherManager
   {
     #region Member variables
     /// <summary>
@@ -18,7 +18,7 @@ namespace myoddweb.directorywatcher.utils
     public WatcherManagerLoadLibrary()
     {
       // Create helper we will throw if the file does not exist.
-      _helper = new WatcherManagerNativeLibrary(GetFromFileSystem(), EventsCallback, StatisticsCallback);
+      _helper = new WatcherManagerNativeLibrary(GetFromFileSystem(), EventsCallback, StatisticsCallback, LoggerCallback);
     }
 
     #region Private Methods

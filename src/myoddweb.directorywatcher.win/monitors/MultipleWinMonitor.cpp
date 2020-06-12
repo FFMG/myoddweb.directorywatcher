@@ -94,6 +94,9 @@ namespace myoddweb::directorywatcher
   {
     try
     {
+      const auto count = (int)(_nonRecursiveParents.size() + _recursiveChildren.size());
+      Log( L"Started Multiple monitor with '%d' %s", count, L"monitorss" );
+
       // start the parents
       Start(_nonRecursiveParents);
 
@@ -437,7 +440,7 @@ namespace myoddweb::directorywatcher
         // we might deadlock depending when this function was called.
         if( !monitor->Completed() )
         {
-          MYODDWEB_OUT("Trying to dispose of monitor that is not yet complete! We might deadlock");
+          monitor->Log(L"Trying to dispose of monitor that is not yet complete! We might deadlock." );
         }
 #endif
         delete monitor;

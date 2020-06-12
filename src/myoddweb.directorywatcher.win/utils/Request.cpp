@@ -13,9 +13,10 @@ namespace myoddweb:: directorywatcher
     _path(nullptr),
     _recursive(false),
     _eventsCallback(nullptr),
-    _statsCallback(nullptr),
+    _statisticsCallback(nullptr),
     _eventsCallbackRateMs(0),
-    _statisticsCallbackRateMs(0)
+    _statisticsCallbackRateMs(0),
+    _loggerCallback(nullptr)
   {
   }
 
@@ -29,7 +30,7 @@ namespace myoddweb:: directorywatcher
   Request::Request(const wchar_t* path, bool recursive, const long long eventsCallbackRateMs, const long long statisticsCallbackRateMs) :
     Request()
   {
-    Assign(path, recursive, nullptr, nullptr, eventsCallbackRateMs, statisticsCallbackRateMs);
+    Assign(path, recursive, nullptr, nullptr, nullptr, eventsCallbackRateMs, statisticsCallbackRateMs);
   }
     
   Request::Request(const Request& request) :
@@ -48,6 +49,9 @@ namespace myoddweb:: directorywatcher
 
   void Request::Dispose()
   {
+    _loggerCallback = nullptr;
+    _eventsCallback = nullptr;
+    _statisticsCallback = nullptr;
     if (_path == nullptr)
     {
       return;
@@ -65,7 +69,7 @@ namespace myoddweb:: directorywatcher
     {
       return;
     }
-    Assign( request._path, request._recursive, request._eventsCallback, request._statsCallback, request._eventsCallbackRateMs, request._statisticsCallbackRateMs );
+    Assign( request._path, request._recursive, request._loggerCallback, request._eventsCallback, request._statisticsCallback, request._eventsCallbackRateMs, request._statisticsCallbackRateMs );
   }
 
   /**
@@ -73,7 +77,8 @@ namespace myoddweb:: directorywatcher
    */
   void Request::Assign(
     const wchar_t* path, 
-    const bool recursive, 
+    const bool recursive,
+    const LoggerCallback& loggerCallback,
     const EventCallback& eventsCallback,
     const StatisticsCallback& statisticsCallback,
     const long long eventsCallbackRateMs,
@@ -82,9 +87,10 @@ namespace myoddweb:: directorywatcher
     // clean up
     Dispose();
 
+    _loggerCallback = loggerCallback;
     _eventsCallback = eventsCallback;
     _eventsCallbackRateMs = eventsCallbackRateMs;
-    _statsCallback = statisticsCallback;
+    _statisticsCallback = statisticsCallback;
     _statisticsCallbackRateMs = statisticsCallbackRateMs;
     _recursive = recursive;
 
@@ -131,7 +137,16 @@ namespace myoddweb:: directorywatcher
   [[nodiscard]]
   const StatisticsCallback& Request::CallbackStatistics() const
   {
-    return _statsCallback;
+    return _statisticsCallback;
+  }
+
+  /**
+   * \brief the logger callback
+   */
+  [[nodiscard]]
+  const LoggerCallback& Request::CallbackLogger() const
+  {
+    return _loggerCallback;
   }
 
   /**

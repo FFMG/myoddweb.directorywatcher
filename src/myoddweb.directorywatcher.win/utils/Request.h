@@ -51,7 +51,7 @@ namespace myoddweb:: directorywatcher
     /**
      * \brief assign request values
      */
-    void Assign(const wchar_t* path, bool recursive, const EventCallback& eventsCallback, const StatisticsCallback& statisticsCallback, long long eventsCallbackRateMs, long long statisticsCallbackRateMs);
+    void Assign(const wchar_t* path, bool recursive, const LoggerCallback& loggerCallback, const EventCallback& eventsCallback, const StatisticsCallback& statisticsCallback, long long eventsCallbackRateMs, long long statisticsCallbackRateMs);
 
   public:
     /**
@@ -92,6 +92,12 @@ namespace myoddweb:: directorywatcher
     const StatisticsCallback& CallbackStatistics() const;
 
     /**
+     * \brief the logger callback function
+     */
+    [[nodiscard]]
+    const LoggerCallback& CallbackLogger() const;
+
+    /**
      * \brief how often we want to check for callbacks
      */
     [[nodiscard]]
@@ -107,6 +113,11 @@ namespace myoddweb:: directorywatcher
 
     /**
      *   NB: THE ORDER OF THE VARIABLES IS IMPORTANT!
+     *       As set in the Delegates.cs file
+     *   public struct Request
+     *   {
+     *     ...
+     *   }
      */
 
 
@@ -128,7 +139,7 @@ namespace myoddweb:: directorywatcher
     /**
      * \brief the callback even we want to call from time to time.
      */
-    StatisticsCallback _statsCallback;
+    StatisticsCallback _statisticsCallback;
 
     /**
      * How often we wish to callback events
@@ -139,5 +150,10 @@ namespace myoddweb:: directorywatcher
      * How often we wish to callback stats
      */
     long long _statisticsCallbackRateMs;
+
+    /**
+     * \brief the logger callback
+     */ 
+    LoggerCallback _loggerCallback;
   };
 }

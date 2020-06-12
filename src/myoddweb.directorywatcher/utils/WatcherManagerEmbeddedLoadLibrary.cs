@@ -5,7 +5,7 @@ using System.Diagnostics.Contracts;
 
 namespace myoddweb.directorywatcher.utils
 {
-  internal class WatcherManagerEmbeddedLoadLibrary : WatcherManagerCommon
+  internal class WatcherManagerEmbeddedLoadLibrary : WatcherManager
   {
     #region Member variables
     /// <summary>
@@ -17,7 +17,7 @@ namespace myoddweb.directorywatcher.utils
     public WatcherManagerEmbeddedLoadLibrary()
     {
       // Create helper we will throw if the file does not exist.
-      _helper = new WatcherManagerNativeLibrary(GetFromEmbedded(), EventsCallback, StatisticsCallback);
+      _helper = new WatcherManagerNativeLibrary(GetFromEmbedded(), EventsCallback, StatisticsCallback, LoggerCallback );
     }
 
     #region Private Methods

@@ -211,4 +211,37 @@ namespace myoddweb:: directorywatcher
   {
     return Io::AreSameFolders(maybe, _request.Path());
   }
+
+  /**
+   * \brief log a message with arguments
+   * \brief format the message format
+   */
+  void Monitor::Log(const wchar_t* format, ... ) const
+  {
+    if( nullptr == _request.CallbackLogger()  )
+    {
+      // we have no logger
+      return;
+    }
+
+    va_list args;
+    va_start(args, format);
+
+    const auto size = vswprintf(nullptr, 0, format, args);
+    if (size > 0)
+    {
+      const auto buffSize = size + 1;
+      const auto buf = new wchar_t[buffSize];
+      memset(buf, L'\0', buffSize);
+      vswprintf(buf, size, format, args);
+      _request.CallbackLogger()
+        (
+          ParentId(),
+          0,
+          buf
+          );
+      delete[] buf;
+    }
+    va_end(args);
+  }
 }
