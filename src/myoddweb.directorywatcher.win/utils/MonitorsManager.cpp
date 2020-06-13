@@ -8,6 +8,8 @@
 #include "../monitors/WinMonitor.h"
 #include "../monitors/MultipleWinMonitor.h"
 #include "Instrumentor.h"
+#include "Logger.h"
+#include "LogLevel.h"
 
 namespace myoddweb
 {
@@ -67,8 +69,11 @@ namespace myoddweb
         // return the instance.
         return _instance;
       }
-      catch (...)
+      catch (const std::exception& e)
       {
+        // log the error
+        Logger::Log(0, LogLevel::Panic, L"Caught exception '%hs' trying to create the manager!", e.what());
+
         return nullptr;
       }
     }
@@ -151,8 +156,11 @@ namespace myoddweb
         }
         return result;
       }
-      catch (...)
+      catch (const std::exception& e)
       {
+        // log the error
+        Logger::Log(id, LogLevel::Panic, L"Caught exception '%hs' trying to stop a monitor!", e.what());
+
         return false;
       }
     }
@@ -188,6 +196,9 @@ namespace myoddweb
             continue;
           }
 
+          // add the logger
+          Logger::Add(id, request.CallbackLogger());
+
           // create the new monitor
           Monitor* monitor;
           if (request.Recursive())
@@ -206,8 +217,11 @@ namespace myoddweb
           return monitor;
         }
       }
-      catch (...)
+      catch (const std::exception& e)
       {
+        // log the error
+        Logger::Log(0, LogLevel::Panic, L"Caught exception '%hs' trying to create a monitor for '%s'!", e.what(), request.Path() );
+
         // something broke while trying to create this monitor.
         return nullptr;
       }
@@ -231,7 +245,7 @@ namespace myoddweb
         // we could not create the monitor for some reason
         if( nullptr == monitor)
         {
-          // @todo we need to log this here.
+          Logger::Log(0, LogLevel::Panic, L"I was unable to create and start a monitor for '%s'!", request.Path());
           return nullptr;
         }
 
@@ -241,8 +255,11 @@ namespace myoddweb
         // and return the monitor we created.
         return monitor;
       }
-      catch (...)
+      catch (const std::exception& e)
       {
+        // log the error
+        Logger::Log(0, LogLevel::Panic, L"Caught exception '%hs' trying to create and start the monitor, '%s'!", e.what(), request.Path() );
+
         // exception while trying to start
         // remove the one we just added.
         if (monitor != nullptr)
@@ -276,7 +293,7 @@ namespace myoddweb
         // stop everything
         while(threads::WaitResult::complete != _workersPool->StopAndWait( *monitor->second, MYODDWEB_WAITFOR_WORKER_COMPLETION ))
         {
-          MYODDWEB_OUT("Timeout while waiting for worker to complete.\n");
+          Logger::Log(0, LogLevel::Warning, L"Timeout while waiting for worker to complete.");
         }
 
         try
@@ -284,18 +301,24 @@ namespace myoddweb
           // delete it
           delete monitor->second;
         }
-        catch (...)
+        catch (const std::exception& e)
         {
-          
+          // log the error
+          Logger::Log(0, LogLevel::Panic, L"Caught exception '%hs' trying to free monitor memory!", e.what());
         }
         // remove it
         _monitors.erase(monitor);
 
+        // remove the logger
+        Logger::Remove(id);
+
         // we are done
         return true;
       }
-      catch (...)
+      catch (const std::exception& e)
       {
+        // log the error
+        Logger::Log(id, LogLevel::Panic, L"Caught exception '%hs' trying to stop and delete a monitor!", e.what());
         return false;
       }
     }

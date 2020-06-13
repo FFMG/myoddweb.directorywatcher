@@ -47,6 +47,11 @@ namespace myoddweb.directorywatcher
     private readonly Task _eventsTask;
 
     /// <summary>
+    /// All the logger taks
+    /// </summary>
+    private readonly List<Task> _logerTasks = new List<Task>();
+
+    /// <summary>
     /// The long running statistics taks
     /// </summary>
     private readonly Task _statisticsTask;
@@ -85,6 +90,9 @@ namespace myoddweb.directorywatcher
 
     /// <inheritdoc />
     public event WatcherEvent<IStatistics> OnStatisticsAsync;
+
+    /// <inheritdoc />
+    public event WatcherEvent<ILoggerEvent> OnLoggerAsync;
     #endregion
 
     public Watcher()
@@ -100,6 +108,9 @@ namespace myoddweb.directorywatcher
       _watcherManager = new WatcherManagerEmbeddedLoadLibrary();
 #endif
 
+      // register for logger events right away
+      _watcherManager.OnLogger += OnLogger;
+
       // start the task that will forever be looking for events.
       _eventsTask = ProcessEventsAsync();
 
@@ -108,6 +119,21 @@ namespace myoddweb.directorywatcher
 
       // we have not disposed
       _disposed = false;
+
+    }
+
+    private void OnLogger(ILoggerEvent logger)
+    {
+      lock (_logerTasks)
+      {
+        var token = _watcherSource.Token;
+        var task = OnLoggerAsync != null
+          ? Task.Run(() => OnLoggerAsync?.Invoke(logger, token), token)
+          : Task.FromResult(false);
+        _logerTasks.Add(task);
+
+        _logerTasks.RemoveAll(t => t.IsCompleted);
+      }
     }
 
     /// <summary>
@@ -183,6 +209,7 @@ namespace myoddweb.directorywatcher
 
       // wait for all the tasks to end
       Task.WaitAll(_eventsTask, _statisticsTask);
+      Task.WaitAll(_logerTasks.ToArray());
 
       // flag that this has stoped.
       _started = false;

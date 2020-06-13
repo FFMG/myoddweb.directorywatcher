@@ -5,6 +5,8 @@
 #include <chrono>
 #include <utility>
 #include "../monitors/Base.h"
+#include "Logger.h"
+#include "LogLevel.h"
 
 #if defined( _WIN32) || defined(_WIN64 )
   constexpr auto MYODDWEB_MAX_WAIT_INT = static_cast<unsigned int>(-1);
@@ -224,9 +226,15 @@ namespace myoddweb:: directorywatcher
               break;
             }
           }
-          catch (...)
+          catch (const std::exception& e)
           {
-            // this is bad ... the condition failed.
+            // log the error
+            Logger::Log(0, LogLevel::Panic, L"Caught exception '%hs' Awaiting on condition!", e.what());
+
+            // this is bad ... the condition failed
+            // we might as well get out as it will probably fail over and over again
+            result = false;
+            break;
           }
         }
 
@@ -237,9 +245,10 @@ namespace myoddweb:: directorywatcher
         }
       }
     }
-    catch (...)
+    catch (const std::exception& e)
     {
-      //  something broke ... maybe we should re-throw.
+      // log the error
+      Logger::Log(0, LogLevel::Panic, L"Caught exception '%hs' Awaiting on condition!", e.what());
       result = false;
     }
 

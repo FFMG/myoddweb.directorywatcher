@@ -32,11 +32,16 @@ namespace myoddweb.directorywatcher.utils.Helper
     private readonly Delegates.StatisticsCallback _statisticsCallback;
 
     /// <summary>
+    /// The logger callback function
+    /// </summary>
+    private readonly Delegates.LoggerCallback _loggerCallback;
+
+    /// <summary>
     /// The handle of the windows c++ dll ... if loaded.
     /// </summary>
     private readonly IntPtr _handle;
 
-    public WatcherManagerNativeLibrary(string library, Delegates.EventsCallback eventsCallback, Delegates.StatisticsCallback statisticsCallback)
+    public WatcherManagerNativeLibrary(string library, Delegates.EventsCallback eventsCallback, Delegates.StatisticsCallback statisticsCallback, Delegates.LoggerCallback loggerCallback)
     {
       // some sanity checks.
       if( library == null )
@@ -47,6 +52,7 @@ namespace myoddweb.directorywatcher.utils.Helper
       _handle = CreatePtrFromFileSystem( library );
       _eventsCallback = eventsCallback ?? throw new ArgumentNullException(nameof(eventsCallback));
       _statisticsCallback = statisticsCallback ?? throw new ArgumentNullException(nameof(statisticsCallback));
+      _loggerCallback = loggerCallback ?? throw new ArgumentNullException(nameof(loggerCallback));
     }
 
     ~WatcherManagerNativeLibrary()
@@ -104,7 +110,8 @@ namespace myoddweb.directorywatcher.utils.Helper
         EventsCallback = _eventsCallback,
         StatisticsCallback = _statisticsCallback,
         EventsCallbackIntervalMs = request.Rates.EventsMilliseconds,
-        StatisticsCallbackIntervalMs = request.Rates.StatisticsMilliseconds
+        StatisticsCallbackIntervalMs = request.Rates.StatisticsMilliseconds,
+        LoggerCallback = _loggerCallback
       };
 
       // start

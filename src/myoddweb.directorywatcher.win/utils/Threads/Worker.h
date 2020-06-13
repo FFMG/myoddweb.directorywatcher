@@ -115,7 +115,7 @@ namespace myoddweb:: directorywatcher:: threads
     /**
      * \brief save the current exception
      */
-    void SaveCurrentException();
+    void SaveCurrentException() const;
 
     /**
      * \brief call the update cycle once only, if we return false the it will be the last one

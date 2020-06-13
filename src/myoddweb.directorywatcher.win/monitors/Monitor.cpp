@@ -5,6 +5,7 @@
 #include "Monitor.h"
 #include "../utils/Io.h"
 #include "../utils/Instrumentor.h"
+#include "../utils/Logger.h"
 #include "Base.h"
 
 namespace myoddweb:: directorywatcher
@@ -141,6 +142,9 @@ namespace myoddweb:: directorywatcher
     catch (...)
     {
       AddEventError(EventError::CannotStart);
+
+      SaveCurrentException();
+
       return false;
     }
   }
@@ -184,6 +188,8 @@ namespace myoddweb:: directorywatcher
     catch (...)
     {
       AddEventError(EventError::CannotStop);
+
+      SaveCurrentException();
     }
   }
 

@@ -22,6 +22,8 @@ namespace myoddweb.directorywatcher.utils.Helper
       
       [MarshalAs(UnmanagedType.I8)]
       public Int64 StatisticsCallbackIntervalMs;
+
+      public LoggerCallback LoggerCallback;
     }
 
     // Delegate with function signature for the GetVersion function
@@ -38,7 +40,7 @@ namespace myoddweb.directorywatcher.utils.Helper
     public delegate bool Ready();
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-    public delegate int EventsCallback(
+    public delegate void EventsCallback(
       [MarshalAs(UnmanagedType.I8)] long id,
       [MarshalAs(UnmanagedType.Bool)] bool isFile,
       [MarshalAs(UnmanagedType.LPWStr)] string name,
@@ -53,6 +55,13 @@ namespace myoddweb.directorywatcher.utils.Helper
       [MarshalAs(UnmanagedType.I8)] long id,
       [MarshalAs(UnmanagedType.R8)] double elapsedTime,
       [MarshalAs(UnmanagedType.I8)] long numberOfEvents
+    );
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    public delegate void LoggerCallback(
+      [MarshalAs(UnmanagedType.I8)] long id,
+      [MarshalAs(UnmanagedType.I4)] int type,
+      [MarshalAs(UnmanagedType.LPWStr)] string message
     );
   }
 }

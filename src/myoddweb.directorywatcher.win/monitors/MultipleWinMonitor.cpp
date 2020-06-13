@@ -14,6 +14,8 @@
 #include <execution>
 
 #include "../utils/Instrumentor.h"
+#include "../utils/Logger.h"
+#include "../utils/LogLevel.h"
 
 namespace myoddweb::directorywatcher
 {
@@ -94,6 +96,8 @@ namespace myoddweb::directorywatcher
   {
     try
     {
+      Logger::Log( ParentId(), LogLevel::Information, L"Started Multiple monitor with '%d' monitors", _nonRecursiveParents.size() + _recursiveChildren.size());
+
       // start the parents
       Start(_nonRecursiveParents);
 
@@ -102,8 +106,9 @@ namespace myoddweb::directorywatcher
 
       return Monitor::OnWorkerStart();
     }
-    catch( ... )
+    catch (const std::exception& e)
     {
+      Logger::Log(ParentId(), LogLevel::Error, L"Caught exception '%hs' trying to start the callback!", e.what());
       return false;
     }
   }
@@ -318,7 +323,7 @@ namespace myoddweb::directorywatcher
       }
       catch (...)
       {
-        // @todo we need to log this somewhere.
+        SaveCurrentException();
       }
     }
     return events;
@@ -370,7 +375,7 @@ namespace myoddweb::directorywatcher
     }
     catch (...)
     {
-      // @todo we need to log this somewhere.
+      SaveCurrentException();
     }
     return {};
   }
@@ -437,7 +442,7 @@ namespace myoddweb::directorywatcher
         // we might deadlock depending when this function was called.
         if( !monitor->Completed() )
         {
-          MYODDWEB_OUT("Trying to dispose of monitor that is not yet complete! We might deadlock");
+          Logger::Log( monitor->Id(), LogLevel::Warning, L"Trying to dispose of monitor that is not yet complete! We might deadlock." );
         }
 #endif
         delete monitor;
@@ -446,9 +451,10 @@ namespace myoddweb::directorywatcher
       // all done so we can clear all the constructor.
       container.clear();
     }
-    catch (...)
+    catch (const std::exception& e)
     {
-      // @todo we need to log this.
+      // log the error
+      Logger::Log(0, LogLevel::Error, L"Caught exception '%hs' in DeleteInLock", e.what());
 
       // we might as well clear everything now.
       container.clear();

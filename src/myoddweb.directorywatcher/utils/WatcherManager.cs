@@ -5,15 +5,27 @@ using myoddweb.directorywatcher.interfaces;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
+using myoddweb.directorywatcher.utils.Helper;
 
 namespace myoddweb.directorywatcher.utils
 {
   internal abstract class WatcherManager : IDisposable
   {
     #region Member variables
+    /// <summary>
+    /// The dictionary with all the events.
+    /// </summary>
+    private readonly Dictionary<long, IList<IEvent>> _idAndEvents = new Dictionary<long, IList<IEvent>>();
+
+    /// <summary>
+    /// Dictionary with the statistics
+    /// </summary>
+    private readonly Dictionary<long, IStatistics> _idStats = new Dictionary<long, IStatistics>();
+
     /// <summary>
     /// The object we will use for the lock.
     /// </summary>
@@ -65,6 +77,15 @@ namespace myoddweb.directorywatcher.utils
     /// </summary>
     private bool _disposed;
     #endregion
+    
+    #region Events
+    public delegate void Watcher<in T>(T e);
+
+    /// <summary>
+    /// Non async methon when a message arrives from the logger.
+    /// </summary>
+    public event Watcher<ILoggerEvent> OnLogger;
+    #endregion
 
     /// <summary>
     /// Private constructor
@@ -72,6 +93,91 @@ namespace myoddweb.directorywatcher.utils
     protected internal WatcherManager()
     {
     }
+
+    #region Protected Methods
+    /// <summary>
+    /// The callback function for when we receive a message from the directory watcher.
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="level"></param>
+    /// <param name="message"></param>
+    protected void LoggerCallback(
+      long id,
+      int level,
+      string message
+    )
+    {
+      // cast the level from an int to an enum
+      // any value will work, even unknown ones.
+      OnLogger?.Invoke(new LoggerEvent(id, (LogLevel)level, message));
+    }
+
+    protected void StatisticsCallback(
+      long id,
+      double elapsedTime,
+      long numberOfEvents
+    )
+    {
+      lock (_idStats)
+      {
+        if (!_idStats.ContainsKey(id))
+        {
+          _idStats[id] = new Statistics(id, elapsedTime, numberOfEvents);
+        }
+        else
+        {
+          var statistics = _idStats[id];
+          _idStats[id] = new Statistics(
+            id,
+            statistics.ElapsedTime + statistics.ElapsedTime,
+            statistics.NumberOfEvents + numberOfEvents
+          );
+        }
+      }
+    }
+
+    /// <summary>
+    /// Function called at regular intervals when file events are detected.
+    /// The intervals are controled in the 'start' function
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="isFile"></param>
+    /// <param name="name"></param>
+    /// <param name="oldName"></param>
+    /// <param name="action"></param>
+    /// <param name="error"></param>
+    /// <param name="dateTimeUtc"></param>
+    /// <returns></returns>
+    protected void EventsCallback(
+      long id,
+      bool isFile,
+      string name,
+      string oldName,
+      int action,
+      int error,
+      long dateTimeUtc)
+    {
+      lock (_idAndEvents)
+      {
+        var e = new Event(
+          isFile,
+          name,
+          oldName,
+          (EventAction)action,
+          (interfaces.EventError)error,
+          DateTime.FromFileTimeUtc(dateTimeUtc)
+        );
+        if (!_idAndEvents.ContainsKey(id))
+        {
+          _idAndEvents[id] = new List<IEvent> { e };
+        }
+        else
+        {
+          _idAndEvents[id].Add(e);
+        }
+      }
+    }
+    #endregion
 
     #region Static helpers
     /// <summary>
@@ -230,13 +336,50 @@ namespace myoddweb.directorywatcher.utils
     #endregion
 
     #region Abstract Methods
+    public bool GetStatistics(long id, out IStatistics statistics)
+    {
+      lock (_idStats)
+      {
+        // do we have that data at all?
+        if (!_idStats.ContainsKey(id))
+        {
+          statistics = null;
+          return false;
+        }
+
+        statistics = _idStats[id];
+        _idStats.Remove(id);
+
+        // the value coul be null
+        return statistics != null;
+      }
+    }
+
+    public long GetEvents(long id, out IList<IEvent> events)
+    {
+      lock (_idAndEvents)
+      {
+        if (!_idAndEvents.ContainsKey(id))
+        {
+          events = new List<IEvent>();
+          return 0;
+        }
+
+        events = _idAndEvents[id].Select(e => new Event(
+          e.IsFile,
+          e.Name,
+          e.OldName,
+          e.Action,
+          e.Error,
+          e.DateTimeUtc)).ToArray();
+        _idAndEvents[id].Clear();
+        return events.Count;
+      }
+    }
+
     public abstract long Start(IRequest request);
 
     public abstract bool Stop(long id);
-
-    public abstract long GetEvents(long id, out IList<IEvent> events);
-
-    public abstract bool GetStatistics(long id, out IStatistics statistics);
     
     public abstract bool Ready();
     #endregion

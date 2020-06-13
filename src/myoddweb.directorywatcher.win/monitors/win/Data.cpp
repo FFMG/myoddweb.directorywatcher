@@ -5,6 +5,8 @@
 #include <utility>
 #include "Data.h"
 #include "../../utils/Instrumentor.h"
+#include "../../utils/Logger.h"
+#include "../../utils/LogLevel.h"
 #include "../../utils/Wait.h"
 #include "../Base.h"
 
@@ -72,9 +74,10 @@ namespace myoddweb:: directorywatcher:: win
       // clear the overlapped structure.
       ClearOverlapped();
     }
-    catch (...)
+    catch (const std::exception& e)
     {
-      // @todo log this
+      // log the error
+      Logger::Log(0, LogLevel::Error, L"Caught exception '%hs' in StopMonitoring!", e.what());
     }
   }
 
@@ -125,7 +128,7 @@ namespace myoddweb:: directorywatcher:: win
               return _operationAborted == true;
             }, MYODDWEB_WAITFOR_OPERATION_ABORTED_COMPLETION))
           {
-            MYODDWEB_OUT("Timeout waiting operation aborted message!\n");
+            Logger::Log(_monitor.Id(), LogLevel::Warning, L"Timeout waiting operation aborted message!" );
             continue;
           }
           break;
@@ -139,7 +142,7 @@ namespace myoddweb:: directorywatcher:: win
       //   If the application is running under a debugger, the function will throw an exception if it receives either a handle value that is not valid or a pseudo-
       //   handle value. This can happen if you close a handle twice, or if you call CloseHandle on a handle returned by the FindFirstFile function instead of 
       //   calling the FindClose function.
-      MYODDWEB_OUT("Ignore: Error waiting operation aborted message\n");
+      Logger::Log( _monitor.Id(), LogLevel::Information, L"Ignore: Error waiting operation aborted message." );
       _operationAborted = true;
     }
 
@@ -367,6 +370,7 @@ namespace myoddweb:: directorywatcher:: win
 
     default:
       const auto dwError = GetLastError();
+      Logger::Log(_monitor.Id(), LogLevel::Warning, L"Warning: There was an error processing an API message %lu.", dwError);
       _monitor.AddEventError(EventError::Overflow);
       break;
     }

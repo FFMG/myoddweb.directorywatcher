@@ -35,5 +35,10 @@ namespace myoddweb.directorywatcher.interfaces
     /// The statistics of the engine.
     /// </summary>
     event WatcherEvent<IStatistics> OnStatisticsAsync;
+
+    /// <summary>
+    /// When we get a log message
+    /// </summary>
+    event WatcherEvent<ILoggerEvent> OnLoggerAsync;
   }
 }

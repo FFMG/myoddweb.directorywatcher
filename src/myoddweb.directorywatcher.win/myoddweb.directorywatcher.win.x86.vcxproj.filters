@@ -57,6 +57,9 @@
     <ClCompile Include="utils\Request.cpp">
       <Filter>utilities</Filter>
     </ClCompile>
+    <ClCompile Include="utils\Logger.cpp">
+      <Filter>utilities</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -140,6 +143,12 @@
     </ClInclude>
     <ClInclude Include="monitors\EventsPublisher.h">
       <Filter>monitors</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\Logger.h">
+      <Filter>utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\LogLevel.h">
+      <Filter>utilities</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
