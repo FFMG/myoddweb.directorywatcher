@@ -275,7 +275,7 @@ namespace myoddweb
         }
 
         // stop everything
-        while(threads::WaitResult::complete != _workersPool->StopAndWait( *monitor->second, MYODDWEB_WAITFOR_WORKER_COMPLETION ))
+        if(threads::WaitResult::complete != _workersPool->StopAndWait( *monitor->second, MYODDWEB_WAITFOR_WORKER_COMPLETION ))
         {
           MYODDWEB_OUT("Timeout while waiting for worker to complete.\n");
         }

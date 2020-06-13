@@ -113,22 +113,20 @@ namespace myoddweb:: directorywatcher:: win
       if (0 != cancel)
       {
         // then wait a little for the operation to be cancelled.
-        for (;;)
-        {
-          if (!Wait::SpinUntil([&]
+        if (!Wait::SpinUntil([&]
+          {
+            if( _operationAborted != true )
             {
               // wait a little to ensure that the aborted message is given.
               // we will return as soon as the message is recived.
               // if we do not wait for the abort message, we might get other
               // messages out of sequence.
               MYODDWEB_YIELD();
-              return _operationAborted == true;
-            }, MYODDWEB_WAITFOR_OPERATION_ABORTED_COMPLETION))
-          {
-            MYODDWEB_OUT("Timeout waiting operation aborted message!\n");
-            continue;
-          }
-          break;
+            }
+            return _operationAborted == true;
+          }, MYODDWEB_WAITFOR_OPERATION_ABORTED_COMPLETION))
+        {
+          Logger::Log(_monitor.Id(), LogLevel::Warning, L"Timeout waiting operation aborted message!" );
         }
       }
       ::CloseHandle(oldHandle);

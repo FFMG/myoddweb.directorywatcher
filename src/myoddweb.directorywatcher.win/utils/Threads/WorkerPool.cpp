@@ -403,7 +403,7 @@ namespace myoddweb :: directorywatcher :: threads
         return _thread->Started();
       }, MYODDWEB_WAITFOR_WORKER_COMPLETION ) )
       {
-        MYODDWEB_OUT("Unable to start Thread!\n");
+        Logger::Log( 0, LogLevel::Error, L"Workpool unable to start Thread!" );
         return;
       }
     }
