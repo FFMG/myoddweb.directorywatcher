@@ -367,9 +367,9 @@ namespace myoddweb:: directorywatcher:: win
       return;
 
     default:
+      //  we cannot use _monitor anymore
       const auto dwError = GetLastError();
-      Logger::Log(_monitor.Id(), LogLevel::Warning, L"Warning: There was an error processing an API message %lu.", dwError);
-      _monitor.AddEventError(EventError::Overflow);
+      Logger::Log(0, LogLevel::Warning, L"Warning: There was an error processing an API message %lu.", dwError);
       break;
     }
   }

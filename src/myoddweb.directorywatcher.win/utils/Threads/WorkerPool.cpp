@@ -59,9 +59,9 @@ namespace myoddweb :: directorywatcher :: threads
         std::execution::par,
         workers.begin(),
         workers.end(),
-        [&](auto&& item)
+        [this,timeout,&lock,&status]( Worker* worker )
         {
-          const auto result = StopAndWait(*item, timeout );
+          const auto result = StopAndWait(*worker, timeout );
           if( WaitResult::complete !=  result )
           {
             MYODDWEB_LOCK(lock);
@@ -179,11 +179,11 @@ namespace myoddweb :: directorywatcher :: threads
         std::execution::par,
         runningWorkers.begin(),
         runningWorkers.end(),
-        [&](auto&& item)
+        [timeout, &lock, &remove](Worker* worker)
         {
           if( !Wait::SpinUntil([&]()
           {
-            if (!item->Completed())
+            if (!worker->Completed())
             {
               return false;
             }
@@ -191,7 +191,7 @@ namespace myoddweb :: directorywatcher :: threads
           }, timeout))
           {
             MYODDWEB_LOCK(lock);
-            remove.emplace_back(item);
+            remove.emplace_back(worker);
           }
         }
       );
@@ -233,9 +233,9 @@ namespace myoddweb :: directorywatcher :: threads
         std::execution::par,
         workers.begin(),
         workers.end(),
-        [&](auto&& item)
+        [this, timeout,&lock,&status]( Worker* worker )
         {
-          const auto result = WaitFor(*item, timeout);
+          const auto result = WaitFor(*worker, timeout);
           if (WaitResult::complete != result)
           {
             MYODDWEB_LOCK(lock);
@@ -751,9 +751,9 @@ namespace myoddweb :: directorywatcher :: threads
         std::execution::par,
         runningWorkers.begin(),
         runningWorkers.end(),
-        [&](auto&& item)
+        [this, timeout](Worker* worker)
         {
-          StopAndWait(*item, timeout );
+          StopAndWait(*worker, timeout );
         }
       );
 
@@ -915,9 +915,9 @@ namespace myoddweb :: directorywatcher :: threads
         std::execution::par,
         runningWorkers.begin(),
         runningWorkers.end(),
-        [&](auto&& item)
+        [this, actualElapsedTimeMilliseconds, &checkIfContinueWithNextEvent](Worker* worker)
         {
-          if (!WorkerUpdateOnce(*item, actualElapsedTimeMilliseconds))
+          if (!WorkerUpdateOnce(*worker, actualElapsedTimeMilliseconds))
           {
             // on of them stopped, so we need to check if we need to stop or not.
             // boolean assignments are atomic so we do not need a lock
@@ -1051,15 +1051,15 @@ namespace myoddweb :: directorywatcher :: threads
         std::execution::par,
         runningWorkers.begin(),
         runningWorkers.end(),
-        [&](auto&& item)
+        [this,&lock,&timeOutWorkers](Worker* worker)
         {
           // stop this worker and wait
           // we cannot end the workpool until the are done.
-          const auto result = StopAndWait(*item, MYODDWEB_WAITFOR_WORKER_COMPLETION);
+          const auto result = StopAndWait(*worker, MYODDWEB_WAITFOR_WORKER_COMPLETION);
           if (WaitResult::complete != result)
           {
             MYODDWEB_LOCK(lock);
-            timeOutWorkers.emplace_back(item);
+            timeOutWorkers.emplace_back(worker);
           }
         }
       );
@@ -1089,7 +1089,7 @@ namespace myoddweb :: directorywatcher :: threads
         std::execution::par,
         runningWorkers.begin(),
         runningWorkers.end(),
-        [&](auto&& worker)
+        [](Worker* worker)
         {
           if( !worker->Completed() )
           {
@@ -1101,7 +1101,7 @@ namespace myoddweb :: directorywatcher :: threads
         }
       );
 
-      // then also add what new workers might have now arrived.
+      // then add what new workers might have now arrived.
       runningWorkers = RemoveWorkersFromWorkersWaitingToEnd();
     }
   }
