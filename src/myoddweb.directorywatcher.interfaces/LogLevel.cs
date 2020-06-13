@@ -12,7 +12,7 @@ namespace myoddweb.directorywatcher.interfaces
   public enum LogLevel : int
   {
     /// <summary>
-    /// We have an unknown log leve
+    /// We have an unknown log level
     /// </summary>
     Unknown = 0,
 

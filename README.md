@@ -232,6 +232,13 @@ All you need to do is add `Rates` to your watchers
 
 You can watch for certain events
 
+  - `Unknown` = 0, Should never happen
+  - `Information` = 1, nothing important, maybe something worth noting
+  - `Warning` = 2, something happened, but we managed to recover from it
+  - `Error` = 3, something broke, messages were probably lost.
+  - `Panic` = 4, something really bad happened, the process probably died.
+  - `Debug` = 100, Should not happen in release more, only for information
+
 ```csharp
     using( var watch = new Watcher() )
     {
