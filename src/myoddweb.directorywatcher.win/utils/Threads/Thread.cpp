@@ -167,7 +167,7 @@ namespace myoddweb::directorywatcher::threads
     catch (const std::exception& e)
     {
       // log the error
-      Logger::Log(0, LogLevel::Error, L"Caught exception '%hs' trying to start a thread!", e.what());
+      Logger::Log(LogLevel::Error, L"Caught exception '%hs' trying to start a thread!", e.what());
     }
   }
 

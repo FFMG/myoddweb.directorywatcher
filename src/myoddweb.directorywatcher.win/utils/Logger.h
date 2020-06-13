@@ -56,6 +56,14 @@ namespace myoddweb:: directorywatcher
      */
     static void Log(long long id, LogLevel level, const wchar_t* format, ...);
 
+    /**
+     * \brief log a message to all our listed messages
+     * \param level the message log level
+     * \param format the message format
+     * \param ... the parametters
+     */
+    static void Log(LogLevel level, const wchar_t* format, ...);
+
   private:
     /**
      * \brief log a message to a single logger
