@@ -59,9 +59,9 @@ namespace myoddweb :: directorywatcher :: threads
         std::execution::par,
         workers.begin(),
         workers.end(),
-        [&](auto&& item)
+        [this,timeout,&lock,&status]( Worker* worker )
         {
-          const auto result = StopAndWait(*item, timeout );
+          const auto result = StopAndWait(*worker, timeout );
           if( WaitResult::complete !=  result )
           {
             MYODDWEB_LOCK(lock);
@@ -179,18 +179,20 @@ namespace myoddweb :: directorywatcher :: threads
         std::execution::par,
         runningWorkers.begin(),
         runningWorkers.end(),
-        [&](auto&& item)
+        [timeout, &lock, &remove](Worker* worker)
         {
-          Wait::SpinUntil([&]()
+          if( !Wait::SpinUntil([&]()
+          {
+            if (!worker->Completed())
             {
-              if (!item->Completed())
-              {
-                return false;
-              }
-              MYODDWEB_LOCK(lock);
-              remove.emplace_back(item);
-              return true;
-            }, timeout);
+              return false;
+            }
+            return true;
+          }, timeout))
+          {
+            MYODDWEB_LOCK(lock);
+            remove.emplace_back(worker);
+          }
         }
       );
 
@@ -231,9 +233,9 @@ namespace myoddweb :: directorywatcher :: threads
         std::execution::par,
         workers.begin(),
         workers.end(),
-        [&](auto&& item)
+        [this, timeout,&lock,&status]( Worker* worker )
         {
-          const auto result = WaitFor(*item, timeout);
+          const auto result = WaitFor(*worker, timeout);
           if (WaitResult::complete != result)
           {
             MYODDWEB_LOCK(lock);
@@ -372,14 +374,8 @@ namespace myoddweb :: directorywatcher :: threads
     // otherwise it will block us all.
     MYODDWEB_LOCK(_lockThreadsWaitingToEnd);
 
-    // create a new thread
-    const auto end = new Thread([&]
-    {
-      worker.WorkerEnd();
-    });
-
     // and add it to the queue.
-    _threadsWaitingToEnd.emplace_back(end);
+    _threadsWaitingToEnd.emplace_back( &worker);
   }
 
   /**
@@ -405,7 +401,7 @@ namespace myoddweb :: directorywatcher :: threads
         return _thread->Started();
       }, MYODDWEB_WAITFOR_WORKER_COMPLETION ) )
       {
-        MYODDWEB_OUT("Unable to start Thread!\n");
+        Logger::Log( 0, LogLevel::Error, L"Workpool unable to start Thread!" );
         return;
       }
     }
@@ -430,17 +426,17 @@ namespace myoddweb :: directorywatcher :: threads
     }
 
     // check the ones that are complete and remove them once done.
-    auto clone = std::vector<Thread*>();
+    auto clone = std::vector<Worker*>();
     clone.reserve(_threadsWaitingToEnd.size());
-    for (auto thread : _threadsWaitingToEnd)
+    for (auto worker : _threadsWaitingToEnd)
     {
-      if( thread->Completed() )
+      if( worker->Completed() )
       {
         // we are done with this thread
-        delete thread;
+        delete worker;
         continue;
       }
-      clone.emplace_back(thread);
+      clone.emplace_back(worker);
     }
 
     // copy the updated thread.
@@ -583,7 +579,7 @@ namespace myoddweb :: directorywatcher :: threads
    *        we will obtain the lock to remove this items.
    * \return the list of items removed.
    */
-  std::vector<Thread*> WorkerPool::RemoveThreadsFromWorkersWaitingToEnd()
+  std::vector<Worker*> WorkerPool::RemoveWorkersFromWorkersWaitingToEnd()
   {
     MYODDWEB_LOCK(_lockThreadsWaitingToEnd);
 
@@ -755,9 +751,9 @@ namespace myoddweb :: directorywatcher :: threads
         std::execution::par,
         runningWorkers.begin(),
         runningWorkers.end(),
-        [&](auto&& item)
+        [this, timeout](Worker* worker)
         {
-          StopAndWait(*item, timeout );
+          StopAndWait(*worker, timeout );
         }
       );
 
@@ -894,6 +890,8 @@ namespace myoddweb :: directorywatcher :: threads
       // make sure all the ones waiting to start have started
       ProcessThreadsAndWorkersWaiting();
 
+      WorkerEndThreadsWaitingToEnd();
+
       // the actual elapsed time expired
       float actualElapsedTimeMilliseconds;
 
@@ -917,9 +915,9 @@ namespace myoddweb :: directorywatcher :: threads
         std::execution::par,
         runningWorkers.begin(),
         runningWorkers.end(),
-        [&](auto&& item)
+        [this, actualElapsedTimeMilliseconds, &checkIfContinueWithNextEvent](Worker* worker)
         {
-          if (!WorkerUpdateOnce(*item, actualElapsedTimeMilliseconds))
+          if (!WorkerUpdateOnce(*worker, actualElapsedTimeMilliseconds))
           {
             // on of them stopped, so we need to check if we need to stop or not.
             // boolean assignments are atomic so we do not need a lock
@@ -1053,15 +1051,15 @@ namespace myoddweb :: directorywatcher :: threads
         std::execution::par,
         runningWorkers.begin(),
         runningWorkers.end(),
-        [&](auto&& item)
+        [this,&lock,&timeOutWorkers](Worker* worker)
         {
           // stop this worker and wait
           // we cannot end the workpool until the are done.
-          const auto result = StopAndWait(*item, MYODDWEB_WAITFOR_WORKER_COMPLETION);
+          const auto result = StopAndWait(*worker, MYODDWEB_WAITFOR_WORKER_COMPLETION);
           if (WaitResult::complete != result)
           {
             MYODDWEB_LOCK(lock);
-            timeOutWorkers.emplace_back(item);
+            timeOutWorkers.emplace_back(worker);
           }
         }
       );
@@ -1083,41 +1081,28 @@ namespace myoddweb :: directorywatcher :: threads
   {
     // remove all the worker and use the list all at once
     // those will need to be completed now so they have to be removed
-    auto runningThreads = RemoveThreadsFromWorkersWaitingToEnd();
-    for (; !runningThreads.empty();)
+    auto runningWorkers = RemoveWorkersFromWorkersWaitingToEnd();
+    for (; !runningWorkers.empty();)
     {
       // stop and wait all of them
-      std::vector<Thread*> timeOutWorkers;
-      MYODDWEB_MUTEX lock;
       std::for_each(
         std::execution::par,
-        runningThreads.begin(),
-        runningThreads.end(),
-        [&](auto&& item)
+        runningWorkers.begin(),
+        runningWorkers.end(),
+        [](Worker* worker)
         {
-          // stop this worker and wait
-          // we cannot end the workpool until the are done.
-          const auto result = item->WaitFor( MYODDWEB_WAITFOR_WORKER_COMPLETION);
-          if (WaitResult::complete != result)
+          if( !worker->Completed() )
           {
-            MYODDWEB_LOCK(lock);
-            timeOutWorkers.emplace_back(item);
+            worker->WorkerEnd();
           }
-          else
-          {
-            // this item is complete and can now be deletd.
-            delete item;
-          }
+
+          // this item is complete and can now be deletd.
+          // but it is not our ours to delete.
         }
       );
 
-      // copy over whatever we might have left.
-      // so we can wait for them to complete.
-      runningThreads = timeOutWorkers;
-
-      // then also add what new workers might have now arrived.
-      const auto newRunningThreads = RemoveThreadsFromWorkersWaitingToEnd();
-      runningThreads.insert(runningThreads.end(), newRunningThreads.begin(), newRunningThreads.end());
+      // then add what new workers might have now arrived.
+      runningWorkers = RemoveWorkersFromWorkersWaitingToEnd();
     }
   }
   #pragma endregion 

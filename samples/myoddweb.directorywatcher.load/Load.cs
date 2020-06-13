@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Timers;
 using myoddweb.directorywatcher.interfaces;
 using myoddweb.directorywatcher.load.Output;
@@ -114,6 +115,7 @@ namespace myoddweb.directorywatcher.load
       {
         foreach (var w in _watchers)
         {
+          w.Watcher.OnLoggerAsync -= OnLoggerAsync;
           w.Stop();
         }
       }
@@ -246,12 +248,18 @@ namespace myoddweb.directorywatcher.load
       if ( !Options.Unique )
       {
         watcher = new Watcher();
+        watcher.OnLoggerAsync += OnLoggerAsync;
       }
       else
       {
         lock (_watchers)
         {
-          watcher = _watchers.FirstOrDefault()?.Watcher ?? new Watcher();
+          watcher = _watchers.FirstOrDefault()?.Watcher;
+          if (null == watcher)
+          {
+            watcher = new Watcher();
+            watcher.OnLoggerAsync += OnLoggerAsync;
+          }
         }
       }
 
@@ -269,6 +277,12 @@ namespace myoddweb.directorywatcher.load
       _nonQuietOutput.AddMessage($"Adding another watched folder: {watchedFolder.Folder}", CancellationToken.None);
 
       return watchedFolder;
+    }
+
+    private Task OnLoggerAsync(ILoggerEvent e, CancellationToken token)
+    {
+      _nonQuietOutput.AddMessage(e.Message, token);
+      return Task.CompletedTask;
     }
 
     /// <summary>
