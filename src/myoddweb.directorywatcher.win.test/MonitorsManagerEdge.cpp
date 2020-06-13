@@ -1,4 +1,3 @@
-#pragma once
 #include "pch.h"
 
 #include "../myoddweb.directorywatcher.win/utils/MonitorsManager.h"
@@ -6,12 +5,11 @@
 #include "../myoddweb.directorywatcher.win/utils/Wait.h"
 
 #include "MonitorsManagerTestHelper.h"
+#include "RequestTestHelper.h"
 
 using myoddweb::directorywatcher::Wait;
 using myoddweb::directorywatcher::EventAction;
 using myoddweb::directorywatcher::MonitorsManager;
-using myoddweb::directorywatcher::Request;
-using myoddweb::directorywatcher::EventCallback;
 
 class RecursiveAndNonRecursive :public ::testing::TestWithParam<bool> {};
 INSTANTIATE_TEST_SUITE_P(
@@ -27,8 +25,18 @@ TEST_P(RecursiveAndNonRecursive, TwoWatchersOnTheSameFolder) {
 
   const auto recursive = GetParam();
 
-  const auto request1 = ::Request(helper->Folder(), recursive, function, TEST_TIMEOUT);
-  const auto request2 = ::Request(helper->Folder(), recursive, function, TEST_TIMEOUT);
+  //  use the test request to create the Request
+  const auto r = RequestHelper(
+    helper->Folder(),
+    recursive,
+    nullptr,
+    function, 
+    nullptr,
+    TEST_TIMEOUT,
+    0);
+
+  const auto request1 = ::Request(r);
+  const auto request2 = ::Request(r);
   const auto id1 = ::MonitorsManager::Start(request1);
   const auto id2 = ::MonitorsManager::Start(request2);
   Add(id1, helper);
@@ -68,8 +76,27 @@ TEST_P(RecursiveAndNonRecursive, TwoWatchersOnTwoSeparateFolders) {
 
   const auto recursive = GetParam();
 
-  const auto request1 = ::Request(helper1->Folder(), recursive, function, TEST_TIMEOUT);
-  const auto request2 = ::Request(helper2->Folder(), recursive, function, TEST_TIMEOUT);
+  //  use the test request to create the Reques
+  const auto r1 = RequestHelper(
+    helper1->Folder(),
+    recursive,
+    nullptr,
+    function,
+    nullptr,
+    TEST_TIMEOUT,
+    0);
+
+  const auto r2 = RequestHelper(
+    helper1->Folder(),
+    recursive,
+    nullptr,
+    function,
+    nullptr,
+    TEST_TIMEOUT,
+    0);
+
+  const auto request1 = ::Request(r1);
+  const auto request2 = ::Request(r2);
   const auto id1 = ::MonitorsManager::Start(request1);
   const auto id2 = ::MonitorsManager::Start(request2);
 

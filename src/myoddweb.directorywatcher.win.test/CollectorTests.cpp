@@ -10,10 +10,12 @@ using myoddweb::directorywatcher::Event;
 using myoddweb::directorywatcher::EventError;
 using myoddweb::directorywatcher::EventAction;
 
+constexpr auto MaxCleanupAgeMilliseconds = 100;
+
 TEST(Collector, EmptyCollectorReturnsNothing) {
 
   // create new one.
-  Collector c;
+  Collector c(MaxCleanupAgeMilliseconds);
 
   // empty
   std::vector<Event*> events;
@@ -24,7 +26,7 @@ TEST(Collector, EmptyCollectorReturnsNothing) {
 TEST(Collector, PathIsValidWithTwoBackSlash) {
 
   // create new one.
-  Collector c;
+  Collector c(MaxCleanupAgeMilliseconds);
   c.Add( EventAction::Added, L"c:\\", L"\\foo\\bar.txt", true, EventError::None);
 
   // get it.
@@ -39,7 +41,7 @@ TEST(Collector, PathIsValidWithTwoBackSlash) {
 TEST(Collector, PathIsValidWithOneBackSlashOnPath) {
 
   // create new one.
-  Collector c;
+  Collector c(MaxCleanupAgeMilliseconds);
   c.Add(EventAction::Added, L"c:\\", L"foo\\bar.txt", true, EventError::None);
 
   // get it.
@@ -54,7 +56,7 @@ TEST(Collector, PathIsValidWithOneBackSlashOnPath) {
 TEST(Collector, PathIsValidWithOneBackSlashOnFileName) {
 
   // create new one.
-  Collector c;
+  Collector c(MaxCleanupAgeMilliseconds);
   c.Add(EventAction::Added, L"c:", L"\\foo\\bar.txt", true, EventError::None );
 
   // get it.

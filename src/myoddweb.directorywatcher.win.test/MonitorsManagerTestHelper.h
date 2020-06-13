@@ -58,8 +58,7 @@ inline auto function = []
   const int action,
   const int error,
   const long long dateTimeUtc
-) -> int
+) -> void
 {
   Get(id)->EventAction(static_cast<::EventAction>(action), isFile);
-  return 0;
 };
