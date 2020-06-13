@@ -35,7 +35,7 @@ TEST(MonitorsManagerAdd, SimpleStartAndStop) {
     nullptr,
     nullptr,
     nullptr,
-    0,
+    50,
     0);
   const auto request = ::Request(r);
   const auto id = ::MonitorsManager::Start( request );
@@ -62,7 +62,7 @@ TEST(MonitorsManagerAdd, StoppingWhatWasNeverStarted) {
     nullptr,
     nullptr,
     nullptr,
-    0,
+    50,
     0);
 
   const auto request = ::Request(r);
@@ -89,7 +89,7 @@ TEST(MonitorsManagerAdd, StartStopThenAddFileToFolder) {
       nullptr,
       function,
       nullptr,
-      0,
+      50,
       0);
 
     const auto request = ::Request(r);
@@ -178,7 +178,7 @@ TEST_P(ValidateNumberOfItemAdded, CallbackWhenFileIsAdded) {
     nullptr,
     function,
     nullptr,
-    0,
+    50,
     0);
 
   const auto request = ::Request(r);
@@ -226,7 +226,7 @@ TEST_P(ValidateNumberOfItemAdded, CallbackWhenFolderIsAdded) {
     nullptr,
     function,
     nullptr,
-    0,
+    50,
     0);
 
   const auto request = ::Request(r);
