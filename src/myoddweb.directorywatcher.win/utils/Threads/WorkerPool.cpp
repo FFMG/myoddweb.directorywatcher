@@ -639,7 +639,7 @@ namespace myoddweb :: directorywatcher :: threads
       catch (const std::exception& e)
       {
         // log the error
-        Logger::Log(0, LogLevel::Error, L"Caught exception '%hs' in remove worker.", e.what());
+        Logger::Log(LogLevel::Error, L"Caught exception '%hs' in remove worker.", e.what());
       }
     }
     return removed;
@@ -708,7 +708,7 @@ namespace myoddweb :: directorywatcher :: threads
     catch (const std::exception& e)
     {
       // log the error
-      Logger::Log(0, LogLevel::Error, L"Caught exception '%hs' in AddWorker", e.what());
+      Logger::Log(LogLevel::Error, L"Caught exception '%hs' in AddWorker", e.what());
     }
   }
 
@@ -726,7 +726,7 @@ namespace myoddweb :: directorywatcher :: threads
     catch (const std::exception& e)
     {
       // log the error
-      Logger::Log(0, LogLevel::Error, L"Caught exception '%hs' in AddWorkers", e.what());
+      Logger::Log(LogLevel::Error, L"Caught exception '%hs' in AddWorkers", e.what());
     }
   }
   #pragma endregion

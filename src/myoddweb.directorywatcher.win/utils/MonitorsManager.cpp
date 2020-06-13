@@ -72,7 +72,7 @@ namespace myoddweb
       catch (const std::exception& e)
       {
         // log the error
-        Logger::Log(0, LogLevel::Panic, L"Caught exception '%hs' trying to create the manager!", e.what());
+        Logger::Log( LogLevel::Panic, L"Caught exception '%hs' trying to create the manager!", e.what());
 
         return nullptr;
       }
@@ -220,7 +220,7 @@ namespace myoddweb
       catch (const std::exception& e)
       {
         // log the error
-        Logger::Log(0, LogLevel::Panic, L"Caught exception '%hs' trying to create a monitor for '%s'!", e.what(), request.Path() );
+        Logger::Log(LogLevel::Panic, L"Caught exception '%hs' trying to create a monitor for '%s'!", e.what(), request.Path() );
 
         // something broke while trying to create this monitor.
         return nullptr;
@@ -245,7 +245,7 @@ namespace myoddweb
         // we could not create the monitor for some reason
         if( nullptr == monitor)
         {
-          Logger::Log(0, LogLevel::Panic, L"I was unable to create and start a monitor for '%s'!", request.Path());
+          Logger::Log(LogLevel::Panic, L"I was unable to create and start a monitor for '%s'!", request.Path());
           return nullptr;
         }
 
@@ -258,7 +258,7 @@ namespace myoddweb
       catch (const std::exception& e)
       {
         // log the error
-        Logger::Log(0, LogLevel::Panic, L"Caught exception '%hs' trying to create and start the monitor, '%s'!", e.what(), request.Path() );
+        Logger::Log(LogLevel::Panic, L"Caught exception '%hs' trying to create and start the monitor, '%s'!", e.what(), request.Path() );
 
         // exception while trying to start
         // remove the one we just added.
@@ -293,7 +293,7 @@ namespace myoddweb
         // stop everything
         if(threads::WaitResult::complete != _workersPool->StopAndWait( *monitor->second, MYODDWEB_WAITFOR_WORKER_COMPLETION ))
         {
-          Logger::Log(0, LogLevel::Warning, L"Timeout while waiting for worker to complete.");
+          Logger::Log(LogLevel::Warning, L"Timeout while waiting for worker to complete.");
         }
 
         try
@@ -304,7 +304,7 @@ namespace myoddweb
         catch (const std::exception& e)
         {
           // log the error
-          Logger::Log(0, LogLevel::Panic, L"Caught exception '%hs' trying to free monitor memory!", e.what());
+          Logger::Log(LogLevel::Panic, L"Caught exception '%hs' trying to free monitor memory!", e.what());
         }
         // remove it
         _monitors.erase(monitor);

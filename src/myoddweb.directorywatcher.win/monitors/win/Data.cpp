@@ -77,7 +77,7 @@ namespace myoddweb:: directorywatcher:: win
     catch (const std::exception& e)
     {
       // log the error
-      Logger::Log(0, LogLevel::Error, L"Caught exception '%hs' in StopMonitoring!", e.what());
+      Logger::Log(LogLevel::Error, L"Caught exception '%hs' in StopMonitoring!", e.what());
     }
   }
 

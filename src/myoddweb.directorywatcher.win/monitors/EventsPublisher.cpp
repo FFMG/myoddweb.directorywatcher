@@ -172,7 +172,7 @@ namespace myoddweb::directorywatcher
     {
       // the callback did something wrong!
       // log the error
-      Logger::Log(0, LogLevel::Error, L"Caught exception '%hs' in PublishStatistics, check the callback!", e.what());
+      Logger::Log(LogLevel::Error, L"Caught exception '%hs' in PublishStatistics, check the callback!", e.what());
     }
   }
 
@@ -224,7 +224,7 @@ namespace myoddweb::directorywatcher
       {
         // the callback did something wrong!
         // log the error
-        Logger::Log(0, LogLevel::Error, L"Caught exception '%hs' in PublishEvents, check the callback!", e.what());
+        Logger::Log(LogLevel::Error, L"Caught exception '%hs' in PublishEvents, check the callback!", e.what());
       }
 
       // we are done with the event
