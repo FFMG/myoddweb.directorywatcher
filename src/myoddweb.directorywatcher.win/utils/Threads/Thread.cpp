@@ -4,6 +4,8 @@
 #include "Thread.h"
 
 #include "../../monitors/Base.h"
+#include "../Logger.h"
+#include "../LogLevel.h"
 #include "../Wait.h"
 #include "CallbackWorker.h"
 #include "WaitResult.h"
@@ -154,7 +156,7 @@ namespace myoddweb::directorywatcher::threads
   /**
    * \brief start running the worker.
    */
-  void Thread::Start()
+  void Thread::Start() const
   {
     // we can now start
     try
@@ -162,9 +164,10 @@ namespace myoddweb::directorywatcher::threads
       // we can assume we are started
       _parentWorker->Start();
     }
-    catch( ... )
+    catch (const std::exception& e)
     {
-      
+      // log the error
+      Logger::Log(0, LogLevel::Error, L"Caught exception '%hs' trying to start a thread!", e.what());
     }
   }
 
@@ -224,6 +227,7 @@ namespace myoddweb::directorywatcher::threads
       }
       catch (...)
       {
+        //  error could happen, it probably means we are done.
       }
     }
     // the future should have ended now
@@ -238,6 +242,7 @@ namespace myoddweb::directorywatcher::threads
       }
       catch (...)
       {
+        //  an error could happen, it means we are done.
       }
     }
     delete _thread;

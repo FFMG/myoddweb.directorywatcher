@@ -43,9 +43,10 @@ namespace myoddweb.directorywatcher.sample
         {
           if (drv.DriveType == System.IO.DriveType.Fixed)
           {
-            watch.Add(new Request(drv.Name, true));
+            watch.Add(new Request(drv.Name, true, new Rates(10000, 0)));
           }
         }
+        //watch.Add(new Request("z:\\", true, new Rates(10000, 0)));
 
         // prepare the console watcher so we can output pretty messages.
         var _ = new ConsoleWatch(watch);

@@ -14,7 +14,7 @@ namespace myoddweb
     class Event
     {
     public:
-      Event() : 
+      Event() :
         Name(nullptr),
         OldName(nullptr),
         Action(0),
@@ -36,9 +36,11 @@ namespace myoddweb
         Clear();
       }
 
-      // prevent copy
+      // prevent copy and move
       Event(const Event& src) = delete;
+      Event(Event&& src) = delete;
       const Event& operator=(const Event& src) = delete;
+      const Event& operator=(Event&& src) = delete;
 
     private:
       void Assign(const wchar_t* name, const wchar_t* oldName, const int action, const int error, const long long timeMillisecondsUtc, const bool isFile)
@@ -116,7 +118,7 @@ namespace myoddweb
           const auto len = wcslen(OldName);
           Name = new wchar_t[len + 1];
           wmemset(Name, L'\0', len + 1);
-          wcscpy_s(Name, len + 1, OldName );
+          wcscpy_s(Name, len + 1, OldName);
         }
 
         // we can get rid of the old name
@@ -149,7 +151,7 @@ namespace myoddweb
       long long TimeMillisecondsUtc;
 
       /**
-     * \brief Boolean if the update is a file or a directory.
+       * \brief Boolean if the update is a file or a directory.
        */
       bool IsFile;
     };

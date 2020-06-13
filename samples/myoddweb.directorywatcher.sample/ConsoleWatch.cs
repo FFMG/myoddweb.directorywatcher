@@ -24,11 +24,29 @@ namespace myoddweb.directorywatcher.sample
     {
       _consoleColor = Console.ForegroundColor;
 
+      // technically we should dispose of those at the end ...
+      // but I live on the wild side.
       watch.OnErrorAsync += OnErrorAsync;
       watch.OnAddedAsync += OnAddedAsync;
       watch.OnRemovedAsync += OnRemovedAsync;
       watch.OnRenamedAsync += OnRenamedAsync;
       watch.OnTouchedAsync += OnTouchedAsync;
+      watch.OnStatisticsAsync += OnStatisticsAsync;
+      watch.OnLoggerAsync += OnOnLoggerAsync;
+    }
+
+    private async Task OnOnLoggerAsync(ILoggerEvent e, CancellationToken token)
+    {
+      await AddMessage(ConsoleColor.DarkBlue, DateTime.UtcNow, $"Id:{e.Id}\n" + e.Message, token).ConfigureAwait(false);
+    }
+
+    private async Task OnStatisticsAsync(IStatistics e, CancellationToken token)
+    {
+      await AddMessage(ConsoleColor.DarkYellow, DateTime.UtcNow, 
+        $"Id:{e.Id}\n"+
+        $"Number Of Events: {e.NumberOfEvents}\n"+
+        $"Elapsed Time: {e.ElapsedTime}", 
+        token).ConfigureAwait(false);
     }
 
     private async Task OnRenamedAsync(IRenamedFileSystemEvent rfse, CancellationToken token)

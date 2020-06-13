@@ -2,6 +2,9 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #pragma once
+#include <mutex>
+
+#define MYODDWEB_MUTEX std::mutex
 
 // create a variable
 #define MYODDWEB_VAR(z) line##z##var
@@ -16,7 +19,7 @@
   #include <iostream>
   #define MYODDWEB_OUT( what ) std::cout << (what);
 #else
-  #define MYODDWEB_OUT
+  #define MYODDWEB_OUT( what )
 #endif
 
 namespace myoddweb:: directorywatcher
@@ -87,8 +90,9 @@ namespace myoddweb:: directorywatcher
   constexpr auto MYODDWEB_WORKER_TYPE = 1;
 
   /**
-   * \brief how often we want to check for 'over-full' containers.
-   *        we will delete events that are older than this number.
+   * \brief a buffer time to ensure that we do not delete things in the container too quickly
+   *        yes, it might mean messages slightly older than what we want to keep
+   *        but it should not be that important
    */
-  constexpr auto MYODDWEB_MAX_EVENT_AGE = 5000;
+  constexpr auto MYODDWEB_MAX_EVENT_AGE_BUFFER = 1000;
 }

@@ -28,17 +28,17 @@ namespace myoddweb:: directorywatcher:: threads
     /**
      * \brief the lock for the running workers.
      */
-    std::recursive_mutex _lockRunningWorkers;
+    MYODDWEB_MUTEX _lockRunningWorkers;
 
     /**
      * \brief lock for the the workers that are waiting to start;
      */
-    std::recursive_mutex _lockWorkersWaitingToStart;
+    MYODDWEB_MUTEX _lockWorkersWaitingToStart;
 
     /**
      * \brief lock for the workers that are waiting to end
      */
-    std::recursive_mutex _lockThreadsWaitingToEnd;
+    MYODDWEB_MUTEX _lockThreadsWaitingToEnd;
     #pragma endregion 
 
     #pragma region Worker/Threads containers

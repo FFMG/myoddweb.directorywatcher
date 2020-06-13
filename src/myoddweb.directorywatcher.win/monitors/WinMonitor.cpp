@@ -135,6 +135,7 @@ namespace myoddweb:: directorywatcher
     }
     catch( ... )
     {
+      SaveCurrentException();
       return false;
     }
   }
@@ -159,7 +160,7 @@ namespace myoddweb:: directorywatcher
     }
     catch( ... )
     {
-      // @todo log exception
+      SaveCurrentException();
     }
     return Monitor::OnWorkerUpdate(fElapsedTimeMilliseconds);
   }

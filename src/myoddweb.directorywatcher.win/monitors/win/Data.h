@@ -20,7 +20,7 @@ namespace myoddweb
         typedef std::function<void(unsigned char*)> DataCallbackFunction;
 
         explicit Data(
-          const Monitor& monitor, 
+          Monitor& monitor, 
           unsigned long notifyFilter,
           bool recursive,
           DataCallbackFunction& dataCallbackFunction,
@@ -171,7 +171,7 @@ namespace myoddweb
         /**
          * \brief the path
          */
-        const Monitor& _monitor;
+        Monitor& _monitor;
 
         /**
          * \brief the overlapped

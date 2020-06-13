@@ -30,5 +30,15 @@ namespace myoddweb.directorywatcher.interfaces
     /// There was an error.
     /// </summary>
     event WatcherEvent<IEventError> OnErrorAsync;
+
+    /// <summary>
+    /// The statistics of the engine.
+    /// </summary>
+    event WatcherEvent<IStatistics> OnStatisticsAsync;
+
+    /// <summary>
+    /// When we get a log message
+    /// </summary>
+    event WatcherEvent<ILoggerEvent> OnLoggerAsync;
   }
 }

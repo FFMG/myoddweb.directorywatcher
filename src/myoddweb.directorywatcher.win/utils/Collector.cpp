@@ -7,22 +7,21 @@
 #include "Io.h"
 #include "Instrumentor.h"
 #include "../monitors/Base.h"
+#include "Logger.h"
+#include "LogLevel.h"
 
 namespace myoddweb:: directorywatcher
 {
-  Collector::Collector() :
-    Collector(MYODDWEB_MAX_EVENT_AGE)
-  {
-  }
-
   /**
-   * \brief 
-   * \param maxAgeMs the maximum amount of time we will be keeping an event for.
+   * \brief the comnstructor
+   * \param maxCleanupAgeMilliseconds the maximum amount of time we want the collector to keep data
+   *        this is only a GUIDE because the data is only cleanned when needed.
    */
-  Collector::Collector( const short maxAgeMs) :
-    _maxCleanupAgeMilliseconds( maxAgeMs ),
+  Collector::Collector( const long long maxCleanupAgeMilliseconds) :
+    _maxCleanupAgeMilliseconds(maxCleanupAgeMilliseconds ),
     _currentEvents(nullptr)
   {
+    // calculate the max age
     _currentEvents = new EventsInformation();
   }
 
@@ -92,6 +91,12 @@ namespace myoddweb:: directorywatcher
   {
     MYODDWEB_PROFILE_FUNCTION();
 
+    // if there is nothing to do ... just get out.
+    if( 0 == _maxCleanupAgeMilliseconds )
+    {
+      return;
+    }
+
     try
     {
       // get the combined path.
@@ -115,9 +120,10 @@ namespace myoddweb:: directorywatcher
       // try and cleanup the events if need be.
       CleanupEvents();
     }
-    catch (...)
+    catch (const std::exception& e)
     {
-      // something wrong happened
+      // log the error
+      Logger::Log(0, LogLevel::Error, L"Caught exception '%hs' when adding event to collector", e.what());
     }
   }
 
@@ -365,14 +371,14 @@ namespace myoddweb:: directorywatcher
     MYODDWEB_LOCK(_lock);
 
     // add it.
-    _currentEvents->push_back(event);
+    _currentEvents->emplace_back(event);
 
     // update the internal counter.
     if(_nextCleanupTimeCheck == 0 )
     {
       // when we want to check for the next cleanup
       // if the time is zero then we will use the event time + the max time.
-      _nextCleanupTimeCheck = event->TimeMillisecondsUtc + _maxCleanupAgeMilliseconds;
+      _nextCleanupTimeCheck = event->TimeMillisecondsUtc + (_maxCleanupAgeMilliseconds + MYODDWEB_MAX_EVENT_AGE_BUFFER);
     }
   }
 
@@ -405,7 +411,7 @@ namespace myoddweb:: directorywatcher
     MYODDWEB_LOCK(_lock);
 
     // get the current time.
-    const auto old = now - _maxCleanupAgeMilliseconds;
+    const auto old = now - (_maxCleanupAgeMilliseconds + MYODDWEB_MAX_EVENT_AGE_BUFFER);
     auto begin = _currentEvents->end();
     auto end = _currentEvents->end();
     for( auto it = _currentEvents->begin();; ++it )

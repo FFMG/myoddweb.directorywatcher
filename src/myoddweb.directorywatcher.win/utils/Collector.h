@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 #include <mutex>
+
+#include "../monitors/Base.h"
 #include "EventAction.h"
 #include "EventInformation.h"
 #include "Event.h"
@@ -20,13 +22,9 @@ namespace myoddweb
     class Collector final
     {
     public:
-      Collector();
-      virtual ~Collector();
+      explicit Collector(long long maxCleanupAgeMilliseconds);
+      ~Collector();
 
-    private:
-      explicit Collector( short maxAgeMs );
-
-    public:
       /**
        * \brief sort events by TimeMillisecondsUtc
        * \param lhs the lhs element we are checking.
@@ -51,7 +49,7 @@ namespace myoddweb
        * \brief This is the oldest number of ms we want something to be.
        * It is *only* removed if _maxInternalCounter is reached.
        */
-      const short _maxCleanupAgeMilliseconds;
+      const long long _maxCleanupAgeMilliseconds;
 
       /**
        * \brief The next time we want to check for cleanup
@@ -73,7 +71,7 @@ namespace myoddweb
       /**
        * \brief the locks so we can add data.
        */
-      std::recursive_mutex _lock;
+      MYODDWEB_MUTEX _lock;
 
       /**
        * \brief the events list

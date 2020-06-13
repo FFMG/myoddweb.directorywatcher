@@ -7,6 +7,8 @@
 #include "../Wait.h"
 #include <execution>
 #include "../Instrumentor.h"
+#include "../Logger.h"
+#include "../LogLevel.h"
 
 namespace myoddweb :: directorywatcher :: threads
 {
@@ -50,7 +52,7 @@ namespace myoddweb :: directorywatcher :: threads
       ProcessThreadsAndWorkersWaiting();
 
       // then go around trying to lock th
-      std::recursive_mutex lock;
+      MYODDWEB_MUTEX lock;
       auto status = WaitResult::complete;
       // send an update for all of them at the same time
       std::for_each(
@@ -172,7 +174,7 @@ namespace myoddweb :: directorywatcher :: threads
       std::vector<Worker*> remove;
 
       // send an update for all of them at the same time
-      std::recursive_mutex lock;
+      MYODDWEB_MUTEX lock;
       std::for_each(
         std::execution::par,
         runningWorkers.begin(),
@@ -186,7 +188,7 @@ namespace myoddweb :: directorywatcher :: threads
                 return false;
               }
               MYODDWEB_LOCK(lock);
-              remove.push_back(item);
+              remove.emplace_back(item);
               return true;
             }, timeout);
         }
@@ -222,7 +224,7 @@ namespace myoddweb :: directorywatcher :: threads
       ProcessThreadsAndWorkersWaiting();
 
       // then go around trying to lock th
-      std::recursive_mutex lock;
+      MYODDWEB_MUTEX lock;
       auto status = WaitResult::complete;
       // send an update for all of them at the same time
       std::for_each(
@@ -377,7 +379,7 @@ namespace myoddweb :: directorywatcher :: threads
     });
 
     // and add it to the queue.
-    _threadsWaitingToEnd.push_back(end);
+    _threadsWaitingToEnd.emplace_back(end);
   }
 
   /**
@@ -571,7 +573,7 @@ namespace myoddweb :: directorywatcher :: threads
       {
         continue;
       }
-      clone.push_back(worker);
+      clone.emplace_back(worker);
     }
     return clone;
   }
@@ -638,9 +640,10 @@ namespace myoddweb :: directorywatcher :: threads
         removed = true;
         container.erase(it);
       }
-      catch( ... )
+      catch (const std::exception& e)
       {
-        //  @TODO: Log somewhere
+        // log the error
+        Logger::Log(0, LogLevel::Error, L"Caught exception '%hs' in remove worker.", e.what());
       }
     }
     return removed;
@@ -678,7 +681,7 @@ namespace myoddweb :: directorywatcher :: threads
       }
 
       // this item was not found either running or about to start
-      uniqueWorkers.push_back(worker);
+      uniqueWorkers.emplace_back(worker);
     }
 
     // we can now add those workers to our list of workers.
@@ -706,9 +709,10 @@ namespace myoddweb :: directorywatcher :: threads
     {
       container.emplace_back( &item );
     }
-    catch( ... )
+    catch (const std::exception& e)
     {
-      //  @TODO: Log somewhere
+      // log the error
+      Logger::Log(0, LogLevel::Error, L"Caught exception '%hs' in AddWorker", e.what());
     }
   }
 
@@ -723,9 +727,10 @@ namespace myoddweb :: directorywatcher :: threads
     {
       container.insert(std::end(container), std::begin(items), std::end(items));
     }
-    catch (...)
+    catch (const std::exception& e)
     {
-      //  @TODO: Log somewhere
+      // log the error
+      Logger::Log(0, LogLevel::Error, L"Caught exception '%hs' in AddWorkers", e.what());
     }
   }
   #pragma endregion
@@ -1041,10 +1046,9 @@ namespace myoddweb :: directorywatcher :: threads
     auto runningWorkers = RemoveWorkersFromRunningWorkers();
     for (; !runningWorkers.empty();)
     {
-MYODDWEB_OUT("Some running workers\n");
       // stop and wait all of them
       std::vector<Worker*> timeOutWorkers;
-      std::recursive_mutex lock;
+      MYODDWEB_MUTEX lock;
       std::for_each(
         std::execution::par,
         runningWorkers.begin(),
@@ -1057,7 +1061,7 @@ MYODDWEB_OUT("Some running workers\n");
           if (WaitResult::complete != result)
           {
             MYODDWEB_LOCK(lock);
-            timeOutWorkers.push_back(item);
+            timeOutWorkers.emplace_back(item);
           }
         }
       );
@@ -1082,10 +1086,9 @@ MYODDWEB_OUT("Some running workers\n");
     auto runningThreads = RemoveThreadsFromWorkersWaitingToEnd();
     for (; !runningThreads.empty();)
     {
-MYODDWEB_OUT("Some running threads\n");
       // stop and wait all of them
       std::vector<Thread*> timeOutWorkers;
-      std::recursive_mutex lock;
+      MYODDWEB_MUTEX lock;
       std::for_each(
         std::execution::par,
         runningThreads.begin(),
@@ -1098,7 +1101,7 @@ MYODDWEB_OUT("Some running threads\n");
           if (WaitResult::complete != result)
           {
             MYODDWEB_LOCK(lock);
-            timeOutWorkers.push_back(item);
+            timeOutWorkers.emplace_back(item);
           }
           else
           {

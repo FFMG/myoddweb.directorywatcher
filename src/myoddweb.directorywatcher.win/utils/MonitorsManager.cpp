@@ -8,13 +8,15 @@
 #include "../monitors/WinMonitor.h"
 #include "../monitors/MultipleWinMonitor.h"
 #include "Instrumentor.h"
+#include "Logger.h"
+#include "LogLevel.h"
 
 namespace myoddweb
 {
   namespace directorywatcher
   {
     MonitorsManager* MonitorsManager::_instance = nullptr;
-    std::recursive_mutex MonitorsManager::_lock;
+    MYODDWEB_MUTEX MonitorsManager::_lock;
 
     MonitorsManager::MonitorsManager() :
       _workersPool( nullptr )
@@ -67,8 +69,11 @@ namespace myoddweb
         // return the instance.
         return _instance;
       }
-      catch (...)
+      catch (const std::exception& e)
       {
+        // log the error
+        Logger::Log(0, LogLevel::Panic, L"Caught exception '%hs' trying to create the manager!", e.what());
+
         return nullptr;
       }
     }
@@ -129,18 +134,18 @@ namespace myoddweb
     bool MonitorsManager::Stop(const long long id)
     {
       MYODDWEB_PROFILE_FUNCTION();
-      MYODDWEB_LOCK(_lock);
-
-      // if we do not have an instance... then we have nothing.
-      if (_instance == nullptr)
-      {
-        return false;
-      }
-
       try
       {
+        MYODDWEB_LOCK(_lock);
+
+        // if we do not have an instance... then we have nothing.
+        if (_instance == nullptr)
+        {
+          return false;
+        }
+
         // try and remove it.
-        const auto result = Instance()->StopAndDelete(id);
+        const auto result = Instance()->StopAndDeleteWithLock(id);
 
         // delete our instance if we are the last one
         if (Instance()->_monitors.empty())
@@ -151,8 +156,11 @@ namespace myoddweb
         }
         return result;
       }
-      catch (...)
+      catch (const std::exception& e)
       {
+        // log the error
+        Logger::Log(id, LogLevel::Panic, L"Caught exception '%hs' trying to stop a monitor!", e.what());
+
         return false;
       }
     }
@@ -188,6 +196,9 @@ namespace myoddweb
             continue;
           }
 
+          // add the logger
+          Logger::Add(id, request.CallbackLogger());
+
           // create the new monitor
           Monitor* monitor;
           if (request.Recursive())
@@ -206,8 +217,11 @@ namespace myoddweb
           return monitor;
         }
       }
-      catch (...)
+      catch (const std::exception& e)
       {
+        // log the error
+        Logger::Log(0, LogLevel::Panic, L"Caught exception '%hs' trying to create a monitor for '%s'!", e.what(), request.Path() );
+
         // something broke while trying to create this monitor.
         return nullptr;
       }
@@ -231,7 +245,7 @@ namespace myoddweb
         // we could not create the monitor for some reason
         if( nullptr == monitor)
         {
-          // @todo we need to log this here.
+          Logger::Log(0, LogLevel::Panic, L"I was unable to create and start a monitor for '%s'!", request.Path());
           return nullptr;
         }
 
@@ -241,13 +255,17 @@ namespace myoddweb
         // and return the monitor we created.
         return monitor;
       }
-      catch (...)
+      catch (const std::exception& e)
       {
+        // log the error
+        Logger::Log(0, LogLevel::Panic, L"Caught exception '%hs' trying to create and start the monitor, '%s'!", e.what(), request.Path() );
+
         // exception while trying to start
         // remove the one we just added.
         if (monitor != nullptr)
         {
-          StopAndDelete(monitor->Id());
+          MYODDWEB_LOCK(_lock);
+          StopAndDeleteWithLock(monitor->Id());
         }
 
         // and return null.
@@ -256,15 +274,13 @@ namespace myoddweb
     }
 
     /**
-     * \brief Stop and remove a monitor
-     *        We will delete the monitor as well.
-     * \param id the item we want to delete
-     * \return success or not.
+     * \brief stop a monitor and then get rid of it if needed, we will assume we have the lock.
+     * \paramn id the id we want to delete.
+     * \return false if there was a problem or if it does not exist.
      */
-    bool MonitorsManager::StopAndDelete(const long long id)
+    bool MonitorsManager::StopAndDeleteWithLock(const long long id)
     {
       MYODDWEB_PROFILE_FUNCTION();
-      MYODDWEB_LOCK(_lock);
       try
       {
         const auto monitor = _monitors.find(id);
@@ -277,7 +293,7 @@ namespace myoddweb
         // stop everything
         if(threads::WaitResult::complete != _workersPool->StopAndWait( *monitor->second, MYODDWEB_WAITFOR_WORKER_COMPLETION ))
         {
-          MYODDWEB_OUT("Timeout while waiting for worker to complete.\n");
+          Logger::Log(0, LogLevel::Warning, L"Timeout while waiting for worker to complete.");
         }
 
         try
@@ -285,18 +301,24 @@ namespace myoddweb
           // delete it
           delete monitor->second;
         }
-        catch (...)
+        catch (const std::exception& e)
         {
-          
+          // log the error
+          Logger::Log(0, LogLevel::Panic, L"Caught exception '%hs' trying to free monitor memory!", e.what());
         }
         // remove it
         _monitors.erase(monitor);
 
+        // remove the logger
+        Logger::Remove(id);
+
         // we are done
         return true;
       }
-      catch (...)
+      catch (const std::exception& e)
       {
+        // log the error
+        Logger::Log(id, LogLevel::Panic, L"Caught exception '%hs' trying to stop and delete a monitor!", e.what());
         return false;
       }
     }

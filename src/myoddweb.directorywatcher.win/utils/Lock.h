@@ -2,7 +2,7 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #pragma once
-#include <mutex>
+#include "../monitors/Base.h"
 
 namespace myoddweb
 {
@@ -15,7 +15,7 @@ namespace myoddweb
 #endif
     {
     public:
-      explicit Lock(std::recursive_mutex& lock);
+      explicit Lock(MYODDWEB_MUTEX& lock);
 
 #if MYODDWEB_DEBUG_LOG
       virtual ~Lock();
@@ -30,7 +30,7 @@ namespace myoddweb
       Lock& operator=(const Lock&&) = delete;
 
     private:
-      std::recursive_mutex& _lock;
+      MYODDWEB_MUTEX& _lock;
     };
   }
 }
@@ -47,7 +47,7 @@ namespace myoddweb
 #define MYODDWEB_DEBUG_LOG 0
 #endif // DEBUG
   
-#if MYODDWEB_DEBUG_LOG
+#if MYODDWEB_DEBUG_LOG == 2
   #if !defined(_DEBUG)
     #error "You cannot use debug log in release mode!"
   #endif
@@ -65,7 +65,7 @@ namespace myoddweb
       class LockTry
       {
       public:
-        explicit LockTry(std::recursive_mutex& lock, std::string functionSig) :
+        explicit LockTry(MYODDWEB_MUTEX& lock, std::string functionSig) :
           _functionSig(std::move(functionSig)),
           _lock( lock )
         {
@@ -108,13 +108,13 @@ namespace myoddweb
 
       protected:
         std::string _functionSig;
-        std::recursive_mutex& _lock;
+        MYODDWEB_MUTEX& _lock;
       };
 
       class LockDebug final : public LockTry
       {
       public:
-        explicit LockDebug(std::recursive_mutex& lock, std::string functionSig) :
+        explicit LockDebug(MYODDWEB_MUTEX& lock, std::string functionSig) :
           LockTry(lock, std::move(functionSig))
         {
           LogStart();
@@ -142,15 +142,20 @@ namespace myoddweb
   // 1- looking for deadlock
   // 2- full log
   #if MYODDWEB_DEBUG_LOG == 1 
-    #define MYODDWEB_LOCK(mutex) LockTry MYODDWEB_DEC(__LINE__)(mutex, __FUNCSIG__);
+    #define MYODDWEB_LOCK(mut) LockTry MYODDWEB_DEC(__LINE__)(mut, __FUNCSIG__);
   #elif MYODDWEB_DEBUG_LOG == 2
-    #define MYODDWEB_LOCK(mutex)                                      \
+    #define MYODDWEB_LOCK(mut)                                      \
     {                                                                 \
       const auto o = "Lock Wait: " + std::string(__FUNCSIG__) + "\n"; \
       MYODDWEB_OUT(o.c_str());                                        \
     }                                                                 \
-    LockDebug MYODDWEB_DEC(__LINE__)(mutex, __FUNCSIG__ );
+    LockDebug MYODDWEB_DEC(__LINE__)(mut, __FUNCSIG__ );
   #endif
+#elseif MYODDWEB_DEBUG_LOG == 1
+  #if !defined(_DEBUG)
+    #error "You cannot use debug log in release mode!"
+  #endif
+  #define MYODDWEB_LOCK(mut) Lock MYODDWEB_DEC(__LINE__)(mut);
 #else
-  #define MYODDWEB_LOCK(mutex) Lock MYODDWEB_DEC(__LINE__)(mutex);
+  #define MYODDWEB_LOCK(mut)  const std::lock_guard<std::mutex> MYODDWEB_DEC(__LINE__)(mut);
 #endif 
