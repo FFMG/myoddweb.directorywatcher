@@ -21,12 +21,48 @@ namespace myoddweb:: directorywatcher
   }
 
   /**
- * \brief create from a parent request, (no callback)
- * \param path the path being watched.
- * \param recursive if the request is recursive or not.
- * \param eventsCallbackRateMs how long we want to keep our events for.
- * \param statisticsCallbackRateMs how long we want to keep stats data for.
- */
+   * \brief protected constructor for unit tests.
+   * \param path the path we are looking at
+   * \param recursive if we are looking at that folder only or not
+   * \param loggerCallback where we will receive log messages
+   * \param eventsCallback where we will receive events
+   * \param statisticsCallback where the statistics are logged
+   * \param eventsCallbackRateMs how fast we want messages published
+   * \param statisticsCallbackRateMs how fast we want statistics to be published.
+   */
+  Request::Request(
+    const wchar_t* path, 
+    bool recursive, 
+    const LoggerCallback& loggerCallback, 
+    const EventCallback& eventsCallback, 
+    const StatisticsCallback& statisticsCallback, 
+    long long eventsCallbackRateMs, 
+    long long statisticsCallbackRateMs) :
+    Request()
+  {
+    Assign(path, recursive, loggerCallback, eventsCallback, statisticsCallback, eventsCallbackRateMs, statisticsCallbackRateMs);
+  }
+
+  /**
+   * \brief the assignment operator
+   * \param src the value we are assigning
+   */
+  Request& Request::operator=(const Request& src )
+  {
+    if( this != &src )
+    {
+      Assign(src);
+    }
+    return *this;
+  }
+
+  /**
+   * \brief create from a parent request, (no callback)
+   * \param path the path being watched.
+   * \param recursive if the request is recursive or not.
+   * \param eventsCallbackRateMs how long we want to keep our events for.
+   * \param statisticsCallbackRateMs how long we want to keep stats data for.
+   */
   Request::Request(const wchar_t* path, bool recursive, const long long eventsCallbackRateMs, const long long statisticsCallbackRateMs) :
     Request()
   {
@@ -47,6 +83,9 @@ namespace myoddweb:: directorywatcher
     Dispose();
   }
 
+  /**
+   * \brief clean up all the values and free memory
+   */
   void Request::Dispose()
   {
     _loggerCallback = nullptr;

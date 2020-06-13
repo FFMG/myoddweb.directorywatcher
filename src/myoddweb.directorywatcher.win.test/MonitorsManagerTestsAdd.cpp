@@ -6,6 +6,7 @@
 #include "../myoddweb.directorywatcher.win/utils/Wait.h"
 
 #include "MonitorsManagerTestHelper.h"
+#include "RequestTestHelper.h"
 
 using myoddweb::directorywatcher::Wait;
 using myoddweb::directorywatcher::EventAction;
@@ -26,7 +27,17 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST(MonitorsManagerAdd, SimpleStartAndStop) {
 
-  const auto request = ::Request(L"c:\\", false, nullptr, 0);
+  // use the test request to create the Request
+  // we make a copy of our helper onto the 'real' request to make sure copy is not broken
+  const auto r = RequestHelper(
+    L"c:\\",
+    false,
+    nullptr,
+    nullptr,
+    nullptr,
+    0,
+    0);
+  const auto request = ::Request(r);
   const auto id = ::MonitorsManager::Start( request );
 
   // do nothing ...
@@ -43,7 +54,18 @@ TEST(MonitorsManagerAdd, StoppingWhenWeNeverStarted) {
 
 TEST(MonitorsManagerAdd, StoppingWhatWasNeverStarted) {
 
-  const auto request = ::Request(L"c:\\", false, nullptr, 0);
+  // use the test request to create the Request
+  // we make a copy of our helper onto the 'real' request to make sure copy is not broken
+  const auto r = RequestHelper(
+    L"c:\\",
+    false,
+    nullptr,
+    nullptr,
+    nullptr,
+    0,
+    0);
+
+  const auto request = ::Request(r);
   const auto id = ::MonitorsManager::Start(request);
 
   // do nothing ...
@@ -59,7 +81,18 @@ TEST(MonitorsManagerAdd, StartStopThenAddFileToFolder) {
     // create the helper.
     auto helper = new MonitorsManagerTestHelper();
 
-    const auto request = ::Request(helper->Folder(), false, function, 0);
+    // use the test request to create the Request
+    // we make a copy of our helper onto the 'real' request to make sure copy is not broken
+    const auto r = RequestHelper(
+      helper->Folder(),
+      false,
+      nullptr,
+      function,
+      nullptr,
+      0,
+      0);
+
+    const auto request = ::Request(r);
     const auto id = ::MonitorsManager::Start(request);
     Add(id, helper);
 
@@ -74,7 +107,17 @@ TEST(MonitorsManagerAdd, StartStopThenAddFileToFolder) {
 
 TEST(MonitorsManagerAdd, InvalidPathDoesNOtThrow) {
 
-  const auto request = ::Request(L"somebadname", false, nullptr, 0);
+  // use the test request to create the Request
+  // we make a copy of our helper onto the 'real' request to make sure copy is not broken
+  const auto r = RequestHelper(
+    L"somebadname",
+    false,
+    nullptr,
+    nullptr,
+    nullptr,
+    0,
+    0);
+  const auto request = ::Request(r);
   const auto id = ::MonitorsManager::Start(request);
 
   // do nothing ...
@@ -86,9 +129,20 @@ TEST(MonitorsManagerAdd, IfTimeoutIsZeroCallbackIsNeverCalled) {
   // create the helper.
   auto helper = new MonitorsManagerTestHelper();
 
+  // use the test request to create the Request
+  // we make a copy of our helper onto the 'real' request to make sure copy is not broken
+  const auto r = RequestHelper(
+    helper->Folder(),
+    false,
+    nullptr,
+    function,
+    nullptr,
+    0,
+    0);
+
   auto count = 0;
   // monitor that folder.
-  const auto request = ::Request(helper->Folder(), false, function, 0);
+  const auto request = ::Request(r);
   const auto id = ::MonitorsManager::Start(request);
   Add(id, helper);
 
@@ -115,7 +169,19 @@ TEST_P(ValidateNumberOfItemAdded, CallbackWhenFileIsAdded) {
   // monitor that folder.
   const auto number = std::get<0>(GetParam());
   const auto recursive = std::get<1>(GetParam());
-  const auto request = ::Request(helper->Folder(), recursive, function, TEST_TIMEOUT);
+
+  // use the test request to create the Request
+    // we make a copy of our helper onto the 'real' request to make sure copy is not broken
+  const auto r = RequestHelper(
+    helper->Folder(),
+    recursive,
+    nullptr,
+    function,
+    nullptr,
+    0,
+    0);
+
+  const auto request = ::Request(r);
   const auto id = ::MonitorsManager::Start(request);
   Add(id, helper);
 
@@ -151,7 +217,19 @@ TEST_P(ValidateNumberOfItemAdded, CallbackWhenFolderIsAdded) {
   // monitor that folder.
   const auto number = std::get<0>(GetParam());
   const auto recursive = std::get<1>(GetParam());
-  const auto request = ::Request(helper->Folder(), recursive, function, TEST_TIMEOUT);
+
+  // use the test request to create the Request
+    // we make a copy of our helper onto the 'real' request to make sure copy is not broken
+  const auto r = RequestHelper(
+    helper->Folder(),
+    recursive,
+    nullptr,
+    function,
+    nullptr,
+    0,
+    0);
+
+  const auto request = ::Request(r);
   const auto id = ::MonitorsManager::Start(request);
   Add(id, helper);
 

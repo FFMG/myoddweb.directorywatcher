@@ -16,6 +16,19 @@ namespace myoddweb:: directorywatcher
      */
     Request();
 
+  protected:
+    /**
+     * \brief protected constructor for unit tests.
+     * \param path the path we are looking at
+     * \param recursive if we are looking at that folder only or not
+     * \param loggerCallback where we will receive log messages
+     * \param eventsCallback where we will receive events
+     * \param statisticsCallback where the statistics are logged
+     * \param eventsCallbackRateMs how fast we want messages published
+     * \param statisticsCallbackRateMs how fast we want statistics to be published.
+     */
+    Request(const wchar_t* path, bool recursive, const LoggerCallback& loggerCallback, const EventCallback& eventsCallback, const StatisticsCallback& statisticsCallback, long long eventsCallbackRateMs, long long statisticsCallbackRateMs);
+
   public:
     /**
      * \brief copy constructor
@@ -32,24 +45,37 @@ namespace myoddweb:: directorywatcher
     Request(const wchar_t* path, bool recursive, long long eventsCallbackRateMs, long long statisticsCallbackRateMs);
     ~Request();
 
-    // prevent assignment + move
+    /**
+     * \brief the assignment operator
+     * \param src the value we are assigning
+     */
+    Request& operator=(const Request& src);
+
+    // prevent move
     Request(Request&&) = delete;
-    const Request& operator=(const Request& ) = delete;
     const Request&& operator=(Request&& ) = delete;
 
   private :
     /**
-     * \brief Dispose all the values.
+     * \brief clean up all the values and free memory
      */
     void Dispose();
 
     /**
      * \brief assin a request
+     * \param request the request value we want to copy
      */
     void Assign(const Request& request);
 
     /**
-     * \brief assign request values
+     * \brief Assign the values directly
+     * \param path the path we are looking at
+     * \param recursive if we are looking at that folder only or not
+     * \param loggerCallback where we will receive log messages
+     * \param eventsCallback where we will receive events
+     * \param statisticsCallback where the statistics are logged
+     * \param eventsCallbackRateMs how fast we want messages published
+     * \param statisticsCallbackRateMs how fast we want statistics to be published.
      */
     void Assign(const wchar_t* path, bool recursive, const LoggerCallback& loggerCallback, const EventCallback& eventsCallback, const StatisticsCallback& statisticsCallback, long long eventsCallbackRateMs, long long statisticsCallbackRateMs);
 
