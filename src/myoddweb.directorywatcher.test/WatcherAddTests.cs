@@ -1,5 +1,4 @@
 ﻿using NUnit.Framework;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
