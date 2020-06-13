@@ -7,6 +7,8 @@
 #include "Io.h"
 #include "Instrumentor.h"
 #include "../monitors/Base.h"
+#include "Logger.h"
+#include "LogLevel.h"
 
 namespace myoddweb:: directorywatcher
 {
@@ -118,9 +120,10 @@ namespace myoddweb:: directorywatcher
       // try and cleanup the events if need be.
       CleanupEvents();
     }
-    catch (...)
+    catch (const std::exception& e)
     {
-      // something wrong happened
+      // log the error
+      Logger::Log(0, LogLevel::Error, L"Caught exception '%hs' when adding event to collector", e.what());
     }
   }
 

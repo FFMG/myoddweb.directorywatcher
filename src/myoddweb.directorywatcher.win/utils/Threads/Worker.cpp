@@ -37,9 +37,10 @@ namespace myoddweb::directorywatcher::threads
         StopAndWait(-1);
       }
     }
-    catch (...)
+    catch (const std::exception& e)
     {
-
+      // log the error
+      Logger::Log(0, LogLevel::Error, L"Caught exception '%hs' trying to complete all operations!", e.what());
     }
   }
 
@@ -181,8 +182,11 @@ namespace myoddweb::directorywatcher::threads
       // done
       return WaitResult::complete;
     }
-    catch( ... )
+    catch (const std::exception& e)
     {
+      // log the error
+      Logger::Log(0, LogLevel::Error, L"Caught exception '%hs' trying to stop and wait!", e.what());
+    
       return WaitResult::timeout;
     }
   }

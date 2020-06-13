@@ -5,6 +5,8 @@
 #include <vector>
 #include "../utils/Event.h"
 #include "../utils/Instrumentor.h"
+#include "../utils/Logger.h"
+#include "../utils/LogLevel.h"
 #include "Monitor.h"
 
 namespace myoddweb::directorywatcher
@@ -166,10 +168,11 @@ namespace myoddweb::directorywatcher
       // we are done with the stats
       _currentStatistics = { 0 };
     }
-    catch (...)
+    catch (const std::exception& e)
     {
       // the callback did something wrong!
-      // we should log it somewhere.
+      // log the error
+      Logger::Log(0, LogLevel::Error, L"Caught exception '%hs' in PublishStatistics, check the callback!", e.what());
     }
   }
 
@@ -217,10 +220,11 @@ namespace myoddweb::directorywatcher
         // update the stats
         UpdateStatistics(*event);
       }
-      catch (...)
+      catch (const std::exception& e)
       {
         // the callback did something wrong!
-        // we should log it somewhere.
+        // log the error
+        Logger::Log(0, LogLevel::Error, L"Caught exception '%hs' in PublishEvents, check the callback!", e.what());
       }
 
       // we are done with the event

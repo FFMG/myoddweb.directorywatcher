@@ -9,7 +9,7 @@ namespace myoddweb.directorywatcher.utils.Helper
     public long Id { get; }
 
     /// <inheritdoc />
-    public int Type { get; }
+    public LogLevel LogLevel { get; }
 
     /// <inheritdoc />
     public string Message { get; }
@@ -18,12 +18,12 @@ namespace myoddweb.directorywatcher.utils.Helper
     /// The constructor
     /// </summary>
     /// <param name="id"></param>
-    /// <param name="type"></param>
+    /// <param name="logLevel"></param>
     /// <param name="message"></param>
-    public LoggerEvent(long id, int type, string message)
+    public LoggerEvent(long id, LogLevel logLevel, string message)
     {
       Id = id;
-      Type = type;
+      LogLevel = logLevel;
       Message = message ?? throw new ArgumentNullException(nameof(message));
     }
   }

@@ -74,9 +74,10 @@ namespace myoddweb:: directorywatcher:: win
       // clear the overlapped structure.
       ClearOverlapped();
     }
-    catch (...)
+    catch (const std::exception& e)
     {
-      // @todo log this
+      // log the error
+      Logger::Log(0, LogLevel::Error, L"Caught exception '%hs' in StopMonitoring!", e.what());
     }
   }
 

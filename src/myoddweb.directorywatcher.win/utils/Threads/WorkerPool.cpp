@@ -7,6 +7,8 @@
 #include "../Wait.h"
 #include <execution>
 #include "../Instrumentor.h"
+#include "../Logger.h"
+#include "../LogLevel.h"
 
 namespace myoddweb :: directorywatcher :: threads
 {
@@ -638,9 +640,10 @@ namespace myoddweb :: directorywatcher :: threads
         removed = true;
         container.erase(it);
       }
-      catch( ... )
+      catch (const std::exception& e)
       {
-        //  @TODO: Log somewhere
+        // log the error
+        Logger::Log(0, LogLevel::Error, L"Caught exception '%hs' in remove worker.", e.what());
       }
     }
     return removed;
@@ -706,9 +709,10 @@ namespace myoddweb :: directorywatcher :: threads
     {
       container.emplace_back( &item );
     }
-    catch( ... )
+    catch (const std::exception& e)
     {
-      //  @TODO: Log somewhere
+      // log the error
+      Logger::Log(0, LogLevel::Error, L"Caught exception '%hs' in AddWorker", e.what());
     }
   }
 
@@ -723,9 +727,10 @@ namespace myoddweb :: directorywatcher :: threads
     {
       container.insert(std::end(container), std::begin(items), std::end(items));
     }
-    catch (...)
+    catch (const std::exception& e)
     {
-      //  @TODO: Log somewhere
+      // log the error
+      Logger::Log(0, LogLevel::Error, L"Caught exception '%hs' in AddWorkers", e.what());
     }
   }
   #pragma endregion

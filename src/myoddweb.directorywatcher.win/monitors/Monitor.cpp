@@ -142,6 +142,9 @@ namespace myoddweb:: directorywatcher
     catch (...)
     {
       AddEventError(EventError::CannotStart);
+
+      SaveCurrentException();
+
       return false;
     }
   }
@@ -185,6 +188,8 @@ namespace myoddweb:: directorywatcher
     catch (...)
     {
       AddEventError(EventError::CannotStop);
+
+      SaveCurrentException();
     }
   }
 

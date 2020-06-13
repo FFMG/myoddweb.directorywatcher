@@ -106,8 +106,9 @@ namespace myoddweb::directorywatcher
 
       return Monitor::OnWorkerStart();
     }
-    catch( ... )
+    catch (const std::exception& e)
     {
+      Logger::Log(ParentId(), LogLevel::Error, L"Caught exception '%hs' trying to start the callback!", e.what());
       return false;
     }
   }
@@ -322,7 +323,7 @@ namespace myoddweb::directorywatcher
       }
       catch (...)
       {
-        // @todo we need to log this somewhere.
+        SaveCurrentException();
       }
     }
     return events;
@@ -374,7 +375,7 @@ namespace myoddweb::directorywatcher
     }
     catch (...)
     {
-      // @todo we need to log this somewhere.
+      SaveCurrentException();
     }
     return {};
   }
@@ -450,9 +451,10 @@ namespace myoddweb::directorywatcher
       // all done so we can clear all the constructor.
       container.clear();
     }
-    catch (...)
+    catch (const std::exception& e)
     {
-      // @todo we need to log this.
+      // log the error
+      Logger::Log(0, LogLevel::Error, L"Caught exception '%hs' in DeleteInLock", e.what());
 
       // we might as well clear everything now.
       container.clear();

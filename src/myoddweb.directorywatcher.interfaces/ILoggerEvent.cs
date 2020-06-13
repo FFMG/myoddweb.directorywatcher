@@ -11,9 +11,9 @@
     long Id { get; }
 
     /// <summary>
-    /// The message type, error, warning, info...
+    /// The message log level...
     /// </summary>
-    int Type { get; }
+    LogLevel LogLevel { get; }
 
     /// <summary>
     /// The actual message

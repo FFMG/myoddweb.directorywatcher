@@ -99,15 +99,17 @@ namespace myoddweb.directorywatcher.utils
     /// The callback function for when we receive a message from the directory watcher.
     /// </summary>
     /// <param name="id"></param>
-    /// <param name="type"></param>
+    /// <param name="level"></param>
     /// <param name="message"></param>
     protected void LoggerCallback(
       long id,
-      int type,
+      int level,
       string message
     )
     {
-      OnLogger?.Invoke(new LoggerEvent(id, type, message));
+      // cast the level from an int to an enum
+      // any value will work, even unknown ones.
+      OnLogger?.Invoke(new LoggerEvent(id, (LogLevel)level, message));
     }
 
     protected void StatisticsCallback(
