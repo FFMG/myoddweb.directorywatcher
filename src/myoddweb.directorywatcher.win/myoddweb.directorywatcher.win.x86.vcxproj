@@ -115,6 +115,7 @@
     <ClInclude Include="utils\Io.h" />
     <ClInclude Include="utils\Lock.h" />
     <ClInclude Include="utils\Logger.h" />
+    <ClInclude Include="utils\LogLevel.h" />
     <ClInclude Include="utils\MonitorsManager.h" />
     <ClInclude Include="utils\Request.h" />
     <ClInclude Include="utils\Threads\CallbackWorker.h" />

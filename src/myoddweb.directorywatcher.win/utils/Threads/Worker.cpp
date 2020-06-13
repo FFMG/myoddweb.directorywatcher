@@ -6,6 +6,7 @@
 #include "../Instrumentor.h"
 #include "../Lock.h"
 #include "../Logger.h"
+#include "../LogLevel.h"
 #include "../Wait.h"
 
 namespace myoddweb::directorywatcher::threads
@@ -355,7 +356,7 @@ namespace myoddweb::directorywatcher::threads
     catch (const std::exception& e) 
     {
       // log the error
-      Logger::Log(0, 0, L"Caught exception '%hs'", e.what() );
+      Logger::Log(0, LogLevel::Error, L"Caught exception '%hs'", e.what() );
     }
   }
 }

@@ -96,11 +96,6 @@ namespace myoddweb
         return _workerPool;
       }
 
-      /**
-       * \brief log a message with arguments
-       * \brief format the message format
-       */
-      void Log(const wchar_t* format, ...) const;
     protected:
       #pragma region Worker overides
       /**

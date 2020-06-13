@@ -8,6 +8,8 @@
 #include "../monitors/WinMonitor.h"
 #include "../monitors/MultipleWinMonitor.h"
 #include "Instrumentor.h"
+#include "Logger.h"
+#include "LogLevel.h"
 
 namespace myoddweb
 {
@@ -188,6 +190,9 @@ namespace myoddweb
             continue;
           }
 
+          // add the logger
+          Logger::Add(id, request.CallbackLogger());
+
           // create the new monitor
           Monitor* monitor;
           if (request.Recursive())
@@ -276,7 +281,7 @@ namespace myoddweb
         // stop everything
         while(threads::WaitResult::complete != _workersPool->StopAndWait( *monitor->second, MYODDWEB_WAITFOR_WORKER_COMPLETION ))
         {
-          (*monitor->second).Log( L"Timeout while waiting for worker to complete.");
+          Logger::Log(0, LogLevel::Warning, L"Timeout while waiting for worker to complete.");
         }
 
         try
@@ -290,6 +295,9 @@ namespace myoddweb
         }
         // remove it
         _monitors.erase(monitor);
+
+        // remove the logger
+        Logger::Remove(id);
 
         // we are done
         return true;

@@ -14,6 +14,8 @@
 #include <execution>
 
 #include "../utils/Instrumentor.h"
+#include "../utils/Logger.h"
+#include "../utils/LogLevel.h"
 
 namespace myoddweb::directorywatcher
 {
@@ -94,7 +96,7 @@ namespace myoddweb::directorywatcher
   {
     try
     {
-      Log( L"Started Multiple monitor with '%d' monitors", _nonRecursiveParents.size() + _recursiveChildren.size());
+      Logger::Log( ParentId(), LogLevel::Information, L"Started Multiple monitor with '%d' monitors", _nonRecursiveParents.size() + _recursiveChildren.size());
 
       // start the parents
       Start(_nonRecursiveParents);
@@ -439,7 +441,7 @@ namespace myoddweb::directorywatcher
         // we might deadlock depending when this function was called.
         if( !monitor->Completed() )
         {
-          monitor->Log(L"Trying to dispose of monitor that is not yet complete! We might deadlock." );
+          Logger::Log( monitor->Id(), LogLevel::Warning, L"Trying to dispose of monitor that is not yet complete! We might deadlock." );
         }
 #endif
         delete monitor;

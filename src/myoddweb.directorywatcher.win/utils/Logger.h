@@ -2,19 +2,20 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #pragma once
-#include <vector>
-
+#include <unordered_map>
 #include "../monitors/Base.h"
 #include "../monitors/Callbacks.h"
 
 namespace myoddweb:: directorywatcher
 {
+  enum class LogLevel;
+
   class Logger final
   {
     /**
      * \brief Our list of loggers
      */
-    std::vector<LoggerCallback> _loggers;
+    std::unordered_map<long long, LoggerCallback> _loggers;
 
     /**
      * \brief the lock to ensure single access.
@@ -35,39 +36,36 @@ namespace myoddweb:: directorywatcher
 
     /**
      * \brief add a logger to our list
+     * \param id the id we are logging for.
      * \param logger the logger we are adding.
      */
-    void Add(const LoggerCallback& logger);
+    static void Add( long long id, const LoggerCallback& logger);
 
     /**
-     * \brief log a message to a single logger
-     * \param logger the logger we will be logging to
-     * \param id owner the id
-     * \param type the message type
-     * \param format the message format
-     * \param args the va_list of arguments
+     * \brief remove a logger from the list.
+     * \param id the id we are logging for.
      */
-    static void Log(const LoggerCallback& logger, long long id, int type, const wchar_t* format, va_list args);
-
-    /**
-     * \brief log a message to a single logger
-     * \param logger the logger we will be logging to
-     * \param id owner the id
-     * \param type the message type
-     * \param message the message we want to log.
-     */
-    static void Log(const LoggerCallback& logger, long long id, int type, const wchar_t* message );
+    static void Remove(long long id );
 
     /**
      * \brief log a message to all our listed messages
      * \param id owner the id
-     * \param type the message type
+     * \param level the message log level
      * \param format the message format
      * \param ... the parametters
      */
-    static void Log(long long id, int type, const wchar_t* format, ...);
+    static void Log(long long id, LogLevel level, const wchar_t* format, ...);
 
   private:
+    /**
+     * \brief log a message to a single logger
+     * \param logger the logger we will be logging to
+     * \param id owner the id
+     * \param level the message log level
+     * \param message the message we want to log.
+     */
+    static void Log(const LoggerCallback& logger, long long id, LogLevel level, const wchar_t* message);
+
     /**
      * \brief create a message, and take ownership of the string
      * \param format the message format
@@ -80,6 +78,6 @@ namespace myoddweb:: directorywatcher
      * \brief check if we have any loggers in our list
      */
     [[nodiscard]]
-    bool HasAnyLoggers();
+    static bool HasAnyLoggers();
   };
 }

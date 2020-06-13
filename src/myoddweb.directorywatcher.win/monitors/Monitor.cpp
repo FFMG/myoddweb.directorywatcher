@@ -212,22 +212,4 @@ namespace myoddweb:: directorywatcher
   {
     return Io::AreSameFolders(maybe, _request.Path());
   }
-
-  /**
-   * \brief log a message with arguments
-   * \brief format the message format
-   */
-  void Monitor::Log(const wchar_t* format, ... ) const
-  {
-    if( nullptr == _request.CallbackLogger()  )
-    {
-      // we have no logger
-      return;
-    }
-
-    va_list args;
-    va_start(args, format);
-    Logger::Log(_request.CallbackLogger(), ParentId(), 0, format, args);
-    va_end(args);
-  }
 }

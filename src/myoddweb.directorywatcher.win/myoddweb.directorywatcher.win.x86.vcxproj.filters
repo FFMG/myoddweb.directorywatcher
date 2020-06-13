@@ -147,6 +147,9 @@
     <ClInclude Include="utils\Logger.h">
       <Filter>utilities</Filter>
     </ClInclude>
+    <ClInclude Include="utils\LogLevel.h">
+      <Filter>utilities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="utilities">
