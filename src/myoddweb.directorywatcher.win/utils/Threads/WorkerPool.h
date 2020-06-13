@@ -50,7 +50,7 @@ namespace myoddweb:: directorywatcher:: threads
     /**
      * \brief the workers lock that we are waiting to end.
      */
-    std::vector<Thread*> _threadsWaitingToEnd;
+    std::vector<Worker*> _threadsWaitingToEnd;
 
     /**
      * \brief all our workers that are currently running.
@@ -280,11 +280,11 @@ namespace myoddweb:: directorywatcher:: threads
     std::vector<Worker*> RemoveWorkersFromRunningWorkers();
 
     /**
-     * \brief remove all the threads that are waiting to end.
+     * \brief remove all the worker that are waiting to end.
      *        we will obtain the lock to remove this items.
      * \return the list of items removed.
      */
-    std::vector<Thread*> RemoveThreadsFromWorkersWaitingToEnd();
+    std::vector<Worker*> RemoveWorkersFromWorkersWaitingToEnd();
 
     /**
      * \brief remove a single worker from a collection of workers
