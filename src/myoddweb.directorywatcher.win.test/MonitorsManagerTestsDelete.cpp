@@ -38,12 +38,15 @@ TEST(MonitorsManagerDelete, IfTimeoutIsZeroCallbackIsNeverCalled) {
     nullptr,
     function,
     nullptr,
-    TEST_TIMEOUT,
-    0);
+    0,
+    50);
 
   // monitor that folder.
   const auto request = ::Request(r);
   const auto id = ::MonitorsManager::Start(request);
+
+  Wait::SpinUntil([] { return ::MonitorsManager::Ready(); }, TEST_TIMEOUT_WAIT);
+
   Add(id, helper);
 
   // add a single file to it.
