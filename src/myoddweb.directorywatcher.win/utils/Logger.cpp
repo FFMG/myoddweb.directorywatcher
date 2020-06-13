@@ -10,9 +10,7 @@ namespace myoddweb::directorywatcher
   Logger Logger::_instance;
   MYODDWEB_MUTEX Logger::_lock;
 
-  Logger::Logger()
-  {
-  }
+  Logger::Logger() = default;
 
   Logger& Logger::Instance()
   {
@@ -53,12 +51,47 @@ namespace myoddweb::directorywatcher
   }
 
   /**
- * \brief log a message to all our listed messages
- * \param id owner the id
- * \param level the message log level
- * \param format the message format
- * \param ... the parametters
- */
+   * \brief log a message to all our listed messages
+   * \param level the message log level
+   * \param format the message format
+   * \param ... the parametters
+   */
+  void Logger::Log(const LogLevel level, const wchar_t* format, ...)
+  {
+    va_list args;
+    va_start(args, format);
+    const auto message = MakeMessage(format, args);
+    va_end(args);
+
+    // anything to do?
+    if (nullptr == message)
+    {
+      return;
+    }
+
+    MYODDWEB_LOCK(_lock);
+    for (const auto logger : Instance()._loggers)
+    {
+      try
+      {
+        Log(logger.second, 0, level, message);
+      }
+      catch ( ... )
+      {
+        // we cannot log a log message that faied
+        MYODDWEB_OUT("There was an issue logging a message");
+      }
+    }
+    delete[] message;
+  }
+
+  /**
+   * \brief log a message to all our listed messages
+   * \param id owner the id
+   * \param level the message log level
+   * \param format the message format
+   * \param ... the parametters
+   */
   void Logger::Log(const long long id, const LogLevel level, const wchar_t* format, ...)
   {
     va_list args;
@@ -73,13 +106,37 @@ namespace myoddweb::directorywatcher
     }
 
     MYODDWEB_LOCK(_lock);
-    for( const auto logger : Instance()._loggers )
+    if( id != 0 )
     {
-      if( 0 != id && id != logger.first )
+      const auto logger = Instance()._loggers.find(id);
+      if (logger != Instance()._loggers.end())
       {
-        continue;
+        try
+        {
+          Log(logger->second, 0, level, message);
+        }
+        catch (...)
+        {
+          // we cannot log a log message that faied
+          MYODDWEB_OUT("There was an issue logging a message");
+        }
       }
-      Log(logger.second, id, level, message);
+    }
+    else
+    {
+      // the value was 0 so we will send to all.
+      for (const auto logger : Instance()._loggers)
+      {
+        try
+        {
+          Log(logger.second, id, level, message);
+        }
+        catch (...)
+        {
+          // we cannot log a log message that faied
+          MYODDWEB_OUT("There was an issue logging a message");
+        }
+      }
     }
     delete[] message;
   }
