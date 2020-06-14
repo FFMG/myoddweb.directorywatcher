@@ -86,6 +86,15 @@ TEST(WorkPool, WaitingForAWorkerThatIsNotOurs)
   auto pool = ::WorkerPool(10);
   pool.Add(worker1);
 
+  // wait for the pool to start
+  if (!Wait::SpinUntil([&]
+    {
+      return pool.Started();
+    }, TEST_TIMEOUT))
+  {
+    GTEST_FATAL_FAILURE_("Unable to start pool");
+  }
+
   // we are not going to stop it
   // we just waiting for it to complete.
   const auto status = pool.WaitFor(worker2, 10000);
