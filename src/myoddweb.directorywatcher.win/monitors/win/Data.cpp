@@ -28,7 +28,8 @@ namespace myoddweb:: directorywatcher:: win
     _hDirectory(nullptr),
     _buffer(nullptr),
     _bufferLength(bufferLength),
-    _monitor(monitor)
+    _monitor(monitor),
+    _canBeginRead( false )  //  we cannot start reading yet
   {
     // prepapre the buffer that will receive our data
     // create the buffer if needed.
@@ -46,6 +47,10 @@ namespace myoddweb:: directorywatcher:: win
   void Data::PrepareForRead()
   {
     MYODDWEB_PROFILE_FUNCTION();
+    if( _operationAborted || !_canBeginRead)
+    {
+      return;
+    }
     
     // restart the buffer.
     memset(_buffer, 0, sizeof(unsigned char)*_bufferLength);
@@ -63,6 +68,9 @@ namespace myoddweb:: directorywatcher:: win
    */
   void Data::StopMonitoring()
   {
+    // we can no longer restart reading so we set the flag now.
+    _canBeginRead = false;
+
     try
     {
       // close the handle 
@@ -95,14 +103,17 @@ namespace myoddweb:: directorywatcher:: win
       return;
     }
 
-    // quick switch... so we don't come back here.
-    // yes, there is a chance that we might indeed come back again
-    // but it does prevent having a 'valid' handle while we are closing.
-    const auto oldHandle = _hDirectory;
-    _hDirectory = nullptr;
-
     try
     {
+      // quick switch... so we don't come back here.
+      // yes, there is a chance that we might indeed come back again
+      // but it does prevent having a 'valid' handle while we are closing.
+      const auto oldHandle = _hDirectory;
+      _hDirectory = nullptr;
+
+      auto overlapped = _overlapped;
+      ClearOverlapped();
+
       // tell all the pending reads that we are ready
       // to stop handling messages now.
       _operationAborted = false;
@@ -112,7 +123,7 @@ namespace myoddweb:: directorywatcher:: win
       // and/or the OVERLAPPED pointer could not be found.
       // \see https://docs.microsoft.com/en-us/windows/win32/fileio/cancelioex-func
 
-      const auto cancel = ::CancelIoEx(oldHandle, Overlapped());
+      const auto cancel = ::CancelIoEx(oldHandle, &overlapped );
       if (0 != cancel)
       {
         // then wait a little for the operation to be cancelled.
@@ -152,13 +163,23 @@ namespace myoddweb:: directorywatcher:: win
    */
   void Data::ClearBuffer()
   {
-    if (_buffer == nullptr)
+    try
     {
-      return;
-    }
+      if (_buffer == nullptr)
+      {
+        return;
+      }
 
-    delete[] _buffer;
-    _buffer = nullptr;
+      delete[] _buffer;
+      _buffer = nullptr;
+    }
+    catch (const std::exception& e)
+    {
+      // the callback did something wrong!
+      // log the error
+      Logger::Log(LogLevel::Error, L"Caught exception '%hs' in PublishStatistics, check the callback!", e.what());
+      _buffer = nullptr;
+    }
   }
 
   /**
@@ -179,33 +200,6 @@ namespace myoddweb:: directorywatcher:: win
   }
 
   /**
-   * \brief get the current buffer
-   * \return the void* buffer.
-   */
-  void* Data::Buffer() const
-  {
-    return _buffer;
-  }
-
-  /**
-   * \brief get the buffer length
-   * \return the buffer length
-   */
-  unsigned long Data::BufferLength() const
-  {
-    return _bufferLength;
-  }
-
-  /**
-   * \brief Get pointer to our overlapped data.
-   * \return pointer to the 'OVERLAPPED' struct.
-   */
-  LPOVERLAPPED Data::Overlapped()
-  {
-    return &_overlapped;
-  }
-
-  /**
    * \brief clone up to 'ulSize' bytes into a buffer.
    *        it is up to the caller to clear/delete the buffer.
    * \param ulSize the max numberof bytes we want to copy
@@ -213,24 +207,34 @@ namespace myoddweb:: directorywatcher:: win
    */
   unsigned char* Data::Clone(const unsigned long ulSize) const
   {
-    // if the size if more than we can offer we need to prevent an overflow.
-    if (ulSize > _bufferLength)
+    try
     {
+      // if the size if more than we can offer we need to prevent an overflow.
+      if (ulSize > _bufferLength)
+      {
+        return nullptr;
+      }
+
+      // create the clone
+      const auto pBuffer = new unsigned char[ulSize];
+      if (_buffer == nullptr)
+      {
+        return nullptr;
+      }
+
+      // copy it.
+      memcpy(pBuffer, _buffer, ulSize);
+
+      // return it.
+      return pBuffer;
+    }
+    catch (const std::exception& e)
+    {
+      // the callback did something wrong!
+      // log the error
+      Logger::Log(LogLevel::Error, L"Caught exception '%hs' in PublishStatistics, check the callback!", e.what());
       return nullptr;
     }
-
-    // create the clone
-    const auto pBuffer = new unsigned char[ulSize];
-    if (_buffer == nullptr )
-    {
-      return nullptr;
-    }
-
-    // copy it.
-    memcpy(pBuffer, _buffer, ulSize);
-
-    // return it.
-    return pBuffer;
   }
 
 
@@ -286,28 +290,43 @@ namespace myoddweb:: directorywatcher:: win
   bool Data::BeginRead()
   {
     MYODDWEB_PROFILE_FUNCTION();
-
-    // prepare all the values
-    PrepareForRead();
-
-    // do the actual read.
-    if( ::ReadDirectoryChangesW(
-      _hDirectory,
-      Buffer(),
-      BufferLength(),
-      _recursive,
-      _notifyFilter,
-      nullptr,                // bytes returned, (not used here as we are async)
-      Overlapped(),           // buffer with our information
-      &FileIoCompletionRoutine
-    ) != 1 )
+    try
     {
-      // we could not create the monitoring
-      _monitor.AddEventError(EventError::Access);
-      StopMonitoring();
+      // check if we are told to no longer get in
+      if(!_canBeginRead)
+      {
+        return false;
+      }
+
+      // prepare all the values
+      PrepareForRead();
+
+      // do the actual read.
+      if (::ReadDirectoryChangesW(
+        _hDirectory,
+        _buffer,
+        _bufferLength,
+        _recursive,
+        _notifyFilter,
+        nullptr,                // bytes returned, (not used here as we are async)
+        &_overlapped,           // buffer with our information
+        &FileIoCompletionRoutine
+      ) != 1)
+      {
+        // we could not create the monitoring
+        _monitor.AddEventError(EventError::Access);
+        StopMonitoring();
+        return false;
+      }
+      return true;
+    }
+    catch (const std::exception& e)
+    {
+      // the callback did something wrong!
+      // log the error
+      Logger::Log(LogLevel::Error, L"Caught exception '%hs' in PublishStatistics, check the callback!", e.what());
       return false;
     }
-    return true;
   }
 
   /***
@@ -319,25 +338,34 @@ namespace myoddweb:: directorywatcher:: win
     _OVERLAPPED* lpOverlapped
   )
   {
-    // get the object we are working with
-    const auto data = static_cast<Data*>(lpOverlapped->hEvent);
-
-    // do we have an object?
-    // should never happen ... but still.
-    if (nullptr == data)
+    try
     {
-      return;
-    }
+      // get the object we are working with
+      const auto data = static_cast<Data*>(lpOverlapped->hEvent);
 
-    if(ERROR_SUCCESS != dwErrorCode)
+      // do we have an object?
+      // should never happen ... but still.
+      if (nullptr == data)
+      {
+        return;
+      }
+
+      if (ERROR_SUCCESS != dwErrorCode)
+      {
+        // some other error
+        data->ProcessError(dwErrorCode);
+        return;
+      }
+
+      // success
+      data->ProcessRead(dwNumberOfBytesTransfered);
+    }
+    catch (const std::exception& e)
     {
-      // some other error
-      data->ProcessError(dwErrorCode);
-      return;
+      // the callback did something wrong!
+      // log the error
+      Logger::Log(LogLevel::Error, L"Caught exception '%hs' in PublishStatistics, check the callback!", e.what());
     }
-
-    // success
-    data->ProcessRead(dwNumberOfBytesTransfered);
   }
 
   /**
@@ -418,12 +446,16 @@ namespace myoddweb:: directorywatcher:: win
    */
   bool Data::StartMonitoring()
   {
+    //  if we are starting up, (again), then we can carry on
+    _canBeginRead = true;
+
     // try and open the directory
     // if it is open already then nothing should happen here.
     if (!OpenDirectoryHandle())
     {
       // we could not access this
       _monitor.AddEventError(EventError::Access);
+      Logger::Log(_monitor.Id(), LogLevel::Warning, L"Unable to read directory: %s", (_monitor.Path() == nullptr ? L"NULL" : _monitor.Path()));
       return false;
     }
 
