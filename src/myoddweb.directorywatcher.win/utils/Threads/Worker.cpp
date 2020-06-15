@@ -170,7 +170,7 @@ namespace myoddweb::directorywatcher::threads
       Stop();
 
       // wait for it
-      if (false == Wait::SpinUntil([&]
+      if (false == Wait::SpinUntil([this]
         {
           return Completed();
         },
