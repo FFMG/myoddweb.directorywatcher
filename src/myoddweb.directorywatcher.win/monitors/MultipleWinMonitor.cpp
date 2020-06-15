@@ -436,15 +436,13 @@ namespace myoddweb::directorywatcher
       // delete all the monitors.
       for (const auto monitor : container )
       {
-#ifdef _DEBUG
         // if this fires then you might have a problem here
         // because of the way the monitor destructor wait
         // we might deadlock depending when this function was called.
-        if( !monitor->Completed() )
+        if(threads::WaitResult::complete != monitor->StopAndWait(MYODDWEB_WAITFOR_WORKER_COMPLETION) )
         {
-          Logger::Log( monitor->Id(), LogLevel::Warning, L"Trying to dispose of monitor that is not yet complete! We might deadlock." );
+          Logger::Log(monitor->Id(), LogLevel::Warning, L"Trying to dispose of monitor that is not yet complete! We might deadlock.");
         }
-#endif
         delete monitor;
       }
 
