@@ -1,8 +1,5 @@
-#include "Logger.h"
-
 #include <stdarg.h>
-
-
+#include "Logger.h"
 #include "Lock.h"
 
 namespace myoddweb::directorywatcher
@@ -113,7 +110,7 @@ namespace myoddweb::directorywatcher
       {
         try
         {
-          Log(logger->second, 0, level, message);
+          Log(logger->second, id, level, message);
         }
         catch (...)
         {
@@ -188,8 +185,8 @@ namespace myoddweb::directorywatcher
 
     const auto buffSize = size + 1;
     const auto buf = new wchar_t[buffSize];
-    memset(buf, L'\0', buffSize);
-    vswprintf(buf, size, format, args);
+    wmemset(buf, L'\0', buffSize );
+    vswprintf_s(buf, buffSize, format, args);
     return buf;
   }
 

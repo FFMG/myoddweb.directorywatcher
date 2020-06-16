@@ -5,7 +5,6 @@
 #include "../../utils/Io.h"
 #include "../../utils/EventError.h"
 #include "../../utils/Instrumentor.h"
-#include "../Base.h"
 
 namespace myoddweb ::directorywatcher :: win
 {
@@ -16,10 +15,9 @@ namespace myoddweb ::directorywatcher :: win
     Monitor& parent,
     const unsigned long bufferLength
   ) :
-      _data(nullptr),
-      _parent(parent),
-      _bufferLength(bufferLength),
-      _function(nullptr)
+    _data(nullptr),
+    _parent(parent),
+    _bufferLength(bufferLength)
   {
   }
 
@@ -32,19 +30,21 @@ namespace myoddweb ::directorywatcher :: win
 
   bool Common::CreateAndStartData()
   {
-    // create the function
-    _function = new Data::DataCallbackFunction(std::bind(&Common::DataCallbackFunction, this, std::placeholders::_1));
-
     // what we are looking for.
     // https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-findfirstchangenotificationa
     // https://docs.microsoft.com/en-gb/windows/desktop/api/WinBase/nf-winbase-readdirectorychangesw
     const auto notifyFilter = GetNotifyFilter();
 
     // create the data
-    _data = new Data(_parent, notifyFilter, _parent.Recursive(), *_function, _bufferLength);
+    _data = new Data(
+      _parent.Id(),
+      _parent.Path(),
+      notifyFilter, 
+      _parent.Recursive(), 
+      _bufferLength);
 
     // then start monitoring
-    return _data->StartMonitoring();
+    return _data->Start();
   }
 
   void Common::Update() const
@@ -53,6 +53,14 @@ namespace myoddweb ::directorywatcher :: win
     if( nullptr == _data)
     {
       return;
+    }
+
+    // get the data and then process it
+    const auto rawData = _data->Get();
+    for( const auto& raw : rawData )
+    {
+      ProcessNotification(raw);
+      delete[] raw;
     }
 
     // ensure that the data is still valid
@@ -67,29 +75,12 @@ namespace myoddweb ::directorywatcher :: win
     if (nullptr != _data)
     {
       // if we are here... we can release the data
-      _data->StopMonitoring();
+      _data->Stop();
     }
 
     // clear the data.
     delete _data;
     _data = nullptr;
-
-    // then stop the function as well.
-    delete _function;
-    _function = nullptr;
-  }
-
-  /***
-   * \brief The async callback function for ReadDirectoryChangesW
-   */
-  void Common::DataCallbackFunction(unsigned char* pBufferBk) const
-  {
-    MYODDWEB_PROFILE_FUNCTION();
-
-    // we cloned the data and restarted the read
-    // so we can now process the data
-    // @todo this should be moved to the worker pool.
-    ProcessNotificationFromBackup(pBufferBk);
   }
 
   /**
@@ -97,7 +88,7 @@ namespace myoddweb ::directorywatcher :: win
    *        we own this buffer and we mus delete it at the end.
    * \param pBuffer
    */
-  void Common::ProcessNotificationFromBackup(const unsigned char* pBuffer) const
+  void Common::ProcessNotification(const unsigned char* pBuffer) const
   {
     MYODDWEB_PROFILE_FUNCTION();
 
@@ -185,9 +176,6 @@ namespace myoddweb ::directorywatcher :: win
       // we have to free the memory.
       _parent.AddEventError(EventError::Memory);
     }
-
-    // we are done with this buffer.
-    delete[] pBuffer;
   }
 
   /**

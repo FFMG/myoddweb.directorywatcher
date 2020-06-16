@@ -5,6 +5,7 @@
 #include <utility>
 #include "Data.h"
 #include "../../utils/Instrumentor.h"
+#include "../../utils/Lock.h"
 #include "../../utils/Logger.h"
 #include "../../utils/LogLevel.h"
 #include "../../utils/Wait.h"
@@ -13,10 +14,10 @@
 namespace myoddweb:: directorywatcher:: win
 {
   Data::Data(
-    Monitor& monitor, 
+    const long long id,
+    const wchar_t* path,
     const unsigned long notifyFilter,
     const bool recursive,
-    DataCallbackFunction& dataCallbackFunction,
     const unsigned long bufferLength
     )
     :
@@ -24,12 +25,12 @@ namespace myoddweb:: directorywatcher:: win
     _notifyFilter(notifyFilter),
     _recursive(recursive),
     _operationAborted( false ),
-    _dataCallbackFunction( dataCallbackFunction ),
     _hDirectory(nullptr),
     _buffer(nullptr),
     _bufferLength(bufferLength),
-    _monitor(monitor),
-    _canBeginRead( false )  //  we cannot start reading yet
+    _path( path ),
+    _id( id ),
+    _overlapped(nullptr)
   {
     // prepapre the buffer that will receive our data
     // create the buffer if needed.
@@ -38,7 +39,7 @@ namespace myoddweb:: directorywatcher:: win
 
   Data::~Data()
   {
-    StopMonitoring();
+    Stop();
   }
 
   /**
@@ -47,7 +48,7 @@ namespace myoddweb:: directorywatcher:: win
   void Data::PrepareForRead()
   {
     MYODDWEB_PROFILE_FUNCTION();
-    if( _operationAborted || !_canBeginRead)
+    if( _operationAborted || _stop )
     {
       return;
     }
@@ -57,20 +58,45 @@ namespace myoddweb:: directorywatcher:: win
 
     // save the overlapped opject.
     ClearOverlapped();
-    _overlapped.hEvent = this;
+    _overlapped = new OVERLAPPED;
+    memset(_overlapped, 0, sizeof(OVERLAPPED));
+    _overlapped->hEvent = this;
 
     // assume that we are not aborted
     _operationAborted = false;
   }
 
   /**
+   * \brief start monitoring the given folder.
+   * \return if we managed to start the monitoring or not.
+   */
+  bool Data::Start()
+  {
+    _stop = false;
+
+    // try and open the directory
+    // if it is open already then nothing should happen here.
+    if (!OpenDirectoryHandle())
+    {
+      // we could not access this
+      Logger::Log(_id, LogLevel::Warning, L"Unable to read directory: %s", _path.c_str());
+      return false;
+    }
+
+    // reset the handle wait.
+    _invalidHandleWait = 0;
+
+    // start reading.
+    Listen();
+    return true;
+  }
+
+  /**
    * \brief Clear all the data and close all connections handles.
    */
-  void Data::StopMonitoring()
+  void Data::Stop()
   {
-    // we can no longer restart reading so we set the flag now.
-    _canBeginRead = false;
-
+    _stop = true;
     try
     {
       // close the handle 
@@ -81,6 +107,9 @@ namespace myoddweb:: directorywatcher:: win
 
       // clear the overlapped structure.
       ClearOverlapped();
+
+      // clear the buffer of data that might be left
+      ClearData();
     }
     catch (const std::exception& e)
     {
@@ -103,6 +132,11 @@ namespace myoddweb:: directorywatcher:: win
       return;
     }
 
+    if( nullptr == _overlapped)
+    {
+      return;
+    }
+
     try
     {
       // quick switch... so we don't come back here.
@@ -111,8 +145,8 @@ namespace myoddweb:: directorywatcher:: win
       const auto oldHandle = _hDirectory;
       _hDirectory = nullptr;
 
-      auto overlapped = _overlapped;
-      ClearOverlapped();
+      const auto overlapped = _overlapped;
+      _overlapped = nullptr;
 
       // tell all the pending reads that we are ready
       // to stop handling messages now.
@@ -123,7 +157,18 @@ namespace myoddweb:: directorywatcher:: win
       // and/or the OVERLAPPED pointer could not be found.
       // \see https://docs.microsoft.com/en-us/windows/win32/fileio/cancelioex-func
 
-      const auto cancel = ::CancelIoEx(oldHandle, &overlapped );
+      auto cancel = ::CancelIoEx(oldHandle, overlapped);
+      unsigned long numberOfBytes = 0;
+      if( GetOverlappedResult(oldHandle, overlapped, &numberOfBytes, true) )
+      {
+        // process those las few bytes.
+        ProcessRead(numberOfBytes);
+      }
+
+      // then wait again for abort, (if needed)
+      // this is almost never, ever neeeded, we just do it one more time
+      // in case any other messages are unprocessed.
+      cancel = ::CancelIoEx(oldHandle, overlapped);
       if (0 != cancel)
       {
         // then wait a little for the operation to be cancelled.
@@ -140,10 +185,15 @@ namespace myoddweb:: directorywatcher:: win
             return _operationAborted == true;
           }, MYODDWEB_WAITFOR_OPERATION_ABORTED_COMPLETION))
         {
-          Logger::Log(_monitor.Id(), LogLevel::Warning, L"Timeout waiting operation aborted message!" );
+          Logger::Log(_id, LogLevel::Warning, L"Timeout waiting operation aborted message!" );
         }
       }
+      else
+      {
+        _operationAborted = true;
+      }
       ::CloseHandle(oldHandle);
+      delete overlapped;
     }
     catch (...)
     {
@@ -151,7 +201,7 @@ namespace myoddweb:: directorywatcher:: win
       //   If the application is running under a debugger, the function will throw an exception if it receives either a handle value that is not valid or a pseudo-
       //   handle value. This can happen if you close a handle twice, or if you call CloseHandle on a handle returned by the FindFirstFile function instead of 
       //   calling the FindClose function.
-      Logger::Log( _monitor.Id(), LogLevel::Information, L"Ignore: Error waiting operation aborted message." );
+      Logger::Log( _id, LogLevel::Information, L"Ignore: Error waiting operation aborted message." );
       _operationAborted = true;
     }
 
@@ -182,12 +232,26 @@ namespace myoddweb:: directorywatcher:: win
     }
   }
 
+  /// <summary>
+  /// Clear all the data that is left in the vector
+  /// </summary>
+  void Data::ClearData()
+  {
+    MYODDWEB_LOCK(_dataLock);
+    for( const auto &raw : _data )
+    {
+      delete[] raw;
+    }
+    _data.clear();
+  }
+
   /**
    * \brief clear the overlapped structure.
    */
   void Data::ClearOverlapped()
   {
-    memset(&_overlapped, 0, sizeof(OVERLAPPED));
+    delete _overlapped;
+    _overlapped = nullptr;
   }
 
   /**
@@ -237,7 +301,6 @@ namespace myoddweb:: directorywatcher:: win
     }
   }
 
-
   /**
    * \brief set the directory handle
    * \return if success or not.
@@ -257,7 +320,7 @@ namespace myoddweb:: directorywatcher:: win
     try
     {
       const auto handle = CreateFileW(
-        _monitor.Path(),		        // the path we are watching
+        _path.c_str(),  		        // the path we are watching
         FILE_LIST_DIRECTORY,        // required for ReadDirectoryChangesW( ... )
         shareMode,
         nullptr,                    // security descriptor
@@ -287,17 +350,15 @@ namespace myoddweb:: directorywatcher:: win
   /**
    * \brief start waiting for notification
    */
-  bool Data::BeginRead()
+  bool Data::Listen()
   {
+    if(_stop)
+    {
+      return false;
+    }
     MYODDWEB_PROFILE_FUNCTION();
     try
     {
-      // check if we are told to no longer get in
-      if(!_canBeginRead)
-      {
-        return false;
-      }
-
       // prepare all the values
       PrepareForRead();
 
@@ -309,13 +370,12 @@ namespace myoddweb:: directorywatcher:: win
         _recursive,
         _notifyFilter,
         nullptr,                // bytes returned, (not used here as we are async)
-        &_overlapped,           // buffer with our information
+        _overlapped,            // buffer with our information
         &FileIoCompletionRoutine
       ) != 1)
       {
         // we could not create the monitoring
-        _monitor.AddEventError(EventError::Access);
-        StopMonitoring();
+        Stop();
         return false;
       }
       return true;
@@ -380,18 +440,13 @@ namespace myoddweb:: directorywatcher:: win
       break;
 
     case ERROR_OPERATION_ABORTED:
-      // we are stopping, so we can indicate that we 
-      // are now completely ready to stop.
-      _monitor.AddEventError(EventError::Aborted);
-
       // set the flag _after_ we posted the message above
       // as what happens after this is undefined.
       _operationAborted = true;
       break;
 
     case ERROR_ACCESS_DENIED:
-      StopMonitoring();
-      _monitor.AddEventError(EventError::Access);
+      Stop();
       return;
 
     default:
@@ -413,12 +468,7 @@ namespace myoddweb:: directorywatcher:: win
       // Get the new read issued as fast as possible. The documentation
       // says that the original OVERLAPPED structure will not be used
       // again once the completion routine is called.
-      BeginRead();
-
-      // If the buffer overflows, the entire contents of the buffer are discarded, 
-      // the lpBytesReturned parameter contains zero, and the ReadDirectoryChangesW function 
-      // fails with the error code ERROR_NOTIFY_ENUM_DIR.
-      _dataCallbackFunction(nullptr);
+      Listen();
 
       // we are done
       return;
@@ -434,37 +484,24 @@ namespace myoddweb:: directorywatcher:: win
     // Get the new read issued as fast as possible. The documentation
     // says that the original OVERLAPPED structure will not be used
     // again once the completion routine is called.
-    BeginRead();
+    Listen();
 
     // call the derived function to handle this.
-    _dataCallbackFunction( clone );
+    MYODDWEB_LOCK(_dataLock);
+    _data.emplace_back( clone );
   }
 
-  /**
-   * \brief start monitoring the given folder.
-   * \return if we managed to start the monitoring or not.
-   */
-  bool Data::StartMonitoring()
+  std::vector<unsigned char*> Data::Get()
   {
-    //  if we are starting up, (again), then we can carry on
-    _canBeginRead = true;
+    MYODDWEB_LOCK(_dataLock);
+    const auto clone = _data;
 
-    // try and open the directory
-    // if it is open already then nothing should happen here.
-    if (!OpenDirectoryHandle())
-    {
-      // we could not access this
-      _monitor.AddEventError(EventError::Access);
-      Logger::Log(_monitor.Id(), LogLevel::Warning, L"Unable to read directory: %s", (_monitor.Path() == nullptr ? L"NULL" : _monitor.Path()));
-      return false;
-    }
+    // clear that list
+    // we do not want to use `shrink_to_fit` as the reserved value
+    // will probably be reused.
+    _data.clear();
 
-    // reset the handle wait.
-    _invalidHandleWait = 0;
-
-    // start reading.
-    BeginRead();
-    return true;
+    return clone;
   }
 
   /**
@@ -496,6 +533,6 @@ namespace myoddweb:: directorywatcher:: win
 
     // try open again, if this does not work then it is fine
     // because we have reset the timer
-    StartMonitoring();
+    Start();
   }
 }
