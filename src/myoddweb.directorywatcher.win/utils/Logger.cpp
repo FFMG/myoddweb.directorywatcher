@@ -60,18 +60,12 @@ namespace myoddweb::directorywatcher
     const auto message = MakeMessage(format, args);
     va_end(args);
 
-    // anything to do?
-    if (nullptr == message)
-    {
-      return;
-    }
-
     MYODDWEB_LOCK(_lock);
     for (const auto logger : Instance()._loggers)
     {
       try
       {
-        Log(logger.second, 0, level, message);
+        Log(logger.second, 0, level, message.c_str());
       }
       catch ( ... )
       {
@@ -79,7 +73,6 @@ namespace myoddweb::directorywatcher
         MYODDWEB_OUT("There was an issue logging a message");
       }
     }
-    delete[] message;
   }
 
   /**
@@ -96,12 +89,6 @@ namespace myoddweb::directorywatcher
     const auto message = MakeMessage(format, args);
     va_end(args);
 
-    // anything to do?
-    if (nullptr == message)
-    {
-      return;
-    }
-
     MYODDWEB_LOCK(_lock);
     if( id != 0 )
     {
@@ -110,7 +97,7 @@ namespace myoddweb::directorywatcher
       {
         try
         {
-          Log(logger->second, id, level, message);
+          Log(logger->second, id, level, message.c_str());
         }
         catch (...)
         {
@@ -126,7 +113,7 @@ namespace myoddweb::directorywatcher
       {
         try
         {
-          Log(logger.second, id, level, message);
+          Log(logger.second, id, level, message.c_str());
         }
         catch (...)
         {
@@ -135,7 +122,6 @@ namespace myoddweb::directorywatcher
         }
       }
     }
-    delete[] message;
   }
 
   /**
@@ -175,19 +161,30 @@ namespace myoddweb::directorywatcher
    * \param format the message format
    * \param args the list of arguments.
    */
-  wchar_t* Logger::MakeMessage(const wchar_t* format, va_list args)
+  std::wstring Logger::MakeMessage(const wchar_t* format, va_list args)
   {
+    // sanity check
+    if( nullptr == format )
+    {
+      return L"";
+    }
+
+    // get the final size
     const auto size = vswprintf(nullptr, 0, format, args);
     if (size <= 0)
     {
-      return nullptr;
+      return L"";
     }
 
+    // build the string
+    std::wstring output;
     const auto buffSize = size + 1;
-    const auto buf = new wchar_t[buffSize];
-    wmemset(buf, L'\0', buffSize );
-    vswprintf_s(buf, buffSize, format, args);
-    return buf;
+    output.reserve(buffSize);
+    if (vswprintf_s(output.data(), buffSize, format, args) < 0)// create the string
+    {
+      output.clear();                                     // Empty the string if there is a problem
+    }
+    return output;
   }
 
 }

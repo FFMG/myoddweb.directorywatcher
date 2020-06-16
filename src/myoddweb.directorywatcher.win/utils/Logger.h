@@ -80,7 +80,7 @@ namespace myoddweb:: directorywatcher
      * \param args the list of arguments.
      */
     [[nodiscard]]
-    static wchar_t* MakeMessage(const wchar_t* format, va_list args);
+    static std::wstring MakeMessage(const wchar_t* format, va_list args);
 
     /**
      * \brief check if we have any loggers in our list
