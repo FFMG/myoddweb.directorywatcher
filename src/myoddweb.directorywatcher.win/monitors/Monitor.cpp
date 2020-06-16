@@ -6,7 +6,7 @@
 #include "../utils/Io.h"
 #include "../utils/Instrumentor.h"
 #include "../utils/Logger.h"
-#include "Base.h"
+#include "../utils/LogLevel.h"
 
 namespace myoddweb:: directorywatcher
 {
@@ -25,6 +25,11 @@ namespace myoddweb:: directorywatcher
 
   Monitor::~Monitor()
   {
+    if( !Completed() )
+    {
+      // log the error
+      Logger::Log(LogLevel::Error, L"Trying to dispose of a monitor that was never completed!" );
+    }
     delete _publisher;
     _publisher = nullptr;
   }
