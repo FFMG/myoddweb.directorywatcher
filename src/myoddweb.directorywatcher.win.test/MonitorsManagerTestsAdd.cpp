@@ -87,7 +87,7 @@ TEST(MonitorsManagerAdd, StartStopThenAddFileToFolder) {
       helper->Folder(),
       false,
       nullptr,
-      function,
+      eventFunction,
       nullptr,
       50,
       0);
@@ -135,7 +135,7 @@ TEST(MonitorsManagerAdd, IfTimeoutIsZeroCallbackIsNeverCalled) {
     helper->Folder(),
     false,
     nullptr,
-    function,
+    eventFunction,
     nullptr,
     0,
     0);
@@ -176,7 +176,7 @@ TEST_P(ValidateNumberOfItemAdded, CallbackWhenFileIsAdded) {
     helper->Folder(),
     recursive,
     nullptr,
-    function,
+    eventFunction,
     nullptr,
     50,
     0);
@@ -224,7 +224,7 @@ TEST_P(ValidateNumberOfItemAdded, CallbackWhenFolderIsAdded) {
     helper->Folder(),
     recursive,
     nullptr,
-    function,
+    eventFunction,
     nullptr,
     50,
     0);

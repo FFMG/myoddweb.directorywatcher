@@ -36,7 +36,7 @@ TEST(MonitorsManagerDelete, IfTimeoutIsZeroCallbackIsNeverCalled) {
     helper->Folder(),
     false,
     nullptr,
-    function,
+    eventFunction,
     nullptr,
     0,
     50);
@@ -83,7 +83,7 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFileIsDeleted) {
     helper->Folder(),
     recursive,
     nullptr,
-    function,
+    eventFunction,
     nullptr,
     TEST_TIMEOUT,
     0);
@@ -136,7 +136,7 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFolderIsDeleted) {
     helper->Folder(),
     recursive,
     nullptr,
-    function,
+    eventFunction,
     nullptr,
     TEST_TIMEOUT,
     0);

@@ -1,5 +1,8 @@
 #pragma once
 
+#include <iostream>
+#include <mutex>
+#include <ostream>
 #include <string>
 #include <vector>
 #include "../myoddweb.directorywatcher.win/utils/EventAction.h"
@@ -37,6 +40,8 @@ public:
 
   void EventAction(EventAction action, bool isFile);
 
+  void LoggerFunction(long long id, int type, const wchar_t* message);
+
   [[nodiscard]] auto Added(bool isFile) const -> int;
   [[nodiscard]] auto Removed(bool isFile) const -> int;
 
@@ -49,7 +54,7 @@ protected:
   static std::wstring RandomString(const size_t length);
 };
 
-inline auto function = []
+inline auto eventFunction = []
 (
   const long long id,
   const bool isFile,
@@ -61,4 +66,22 @@ inline auto function = []
 ) -> void
 {
   Get(id)->EventAction(static_cast<::EventAction>(action), isFile);
+};
+
+inline auto loggerFunction = []
+(
+  const long long id,
+  const int type,
+  const wchar_t* message
+  ) -> void
+{
+  const auto l = Get(id);
+  if (l != nullptr)
+  {
+    l->LoggerFunction(id, type, message);
+  }
+  else
+  {
+    std::wcerr << L"Globla:" << message << std::endl;
+  }
 };

@@ -19,7 +19,7 @@ using myoddweb::directorywatcher::Io;
 using myoddweb::directorywatcher::Wait;
 
 std::mutex _cv_m;
-
+std::mutex _lockCout;
 class MonitorsManagerTestHelper;
 std::map<long long, MonitorsManagerTestHelper*> _managers;
 
@@ -117,6 +117,12 @@ MonitorsManagerTestHelper::~MonitorsManagerTestHelper()
 const wchar_t* MonitorsManagerTestHelper::Folder() const 
 {
   return _folder.c_str();
+}
+
+void MonitorsManagerTestHelper::LoggerFunction(const long long id, const int type, const wchar_t* message)
+{
+  const std::lock_guard<std::mutex> l(_lockCout);
+  std::wcerr << id << L": " << message << std::endl;
 }
 
 void MonitorsManagerTestHelper::EventAction(const ::EventAction action, bool isFile)

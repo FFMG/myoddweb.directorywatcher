@@ -30,7 +30,7 @@ TEST_P(RecursiveAndNonRecursive, TwoWatchersOnTheSameFolder) {
     helper->Folder(),
     recursive,
     nullptr,
-    function, 
+    eventFunction,
     nullptr,
     TEST_TIMEOUT,
     0);
@@ -81,7 +81,7 @@ TEST_P(RecursiveAndNonRecursive, TwoWatchersOnTwoSeparateFolders) {
     helper1->Folder(),
     recursive,
     nullptr,
-    function,
+    eventFunction,
     nullptr,
     TEST_TIMEOUT,
     0);
@@ -90,7 +90,7 @@ TEST_P(RecursiveAndNonRecursive, TwoWatchersOnTwoSeparateFolders) {
     helper1->Folder(),
     recursive,
     nullptr,
-    function,
+    eventFunction,
     nullptr,
     TEST_TIMEOUT,
     0);
@@ -133,9 +133,51 @@ TEST_P(RecursiveAndNonRecursive, TwoWatchersOnTwoSeparateFolders) {
 }
 
 TEST(MonitorsManagerEdgeCases, StartAndStopAlmostInstantly) {
+    // create the helper.
+    auto helper = MonitorsManagerTestHelper();
+    const auto recursive = true;
 
+    // use the test request to create the Request
+    // we make a copy of our helper onto the 'real' request to make sure copy is not broken
+    const auto r = RequestHelper(
+      helper.Folder(),
+      recursive,
+      loggerFunction,
+      eventFunction,
+      nullptr,
+      TEST_TIMEOUT,
+      0);
+
+    // monitor that folder.
+    const auto request = ::Request(r);
+    const auto id = ::MonitorsManager::Start(request);
+    Add(id, &helper);
+
+    // wait for the thread to get started
+    Wait::Delay(TEST_TIMEOUT_WAIT);
+
+    auto folders = std::vector<std::wstring>();
+
+    // add a folder and remove it
+    const auto folder = helper.AddFolder();
+    ASSERT_TRUE(helper.RemoveFolder(folder));
+
+    // no waiting for anything
+
+    // stop
+    ASSERT_NO_THROW(::MonitorsManager::Stop(id));
+
+    // all done
+    ASSERT_TRUE(Remove(id));
+}
+
+TEST(MonitorsManagerEdgeCases, StartAndStopAlmostInstantlyWithSubFolders) {
   // create the helper.
   auto helper = MonitorsManagerTestHelper();
+  for( auto i =0; i < 5 ; ++i )
+  {
+    helper.AddFolder();
+  }
   const auto recursive = true;
 
   // use the test request to create the Request
@@ -143,8 +185,8 @@ TEST(MonitorsManagerEdgeCases, StartAndStopAlmostInstantly) {
   const auto r = RequestHelper(
     helper.Folder(),
     recursive,
-    nullptr,
-    function,
+    loggerFunction,
+    eventFunction,
     nullptr,
     TEST_TIMEOUT,
     0);
