@@ -1,0 +1,20 @@
+language: csharp
+os: windows
+solution: src/myoddweb.directorywatcher.sln
+
+before_install:
+  - sudo apt-get install nunit-console
+before_script:
+  - nuget restore src/myoddweb.directorywatcher.sln
+  
+script:
+  - msbuild /p:Configuration=Debug src/myoddweb.directorywatcher.sln
+
+notifications:
+  - email: false
+
+# whitelist
+branches:
+  only:
+    - master
+    - develop
