@@ -125,9 +125,9 @@ namespace myoddweb :: directorywatcher :: threads
   }
 
   /**
- * \brief add multiple workers at once
- * \param workers the workers we are adding.
- */
+   * \brief add multiple workers at once
+   * \param workers the workers we are adding.
+   */
   void WorkerPool::Add(const std::vector<Worker*>& workers)
   {
     try
@@ -255,7 +255,6 @@ namespace myoddweb :: directorywatcher :: threads
       return WaitResult::timeout;
     }
   }
-
 
   /**
    * \brief wait a little bit for a worker to finish
@@ -864,8 +863,7 @@ namespace myoddweb :: directorywatcher :: threads
       // we need to use the lock to make sure that nothing else
       // changes the current running workers.
       // if we have nothing running at all then no point going any further.
-      MYODDWEB_LOCK(_lockRunningWorkers);
-      return !_runningWorkers.empty();
+      return !CanStopWorkerpoolUpdates();
     }
     catch (...)
     {
