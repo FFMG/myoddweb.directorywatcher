@@ -9,6 +9,9 @@ namespace myoddweb:: directorywatcher:: win
 {
   class Data final
   {
+    typedef struct _OVERLAPPED_DATA : _OVERLAPPED {
+      Data* pdata;
+    } OVERLAPPED_DATA, * LPOVERLAPPED_DATA;
   public:
     explicit Data(
       long long id,
@@ -160,7 +163,7 @@ namespace myoddweb:: directorywatcher:: win
     /// <summary>
     /// The overlapped structure used to listen for changes.
     /// </summary>
-    OVERLAPPED*	_overlapped;
+    OVERLAPPED_DATA*	_overlapped;
 
     bool _stop = true;
     #pragma endregion

@@ -56,11 +56,16 @@ namespace myoddweb:: directorywatcher:: win
     // restart the buffer.
     memset(_buffer, 0, sizeof(unsigned char)*_bufferLength);
 
-    // save the overlapped opject.
+    // reset our overlappped object
     ClearOverlapped();
-    _overlapped = new OVERLAPPED;
-    memset(_overlapped, 0, sizeof(OVERLAPPED));
-    _overlapped->hEvent = this;
+
+    // create a new one with our own data
+    _overlapped = new OVERLAPPED_DATA();
+    memset(_overlapped, 0, sizeof(OVERLAPPED_DATA));
+
+    // save the handle as well as this class so we can access it later.
+    _overlapped->hEvent = _hDirectory;
+    _overlapped->pdata = this;
 
     // assume that we are not aborted
     _operationAborted = false;
@@ -139,15 +144,6 @@ namespace myoddweb:: directorywatcher:: win
 
     try
     {
-      // quick switch... so we don't come back here.
-      // yes, there is a chance that we might indeed come back again
-      // but it does prevent having a 'valid' handle while we are closing.
-      const auto oldHandle = _hDirectory;
-      _hDirectory = nullptr;
-
-      const auto overlapped = _overlapped;
-      _overlapped = nullptr;
-
       // tell all the pending reads that we are ready
       // to stop handling messages now.
       _operationAborted = false;
@@ -157,22 +153,26 @@ namespace myoddweb:: directorywatcher:: win
       // and/or the OVERLAPPED pointer could not be found.
       // \see https://docs.microsoft.com/en-us/windows/win32/fileio/cancelioex-func
 
-      auto cancel = ::CancelIoEx(oldHandle, overlapped);
-      unsigned long numberOfBytes = 0;
-      if( GetOverlappedResult(oldHandle, overlapped, &numberOfBytes, true) )
-      {
-        // process those las few bytes.
-        ProcessRead(numberOfBytes);
-      }
-
       // then wait again for abort, (if needed)
-      // this is almost never, ever neeeded, we just do it one more time
       // in case any other messages are unprocessed.
-      cancel = ::CancelIoEx(oldHandle, overlapped);
-      if (0 != cancel)
+      unsigned long numberOfBytes = 0;
+      if (::CancelIoEx(_hDirectory, _overlapped) != 0 )
       {
+        for (;;)
+        {
+          const auto status = WaitForSingleObjectEx(_hDirectory, 500, true );
+          if( status == WAIT_IO_COMPLETION)
+          {
+            break;
+          }
+          if (status == WAIT_OBJECT_0)
+          {
+            break;
+          }
+        }
+
         // then wait a little for the operation to be cancelled.
-        if (!Wait::SpinUntil([&]
+        if (!_operationAborted && !Wait::SpinUntil([&]
           {
             if( _operationAborted != true )
             {
@@ -190,10 +190,10 @@ namespace myoddweb:: directorywatcher:: win
       }
       else
       {
+        const auto dw = ::GetLastError();
         _operationAborted = true;
       }
-      ::CloseHandle(oldHandle);
-      delete overlapped;
+      ::CloseHandle(_hDirectory);
     }
     catch (...)
     {
@@ -367,7 +367,7 @@ namespace myoddweb:: directorywatcher:: win
         _hDirectory,
         _buffer,
         _bufferLength,
-        _recursive,
+        _recursive ? 1 : 0,
         _notifyFilter,
         nullptr,                // bytes returned, (not used here as we are async)
         _overlapped,            // buffer with our information
@@ -392,7 +392,7 @@ namespace myoddweb:: directorywatcher:: win
   /***
    * \brief The async callback function for ReadDirectoryChangesW
    */
-  void __stdcall Data::FileIoCompletionRoutine(
+  void Data::FileIoCompletionRoutine(
     const unsigned long dwErrorCode,
     const unsigned long dwNumberOfBytesTransfered,
     _OVERLAPPED* lpOverlapped
@@ -401,12 +401,14 @@ namespace myoddweb:: directorywatcher:: win
     try
     {
       // get the object we are working with
-      const auto data = static_cast<Data*>(lpOverlapped->hEvent);
+      const auto lpOverlappedData = reinterpret_cast<_OVERLAPPED_DATA*>(lpOverlapped);
+      auto data = lpOverlappedData == nullptr ? nullptr : lpOverlappedData->pdata;
 
       // do we have an object?
       // should never happen ... but still.
       if (nullptr == data)
       {
+        data->ProcessError(dwErrorCode);
         return;
       }
 
@@ -451,8 +453,7 @@ namespace myoddweb:: directorywatcher:: win
 
     default:
       //  we cannot use _monitor anymore
-      const auto dwError = GetLastError();
-      Logger::Log(0, LogLevel::Warning, L"Warning: There was an error processing an API message %lu.", dwError);
+      Logger::Log(0, LogLevel::Warning, L"Warning: There was an error processing an API message %lu.", errorCode );
       break;
     }
   }
