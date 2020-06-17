@@ -127,6 +127,10 @@ namespace myoddweb.directorywatcher.utils.Helper
       return _stop(id);
     }
 
+    /// <summary>
+    /// Return if the monitor manager is ready to accept requests.
+    /// </summary>
+    /// <returns></returns>
     public bool Ready()
     {
       if (_ready == null)
