@@ -27,7 +27,7 @@ namespace myoddweb.directorywatcher.load
     /// <summary>
     /// The watcher we will be using
     /// </summary>
-    public IWatcher2 Watcher{ get; }
+    public IWatcher3 Watcher{ get; }
 
     /// <summary>
     /// The folder we are watching
@@ -39,7 +39,7 @@ namespace myoddweb.directorywatcher.load
     /// </summary>
     private readonly IOutput _output;
 
-    public WatchedFolder( IOutput output, DirectoryInfo directory, int howOftenStopWatch, IWatcher2 watcher)
+    public WatchedFolder( IOutput output, DirectoryInfo directory, int howOftenStopWatch, IWatcher3 watcher)
     {
       _output = output ?? throw new ArgumentNullException(nameof(output));
       Folder = directory ?? throw new ArgumentNullException(nameof(directory));

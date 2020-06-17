@@ -14,6 +14,11 @@ namespace myoddweb.directorywatcher.load
     public bool Unique { get; }
 
     /// <summary>
+    /// If we want to run a random check test 
+    /// </summary>
+    public bool Random { get; }
+
+    /// <summary>
     /// If we want to test all drives.
     /// </summary>
     public bool Drives { get; }
@@ -51,6 +56,9 @@ namespace myoddweb.directorywatcher.load
 
       // if we are testing the drive letters only.
       Drives = arguments.Get<bool>("d");
+
+      // are we testing for random events?
+      Random = arguments.Get<bool>("r");
     }
   }
 }
