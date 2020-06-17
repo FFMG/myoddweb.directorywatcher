@@ -11,3 +11,9 @@ script:
 
 notifications:
   - email: false
+
+# whitelist
+branches:
+  only:
+    - master
+    - develop
