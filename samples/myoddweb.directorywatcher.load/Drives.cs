@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Timers;
+using myoddweb.directorywatcher.interfaces;
 using myoddweb.directorywatcher.load.Output;
 using Timer = System.Timers.Timer;
 
@@ -80,6 +82,7 @@ namespace myoddweb.directorywatcher.load
         // start them all
         foreach (var w in _watchers)
         {
+          w.Watcher.OnLoggerAsync += OnLoggerAsync;
           w.Start();
         }
       }
@@ -97,9 +100,16 @@ namespace myoddweb.directorywatcher.load
       {
         foreach (var w in _watchers)
         {
+          w.Watcher.OnLoggerAsync -= OnLoggerAsync;
           w.Stop();
         }
       }
+    }
+
+    private Task OnLoggerAsync(ILoggerEvent e, CancellationToken token)
+    {
+      _nonQuietOutput.AddMessage(e.Message, token);
+      return Task.CompletedTask;
     }
 
     /// <summary>
