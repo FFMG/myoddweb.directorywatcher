@@ -43,12 +43,12 @@ namespace myoddweb.directorywatcher.test
       using var helper = new HelperTest();
 
       using var watcher = new Watcher();
-      watcher.Add(new Request( helper.Folder , recursive));
+      watcher.Add(new Request( helper.Folder , recursive, new Rates(100)));
       
       var added = 0;
       watcher.OnAddedAsync += (ft, t) =>
        {
-         ++added;
+         Interlocked.Increment(ref added);
          return Task.CompletedTask;
        };
 
@@ -56,7 +56,13 @@ namespace myoddweb.directorywatcher.test
       watcher.Start();
 
       //we then need to wait a bit for all the workers to have started.
-      SpinWait.SpinUntil(() => watcher.Ready());
+      TestContext.Out.WriteLine("Waiting for watchers!");
+
+      //we then need to wait a bit for all the workers to have started.
+      var timeout = number * 1000;
+      Assert.IsTrue(SpinWait.SpinUntil(() => watcher.Ready(), timeout));
+
+      TestContext.Out.WriteLine("All watchers ready!");
 
       for ( var i = 0; i < number; ++i )
       {
@@ -64,7 +70,7 @@ namespace myoddweb.directorywatcher.test
       }
 
       // wait a bit
-      SpinWait.SpinUntil(() => number == added, number * 1000);
+      SpinWait.SpinUntil(() => number == added, timeout );
 
       watcher.Stop();
 
@@ -84,20 +90,20 @@ namespace myoddweb.directorywatcher.test
       using var helper = new HelperTest();
 
       using var watcher1 = new Watcher();
-      watcher1.Add(new Request(helper.Folder, recursive));
+      watcher1.Add(new Request(helper.Folder, recursive, new Rates(500)));
       using var watcher2 = new Watcher();
-      watcher2.Add(new Request(helper.Folder, recursive));
+      watcher2.Add(new Request(helper.Folder, recursive, new Rates(500)));
 
       var added1 = 0;
       var added2 = 0;
       watcher1.OnAddedAsync += (ft, t) =>
       {
-        ++added1;
+        Interlocked.Increment(ref added1 );
         return Task.CompletedTask;
       };
       watcher2.OnAddedAsync += (ft, t) =>
       {
-        ++added2;
+        Interlocked.Increment(ref added2);
         return Task.CompletedTask;
       };
 
@@ -105,8 +111,13 @@ namespace myoddweb.directorywatcher.test
       watcher1.Start();
       watcher2.Start();
 
+      TestContext.Out.WriteLine("Waiting for watchers!");
+
       //we then need to wait a bit for all the workers to have started.
-      SpinWait.SpinUntil(() => watcher1.Ready() && watcher2.Ready());
+      var timeout = number * 1000;
+      Assert.IsTrue( SpinWait.SpinUntil(() => watcher1.Ready() && watcher2.Ready(), timeout ));
+
+      TestContext.Out.WriteLine("All watchers ready!");
 
       for (var i = 0; i < number; ++i)
       {
@@ -114,7 +125,7 @@ namespace myoddweb.directorywatcher.test
       }
 
       // wait a bit
-      SpinWait.SpinUntil(() => number == added1 && number == added2, number * 1000);
+      SpinWait.SpinUntil(() => number == added1 && number == added2, timeout );
 
       watcher1.Stop();
       watcher2.Stop();
@@ -126,19 +137,22 @@ namespace myoddweb.directorywatcher.test
 
     [TestCase(5, true)]
     [TestCase(5, false)]
-    public async Task RemoveAddedDelegateBeforeStop(int number, bool recursive )
+    [Retry(5)]
+    public void RemoveAddedDelegateBeforeStop(int number, bool recursive )
     {
       var added = 0;
       Task Fn(IFileSystemEvent ft, CancellationToken token)
       {
-        ++added;
+        Interlocked.Increment(ref added );
         return Task.CompletedTask;
       }
 
       using var helper = new HelperTest();
       using var watcher = new Watcher();
-      watcher.Add(new Request(helper.Folder, recursive));
+      watcher.Add(new Request(helper.Folder, recursive, new Rates(50)));
       watcher.Start();
+
+      SpinWait.SpinUntil(() => watcher.Ready());
 
       watcher.OnAddedAsync += Fn;
 
@@ -148,10 +162,7 @@ namespace myoddweb.directorywatcher.test
       }
 
       // wait a bit
-      var stopWatch = new Stopwatch();
-      stopWatch.Start();
-      SpinWait.SpinUntil(() => number == added, number * 1000);
-      stopWatch.Stop();
+      Assert.IsTrue( SpinWait.SpinUntil(() => number == added, number * 1000) );
 
       // check that they all added.
       Assert.AreEqual(number, added);
@@ -165,7 +176,6 @@ namespace myoddweb.directorywatcher.test
         helper.AddFile();
       }
 
-      await Task.Delay((int)stopWatch.ElapsedMilliseconds).ConfigureAwait( false );
       Assert.AreEqual(number, added);
 
       watcher.Stop();

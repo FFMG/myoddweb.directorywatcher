@@ -14,5 +14,10 @@ namespace myoddweb.directorywatcher.interfaces
     /// If it is recursive or not.
     /// </summary>
     bool Recursive { get; }
+
+    /// <summary>
+    /// The various refresh rates
+    /// </summary>
+    IRates Rates { get; }
   }
 }

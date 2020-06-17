@@ -50,6 +50,8 @@
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="..\myoddweb.directorywatcher.win\monitors\EventsPublisher.cpp" />
+    <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Logger.cpp" />
+    <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Request.cpp" />
     <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Threads\CallbackWorker.cpp" />
     <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Threads\Thread.cpp" />
     <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Threads\Worker.cpp" />
@@ -90,6 +92,8 @@
     <ClCompile Include="..\packages\googletest-release-1.10.0\googletest\src\gtest-all.cc" />
     <ClCompile Include="..\packages\googletest-release-1.10.0\googletest\src\gtest_main.cc" />
     <ClCompile Include="MonitorDataTests.cpp" />
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Logger.h" />
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\LogLevel.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\MonitorsManager.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Request.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Threads\CallbackWorker.h" />
@@ -101,6 +105,7 @@
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Wait.h" />
     <ClInclude Include="MonitorsManagerTestHelper.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="RequestTestHelper.h" />
     <ClInclude Include="WorkerHelper.h" />
   </ItemGroup>
   <ItemGroup>

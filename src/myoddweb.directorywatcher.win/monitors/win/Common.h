@@ -43,8 +43,6 @@ namespace myoddweb
         [[nodiscard]]
         virtual unsigned long GetNotifyFilter() const = 0;
 
-        void DataCallbackFunction(unsigned char* pBufferBk) const;
-
       private:
         /**
          * \brief start monitoring the given folder.
@@ -52,7 +50,7 @@ namespace myoddweb
          */
         bool CreateAndStartData();
 
-        void ProcessNotificationFromBackup(const unsigned char* pBuffer) const;
+        void ProcessNotification(const unsigned char* pBuffer) const;
 
         /**
          * \brief all the data used by the monitor.
@@ -68,11 +66,6 @@ namespace myoddweb
          * \brief the max length of the buffers.
          */
         const unsigned long _bufferLength;
-
-        /**
-         * \brief the callback function.
-         */
-        Data::DataCallbackFunction* _function;
 
       protected:
         /**

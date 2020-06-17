@@ -69,6 +69,12 @@
       <Filter>win\monitors</Filter>
     </ClCompile>
     <ClCompile Include="WorkerTest.cpp" />
+    <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Request.cpp">
+      <Filter>win\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Logger.cpp">
+      <Filter>win\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -155,6 +161,13 @@
       <Filter>win\monitors</Filter>
     </ClInclude>
     <ClInclude Include="WorkerHelper.h" />
+    <ClInclude Include="RequestTestHelper.h" />
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Logger.h">
+      <Filter>win\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\LogLevel.h">
+      <Filter>win\utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="win">

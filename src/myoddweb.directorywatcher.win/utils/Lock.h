@@ -8,7 +8,7 @@ namespace myoddweb
 {
   namespace directorywatcher
   {
-#if MYODDWEB_DEBUG_LOG
+#if MYODDWEB_DEBUG_LOCK
     class Lock
 #else
     class Lock final
@@ -17,7 +17,7 @@ namespace myoddweb
     public:
       explicit Lock(MYODDWEB_MUTEX& lock);
 
-#if MYODDWEB_DEBUG_LOG
+#if MYODDWEB_DEBUG_LOCK
       virtual ~Lock();
 #else
       ~Lock(); 
@@ -42,14 +42,14 @@ namespace myoddweb
   *        1 -is looking for deadlock
   *        2- is full logging
   */
-#define MYODDWEB_DEBUG_LOG 0
+#define MYODDWEB_DEBUG_LOCK 0
 #else
-#define MYODDWEB_DEBUG_LOG 0
+#define MYODDWEB_DEBUG_LOCK 0
 #endif // DEBUG
   
-#if MYODDWEB_DEBUG_LOG == 2
+#if MYODDWEB_DEBUG_LOCK == 2
   #if !defined(_DEBUG)
-    #error "You cannot use debug log in release mode!"
+    #error "You cannot use debug lock in release mode!"
   #endif
 
   #include "../monitors/Base.h"
@@ -141,9 +141,9 @@ namespace myoddweb
 
   // 1- looking for deadlock
   // 2- full log
-  #if MYODDWEB_DEBUG_LOG == 1 
+  #if MYODDWEB_DEBUG_LOCK == 1 
     #define MYODDWEB_LOCK(mut) LockTry MYODDWEB_DEC(__LINE__)(mut, __FUNCSIG__);
-  #elif MYODDWEB_DEBUG_LOG == 2
+  #elif MYODDWEB_DEBUG_LOCK == 2
     #define MYODDWEB_LOCK(mut)                                      \
     {                                                                 \
       const auto o = "Lock Wait: " + std::string(__FUNCSIG__) + "\n"; \
@@ -151,9 +151,9 @@ namespace myoddweb
     }                                                                 \
     LockDebug MYODDWEB_DEC(__LINE__)(mut, __FUNCSIG__ );
   #endif
-#elseif MYODDWEB_DEBUG_LOG == 1
+#elseif MYODDWEB_DEBUG_LOCK == 1
   #if !defined(_DEBUG)
-    #error "You cannot use debug log in release mode!"
+    #error "You cannot use debug lock in release mode!"
   #endif
   #define MYODDWEB_LOCK(mut) Lock MYODDWEB_DEC(__LINE__)(mut);
 #else

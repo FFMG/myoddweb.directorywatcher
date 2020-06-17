@@ -22,13 +22,9 @@ namespace myoddweb
     class Collector final
     {
     public:
-      Collector();
-      virtual ~Collector();
+      explicit Collector(long long maxCleanupAgeMilliseconds);
+      ~Collector();
 
-    private:
-      explicit Collector( short maxAgeMs );
-
-    public:
       /**
        * \brief sort events by TimeMillisecondsUtc
        * \param lhs the lhs element we are checking.
@@ -53,7 +49,7 @@ namespace myoddweb
        * \brief This is the oldest number of ms we want something to be.
        * It is *only* removed if _maxInternalCounter is reached.
        */
-      const short _maxCleanupAgeMilliseconds;
+      const long long _maxCleanupAgeMilliseconds;
 
       /**
        * \brief The next time we want to check for cleanup

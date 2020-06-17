@@ -1,5 +1,3 @@
-#pragma once
-
 #include "pch.h"
 
 #include "../myoddweb.directorywatcher.win/utils/MonitorsManager.h"
@@ -7,6 +5,7 @@
 #include "../myoddweb.directorywatcher.win/utils/Wait.h"
 
 #include "MonitorsManagerTestHelper.h"
+#include "RequestTestHelper.h"
 
 using myoddweb::directorywatcher::Wait;
 using myoddweb::directorywatcher::EventAction;
@@ -30,9 +29,24 @@ TEST(MonitorsManagerDelete, IfTimeoutIsZeroCallbackIsNeverCalled) {
   auto helper = new MonitorsManagerTestHelper();
 
   auto count = 0;
+
+  // use the test request to create the Request
+  // we make a copy of our helper onto the 'real' request to make sure copy is not broken
+  const auto r = RequestHelper(
+    helper->Folder(),
+    false,
+    nullptr,
+    eventFunction,
+    nullptr,
+    0,
+    50);
+
   // monitor that folder.
-  const auto request = ::Request(helper->Folder(), false, function, 0);
+  const auto request = ::Request(r);
   const auto id = ::MonitorsManager::Start(request);
+
+  Wait::SpinUntil([] { return ::MonitorsManager::Ready(); }, TEST_TIMEOUT_WAIT);
+
   Add(id, helper);
 
   // add a single file to it.
@@ -62,8 +76,20 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFileIsDeleted) {
   const auto recursive = std::get<1>(GetParam());
 
   auto count = 0;
+
+  // use the test request to create the Request
+  // we make a copy of our helper onto the 'real' request to make sure copy is not broken
+  const auto r = RequestHelper(
+    helper->Folder(),
+    recursive,
+    nullptr,
+    eventFunction,
+    nullptr,
+    TEST_TIMEOUT,
+    0);
+
   // monitor that folder.
-  const auto request = ::Request(helper->Folder(), recursive, function, TEST_TIMEOUT);
+  const auto request = ::Request(r);
   const auto id = ::MonitorsManager::Start(request);
   Add(id, helper);
 
@@ -103,8 +129,20 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFolderIsDeleted) {
   const auto recursive = std::get<1>(GetParam());
 
   auto count = 0;
+
+  // use the test request to create the Request
+  // we make a copy of our helper onto the 'real' request to make sure copy is not broken
+  const auto r = RequestHelper(
+    helper->Folder(),
+    recursive,
+    nullptr,
+    eventFunction,
+    nullptr,
+    TEST_TIMEOUT,
+    0);
+
   // monitor that folder.
-  const auto request = ::Request(helper->Folder(), recursive, function, TEST_TIMEOUT);
+  const auto request = ::Request(r);
   const auto id = ::MonitorsManager::Start(request);
   Add(id, helper);
 

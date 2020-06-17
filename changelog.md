@@ -8,12 +8,26 @@ Notable changes
 
 - Added worker pool to [limit the number thread](https://github.com/FFMG/myoddweb.directorywatcher/issues/8)
 - Added `Ready()` to interface so we can ask if/when the system is ready to monitor files/folders.
+- Added basic statistics, (see `IStatistics`), to the directory watcher added event `OnStatisticsAsync`
+  - Number of events
+  - Number of milliseconds since last statistics
+- Added `IRates` interface to allow to control how often events are published.
+- Added simple logger so messages can be sent to the watcher event `OnLoggerAsync`
+  - `Unknown` = 0, Should never happen
+  - `Information` = 1, nothing important, maybe something worth noting
+  - `Warning` = 2, something happened, but we managed to recover from it
+  - `Error` = 3, something broke, messages were probably lost.
+  - `Panic` = 4, something really bad happened, the process probably died.
+  - `Debug` = 100, Should not happen in release more, only for information
 
 ### Changed
 
 - Changed the default number of threads from unlimited to a max of 200, (in reality only about 50)
+- You can now set the events rate, the default was every 50ms
 
 ### Fixed
+
+- When monitoring folders that were deleted we would not remove them and free memory
 
 ### Removed
 

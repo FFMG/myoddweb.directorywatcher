@@ -1,5 +1,4 @@
 ﻿using NUnit.Framework;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -29,17 +28,23 @@ namespace myoddweb.directorywatcher.test
         watcher.Add(new Request(helper.Folder, recursive));
         watcher.OnAddedAsync += ( fse,  token) =>
           {
-            TestContext.Out.WriteLine("Message to write to log");
+            TestContext.Out.WriteLine( $"Adding {(fse.IsFile?"File":"Folder")}");
             if (fse.IsFile)
             {
-              ++numberAdded;
+              Interlocked.Increment( ref numberAdded );
             }
             return Task.CompletedTask;
           };
         watcher.Start();
 
         //we then need to wait a bit for all the workers to have started.
-        SpinWait.SpinUntil(() => watcher.Ready() );
+        TestContext.Out.WriteLine("Waiting for watchers!");
+
+        //we then need to wait a bit for all the workers to have started.
+        var timeout = (numberToAdd <= 2 ? 3 : numberToAdd) * 1000;
+        Assert.IsTrue(SpinWait.SpinUntil(() => watcher.Ready(), timeout));
+
+        TestContext.Out.WriteLine("All watchers ready!");
 
         for (var i = 0; i < numberToAdd; ++i)
         {
@@ -49,7 +54,7 @@ namespace myoddweb.directorywatcher.test
         }
 
         // give a bit of time
-        SpinWait.SpinUntil( () => numberAdded >= numberToAdd, numberToAdd * 1000 );
+        SpinWait.SpinUntil( () => numberAdded >= numberToAdd, timeout );
       }
       Assert.AreEqual(numberToAdd, numberAdded);
     }

@@ -1,4 +1,3 @@
-#pragma once
 #include "pch.h"
 
 #include "../myoddweb.directorywatcher.win/utils/MonitorsManager.h"
@@ -6,12 +5,11 @@
 #include "../myoddweb.directorywatcher.win/utils/Wait.h"
 
 #include "MonitorsManagerTestHelper.h"
+#include "RequestTestHelper.h"
 
 using myoddweb::directorywatcher::Wait;
 using myoddweb::directorywatcher::EventAction;
 using myoddweb::directorywatcher::MonitorsManager;
-using myoddweb::directorywatcher::Request;
-using myoddweb::directorywatcher::EventCallback;
 
 class RecursiveAndNonRecursive :public ::testing::TestWithParam<bool> {};
 INSTANTIATE_TEST_SUITE_P(
@@ -27,8 +25,18 @@ TEST_P(RecursiveAndNonRecursive, TwoWatchersOnTheSameFolder) {
 
   const auto recursive = GetParam();
 
-  const auto request1 = ::Request(helper->Folder(), recursive, function, TEST_TIMEOUT);
-  const auto request2 = ::Request(helper->Folder(), recursive, function, TEST_TIMEOUT);
+  //  use the test request to create the Request
+  const auto r = RequestHelper(
+    helper->Folder(),
+    recursive,
+    nullptr,
+    eventFunction,
+    nullptr,
+    TEST_TIMEOUT,
+    0);
+
+  const auto request1 = ::Request(r);
+  const auto request2 = ::Request(r);
   const auto id1 = ::MonitorsManager::Start(request1);
   const auto id2 = ::MonitorsManager::Start(request2);
   Add(id1, helper);
@@ -68,8 +76,27 @@ TEST_P(RecursiveAndNonRecursive, TwoWatchersOnTwoSeparateFolders) {
 
   const auto recursive = GetParam();
 
-  const auto request1 = ::Request(helper1->Folder(), recursive, function, TEST_TIMEOUT);
-  const auto request2 = ::Request(helper2->Folder(), recursive, function, TEST_TIMEOUT);
+  //  use the test request to create the Reques
+  const auto r1 = RequestHelper(
+    helper1->Folder(),
+    recursive,
+    nullptr,
+    eventFunction,
+    nullptr,
+    TEST_TIMEOUT,
+    0);
+
+  const auto r2 = RequestHelper(
+    helper1->Folder(),
+    recursive,
+    nullptr,
+    eventFunction,
+    nullptr,
+    TEST_TIMEOUT,
+    0);
+
+  const auto request1 = ::Request(r1);
+  const auto request2 = ::Request(r2);
   const auto id1 = ::MonitorsManager::Start(request1);
   const auto id2 = ::MonitorsManager::Start(request2);
 
@@ -103,4 +130,86 @@ TEST_P(RecursiveAndNonRecursive, TwoWatchersOnTwoSeparateFolders) {
 
   delete helper1;
   delete helper2;
+}
+
+TEST(MonitorsManagerEdgeCases, StartAndStopAlmostInstantly) {
+    // create the helper.
+    auto helper = MonitorsManagerTestHelper();
+    const auto recursive = true;
+
+    // use the test request to create the Request
+    // we make a copy of our helper onto the 'real' request to make sure copy is not broken
+    const auto r = RequestHelper(
+      helper.Folder(),
+      recursive,
+      loggerFunction,
+      eventFunction,
+      nullptr,
+      TEST_TIMEOUT,
+      0);
+
+    // monitor that folder.
+    const auto request = ::Request(r);
+    const auto id = ::MonitorsManager::Start(request);
+    Add(id, &helper);
+
+    // wait for the thread to get started
+    Wait::Delay(TEST_TIMEOUT_WAIT);
+
+    auto folders = std::vector<std::wstring>();
+
+    // add a folder and remove it
+    const auto folder = helper.AddFolder();
+    ASSERT_TRUE(helper.RemoveFolder(folder));
+
+    // no waiting for anything
+
+    // stop
+    ASSERT_NO_THROW(::MonitorsManager::Stop(id));
+
+    // all done
+    ASSERT_TRUE(Remove(id));
+}
+
+TEST(MonitorsManagerEdgeCases, StartAndStopAlmostInstantlyWithSubFolders) {
+  // create the helper.
+  auto helper = MonitorsManagerTestHelper();
+  for( auto i =0; i < 5 ; ++i )
+  {
+    helper.AddFolder();
+  }
+  const auto recursive = true;
+
+  // use the test request to create the Request
+  // we make a copy of our helper onto the 'real' request to make sure copy is not broken
+  const auto r = RequestHelper(
+    helper.Folder(),
+    recursive,
+    loggerFunction,
+    eventFunction,
+    nullptr,
+    TEST_TIMEOUT,
+    0);
+
+  // monitor that folder.
+  const auto request = ::Request(r);
+  const auto id = ::MonitorsManager::Start(request);
+  Add(id, &helper);
+
+  // wait for the thread to get started
+  Wait::Delay(TEST_TIMEOUT_WAIT);
+
+  auto folders = std::vector<std::wstring>();
+
+  // add a folder and remove it
+  const auto folder = helper.AddFolder();
+  ASSERT_TRUE(helper.RemoveFolder(folder));
+
+  // no waiting for anything
+
+  // stop
+  ASSERT_NO_THROW(::MonitorsManager::Stop(id));
+
+  // all done
+  ASSERT_TRUE(Remove(id));
 }

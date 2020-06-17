@@ -5,6 +5,8 @@
 #include "../../monitors/Base.h"
 #include "../Instrumentor.h"
 #include "../Lock.h"
+#include "../Logger.h"
+#include "../LogLevel.h"
 #include "../Wait.h"
 
 namespace myoddweb::directorywatcher::threads
@@ -35,9 +37,10 @@ namespace myoddweb::directorywatcher::threads
         StopAndWait(-1);
       }
     }
-    catch (...)
+    catch (const std::exception& e)
     {
-
+      // log the error
+      Logger::Log(LogLevel::Error, L"Caught exception '%hs' trying to complete all operations!", e.what());
     }
   }
 
@@ -167,7 +170,7 @@ namespace myoddweb::directorywatcher::threads
       Stop();
 
       // wait for it
-      if (false == Wait::SpinUntil([&]
+      if (false == Wait::SpinUntil([this]
         {
           return Completed();
         },
@@ -179,8 +182,11 @@ namespace myoddweb::directorywatcher::threads
       // done
       return WaitResult::complete;
     }
-    catch( ... )
+    catch (const std::exception& e)
     {
+      // log the error
+      Logger::Log(LogLevel::Error, L"Caught exception '%hs' trying to stop and wait!", e.what());
+    
       return WaitResult::timeout;
     }
   }
@@ -342,9 +348,19 @@ namespace myoddweb::directorywatcher::threads
   /**
    * \brief save the current exception
    */
-  void Worker::SaveCurrentException()
+  void Worker::SaveCurrentException() const
   {
-    // log the error
-    // const auto ptr = std::current_exception();
+    try {
+      const auto ptr = std::current_exception();
+      if (ptr) 
+      {
+        std::rethrow_exception(ptr);
+      }
+    }
+    catch (const std::exception& e) 
+    {
+      // log the error
+      Logger::Log(LogLevel::Error, L"Caught exception '%hs'", e.what() );
+    }
   }
 }

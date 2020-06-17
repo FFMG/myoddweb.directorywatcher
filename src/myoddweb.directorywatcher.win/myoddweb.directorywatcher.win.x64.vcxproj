@@ -114,6 +114,7 @@
     <ClInclude Include="utils\Instrumentor.h" />
     <ClInclude Include="utils\Io.h" />
     <ClInclude Include="utils\Lock.h" />
+    <ClInclude Include="utils\Logger.h" />
     <ClInclude Include="utils\MonitorsManager.h" />
     <ClInclude Include="utils\Request.h" />
     <ClInclude Include="utils\Threads\CallbackWorker.h" />
@@ -140,7 +141,9 @@
     <ClCompile Include="utils\Collector.cpp" />
     <ClCompile Include="utils\Io.cpp" />
     <ClCompile Include="utils\Lock.cpp" />
+    <ClCompile Include="utils\Logger.cpp" />
     <ClCompile Include="utils\MonitorsManager.cpp" />
+    <ClCompile Include="utils\Request.cpp" />
     <ClCompile Include="utils\Threads\CallbackWorker.cpp" />
     <ClCompile Include="utils\Threads\Thread.cpp" />
     <ClCompile Include="utils\Threads\Worker.cpp" />

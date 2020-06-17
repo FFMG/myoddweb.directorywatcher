@@ -5,10 +5,11 @@
 #include <string>
 #include <sstream>
 #include <chrono>
-#include <algorithm>
 #include <fstream>
-#include <vector>
 #include <mutex>
+#include <iomanip>
+#include <thread>
+
 #include "../monitors/Base.h"
 
 /**
@@ -20,185 +21,183 @@
 
 // from https://github.com/TheCherno/Hazel
 // go to chrome://tracing/
-namespace myoddweb
+namespace myoddweb::directorywatcher
 {
-  namespace directorywatcher
+  using FloatingPointMicroseconds = std::chrono::duration<double, std::micro>;
+
+  struct ProfileResult
   {
-    struct ProfileResult
-    {
-      std::string Name;
-      long long Start, End;
-      uint32_t ThreadID;
-    };
+    std::string Name;
 
-    struct InstrumentationSession
-    {
-      std::string Name;
-    };
+    FloatingPointMicroseconds Start;
+    std::chrono::microseconds ElapsedTime;
+    std::thread::id ThreadID;
+  };
 
-    class Instrumentor
+  struct InstrumentationSession
+  {
+    std::string Name;
+  };
+
+  class Instrumentor
+  {
+  private:
+    std::mutex m_Mutex;
+    InstrumentationSession* m_CurrentSession;
+    std::ofstream m_OutputStream;
+  public:
+    Instrumentor()
+      : m_CurrentSession(nullptr)
     {
-      InstrumentationSession* _currentSession;
-      std::ofstream _outputStream;
-      uint32_t _profileCount;
-      MYODDWEB_MUTEX _lock;
-      std::vector<ProfileResult> _msgs;
-      const uint32_t _maxPacketSize;
-    public:
-      Instrumentor()
-        : 
-        _currentSession(nullptr), 
-        _profileCount(0),
-        _maxPacketSize(MYODDWEB_PROFILE_BUFFER)
+    }
+
+    void BeginSession(const std::string& name, const std::string& filepath = "results.json")
+    {
+      std::lock_guard lock(m_Mutex);
+      if (m_CurrentSession)
       {
+        // If there is already a current session, then close it before beginning new one.
+        // Subsequent profiling output meant for the original session will end up in the
+        // newly opened session instead.  That's better than having badly formatted
+        // profiling output.
+        //MYODDWEB_OUT("Instrumentor::BeginSession('{0}') when session '{1}' already open.", name, m_CurrentSession->Name);
+        InternalEndSession();
       }
+      m_OutputStream.open(filepath);
 
-      void BeginSession(const std::string& name, const std::string& filepath = "results.json")
+      if (m_OutputStream.is_open())
       {
-        _outputStream.open(filepath);
+        m_CurrentSession = new InstrumentationSession({ name });
         WriteHeader();
-        _currentSession = new InstrumentationSession{ name };
       }
-
-      void EndSession()
+      else
       {
-        Flush();
-        WriteFooter();
-        _outputStream.close();
-        delete _currentSession;
-        _currentSession = nullptr;
-        _profileCount = 0;
+        //MYODDWEB_OUT(("Instrumentor could not open results file '{0}'.", filepath);
       }
+    }
 
-      void WriteProfile(const ProfileResult& result)
-      {
-        _lock.lock();
-        try
-        {
-          _msgs.emplace_back(result);
-          if (static_cast<uint32_t>(_msgs.size()) > _maxPacketSize)
-          {
-            FlushInLock();
-          }
-        }
-        catch (...)
-        {
-        }
-        _lock.unlock();
-      }
-
-      static Instrumentor& Get()
-      {
-        static Instrumentor instance;
-        return instance;
-      }
-
-    private:
-      /**
-       * \brief given the profile result create the json string to add.
-       * \param result the data we want to build the string with
-       * \return the created string.
-       */
-      static std::string BuildMessage(const ProfileResult& result)
-      {
-        auto name = result.Name;
-        std::replace(name.begin(), name.end(), '"', '\'');
-
-        std::stringstream ss;
-
-        ss << "{";
-        ss << R"("cat":"function",)";
-        ss << "\"dur\":" << (result.End - result.Start) << ',';
-        ss << R"("name":")" << name << "\",";
-        ss << "\"ph\":\"X\",";
-        ss << "\"pid\":0,";
-        ss << "\"tid\":" << result.ThreadID << ',';
-        ss << "\"ts\":" << result.Start;
-        ss << "}";
-        return ss.str();
-      }
-
-      void Flush()
-      {
-        _lock.lock();
-        try
-        {
-          FlushInLock();
-        }
-        catch (...)
-        {
-        }
-        _lock.unlock();
-      }
-
-      void FlushInLock()
-      {
-        if (_msgs.empty())
-        {
-          return;
-        }
-        for (auto it = _msgs.begin(); it != _msgs.end(); ++it)
-        {
-          if (_profileCount++ > 0)
-          {
-            _outputStream << ",";
-          }
-          _outputStream << BuildMessage( *it );
-        }
-        _outputStream.flush();
-        _msgs.clear();
-      }
-
-      void WriteHeader()
-      {
-        _outputStream << "{\"otherData\": {},\"traceEvents\":[";
-        _outputStream.flush();
-      }
-
-      void WriteFooter()
-      {
-        _outputStream << "]}";
-        _outputStream.flush();
-      }
-    };
-
-    class InstrumentationTimer
+    void EndSession()
     {
-      const char* _name;
-      std::chrono::time_point<std::chrono::high_resolution_clock> _startTimepoint;
-      bool _stopped;
-      const uint32_t _threadId;
+      std::lock_guard lock(m_Mutex);
+      InternalEndSession();
+    }
 
-    public:
-      InstrumentationTimer(const char* name, const uint32_t threadId)
-        : 
-        _name(name), 
-        _stopped(false),
-        _threadId( threadId )
+    void WriteProfile(const ProfileResult& result)
+    {
+      std::stringstream json;
+
+      json << std::setprecision(3) << std::fixed;
+      json << ",{";
+      json << "\"cat\":\"function\",";
+      json << "\"dur\":" << (result.ElapsedTime.count()) << ',';
+      json << "\"name\":\"" << result.Name << "\",";
+      json << "\"ph\":\"X\",";
+      json << "\"pid\":0,";
+      json << "\"tid\":" << result.ThreadID << ",";
+      json << "\"ts\":" << result.Start.count();
+      json << "}";
+
+      std::lock_guard lock(m_Mutex);
+      if (m_CurrentSession)
       {
-        _startTimepoint = std::chrono::high_resolution_clock::now();
+        m_OutputStream << json.str();
+        m_OutputStream.flush();
       }
+    }
 
-      ~InstrumentationTimer()
+    static Instrumentor& Get()
+    {
+      static Instrumentor instance;
+      return instance;
+    }
+
+  private:
+
+    void WriteHeader()
+    {
+      m_OutputStream << "{\"otherData\": {},\"traceEvents\":[{}";
+      m_OutputStream.flush();
+    }
+
+    void WriteFooter()
+    {
+      m_OutputStream << "]}";
+      m_OutputStream.flush();
+    }
+
+    // Note: you must already own lock on m_Mutex before
+    // calling InternalEndSession()
+    void InternalEndSession()
+    {
+      if (m_CurrentSession)
       {
-        if (!_stopped)
-        {
-          Stop();
-        }
+        WriteFooter();
+        m_OutputStream.close();
+        delete m_CurrentSession;
+        m_CurrentSession = nullptr;
       }
+    }
 
-      void Stop()
-      {
-        const auto endTimepoint = std::chrono::high_resolution_clock::now();
+  };
 
-        const auto start = std::chrono::time_point_cast<std::chrono::microseconds>(_startTimepoint).time_since_epoch().count();
-        const auto end = std::chrono::time_point_cast<std::chrono::microseconds>(endTimepoint).time_since_epoch().count();
+  class InstrumentationTimer
+  {
+  public:
+    InstrumentationTimer(const char* name)
+      : m_Name(name), m_Stopped(false)
+    {
+      m_StartTimepoint = std::chrono::steady_clock::now();
+    }
 
-        Instrumentor::Get().WriteProfile({ _name, start, end, _threadId });
+    ~InstrumentationTimer()
+    {
+      if (!m_Stopped)
+        Stop();
+    }
 
-        _stopped = true;
-      }
+    void Stop()
+    {
+      auto endTimepoint = std::chrono::steady_clock::now();
+      auto highResStart = FloatingPointMicroseconds{ m_StartTimepoint.time_since_epoch() };
+      auto elapsedTime = std::chrono::time_point_cast<std::chrono::microseconds>(endTimepoint).time_since_epoch() - std::chrono::time_point_cast<std::chrono::microseconds>(m_StartTimepoint).time_since_epoch();
+
+      Instrumentor::Get().WriteProfile({ m_Name, highResStart, elapsedTime, std::this_thread::get_id() });
+
+      m_Stopped = true;
+    }
+  private:
+    const char* m_Name;
+    std::chrono::time_point<std::chrono::steady_clock> m_StartTimepoint;
+    bool m_Stopped;
+  };
+
+  namespace InstrumentorUtils {
+
+    template <size_t N>
+    struct ChangeResult
+    {
+      char Data[N];
     };
+
+    template <size_t N, size_t K>
+    constexpr auto CleanupOutputString(const char(&expr)[N], const char(&remove)[K])
+    {
+      ChangeResult<N> result = {};
+
+      size_t srcIndex = 0;
+      size_t dstIndex = 0;
+      while (srcIndex < N)
+      {
+        size_t matchIndex = 0;
+        while (matchIndex < K - 1 && srcIndex + matchIndex < N - 1 && expr[srcIndex + matchIndex] == remove[matchIndex])
+          matchIndex++;
+        if (matchIndex == K - 1)
+          srcIndex += matchIndex;
+        result.Data[dstIndex++] = expr[srcIndex] == '"' ? '\'' : expr[srcIndex];
+        srcIndex++;
+      }
+      return result;
+    }
   }
 }
 
@@ -214,15 +213,16 @@ namespace myoddweb
 #endif // DEBUG
 
 #if MYODDWEB_PROFILE
+  #if !defined(_DEBUG)
+    #error "You cannot use profiling in release mode!"
+  #endif
   #define MYODDWEB_PROFILE_BEGIN_SESSION(name, filepath) ::myoddweb::directorywatcher::Instrumentor::Get().BeginSession(name, filepath)
   #define MYODDWEB_PROFILE_END_SESSION() ::myoddweb::directorywatcher::Instrumentor::Get().EndSession()
-  #define MYODDWEB_PROFILE_SCOPE(name, threadId) ::myoddweb::directorywatcher::InstrumentationTimer timer##__LINE__(name, threadId);
-  #define MYODDWEB_PROFILE_FUNCTION_WITHTHREADID() MYODDWEB_PROFILE_SCOPE(__FUNCSIG__, static_cast<uint32_t>(std::hash<std::thread::id>{}(std::this_thread::get_id())))
-  #define MYODDWEB_PROFILE_FUNCTION() MYODDWEB_PROFILE_SCOPE(__FUNCSIG__, (uint32_t)0)
+  #define MYODDWEB_PROFILE_SCOPE(name) ::myoddweb::directorywatcher::InstrumentationTimer timer##__LINE__(name);
+  #define MYODDWEB_PROFILE_FUNCTION() MYODDWEB_PROFILE_SCOPE(__FUNCSIG__)
 #else
   #define MYODDWEB_PROFILE_BEGIN_SESSION(name, filepath)
   #define MYODDWEB_PROFILE_END_SESSION()
   #define MYODDWEB_PROFILE_SCOPE(name)
   #define MYODDWEB_PROFILE_FUNCTION()
-  #define MYODDWEB_PROFILE_FUNCTION_WITHTHREADID()
-#endif 
+#endif
