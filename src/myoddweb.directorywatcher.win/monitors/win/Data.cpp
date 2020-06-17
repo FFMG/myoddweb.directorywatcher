@@ -155,7 +155,6 @@ namespace myoddweb:: directorywatcher:: win
 
       // then wait again for abort, (if needed)
       // in case any other messages are unprocessed.
-      unsigned long numberOfBytes = 0;
       if (::CancelIoEx(_hDirectory, _overlapped) != 0 )
       {
         for (;;)
@@ -447,13 +446,19 @@ namespace myoddweb:: directorywatcher:: win
       _operationAborted = true;
       break;
 
+    case ERROR_NETNAME_DELETED:
+      Stop();
+      Logger::Log(LogLevel::Warning, L"Warning: The network connection to '%' has been deleted.", _path.c_str() );
+      return;
+
     case ERROR_ACCESS_DENIED:
       Stop();
+      Logger::Log(LogLevel::Warning, L"Warning: Acess to '%s' is denied", _path.c_str() );
       return;
 
     default:
-      //  we cannot use _monitor anymore
-      Logger::Log(0, LogLevel::Warning, L"Warning: There was an error processing an API message %lu.", errorCode );
+      //  we cannot use the path anymore
+      Logger::Log( LogLevel::Warning, L"Warning: There was an error processing an API message %lu.", errorCode );
       break;
     }
   }
