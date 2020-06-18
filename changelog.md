@@ -21,6 +21,7 @@ Notable changes
   - `Debug` = 100, Should not happen in release more, only for information
 - Added [random testing app](testing.md), (create/delete/etc) files to ensure that events are not lost over time.
 - Added [load testing app](testing.md), create multiple watchers and start/stop them over hundreds of events.
+- Added [strong name signing] to included files (https://github.com/FFMG/myoddweb.directorywatcher/issues/9)
 
 ### Changed
 
