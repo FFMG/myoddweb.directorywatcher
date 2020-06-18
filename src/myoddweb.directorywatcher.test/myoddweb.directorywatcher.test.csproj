@@ -6,6 +6,10 @@
     <IsPackable>false</IsPackable>
 
     <NoWin32Manifest>true</NoWin32Manifest>
+    
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>../myoddweb.directorywatcher.snk</AssemblyOriginatorKeyFile>
+    
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

@@ -37,3 +37,18 @@ Example: `--iterations 5 --q true --r true`
 Run a test for `x` iterations and add/remove files at random intervals, the idea being that changes are still picked up after a while.
 
 We start a watcher that monitors all the folders and all the files, so it is the "maximum" case.
+
+# Strong Name Signing
+
+locate sn.exe
+
+Create a signature file, `sn -k "myoddweb.directorywatcher.snk"`
+
+Create a public file off the snk file, `sn -p "myoddweb.directorywatcher.snk" "pmyoddweb.directorywatcher.snk"`
+
+Output the public key: `sn -tp "Z:\Projects\myoddweb.directorywatcher\src\pmyoddweb.directorywatcher.snk"`
+
+## More 
+
+- https://docs.microsoft.com/en-us/dotnet/framework/tools/sn-exe-strong-name-tool
+- https://docs.microsoft.com/en-us/dotnet/standard/assembly/create-public-private-key-pair
