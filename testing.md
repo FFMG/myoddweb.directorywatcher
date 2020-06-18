@@ -46,7 +46,7 @@ Create a signature file, `sn -k "myoddweb.directorywatcher.snk"`
 
 Create a public file off the snk file, `sn -p "myoddweb.directorywatcher.snk" "pmyoddweb.directorywatcher.snk"`
 
-Output the public key: `sn -tp "Z:\Projects\myoddweb.directorywatcher\src\pmyoddweb.directorywatcher.snk"`
+Output the public key: `sn -tp "pmyoddweb.directorywatcher.snk"`
 
 ## More 
 
