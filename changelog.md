@@ -19,6 +19,8 @@ Notable changes
   - `Error` = 3, something broke, messages were probably lost.
   - `Panic` = 4, something really bad happened, the process probably died.
   - `Debug` = 100, Should not happen in release more, only for information
+- Added [random testing app](testing.md), (create/delete/etc) files to ensure that events are not lost over time.
+- Added [load testing app](testing.md), create multiple watchers and start/stop them over hundreds of events.
 
 ### Changed
 

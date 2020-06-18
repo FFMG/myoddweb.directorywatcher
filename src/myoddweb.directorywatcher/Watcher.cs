@@ -289,6 +289,16 @@ namespace myoddweb.directorywatcher
 
       try
       {
+        // special case, if we have started, but we have no processed requests
+        // then we can say that we are ready
+        // we know for a fact that the manager is not ready, simply because
+        // we could not have started it without any folder.
+        // but we are not in error, we are indeed "ready"
+        if (_started && !_processedRequests.Any())
+        {
+          return true;
+        }
+
         // do we have anything to do ... or are we even able to work?
         return _watcherManager?.Ready() ?? false;
       }

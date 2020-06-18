@@ -55,6 +55,12 @@ namespace myoddweb::directorywatcher
    */
   void Logger::Log(const LogLevel level, const wchar_t* format, ...)
   {
+    //  shortcut
+    if(HasAnyLoggers())
+    {
+      return;
+    }
+
     va_list args;
     va_start(args, format);
     const auto message = MakeMessage(format, args);
@@ -84,6 +90,12 @@ namespace myoddweb::directorywatcher
    */
   void Logger::Log(const long long id, const LogLevel level, const wchar_t* format, ...)
   {
+    //  shortcut
+    if (HasAnyLoggers())
+    {
+      return;
+    }
+
     va_list args;
     va_start(args, format);
     const auto message = MakeMessage(format, args);
