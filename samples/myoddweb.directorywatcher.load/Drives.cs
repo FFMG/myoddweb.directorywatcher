@@ -147,13 +147,11 @@ namespace myoddweb.directorywatcher.load
       Stop();
     }
 
-
     private void StopTimers()
     {
       _displayUpdatesTimer.Enabled = false;
       _displayUpdatesTimer.Elapsed -= OnDisplayUpdatesTimerEvent;
     }
-
 
     private void StartTimers()
     {

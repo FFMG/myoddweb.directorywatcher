@@ -244,7 +244,7 @@ namespace myoddweb.directorywatcher.load
 
     private WatchedFolder AddWatchedFolder()
     {
-      IWatcher2 watcher;
+      IWatcher3 watcher;
       if ( !Options.Unique )
       {
         watcher = new Watcher();
