@@ -37,6 +37,11 @@ namespace myoddweb.directorywatcher.utils
     private string _embededFolder;
 
     /// <summary>
+    /// The starting point of Unix time.
+    /// </summary>
+    private readonly DateTime _utcStartTimeForUnix = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+
+    /// <summary>
     /// Get the current embeded folder.
     /// </summary>
     protected string EmbededFolder
@@ -146,7 +151,7 @@ namespace myoddweb.directorywatcher.utils
     /// <param name="oldName"></param>
     /// <param name="action"></param>
     /// <param name="error"></param>
-    /// <param name="dateTimeUtc"></param>
+    /// <param name="eventUnixDateTimeInMilliseconds"></param>
     /// <returns></returns>
     protected void EventsCallback(
       long id,
@@ -155,7 +160,7 @@ namespace myoddweb.directorywatcher.utils
       string oldName,
       int action,
       int error,
-      long dateTimeUtc)
+      long eventUnixDateTimeInMilliseconds)
     {
       lock (_idAndEvents)
       {
@@ -165,7 +170,7 @@ namespace myoddweb.directorywatcher.utils
           oldName,
           (EventAction)action,
           (interfaces.EventError)error,
-          DateTime.FromFileTimeUtc(dateTimeUtc)
+          UnixMillisecondsToDateTimeUtc(eventUnixDateTimeInMilliseconds)
         );
         if (!_idAndEvents.ContainsKey(id))
         {
@@ -180,6 +185,16 @@ namespace myoddweb.directorywatcher.utils
     #endregion
 
     #region Static helpers
+    /// <summary>
+    /// Convert a unix time in milliseconds to a date/time
+    /// </summary>
+    /// <param name="unixTimeInMilliseconds"></param>
+    /// <returns></returns>
+    public DateTime UnixMillisecondsToDateTimeUtc( long unixTimeInMilliseconds )
+    {
+      return _utcStartTimeForUnix.AddMilliseconds(unixTimeInMilliseconds);
+    }
+
     /// <summary>
     /// Load an embeded file and return the raw data.
     /// 'Borrowed' from https://www.codeproject.com/Articles/528178/Load-DLL-From-Embedded-Resource
@@ -208,7 +223,7 @@ namespace myoddweb.directorywatcher.utils
     /// </summary>
     /// <param name="input"></param>
     /// <returns></returns>
-    static private string Hash(string input)
+    private static string Hash(string input)
     {
       using (var sha1 = new SHA1CryptoServiceProvider())
       {

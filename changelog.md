@@ -31,6 +31,7 @@ Notable changes
 ### Fixed
 
 - When monitoring folders that were deleted we would not remove them and free memory
+- The date time of an event was wrong, (like ... a lot).
 
 ### Removed
 
