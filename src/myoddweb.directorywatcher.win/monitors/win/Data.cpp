@@ -21,6 +21,7 @@ namespace myoddweb:: directorywatcher:: win
     const unsigned long bufferLength
     )
     :
+    _stopWorker( nullptr ),
     _invalidHandleWait(0),
     _notifyFilter(notifyFilter),
     _recursive(recursive),
@@ -39,7 +40,7 @@ namespace myoddweb:: directorywatcher:: win
 
   Data::~Data()
   {
-    Stop();
+    StopAndWait();
   }
 
   /**
@@ -96,6 +97,28 @@ namespace myoddweb:: directorywatcher:: win
     return true;
   }
 
+  /// <summary>
+  /// Stop monitoring data and wait for the work to complete.
+  /// </summary>
+  void Data::StopAndWait()
+  {
+    //  call the stop
+    Stop();
+
+    if (_stopWorker != nullptr)
+    {
+      // and then wait for it to complete
+      _stopWorker->StopAndWait(-1);
+
+      // we are done with this worker
+      delete _stopWorker;
+    }
+
+    // we are done already.
+    _stopWorker = nullptr;
+  }
+
+
   /**
    * \brief Clear all the data and close all connections handles.
    */
@@ -104,17 +127,35 @@ namespace myoddweb:: directorywatcher:: win
     _stop = true;
     try
     {
-      // close the handle 
-      ClearHandle();
+      // are we stopping already?
+      // no point in doing this again.
+      if( nullptr != _stopWorker )
+      {
+        return;
+      }
 
-      // the buffer.
-      ClearBuffer();
+      // make sure we do no start a new thread for no reason
+      if( !IsValidHandle() )
+      {
+        return;
+      }
 
-      // clear the overlapped structure.
-      ClearOverlapped();
+      // start a worker to stop everything.
+      // the stop flag is set so we should not be able to re-start anything
+      // we can move on and let other threads do their things.
+      _stopWorker = new threads::CallbackWorker( [this] {
+        // close the handle 
+        ClearHandle();
 
-      // clear the buffer of data that might be left
-      ClearData();
+        // the buffer.
+        ClearBuffer();
+
+        // clear the overlapped structure.
+        ClearOverlapped();
+
+        // clear the buffer of data that might be left
+        ClearData();
+      });
     }
     catch (const std::exception& e)
     {

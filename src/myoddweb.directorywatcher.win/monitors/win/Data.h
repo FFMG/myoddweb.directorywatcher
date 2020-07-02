@@ -4,6 +4,7 @@
 #pragma once
 #include <Windows.h>
 #include "../Monitor.h"
+#include "../../utils/Threads/CallbackWorker.h"
 
 namespace myoddweb:: directorywatcher:: win
 {
@@ -41,6 +42,10 @@ namespace myoddweb:: directorywatcher:: win
      */
     void Stop();
 
+    /// <summary>
+    /// Get the buffer data
+    /// </summary>
+    /// <returns></returns>
     std::vector<unsigned char*> Get();
 
     /**
@@ -49,9 +54,25 @@ namespace myoddweb:: directorywatcher:: win
      */
     void CheckStillValid();
   private:
+    /// <summary>
+    /// The worker we will be using to stop collecting data
+    /// </summary>
+    threads::CallbackWorker* _stopWorker;
 
+    /// <summary>
+    /// The lock we are using to clear/update the buffer
+    /// </summary>
     MYODDWEB_MUTEX _dataLock;
+
+    /// <summary>
+    /// The buffer of data
+    /// </summary>
     std::vector<unsigned char*> _data;
+
+    /// <summary>
+    /// Stop monitoring data and wait for the work to complete.
+    /// </summary>
+    void StopAndWait();
 
     /**
      * \brief Check if the handle is valid
