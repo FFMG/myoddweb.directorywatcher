@@ -2,6 +2,18 @@
 
 Notable changes
 
+## 0.1.9 - dd-mm-2020
+
+### Added
+
+### Changed
+
+### Fixed
+
+- There would be [a crash when renaming a 'root' folder](https://github.com/FFMG/myoddweb.directorywatcher/issues/16)
+
+### Removed
+
 ## 0.1.8 - 19-06-2020
 
 ### Added
