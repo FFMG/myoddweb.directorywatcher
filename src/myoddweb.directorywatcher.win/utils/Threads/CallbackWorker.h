@@ -2,7 +2,8 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #pragma once
-#include "../../monitors/win/Data.h"
+#include "Worker.h"
+#include "Thread.h"
 
 namespace myoddweb:: directorywatcher:: threads
 {
