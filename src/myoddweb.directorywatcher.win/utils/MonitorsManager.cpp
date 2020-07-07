@@ -299,6 +299,7 @@ namespace myoddweb
         try
         {
           // delete it
+          _workersPool->Remove(*monitor->second);
           delete monitor->second;
         }
         catch (const std::exception& e)

@@ -43,12 +43,12 @@ namespace myoddweb.directorywatcher.sample
     {
       using (var watch = new Watcher())
       {
-        var drvs = System.IO.DriveInfo.GetDrives();
+        var drvs = DriveInfo.GetDrives();
         foreach (var drv in drvs)
         {
           if (drv.DriveType == DriveType.Fixed)
           {
-            watch.Add(new Request(drv.Name, true, new Rates(50, 0)));
+            watch.Add(new Request(drv.Name, true ));
           }
         }
         
@@ -70,8 +70,8 @@ namespace myoddweb.directorywatcher.sample
         var cts = new CancellationTokenSource();
 
         // start the renaming of folder
-        const string path = "c:\\";
-        var task = RenameFolders( $"{path}\\{Guid.NewGuid()}", 1000, cts.Token );
+        const string path = "z:\\";
+        var task = RenameFolders( $"{path}\\myoddweb.{Guid.NewGuid()}", 1000, cts.Token );
 
         Console.WriteLine("Press Ctrl+C to stop to exit.");
         WaitForCtrlC();

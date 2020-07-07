@@ -8,6 +8,8 @@ Notable changes
 
 ### Changed
 
+- Stop/Shutdown is a lot faster, (especially when monitoring large folders)
+
 ### Fixed
 
 - There would be [a crash when renaming a 'root' folder](https://github.com/FFMG/myoddweb.directorywatcher/issues/16)

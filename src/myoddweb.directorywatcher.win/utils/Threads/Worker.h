@@ -2,7 +2,6 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #pragma once
-#include <atomic>
 #include <chrono>
 #include <mutex>
 
@@ -26,7 +25,10 @@ namespace myoddweb:: directorywatcher:: threads
     };
 
   private:
-    std::atomic<State> _state;
+    /// <summary>
+    /// The current state of the worker.
+    /// </summary>
+    State _state;
     
     /**
      * \brief The timers used to calculate the elapsed time.
@@ -69,21 +71,29 @@ namespace myoddweb:: directorywatcher:: threads
     [[nodiscard]]
     bool MustStop() const;
 
-    /**
-     * \brief Function called to run the thread.
-     */
-    void Start();
+    /// <summary>
+    /// The one and only function that run the complete thread.
+    /// </summary>
+    void Execute();
 
     /**
      * \brief non blocking call to instruct the thread to stop.
      */
     void Stop();
 
-    /**
-     * \brief stop the running thread and wait
-     */
+    /// <summary>
+    /// Stop the execution and wait for it to complete.
+    /// </summary>
+    /// <param name="timeout"></param>
+    /// <returns></returns>
     virtual WaitResult StopAndWait( long long timeout );
 
+    /// <summary>
+    /// Wait for the worker to finish or timeout.
+    /// </summary>
+    /// <param name="timeout">How long to wait for.</param>
+    /// <returns>Either complete or timeout</returns>
+    virtual WaitResult WaitFor(long long timeout);
   private:
     /**
      * \brief called when the thread is starting
@@ -109,6 +119,7 @@ namespace myoddweb:: directorywatcher:: threads
      */
     float CalculateElapsedTimeMilliseconds();
 
+    void StopInLock();
   protected:
     friend WorkerPool;
 
@@ -131,6 +142,12 @@ namespace myoddweb:: directorywatcher:: threads
      */
     [[nodiscard]]
     bool Is(const State& state) const;
+
+    /// <summary>
+    /// Update the state from one value to anothers.
+    /// </summary>
+    /// <param name="state">The new value</param>
+    void SetState(const State& state);
 
     /**
      * \brief called when the worker is ready to start

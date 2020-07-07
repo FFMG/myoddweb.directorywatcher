@@ -28,8 +28,6 @@ TEST(MonitorsManagerDelete, IfTimeoutIsZeroCallbackIsNeverCalled) {
   // create the helper.
   auto helper = new MonitorsManagerTestHelper();
 
-  auto count = 0;
-
   // use the test request to create the Request
   // we make a copy of our helper onto the 'real' request to make sure copy is not broken
   const auto r = RequestHelper(

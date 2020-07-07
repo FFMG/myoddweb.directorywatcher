@@ -157,5 +157,5 @@ namespace myoddweb
   #endif
   #define MYODDWEB_LOCK(mut) Lock MYODDWEB_DEC(__LINE__)(mut);
 #else
-  #define MYODDWEB_LOCK(mut)  const std::lock_guard<std::mutex> MYODDWEB_DEC(__LINE__)(mut);
+  #define MYODDWEB_LOCK(mut)  const std::lock_guard<decltype(mut)> MYODDWEB_DEC(__LINE__)(mut);
 #endif 

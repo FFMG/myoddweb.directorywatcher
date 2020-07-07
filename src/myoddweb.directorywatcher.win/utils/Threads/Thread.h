@@ -49,7 +49,7 @@ namespace myoddweb:: directorywatcher:: threads
     /**
      * \brief start running the worker.
      */
-    void Start() const;
+    void Execute() const;
 
     /**
      * \brief the common constructor, private as used to set default values.

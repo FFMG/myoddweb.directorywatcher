@@ -18,7 +18,8 @@ namespace myoddweb:: directorywatcher:: win
     const wchar_t* path,
     const unsigned long notifyFilter,
     const bool recursive,
-    const unsigned long bufferLength
+    const unsigned long bufferLength,
+    threads::WorkerPool& workerPool
     )
     :
     _stopWorker( nullptr ),
@@ -31,7 +32,7 @@ namespace myoddweb:: directorywatcher:: win
     _bufferLength(bufferLength),
     _path( path ),
     _id( id ),
-    _overlapped(nullptr)
+    _workerPool( workerPool )
   {
     // prepapre the buffer that will receive our data
     // create the buffer if needed.
@@ -49,7 +50,7 @@ namespace myoddweb:: directorywatcher:: win
   void Data::PrepareForRead()
   {
     MYODDWEB_PROFILE_FUNCTION();
-    if( _operationAborted || _stop )
+    if( _operationAborted || _colectionState != CollectionState::Started )
     {
       return;
     }
@@ -78,7 +79,13 @@ namespace myoddweb:: directorywatcher:: win
    */
   bool Data::Start()
   {
-    _stop = false;
+    // only start if we are unknown
+    // otherwise just get out
+    if(_colectionState != CollectionState::Unknown )
+    {
+      return false;
+    }
+    _colectionState = CollectionState::Started;
 
     // try and open the directory
     // if it is open already then nothing should happen here.
@@ -102,13 +109,21 @@ namespace myoddweb:: directorywatcher:: win
   /// </summary>
   void Data::StopAndWait()
   {
+    MYODDWEB_LOCK(_stopWorkerLock);
+
     //  call the stop
-    Stop();
+    StopInLock();
 
     if (_stopWorker != nullptr)
     {
+      _workerPool.WaitFor(*_stopWorker, -1);
+
       // and then wait for it to complete
-      _stopWorker->StopAndWait(-1);
+      const auto wr = _stopWorker->StopAndWait(-1);
+      if( wr != threads::WaitResult::complete )
+      {
+        Logger::Log(LogLevel::Error, L"Unable to complete Data worker" );
+      }
 
       // we are done with this worker
       delete _stopWorker;
@@ -124,7 +139,16 @@ namespace myoddweb:: directorywatcher:: win
    */
   void Data::Stop()
   {
-    _stop = true;
+    MYODDWEB_LOCK(_stopWorkerLock);
+    StopInLock();
+  }
+
+  /// <summary>
+  /// Stop monitoring folder while we have the stop lock.
+  /// </summary>
+  void Data::StopInLock()
+  {
+    _colectionState = CollectionState::Stopped;
     try
     {
       // are we stopping already?
@@ -156,6 +180,9 @@ namespace myoddweb:: directorywatcher:: win
         // clear the buffer of data that might be left
         ClearData();
       });
+
+      // add this to the pool
+      _workerPool.Add( *_stopWorker );
     }
     catch (const std::exception& e)
     {
@@ -209,6 +236,13 @@ namespace myoddweb:: directorywatcher:: win
           {
             break;
           }
+        }
+
+        if(_operationAborted != true )
+        {
+          unsigned long t = 0;
+          const auto x = GetOverlappedResult(_hDirectory, _overlapped, &t, FALSE);
+Logger::Log(_id, LogLevel::Warning, L"Timeout waiting operation aborted message!");
         }
 
         // then wait a little for the operation to be cancelled.
@@ -392,10 +426,12 @@ namespace myoddweb:: directorywatcher:: win
    */
   bool Data::Listen()
   {
-    if(_stop)
+    // if we are not started then we do not want to start
+    if(_colectionState != CollectionState::Started )
     {
       return false;
     }
+
     MYODDWEB_PROFILE_FUNCTION();
     try
     {
@@ -577,6 +613,9 @@ namespace myoddweb:: directorywatcher:: win
 
     // we will reopen, so reset the wait time.
     _invalidHandleWait = 0;
+
+    // reset the start flag so we can restart
+    _colectionState = CollectionState::Unknown;
 
     // try open again, if this does not work then it is fine
     // because we have reset the timer

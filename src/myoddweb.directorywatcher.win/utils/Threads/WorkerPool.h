@@ -2,322 +2,293 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #pragma once
-#include <mutex>
+#include <map>
 #include "Thread.h"
 
 namespace myoddweb:: directorywatcher:: threads
 {
   class WorkerPool final : public Worker
   {
-    /**
-     * \brief the current thread handle, if we have one.
-     */
-    Thread* _thread;
-
-    /**
-     * \brief how often we want to limit this.
-     */
-    const long long _throttleElapsedTimeMilliseconds;
-
-    /**
-     * \brief the elapsed time since the last time we checked this
-     */
-    float _elapsedTimeMilliseconds = 0;
-
-    #pragma region Locks
-    /**
-     * \brief the lock for the running workers.
-     */
-    MYODDWEB_MUTEX _lockRunningWorkers;
-
-    /**
-     * \brief lock for the the workers that are waiting to start;
-     */
-    MYODDWEB_MUTEX _lockWorkersWaitingToStart;
-
-    /**
-     * \brief lock for the workers that are waiting to end
-     */
-    MYODDWEB_MUTEX _lockThreadsWaitingToEnd;
-    #pragma endregion 
-
-    #pragma region Worker/Threads containers
-    /**
-     * \brief the workers that have yet to be started
-     */
-    std::vector<Worker*> _workersWaitingToStart;
-
-    /**
-     * \brief the workers lock that we are waiting to end.
-     */
-    std::vector<Worker*> _threadsWaitingToEnd;
-
-    /**
-     * \brief all our workers that are currently running.
-     */
-    std::vector<Worker*> _runningWorkers;
-    #pragma endregion
-
   public:
     WorkerPool(const WorkerPool&) = delete;
     WorkerPool(WorkerPool&&) = delete;
-    WorkerPool() = delete;
-    const WorkerPool& operator=(const WorkerPool&) = delete;
-    const WorkerPool& operator=(const WorkerPool&&) = delete;
+    WorkerPool& operator=(WorkerPool&&) = delete;
+    WorkerPool& operator=(const WorkerPool&) = delete;
 
+    /// <summary>
+    /// Called when when the pool is starting
+    /// </summary>
+    /// <param name="throttleElapsedTimeMilliseconds">How often we want updates to happen</param>
     explicit WorkerPool(long long throttleElapsedTimeMilliseconds);
     virtual ~WorkerPool();
 
-    /**
-     * \brief add a worker to our worers pool.
-     * \param worker the worker we are trying to add.
-     */
+    #pragma region Helpers
+    /// <summary>
+    /// Add a worker to the pool of workers.
+    /// </summary>
+    /// <param name="worker">The worker we want to add.</param>
     void Add(Worker& worker);
 
-    /**
-     * \brief add multiple workers at once
-     * \param workers the workers we are adding.
-     */
-    void Add( const std::vector<Worker*>& workers );
+    /// <summary>
+    /// Remove a worker from our list of workers.
+    /// </summary>
+    /// <param name="worker"></param>
+    void Remove(Worker& worker);
 
-    /**
-     * \brief wait a little bit for a worker to finish
-     *        if the worker does not exist we just return that it is complete.
-     * \param worker the worker we are waiting for
-     * \param timeout the number of ms we want to wait for the worker to complete.
-     * \return either timeout of complete if the thread completed.
-     */
+    /// <summary>
+    /// Wait for a worker to either complete or timeout
+    /// </summary>
+    /// <param name="worker">The worker we will be waiting for</param>
+    /// <param name="timeout">How long to wait for.</param>
+    /// <returns>Either complete or timeout</returns>
     WaitResult WaitFor(Worker& worker, long long timeout);
 
-    /**
-     * \brief wait for an array of workers to complete.
-     * \param workers the workers we are waiting for.
-     * \param timeout how long we are waiting for.
-     * \return if any of them timed out.
-     */
-    WaitResult WaitFor( const std::vector<Worker*>& workers, long long timeout);
+    /// <summary>
+    /// Wait for all the workers to either finish or the timeout.
+    /// </summary>
+    /// <param name="timeout">How long to wait for.</param>
+    /// <returns>Either complete or timeout</returns>
+    WaitResult WaitFor(long long timeout) override;
 
-    /**
-     * \brief wait a little bit for all the workers to finish
-     *        if the worker does not exist we just return that it is complete.
-     * \param timeout the number of ms we want to wait for the workers to complete.
-     * \return either timeout of complete if the threads completed.
-     */
-    WaitResult WaitFor( long long timeout);
+    /// <summary>
+    /// Signal a single worker to stop.
+    /// </summary>
+    /// <param name="worker"></param>
+    void StopWorker(Worker& worker);
 
-    /**
-     * \brief non blocking call to instruct the thread to stop.
-     */
-    void OnWorkerStop() override;
+    /// <summary>
+    /// Stop one or more workers and wait for them to complete.
+    /// After stopping them we wait for them all or timeout.
+    /// </summary>
+    /// <param name="workers">The workers we are waiting for.</param>
+    /// <param name="timeout">How long we want to wait for.</param>
+    /// <returns>Either complete if everything completed or timeout</returns>
+    WaitResult StopAndWait(const std::vector<Worker*>& workers, long long timeout);
 
-    /**
-     * \brief stop one of the worker
-     * \param worker the worker we are waiting for.
-     */
-    void StopWorker( Worker& worker );
-
-    /**
-     * \brief stop multiple workers
-     * \param workers the workers we are waiting for.
-     */
-    void StopWorkers( const std::vector<Worker*>& workers);
-
-    /**
-     * \brief stop the running workers and wait
-     * \param timeout the number of ms we want to wait.
-     * \return the result of the wait
-     */
-    WaitResult StopAndWait(long long timeout) override;
-
-    /**
-     * \brief stop multiple workers and wait
-     * \param workers the workers we are waiting for.
-     * \param timeout the number of ms we want to wait for them.
-     * \return the result of the wait
-     */
-    WaitResult StopAndWait( const std::vector<Worker*>& workers, long long timeout);
-
-    /**
-     * \brief stop one of the worker and wait
-     * \param worker the worker we are waiting for.
-     * \param timeout the number of ms we want to wait.
-     */
+    /// <summary>
+    /// Wait for a single engine worker to complete and wait for it to complete.
+    /// </summary>
+    /// <param name="worker">The worker we are waiting for.</param>
+    /// <param name="timeout">How long we want to wait for.</param>
+    /// <returns>Either complete if everything completed or timeout</returns>
     WaitResult StopAndWait(Worker& worker, long long timeout);
 
+    /// <summary>
+    /// Stop alll the workers and wait for them all to complete.
+    /// </summary>
+    /// <param name="timeout">The number of ms we want to wait for</param>
+    /// <returns>Either timeout or complete if all the workers completed</returns>
+    WaitResult StopAndWait(long long timeout) override;
+    #pragma endregion
+
   protected:
-    /**
-     * \brief called when the worker thread is about to start
-     */
+    #pragma region Worker
+    /// <summary>
+    /// Called when we want to stop
+    /// </summary>
+    void OnWorkerStop() override;
+
+    /// <summary>
+    /// Called when whend the pool is starting
+    /// </summary>
+    /// <returns></returns>
     bool OnWorkerStart() override;
 
-    /**
-     * \brief Give the worker a chance to do something in the loop
-     *        Workers can do _all_ the work at once and simply return false
-     *        or if they have a tight look they can return true until they need to come out.
-     * \param fElapsedTimeMilliseconds the amount of time since the last time we made this call.
-     * \return true if we want to continue or false if we want to end the thread
-     */
+    /// <summary>
+    /// Called at regular intervals
+    /// </summary>
+    /// <param name="fElapsedTimeMilliseconds"></param>
+    /// <returns>False if we want to end the pool or true if we want to continue</returns>
     bool OnWorkerUpdate(float fElapsedTimeMilliseconds) override;
 
-    /**
-     * \brief Called when the thread pool has been completed, all the workers should have completed here.
-     *        We are done with all of them now.
-     */
+    /// <summary>
+    /// When the worker pool has ended.
+    /// </summary>
     void OnWorkerEnd() override;
+    #pragma endregion
 
   private:
-    /**
-     * \brief complete all the running workers
-     */
-    void WorkerEndRunningWorkers();
+    #pragma region Private Helpers
+    enum class FutureEndState
+    {
+      NotRunning,
+      StillRunning,
+      CompleteTrue,
+      CompleteFalse
+    };
 
-    /**
-     * \brief complete all the end threads.
-     */
-    void WorkerEndThreadsWaitingToEnd();
+    class Futures
+    {
+    public:
+      explicit Futures(std::future<bool>* update, std::future<void>* end) :
+        _update(update),
+        _end(end)
+      {
+      }
 
-    /**
-     * \brief check if we stop or not.
-     */
-    bool CanStopWorkerpoolUpdates();
+      ~Futures()
+      {
+        FreeUpdate();
+        FreeEnd();
+      }
 
-    /**
-     * \brief if the running worker container is empty or not.
-     * \return if we still have running workers or not
-     */
-    bool IsRunningWorkerContainerEmpty();
+      void SetUpdate(std::future<bool>* update )
+      {
+        FreeUpdate();
+        _update = update;
+      }
 
-    /**
-     * \brief if the worker waiting to start container is empty or not.
-     * \return if we still have workers waiting to start or not
-     */
-    bool IsWorkersWaitingToStartContainerEmpty();
+      void SetEnd(std::future<void>* end)
+      {
+        FreeEnd();
+        _end = end;
+      }
 
-    /**
-     * \brief if the threads waiting to end container is empty or not.
-     * \return if we still have threads waiting to end or not
-     */
-    bool IsThreadWaitingToEndContainerEmpty();
+      std::future<bool>* _update;
+      std::future<void>* _end;
 
-    /**
-     * \brief check if the time has now elapsed.
-     * \param givenElapsedTimeMilliseconds the number of ms since the last time we checked.
-     * \param actualElapsedTimeMilliseconds the number of ms that has expired since our last check.
-     * \return if the time has elapsed and we can continue.
-     */
-    bool HasElapsed( float givenElapsedTimeMilliseconds, float& actualElapsedTimeMilliseconds);
+    private:
+      void FreeUpdate()
+      {
+        if (_update != nullptr && _update->valid())
+        {
+          _update->get();
+        }
+        delete _update;
+        _update = nullptr;
+      }
+      void FreeEnd()
+      {
+        if (_end != nullptr && _end->valid())
+        {
+          _end->get();
+        }
+        delete _end;
+        _end = nullptr;
+      }
+    };
 
-    /**
-     * \brief queue a worker to the end thread
-     * \param worker the worker we want to end.
-     */
-    void QueueWorkerEnd(Worker& worker);
+    /// <summary>
+    /// Safely add a container to the list.
+    /// </summary>
+    /// <param name="worker">The container to add.</param>
+    void AddWorker(Worker& worker);
 
-    /**
-     * \brief Give the worker a chance to do something in the loop
-     *        Workers can do _all_ the work at once and simply return false
-     *        or if they have a tight look they can return true until they need to come out.
-     * \param worker the worker we are managing.
-     * \param fElapsedTimeMilliseconds the amount of time since the last time we made this call.
-     * \return true if we want to continue or false if we want to end the thread
-     */
-    bool WorkerUpdateOnce(Worker& worker, float fElapsedTimeMilliseconds);
+    /// <summary>
+    /// Get the current number of running workers
+    /// </summary>
+    /// <returns>Num number of workers</returns>
+    int NumberOfIncompleteWorkers() const;
 
-    /**
-     * \brief make a thread safe copy of the running workers.
-     */
-    std::vector<Worker*> CloneRunningWorkers();
+    /// <summary>
+    /// Safely start the worker thread if needed.
+    /// </summary>
+    void StartWorkerThreadIfNeeded();
 
-    /**
-     * \brief start any workers that are pending.
-     */
-    void ProcessWorkersWaitingToStart();
+    /// <summary>
+    /// Delete the worker thread if the work is complete
+    /// So that it can be re-used if needed.
+    /// </summary>
+    void DeleteWorkerThreadIfComplete();
 
-    /**
-     * \brief wait for any workers that are stopping.
-     */
-    void ProcessThreadsWaitingToEnd();
+    /// <summary>
+    /// Send a motification to stop all the workers.
+    /// </summary>
+    void StopAllWorkers();
 
-    /**
-     * \brief start any workers and thread that need to be started/removed.
-     */
-    void ProcessThreadsAndWorkersWaiting();
+    /// <summary>
+    /// Check if the worker is one of our workers
+    /// </summary>
+    /// <param name="worker"></param>
+    /// <returns></returns>
+    bool Exists(Worker& worker) const;
 
-    /**
-     * \brief process workers that has indicated the need to stop.
-     * \param workers the workers we are wanting to stop
-     */
-    void ProcessWorkersWaitingToEnd( const std::vector<Worker*>& workers );
+    /// <summary>
+    /// Get the future for a worker while we have the lock
+    /// We return null if we do not have one.
+    /// </summary>
+    /// <param name="worker">The worker we are looking for</param>
+    /// <returns>The future</returns>
+    Futures* GetFuturesWorkerInLock(Worker& worker) const;
 
-    /**
-     * \brief remove a workers from our list of posible waiting workers.
-     *        we will obtain the lock to remove those items.
-     * \return the list of items removed.
-     */
-    std::vector<Worker*> RemoveWorkersFromWorkersWaitingToStart();
+    /// <summary>
+    /// Update a single worker in a lock, either check the result or create a result
+    /// </summary>
+    /// <param name="worker"></param>
+    /// <param name="fElapsedTimeMilliseconds"></param>
+    /// <returns>True if we want to continue or false if we want to stop.</returns>
+    bool UpdateOnceInLock(Worker& worker, float fElapsedTimeMilliseconds);
 
-    /**
-     * \brief remove a worker from our list of running workers.
-     *        we will obtain the lock to remove this item.
-     * \param worker the worker we are wanting to remove
-     * \return if the item was removed or not.
-     */
-    bool RemoveWorkerFromRunningWorkers(const Worker& worker);
+    /// <summary>
+    /// Call the worker end for this worker and create a future for it.
+    /// </summary>
+    /// <param name="worker"></param>
+    void WorkerEndInLock(Worker& worker);
 
-    /**
-     * \brief remove workers from our list of running workers.
-     *        we will obtain the lock to remove this items.
-     * \param workers the workers we are wanting to remove
-     * \return the list of items removed.
-     */
-    std::vector<Worker*> RemoveWorkersFromRunningWorkers(const std::vector<Worker*>& workers);
+    /// <summary>
+    /// Get the state of the future, (complete, running, ...)
+    /// We also delete the future if it is no longer needed.
+    /// </summary>
+    /// <param name="worker"></param>
+    /// <returns></returns>
+    FutureEndState GetUpdateFutureEndStateInLock(Worker& worker) const;
 
-    /**
-     * \brief remove all the workers from our list of running workers.
-     *        we will obtain the lock to remove this items.
-     * \return the list of items removed.
-     */
-    std::vector<Worker*> RemoveWorkersFromRunningWorkers();
+    /// <summary>
+    /// Get the state of the future, (complete, running, ...)
+    /// We also delete the future if it is no longer needed.
+    /// </summary>
+    /// <param name="worker"></param>
+    /// <returns></returns>
+    FutureEndState GetEndFutureEndStateInLock(Worker& worker) const;
 
-    /**
-     * \brief remove all the worker that are waiting to end.
-     *        we will obtain the lock to remove this items.
-     * \return the list of items removed.
-     */
-    std::vector<Worker*> RemoveWorkersFromWorkersWaitingToEnd();
+    /// <summary>
+    /// Wait for all the workers that still have a future to complete
+    /// We do not care about the result, we simply want them to end.
+    /// </summary>
+    /// <param name="timeout">How long we are prepared to wait for.</param>
+    /// <returns></returns>
+    WaitResult WaitForAllFuturesToComplete(long long timeout);
 
-    /**
-     * \brief remove a single worker from a collection of workers
-     * \param container the collection of workers.
-     * \param item the worker we want t remove
-     * \return if the worker was found and removed
-     */
-    static bool RemoveWorker(std::vector<Worker*>& container, const Worker& item);
+    /// <summary>
+    /// Wait for all the futures in a list of workers to complete.
+    /// </summary>
+    /// <param name="workers">The workers</param>
+    /// <param name="timeout">How long we want to wait</param>
+    /// <returns></returns>
+    WaitResult WaitForAllFuturesToComplete( std::vector<Worker*> workers, long long timeout);
 
-    /**
-     * \brief add workers to a list of workers that are waiting to start.
-     * \param workers the worker we want to add.
-     */
-    void AddToWorkersWaitingToStart( const std::vector<Worker*>& workers);
+    /// <summary>
+    /// Remove all the completed workers from the list and free the memories
+    /// </summary>
+    void RemoveAllCompletedWorkers();
+    #pragma endregion 
 
-    /**
-     * \brief add this worker to our list of running workers
-     * \param worker the worker we are adding
-     */
-    void AddToRunningWorkers(Worker& worker);
+    #pragma region Member Variables
+    /// <summary>
+    /// How often we want updates to happen.
+    /// </summary>
+    const float _throttleElapsedTimeMilliseconds;
 
-    /**
-     * \brief had a worker to the container
-     * \param container the container we are adding to
-     * \param item the worker we want to add.
-     */
-    static void AddWorker(std::vector<Worker*>& container, Worker& item);
+    /// <summary>
+    /// This is our actual ellapsed time in ms.
+    /// </summary>
+    float _fElapsedTimeMilliseconds;
 
-    /**
-     * \brief had a worker to the container
-     * \param container the container we are adding to
-     * \param items the workers we want to add.
-     */
-    static void AddWorkers(std::vector<Worker*>& container, const std::vector<Worker*>& items);
+    /// <summary>
+    /// Our worker thread.
+    /// </summary>
+    Thread* _thread;
+
+    /// <summary>
+    /// The workers we are currently looking after.
+    /// </summary>
+    std::map<Worker*, Futures*> _workerAndFutures;
+
+    /// <summary>
+    /// The lock to make sure that we do not update the list of workers
+    /// While the list is being updated
+    /// </summary>
+    mutable MYODDWEB_MUTEX _workerAndFuturesLock;
+    #pragma endregion
   };
 }

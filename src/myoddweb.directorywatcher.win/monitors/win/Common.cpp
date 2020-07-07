@@ -46,7 +46,9 @@ namespace myoddweb ::directorywatcher :: win
       _parent.Path(),
       notifyFilter, 
       _parent.Recursive(), 
-      _bufferLength);
+      _bufferLength,
+      _parent.WorkerPool() 
+    );
 
     // then start monitoring
     return _data->Start();
