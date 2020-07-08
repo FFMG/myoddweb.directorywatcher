@@ -170,6 +170,9 @@ namespace myoddweb::directorywatcher
         continue;
       }
 
+      // we are done with this monitor.
+      WorkerPool().Remove(*monitor);
+
       // this item is complete, we can get rid of it.
       delete monitor;
       _recursiveChildren.erase(it);
@@ -443,6 +446,10 @@ namespace myoddweb::directorywatcher
         {
           Logger::Log(monitor->Id(), LogLevel::Warning, L"Trying to dispose of monitor that is not yet complete! We might deadlock.");
         }
+
+        // we are done with this monitor.
+        WorkerPool().Remove(*monitor);
+
         delete monitor;
       }
 

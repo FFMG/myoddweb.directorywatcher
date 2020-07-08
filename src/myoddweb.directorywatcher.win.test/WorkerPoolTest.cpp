@@ -108,39 +108,42 @@ TEST(WorkPool, EndIsCalledExactlyOnce) {
 
 TEST(WorkPool, NumberOfTimesUpdatesIsCalled) {
   {
-    // we do not want this to be too quick
-    // otherwise those might finish before we even start
-    const auto numTimesWorker1 = 50;
-    const auto numTimesWorker2 = 60;
-
-    auto worker1 = TestWorker(numTimesWorker1);
-    auto worker2 = TestWorker(numTimesWorker2);
-
-    auto pool = ::WorkerPool(10);
-    pool.Add( worker1 );
-    pool.Add( worker2 );
-
-    // wait for the pool to start
-    if (!Wait::SpinUntil([&pool]
-      {
-        return pool.Started();
-      }, TEST_TIMEOUT))
+    for (auto i = 0; i < 10; ++i)
     {
-      GTEST_FATAL_FAILURE_("Unable to start pool");
+      // we do not want this to be too quick
+      // otherwise those might finish before we even start
+      const auto numTimesWorker1 = 50;
+      const auto numTimesWorker2 = 60;
+      const auto pollTime = 10;
+
+      auto worker1 = TestWorker(numTimesWorker1);
+      auto worker2 = TestWorker(numTimesWorker2);
+
+      auto pool = ::WorkerPool(pollTime);
+      pool.Add(worker1);
+      pool.Add(worker2);
+
+      // wait for the pool to start
+      if (!Wait::SpinUntil([&pool]
+        {
+          return pool.Started();
+        }, TEST_TIMEOUT_WAIT))
+      {
+        GTEST_FATAL_FAILURE_("Unable to start pool");
+      }
+
+      // we are not going to stop it
+      // we just waiting for it to complete.
+      const auto status = pool.WaitFor( (numTimesWorker1 + numTimesWorker2) * TEST_TIMEOUT_WAIT );
+
+      EXPECT_EQ(myoddweb::directorywatcher::threads::WaitResult::complete, status);
+      EXPECT_EQ(worker1._maxUpdate, worker1._updateCalled);
+      EXPECT_EQ(worker2._maxUpdate, worker2._updateCalled);
+
+      // santy check that our test class is saving the correct values
+      EXPECT_EQ(numTimesWorker1, worker1._updateCalled);
+      EXPECT_EQ(numTimesWorker2, worker2._updateCalled);
     }
-
-    // we are not going to stop it
-    // we just waiting for it to complete.
-    const auto status = pool.WaitFor( (numTimesWorker1+numTimesWorker2)*TEST_TIMEOUT_WAIT );
-
-    EXPECT_EQ( myoddweb::directorywatcher::threads::WaitResult::complete, status );
-    EXPECT_EQ( worker1._maxUpdate, worker1._updateCalled );
-    EXPECT_EQ( worker2._maxUpdate, worker2._updateCalled);
-
-    // santy check that our test class is saving the correct values
-    EXPECT_EQ(numTimesWorker1, worker1._updateCalled);
-    EXPECT_EQ(numTimesWorker2, worker2._updateCalled);
-
   }
 }
 

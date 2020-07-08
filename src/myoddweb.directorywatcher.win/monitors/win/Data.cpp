@@ -126,6 +126,9 @@ namespace myoddweb:: directorywatcher:: win
       }
 
       // we are done with this worker
+      _workerPool.Remove(*_stopWorker);
+
+      // we are done with this worker
       delete _stopWorker;
     }
 

@@ -91,6 +91,15 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFileIsDeleted) {
   const auto id = ::MonitorsManager::Start(request);
   Add(id, helper);
 
+  // wait for the pool to start
+  if (!Wait::SpinUntil([&]
+    {
+      return ::MonitorsManager::Ready();
+    }, TEST_TIMEOUT_WAIT))
+  {
+    GTEST_FATAL_FAILURE_("Unable to start pool");
+  }
+
   auto files = std::vector<std::wstring>();
   for (auto i = 0; i < number; ++i)
   {
@@ -144,8 +153,14 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFolderIsDeleted) {
   const auto id = ::MonitorsManager::Start(request);
   Add(id, helper);
 
-  // wait for the thread to get started
-  Wait::Delay(TEST_TIMEOUT_WAIT);
+  // wait for the pool to start
+  if (!Wait::SpinUntil([&]
+    {
+      return ::MonitorsManager::Ready();
+    }, TEST_TIMEOUT_WAIT))
+  {
+    GTEST_FATAL_FAILURE_("Unable to start pool");
+  }
 
   auto folders = std::vector<std::wstring>();
   for (auto i = 0; i < number; ++i)

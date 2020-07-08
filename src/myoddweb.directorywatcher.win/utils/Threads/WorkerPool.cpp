@@ -70,28 +70,7 @@ namespace myoddweb::directorywatcher::threads
       return;
     }
 
-    if (it->second != nullptr)
-    {
-      // complete the update future if neeed.
-      if (it->second->_update != nullptr)
-      {
-        if (it->second->_update->valid())
-        {
-          it->second->_update->wait();
-        }
-      }
-      delete it->second->_update;
-
-      // then complete the nd future if neeeded
-      if (it->second->_end != nullptr)
-      {
-        if (it->second->_end->valid())
-        {
-          it->second->_end->wait();
-        }
-      }
-      delete it->second->_end;
-    }
+    // delete the futures ... we will wait for the values in the destructor.
     delete it->second;
 
     // finally clear it all.
@@ -203,14 +182,17 @@ namespace myoddweb::directorywatcher::threads
     // just tell all our workers to stop.
     StopAllWorkers();
 
-    // then we need to make sure that all the futures are complete
-    if( WaitResult::timeout == WaitForAllFuturesToComplete( timeout ) )
+    // we have to wait for all the futures to complete
+    // if they timeout then we cannot stop ourselves.
+    if( WaitResult::timeout == WaitForAllFuturesToComplete(timeout) )
     {
       return WaitResult::timeout;
     }
 
-    // then just wait for ourselves to be done.
-    return Worker::StopAndWait( timeout);
+    // now that our futures are complete, (the ones we are aware of)
+    // we can call ourselves to stop
+    // if we could not complete the futures, then we cannot stop
+    return Worker::StopAndWait(timeout);
   }
   #pragma endregion
 
@@ -221,9 +203,8 @@ namespace myoddweb::directorywatcher::threads
   /// </summary>
   void WorkerPool::OnWorkerStop()
   {
+    // send a stop notification to all the workers.
     StopAllWorkers();
-
-    WaitForAllFuturesToComplete(-1);
   }
 
   /// <summary>
@@ -232,10 +213,9 @@ namespace myoddweb::directorywatcher::threads
   /// <returns></returns>
   bool WorkerPool::OnWorkerStart()
   {
-    MYODDWEB_LOCK(_workerAndFuturesLock);
-    for ( const auto workerAndFutures : _workerAndFutures)
+    for ( const auto workerAndFuture : _workerAndFutures)
     {
-      auto worker = workerAndFutures.first;
+      const auto worker = workerAndFuture.first;
       if( worker->Started() || worker->Completed())
       {
         continue;
@@ -266,6 +246,7 @@ namespace myoddweb::directorywatcher::threads
     MYODDWEB_LOCK(_workerAndFuturesLock);
     for (const auto workerAndFuture : _workerAndFutures)
     {
+      // the worker
       const auto worker = workerAndFuture.first;
 
       // if that worker is completed then we do not care
@@ -281,6 +262,8 @@ namespace myoddweb::directorywatcher::threads
         if (!worker->WorkerStart())
         {
           // it does not want to start so it has to be completed.
+          // we do not change the mustContinue flag in case
+          // another worker wants to continue.
           assert(worker->Completed());
           continue;
         }
@@ -289,19 +272,35 @@ namespace myoddweb::directorywatcher::threads
       // while we are in the quick update loop, we want to check if the future returned false,
       // or if we completed our end workers.
       // if it did, then we need to end it right away rather than waiting for the next loop.
-      if (FutureEndState::CompleteTrue == GetEndFutureEndStateInLock(*worker))
+      const auto end = GetEndFutureEndStateInLock(*worker);
+      if (FutureEndState::CompleteTrue == end )
       {
         // we are now completely done with this worker
         // all the updates and end futures have been called.
-        mustContinue = false;
+        // we don't change the flag in case someone else wants to continue
+        continue;
+      }
+      else if (FutureEndState::StillRunning == end )
+      {
+        // this is still running, so we want to go on.
+        mustContinue = true;
         continue;
       }
 
-      if (FutureEndState::CompleteFalse == GetUpdateFutureEndStateInLock(*worker))
+      const auto update = GetUpdateFutureEndStateInLock(*worker);
+      if(FutureEndState::CompleteFalse == update )
       {
+        // the worker returned false, so it wants to end
         WorkerEndInLock( *worker );
 
         // we want to continue, only once the end future is done can we end
+        mustContinue = true;
+        continue;
+      }
+      else if (FutureEndState::StillRunning == update)
+      {
+        // the worker is still busy, so we do not want to call it again
+        // so we must go around one more time.
         mustContinue = true;
         continue;
       }
@@ -347,6 +346,12 @@ namespace myoddweb::directorywatcher::threads
     for (const auto workerAndFutures : _workerAndFutures)
     {
       const auto worker = workerAndFutures.first;
+
+      // if our worker is still running then we cannot end the worker
+      if( FutureEndState::StillRunning == GetUpdateFutureEndStateInLock(*worker))
+      {
+        continue;
+      }
 
       // no need to check if stopped already or not
       // the worker class checks if we can call it.
