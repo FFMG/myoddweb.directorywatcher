@@ -35,6 +35,14 @@ namespace myoddweb::directorywatcher
   MultipleWinMonitor::~MultipleWinMonitor()
   {
     Delete();
+    if (_lock.try_lock())
+    {
+      _lock.unlock();
+    }
+    else
+    {
+      MYODDWEB_OUT("A\n");
+    }
   }
 
   /**
@@ -432,7 +440,7 @@ namespace myoddweb::directorywatcher
      * \brief Clear the container data
      * \param container the container we want to clear.
      */
-  void MultipleWinMonitor::DeleteInLock(std::vector<Monitor*>& container)
+  void MultipleWinMonitor::DeleteInLock(std::vector<Monitor*>& container) const
   {
     try
     {

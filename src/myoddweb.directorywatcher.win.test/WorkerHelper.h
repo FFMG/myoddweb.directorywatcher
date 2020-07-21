@@ -1,8 +1,11 @@
 ﻿#pragma once
 #include "../myoddweb.directorywatcher.win/utils/Threads/Worker.h"
-using myoddweb::directorywatcher::threads::Worker;
+#include "../myoddweb.directorywatcher.win/utils/Threads/WorkerPool.h"
 
-class TestWorker final : public ::Worker
+using myoddweb::directorywatcher::threads::Worker;
+using myoddweb::directorywatcher::threads::WorkerPool;
+
+class TestWorker : public ::Worker
 {
 public:
   const int _maxUpdate = 0;
@@ -19,7 +22,7 @@ public:
   }
 
   void OnWorkerStop() override { ++_stop; }
-  bool OnWorkerStart() override
+  virtual bool OnWorkerStart() override
   {
     ++_startCalled;
     return true;
@@ -37,5 +40,25 @@ public:
       return false;
     }
     return ++_updateCalled < _maxUpdate;
+  }
+};
+
+class TestWorkerOnStart : public TestWorker
+{
+  ::Worker& _worker;
+  ::WorkerPool& _pool;
+
+public:
+  TestWorkerOnStart(::WorkerPool& pool, ::Worker& worker, const int maxUpdate = 5)
+   : TestWorker( maxUpdate ),
+   _worker( worker ),
+   _pool( pool)
+  {
+  }
+
+  bool OnWorkerStart() override
+  {
+    _pool.Add(_worker);
+    return TestWorker::OnWorkerStart();
   }
 };

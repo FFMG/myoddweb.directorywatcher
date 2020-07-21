@@ -7,6 +7,8 @@
 
 
 #include "../Lock.h"
+#include "../Logger.h"
+#include "../LogLevel.h"
 #include "../Wait.h"
 
 namespace myoddweb::directorywatcher::threads
@@ -28,14 +30,29 @@ namespace myoddweb::directorywatcher::threads
   /// <returns></returns>
   WorkerPool::~WorkerPool()
   {
-    // we need to make sure all is good
-    StopAndWait(-1);
+    try
+    {
+      // we need to make sure all is good
+      StopAndWait(-1);
 
-    // clen what needs to be
-    RemoveAllCompletedWorkers();
+      // clen what needs to be
+      RemoveAllCompletedWorkers();
 
-    delete _thread;
-    _thread = nullptr;
+      // kill the thread
+      DeleteWorkerThreadIfComplete();
+
+#ifdef _DEBUG
+      // make sure that the memory is clear.
+      assert(_thread == nullptr);
+      assert(_addFutures.empty());
+      assert(_workerAndFutures.empty());
+#endif
+    }
+    catch (const std::exception& e)
+    {
+      //  there was an error while shutting down
+      Logger::Log(LogLevel::Error, L"Caught exception '%hs' in PublishEvents, check the callback!", e.what());
+    }
   }
 
   #pragma region Helpers
@@ -45,14 +62,13 @@ namespace myoddweb::directorywatcher::threads
   /// <param name="worker">The worker we want to add.</param>
   void WorkerPool::Add(Worker& worker)
   {
-    // if the work is complete then we need to restart it
-    DeleteWorkerThreadIfComplete();
-
-    // first we must add our worker to the list.
-    AddWorker(worker);
-
-    // make sure that the thread is running
-    StartWorkerThreadIfNeeded();
+    // just add the worker to our list of workers.
+    // we do that in a thread in case we have workers that add within workers.
+    MYODDWEB_LOCK(_addFuturesLock);
+    _addFutures.push_back( new std::future<void>(std::async(std::launch::async, [this, &worker]
+      {
+        AddWorker(worker);
+      })));
   }
 
   /// <summary>
@@ -61,6 +77,9 @@ namespace myoddweb::directorywatcher::threads
   /// <param name="worker"></param>
   void WorkerPool::Remove(Worker& worker)
   {
+    // wait for everybody to be added
+    WaitForAllAddFuturesPending();
+
     // no need to check if it exists.
     MYODDWEB_LOCK(_workerAndFuturesLock);
 
@@ -85,6 +104,9 @@ namespace myoddweb::directorywatcher::threads
   /// <returns>Either complete or timeout</returns>
   WaitResult WorkerPool::WaitFor(Worker& worker, const long long timeout)
   {
+    // wait for everybody to be added
+    WaitForAllAddFuturesPending();
+
     // look for that worker
     if (!Exists(worker))
     {
@@ -108,6 +130,9 @@ namespace myoddweb::directorywatcher::threads
   /// <returns>Either complete or timeout</returns>
   WaitResult WorkerPool::WaitFor(const long long timeout)
   {
+    // wait for everybody to be added
+    WaitForAllAddFuturesPending();
+
     StartWorkerThreadIfNeeded();
     const auto wait = Worker::WaitFor( timeout );
 
@@ -124,6 +149,9 @@ namespace myoddweb::directorywatcher::threads
   /// <param name="worker"></param>
   void WorkerPool::StopWorker(Worker& worker)
   {
+    // wait for everybody to be added
+    WaitForAllAddFuturesPending();
+
     // look for that worker
     if( !Exists(worker ))
     {
@@ -142,6 +170,9 @@ namespace myoddweb::directorywatcher::threads
   /// <returns>Either complete if everything completed or timeout</returns>
   WaitResult WorkerPool::StopAndWait(const std::vector<Worker*>& workers, const long long timeout)
   {
+    // wait for everybody to be added
+    WaitForAllAddFuturesPending();
+
     // first we will stop the workers
     // we now need to wait for all the processes to finish
     std::for_each(
@@ -179,6 +210,9 @@ namespace myoddweb::directorywatcher::threads
   /// <returns>Either timeout or complete if all the workers completed</returns>
   WaitResult WorkerPool::StopAndWait( const long long timeout)
   {
+    // wait for all the start workers
+    WaitForAllAddFuturesPending();
+
     // just tell all our workers to stop.
     StopAllWorkers();
 
@@ -213,6 +247,9 @@ namespace myoddweb::directorywatcher::threads
   /// <returns></returns>
   bool WorkerPool::OnWorkerStart()
   {
+    // wait for all the start workers
+    WaitForAllAddFuturesPending();
+
     for ( const auto workerAndFuture : _workerAndFutures)
     {
       const auto worker = workerAndFuture.first;
@@ -236,6 +273,9 @@ namespace myoddweb::directorywatcher::threads
   /// <returns>False if we want to end the pool or true if we want to continue</returns>
   bool WorkerPool::OnWorkerUpdate(const float fElapsedTimeMilliseconds)
   {
+    // wait for all the start workers
+    WaitForAllAddFuturesPending();
+
     // assume that none of our workers want to continue
     // ignore the completed workers.
     auto mustContinue = false;
@@ -250,6 +290,7 @@ namespace myoddweb::directorywatcher::threads
       const auto worker = workerAndFuture.first;
 
       // if that worker is completed then we do not care
+      // it will be removed at some other poing
       if (worker->Completed())
       {
         continue;
@@ -333,8 +374,8 @@ namespace myoddweb::directorywatcher::threads
       _fElapsedTimeMilliseconds = 0;
     }
 
-    // return if we must continue or not.
-    return mustContinue;
+    // return if we must continue or not or if we still have pending futures.
+    return mustContinue || HasAddFuturesPending();
   }
 
   /// <summary>
@@ -342,6 +383,9 @@ namespace myoddweb::directorywatcher::threads
   /// </summary>
   void WorkerPool::OnWorkerEnd()
   {
+    // wait for all the start workers
+    WaitForAllAddFuturesPending();
+
     MYODDWEB_LOCK(_workerAndFuturesLock);
     for (const auto workerAndFutures : _workerAndFutures)
     {
@@ -405,6 +449,7 @@ namespace myoddweb::directorywatcher::threads
     {
       return;
     }
+    MYODDWEB_LOCK(_threadLock);
     delete _thread;
     _thread = nullptr;
     _fElapsedTimeMilliseconds = 0;
@@ -416,6 +461,7 @@ namespace myoddweb::directorywatcher::threads
   /// </summary>
   void WorkerPool::StartWorkerThreadIfNeeded()
   {
+    MYODDWEB_LOCK(_threadLock);
     if (_thread != nullptr)
     {
       return;
@@ -451,6 +497,9 @@ namespace myoddweb::directorywatcher::threads
   /// <param name="worker">The container to add.</param>
   void WorkerPool::AddWorker(Worker& worker)
   {
+    // if the work is complete then we need to restart it
+    DeleteWorkerThreadIfComplete();
+
     MYODDWEB_LOCK(_workerAndFuturesLock);
     // make sure that this worker does not exist already.
     const auto it = _workerAndFutures.find(&worker);
@@ -459,6 +508,9 @@ namespace myoddweb::directorywatcher::threads
       return;
     }
     _workerAndFutures[&worker] = nullptr;
+
+    // make sure that the thread is running
+    StartWorkerThreadIfNeeded();
   }
 
   /// <summary>
@@ -763,6 +815,61 @@ namespace myoddweb::directorywatcher::threads
       const auto it = _workerAndFutures.find(worker);
       _workerAndFutures.erase(it);
     }
+  }
+
+  /// <summary>
+  /// Check if we have any wokers still being added.
+  /// </summary>
+  /// <returns>If we still have workers.</returns>
+  bool WorkerPool::HasAddFuturesPending()
+  {
+    MYODDWEB_LOCK(_addFuturesLock);
+    auto busy = false;
+    const auto wait = std::chrono::milliseconds(1);
+    auto it = _addFutures.begin();
+    while( it != _addFutures.end() )
+    {
+      auto currentFutures = (*it);
+      if( !(*it)->valid())
+      {
+        delete currentFutures;
+        _addFutures.erase(it);
+        it = _addFutures.begin();
+        continue;
+      }
+      
+      if (currentFutures->wait_for(wait) == std::future_status::ready)
+      {
+        currentFutures->get();
+        delete currentFutures;
+        _addFutures.erase(it);
+        it = _addFutures.begin();
+        continue;
+      }
+
+      // if we are her, then we are still busy
+      busy = true;
+
+      // check the others if they can be removed.
+      ++it;
+    }
+    return busy;
+  }
+
+  /// <summary>
+  /// Wait for all the add futures to complete.
+  /// </summary>
+  void WorkerPool::WaitForAllAddFuturesPending()
+  {
+    Wait::SpinUntil([this]
+    {
+      return !HasAddFuturesPending();
+    }, -1);
+
+#ifdef _DEBUG
+    // make sure that the memory is clear.
+    assert(_addFutures.empty());
+#endif
   }
   #pragma endregion 
 }

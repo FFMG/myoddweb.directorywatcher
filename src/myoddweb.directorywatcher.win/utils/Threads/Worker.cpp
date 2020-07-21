@@ -260,7 +260,6 @@ namespace myoddweb::directorywatcher::threads
     // grab the lock not because we are doing anything, but because _we_ might be in the middle of an update
     MYODDWEB_PROFILE_FUNCTION();
     MYODDWEB_LOCK(_lockState);
-
     try
     {
       // we are starting

@@ -23,6 +23,7 @@ namespace myoddweb:: directorywatcher:: win
     )
     :
     _stopWorker( nullptr ),
+    _workerPool( workerPool ),
     _invalidHandleWait(0),
     _notifyFilter(notifyFilter),
     _recursive(recursive),
@@ -31,8 +32,7 @@ namespace myoddweb:: directorywatcher:: win
     _buffer(nullptr),
     _bufferLength(bufferLength),
     _path( path ),
-    _id( id ),
-    _workerPool( workerPool )
+    _id( id )
   {
     // prepapre the buffer that will receive our data
     // create the buffer if needed.

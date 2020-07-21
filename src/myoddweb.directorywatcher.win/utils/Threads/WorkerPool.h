@@ -261,6 +261,17 @@ namespace myoddweb:: directorywatcher:: threads
     /// Remove all the completed workers from the list and free the memories
     /// </summary>
     void RemoveAllCompletedWorkers();
+
+    /// <summary>
+    /// Check if we still have some pending "Add" futures.
+    /// </summary>
+    /// <returns></returns>
+    bool HasAddFuturesPending();
+
+    /// <summary>
+    /// Wait for all the add futures to complete.
+    /// </summary>
+    void WaitForAllAddFuturesPending();
     #pragma endregion 
 
     #pragma region Member Variables
@@ -285,10 +296,25 @@ namespace myoddweb:: directorywatcher:: threads
     std::map<Worker*, Futures*> _workerAndFutures;
 
     /// <summary>
+    /// All the futures to add workers.
+    /// </summary>
+    std::vector<std::future<void>*> _addFutures;
+
+    /// <summary>
     /// The lock to make sure that we do not update the list of workers
     /// While the list is being updated
     /// </summary>
     mutable MYODDWEB_MUTEX _workerAndFuturesLock;
+
+    /// <summary>
+    /// Lock for our add futures so we can update the values as required.
+    /// </summary>
+    mutable MYODDWEB_MUTEX _addFuturesLock;
+
+    /// <summary>
+    /// Lock to prevent multiple threads from updating our own thread.
+    /// </summary>
+    mutable MYODDWEB_MUTEX _threadLock;
     #pragma endregion
   };
 }
