@@ -43,7 +43,7 @@ namespace myoddweb:: directorywatcher
      * \param statisticsCallbackRateMs how long we want to keep stats data for.
      */
     Request(const wchar_t* path, bool recursive, long long eventsCallbackRateMs, long long statisticsCallbackRateMs);
-    ~Request();
+    virtual ~Request();
 
     /**
      * \brief the assignment operator

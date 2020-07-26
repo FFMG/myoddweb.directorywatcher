@@ -226,7 +226,7 @@ namespace myoddweb:: directorywatcher
               break;
             }
           }
-          catch (const std::exception& e)
+          catch (std::exception& e)
           {
             // log the error
             Logger::Log(LogLevel::Panic, L"Caught exception '%hs' Awaiting on condition!", e.what());
@@ -245,7 +245,7 @@ namespace myoddweb:: directorywatcher
         }
       }
     }
-    catch (const std::exception& e)
+    catch (std::exception& e)
     {
       // log the error
       Logger::Log(LogLevel::Panic, L"Caught exception '%hs' Awaiting on condition!", e.what());

@@ -164,7 +164,7 @@ namespace myoddweb::directorywatcher::threads
       // we can assume we are started
       _parentWorker->Execute();
     }
-    catch (const std::exception& e)
+    catch (std::exception& e)
     {
       // log the error
       Logger::Log(LogLevel::Error, L"Caught exception '%hs' trying to start a thread!", e.what());
@@ -240,9 +240,10 @@ namespace myoddweb::directorywatcher::threads
       {
         (*_thread).join();
       }
-      catch (...)
+      catch (std::exception& e )
       {
         //  an error could happen, it means we are done.
+        Logger::Log(LogLevel::Panic, L"I was unable to stop the running thread: %hs", e.what());
       }
     }
     delete _thread;

@@ -120,7 +120,7 @@ namespace myoddweb:: directorywatcher
       // try and cleanup the events if need be.
       CleanupEvents();
     }
-    catch (const std::exception& e)
+    catch (std::exception& e)
     {
       // log the error
       Logger::Log(LogLevel::Error, L"Caught exception '%hs' when adding event to collector", e.what());

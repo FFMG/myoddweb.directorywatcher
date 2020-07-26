@@ -168,7 +168,7 @@ namespace myoddweb::directorywatcher
       // we are done with the stats
       _currentStatistics = { 0 };
     }
-    catch (const std::exception& e)
+    catch (std::exception& e)
     {
       // the callback did something wrong!
       // log the error
@@ -220,7 +220,7 @@ namespace myoddweb::directorywatcher
         // update the stats
         UpdateStatistics(*event);
       }
-      catch (const std::exception& e)
+      catch (std::exception& e)
       {
         // the callback did something wrong!
         // log the error
