@@ -9,7 +9,7 @@ namespace myoddweb:: directorywatcher
   /**
    * \brief unmannaged implementation of IRequest
    */
-  class Request
+  struct Request
   {
     /**
      * \brief private constructor prevent empty requests.
@@ -43,7 +43,7 @@ namespace myoddweb:: directorywatcher
      * \param statisticsCallbackRateMs how long we want to keep stats data for.
      */
     Request(const wchar_t* path, bool recursive, long long eventsCallbackRateMs, long long statisticsCallbackRateMs);
-    virtual ~Request();
+    ~Request();
 
     /**
      * \brief the assignment operator
