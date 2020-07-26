@@ -2,6 +2,7 @@
 
 #include "../myoddweb.directorywatcher.win/utils/MonitorsManager.h"
 #include "../myoddweb.directorywatcher.win/utils/EventAction.h"
+#include "../myoddweb.directorywatcher.win/utils/Logger.h"
 #include "../myoddweb.directorywatcher.win/utils/Wait.h"
 
 #include "MonitorsManagerTestHelper.h"
@@ -66,9 +67,8 @@ TEST(MonitorsManagerDelete, IfTimeoutIsZeroCallbackIsNeverCalled) {
 
 TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFileIsDeleted) {
 
-  for (int i = 0; i < 10; ++i)
+  for (auto loop = 0; loop < 10; ++loop)
   {
-MYODDWEB_OUT("---------------------------\n");
     try
     {
       // create the helper.
@@ -77,14 +77,18 @@ MYODDWEB_OUT("---------------------------\n");
       const auto number = std::get<0>(GetParam());
       const auto recursive = std::get<1>(GetParam());
 
-      auto count = 0;
+      static std::mutex lockCout;
 
       // use the test request to create the Request
       // we make a copy of our helper onto the 'real' request to make sure copy is not broken
       const auto r = RequestHelper(
         helper->Folder(),
         recursive,
-        nullptr,
+        [](const long long id, int type, const wchar_t* message)
+        {
+          const std::lock_guard<std::mutex> l(lockCout);
+          std::wcerr << id << L": " << message << std::endl;
+        },
         eventFunction,
         nullptr,
         TEST_TIMEOUT,
@@ -93,6 +97,7 @@ MYODDWEB_OUT("---------------------------\n");
       // monitor that folder.
       const auto request = ::Request(r);
       const auto id = ::MonitorsManager::Start(request);
+
       Add(id, helper);
 
       // wait for the pool to start
@@ -132,9 +137,9 @@ MYODDWEB_OUT("---------------------------\n");
       ASSERT_TRUE(Remove(id));
       delete helper;
     }
-    catch (const std::exception& e)
+    catch ( ... )
     {
-      MYODDWEB_OUT( "A" );
+      GTEST_FATAL_FAILURE_("There was an exception running the test.");
     }
   }
 }
@@ -146,8 +151,6 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFolderIsDeleted) {
 
   const auto number = std::get<0>(GetParam());
   const auto recursive = std::get<1>(GetParam());
-
-  auto count = 0;
 
   // use the test request to create the Request
   // we make a copy of our helper onto the 'real' request to make sure copy is not broken
