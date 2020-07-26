@@ -123,8 +123,9 @@ namespace myoddweb::directorywatcher::threads
   /// <param name="worker"></param>
   void WorkerPool::StopWorker(Worker& worker)
   {
-    // wait for everybody to be added
-    WaitForAllAddFuturesPending();
+    // before we stop all workers ... we have
+    // to make sure that everybody is started
+    StartAllPendingWorkers();
 
     // look for that worker
     if( !Exists(worker ))
@@ -144,8 +145,9 @@ namespace myoddweb::directorywatcher::threads
   /// <returns>Either complete if everything completed or timeout</returns>
   WaitResult WorkerPool::StopAndWait(const std::vector<Worker*>& workers, const long long timeout)
   {
-    // wait for everybody to be added
-    WaitForAllAddFuturesPending();
+    // before we stop those workers ... we have
+    // to make sure that everybody is started
+    StartAllPendingWorkers();
 
     // first we will stop the workers
     // we now need to wait for all the processes to finish
@@ -184,8 +186,9 @@ namespace myoddweb::directorywatcher::threads
   /// <returns>Either timeout or complete if all the workers completed</returns>
   WaitResult WorkerPool::StopAndWait( const long long timeout)
   {
-    // wait for all the start workers
-    WaitForAllAddFuturesPending();
+    // before we stop all workers ... we have
+    // to make sure that everybody is started
+    StartAllPendingWorkers();
 
     // just tell all our workers to stop.
     StopAllWorkers();
@@ -211,6 +214,10 @@ namespace myoddweb::directorywatcher::threads
   /// </summary>
   void WorkerPool::OnWorkerStop()
   {
+    // before we stop all workers ... we have
+    // to make sure that everybody is started
+    StartAllPendingWorkers();
+
     // send a stop notification to all the workers.
     StopAllWorkers();
   }
@@ -221,24 +228,7 @@ namespace myoddweb::directorywatcher::threads
   /// <returns></returns>
   bool WorkerPool::OnWorkerStart()
   {
-    // wait for all the start workers
-    WaitForAllAddFuturesPending();
-
-    for ( const auto workerAndFuture : _workerAndFutures)
-    {
-      const auto worker = workerAndFuture.first;
-      if( worker->Started() || worker->Completed())
-      {
-        continue;
-      }
-
-      if( !worker->WorkerStart() )
-      {
-        // it does not want to start so it has to be completed.
-        assert(worker->Completed());
-      }
-    }
-    return true;
+    return StartAllPendingWorkers();
   }
 
   /// <summary>
@@ -381,6 +371,55 @@ namespace myoddweb::directorywatcher::threads
   #pragma endregion
 
   #pragma region Private Helpers
+  /// <summary>
+  /// Start all the workers that have yet to start
+  /// We return false if _all_ the workers returned false
+  /// Or if we have no worker pending.
+  /// </summary>
+  /// <returns></returns>
+  bool WorkerPool::StartAllPendingWorkers()
+  {
+    // wait for all the start workers
+    WaitForAllAddFuturesPending();
+
+    // if anything started and returned true
+    // by default we assume that nothing started
+    auto startedOrRunning = false;
+
+    MYODDWEB_LOCK(_workerAndFuturesLock);
+    for (const auto workerAndFuture : _workerAndFutures)
+    {
+      const auto worker = workerAndFuture.first;
+      if(worker->Completed())
+      {
+        // if it is completed then it is not started
+        // or even currently running.
+        continue;  
+      }
+
+      if (worker->Started() )
+      {
+        // if it is started then we have to assume that it is still running
+        // so we want to "carry-on" running rather than
+        // returning false and giving the false impression that nothing started
+        startedOrRunning = true;
+        continue;
+      }
+
+      if (!worker->WorkerStart())
+      {
+        // it does not want to start so it has to be completed.
+        assert(worker->Completed());
+        continue;
+      }
+      startedOrRunning = true;
+    }
+
+    // return if one of them started and/or one of them
+    // is still currently running.
+    return startedOrRunning;
+  }
+
   /// <summary>
   /// Get the future for a worker while we have the lock
   /// We return null if we do not have one.

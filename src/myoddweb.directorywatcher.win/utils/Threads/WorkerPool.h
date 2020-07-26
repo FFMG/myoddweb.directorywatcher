@@ -271,6 +271,14 @@ namespace myoddweb:: directorywatcher:: threads
     /// Wait for all the add futures to complete.
     /// </summary>
     void WaitForAllAddFuturesPending();
+
+    /// <summary>
+    /// Start all the workers that have yet to start
+    /// We return false if _all_ the workers returned false
+    /// Or if we have no worker pending.
+    /// </summary>
+    /// <returns></returns>
+    bool StartAllPendingWorkers();
     #pragma endregion 
 
     #pragma region Member Variables

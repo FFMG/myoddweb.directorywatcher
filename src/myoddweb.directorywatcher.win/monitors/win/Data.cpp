@@ -241,13 +241,6 @@ namespace myoddweb:: directorywatcher:: win
           }
         }
 
-        if(_operationAborted != true )
-        {
-          unsigned long t = 0;
-          const auto x = GetOverlappedResult(_hDirectory, _overlapped, &t, FALSE);
-Logger::Log(_id, LogLevel::Warning, L"Timeout waiting operation aborted message!");
-        }
-
         // then wait a little for the operation to be cancelled.
         if (!_operationAborted && !Wait::SpinUntil([&]
           {
@@ -528,12 +521,12 @@ Logger::Log(_id, LogLevel::Warning, L"Timeout waiting operation aborted message!
 
     case ERROR_NETNAME_DELETED:
       Stop();
-      Logger::Log(LogLevel::Warning, L"Warning: The network connection to '%' has been deleted.", _path.c_str() );
+      Logger::Log(LogLevel::Warning, L"Warning: The network connection to '%hs' has been deleted.", _path.c_str() );
       return;
 
     case ERROR_ACCESS_DENIED:
       Stop();
-      Logger::Log(LogLevel::Warning, L"Warning: Acess to '%s' is denied", _path.c_str() );
+      Logger::Log(LogLevel::Warning, L"Warning: Acess to '%hs' is denied", _path.c_str() );
       return;
 
     default:

@@ -17,7 +17,7 @@ MonitorsManagerTestHelper* Get(long long id);
 bool Remove(long long id);
 bool Add(long long id, MonitorsManagerTestHelper* mng);
 
-class MonitorsManagerTestHelper
+class MonitorsManagerTestHelper final
 {
 private:
   std::wstring _folder;

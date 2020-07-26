@@ -29,6 +29,11 @@ namespace myoddweb:: directorywatcher:: threads
     /// The current state of the worker.
     /// </summary>
     State _state;
+
+    /// <summary>
+    /// The id of this worker.
+    /// </summary>
+    long long _id;
     
     /**
      * \brief The timers used to calculate the elapsed time.
@@ -82,6 +87,13 @@ namespace myoddweb:: directorywatcher:: threads
     void Stop();
 
     /// <summary>
+    /// Get the Id of this worker.
+    /// </summary>
+    /// <returns></returns>
+    [[nodiscard]]
+    const long long& Id() const;
+
+    /// <summary>
     /// Stop the execution and wait for it to complete.
     /// </summary>
     /// <param name="timeout"></param>
@@ -94,7 +106,17 @@ namespace myoddweb:: directorywatcher:: threads
     /// <param name="timeout">How long to wait for.</param>
     /// <returns>Either complete or timeout</returns>
     virtual WaitResult WaitFor(long long timeout);
-  private:
+
+  protected:
+    friend WorkerPool;
+
+    /// <summary>
+    /// The base class can give us an id.
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    Worker(long long id);
+
     /**
      * \brief called when the thread is starting
      *        this should not block anything
@@ -113,16 +135,19 @@ namespace myoddweb:: directorywatcher:: threads
      */
     void WorkerEnd();
 
+  private:
     /**
      * \brief calculate the elapsed time since the last time this call was made
      * \return float the elapsed time in milliseconds.
      */
     float CalculateElapsedTimeMilliseconds();
 
+    /// <summary>
+    /// Stop everything  while we have the lock
+    /// </summary>
     void StopInLock();
-  protected:
-    friend WorkerPool;
 
+  protected:
     /**
      * \brief save the current exception
      */
@@ -149,19 +174,19 @@ namespace myoddweb:: directorywatcher:: threads
     /// <param name="state">The new value</param>
     void SetState(const State& state);
 
-    /**
-     * \brief called when the worker is ready to start
-     *        return false if you do not wish to start the worker.
-     */
+    /// <summary>
+    /// called when the worker is ready to start
+    /// </summary>
+    /// <returns>false if you do not wish to start the worker.</returns>
     virtual bool OnWorkerStart() = 0;
 
-    /**
-     * \brief Give the worker a chance to do something in the loop
-     *        Workers can do _all_ the work at once and simply return false
-     *        or if they have a tight look they can return true until they need to come out.
-     * \param fElapsedTimeMilliseconds the amount of time since the last time we made this call.
-     * \return true if we want to continue or false if we want to end the thread
-     */
+    /// <summary>
+    /// Give the worker a chance to do something in the loop
+    /// Workers can do _all_ the work at once and simply return false
+    /// or if they have a tight look they can return true until they need to come out.
+    /// </summary>
+    /// <param name="fElapsedTimeMilliseconds">the amount of time since the last time we made this call.</param>
+    /// <returns> true if we want to continue or false if we want to end the thread.</returns>
     virtual bool OnWorkerUpdate(float fElapsedTimeMilliseconds) = 0;
 
     /**
@@ -169,20 +194,12 @@ namespace myoddweb:: directorywatcher:: threads
      *        this is to allow our workers a chance to dispose of data
      *        
      */
-    virtual void OnWorkerEnd()
-    {
-    }
+    virtual void OnWorkerEnd() = 0;
 
     /**
      * \brief called when stop is called.
      *        this is to allow our derived workers to stop
      */
     virtual void OnWorkerStop() = 0;
-
-    /**
-     * \brief make sure that all operations are safely completed.
-     *        does not throw an exception
-     */
-    virtual void CompleteAllOperations() noexcept;
   };
 }
