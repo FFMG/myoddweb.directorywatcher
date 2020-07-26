@@ -126,7 +126,7 @@ namespace myoddweb:: directorywatcher:: win
       }
 
       // we are done with this worker
-      _workerPool.Remove(*_stopWorker);
+      _workerPool.StopAndWait(*_stopWorker, -1 );
 
       // we are done with this worker
       delete _stopWorker;
@@ -187,7 +187,7 @@ namespace myoddweb:: directorywatcher:: win
       // add this to the pool
       _workerPool.Add( *_stopWorker );
     }
-    catch (const std::exception& e)
+    catch ( std::exception& e)
     {
       // log the error
       Logger::Log(LogLevel::Error, L"Caught exception '%hs' in StopMonitoring!", e.what());
@@ -300,7 +300,7 @@ Logger::Log(_id, LogLevel::Warning, L"Timeout waiting operation aborted message!
       delete[] _buffer;
       _buffer = nullptr;
     }
-    catch (const std::exception& e)
+    catch (std::exception& e)
     {
       // the callback did something wrong!
       // log the error
@@ -369,7 +369,7 @@ Logger::Log(_id, LogLevel::Warning, L"Timeout waiting operation aborted message!
       // return it.
       return pBuffer;
     }
-    catch (const std::exception& e)
+    catch ( std::exception& e)
     {
       // the callback did something wrong!
       // log the error
@@ -459,7 +459,7 @@ Logger::Log(_id, LogLevel::Warning, L"Timeout waiting operation aborted message!
       }
       return true;
     }
-    catch (const std::exception& e)
+    catch (std::exception& e)
     {
       // the callback did something wrong!
       // log the error
@@ -501,7 +501,7 @@ Logger::Log(_id, LogLevel::Warning, L"Timeout waiting operation aborted message!
       // success
       data->ProcessRead(dwNumberOfBytesTransfered);
     }
-    catch (const std::exception& e)
+    catch (std::exception& e)
     {
       // the callback did something wrong!
       // log the error

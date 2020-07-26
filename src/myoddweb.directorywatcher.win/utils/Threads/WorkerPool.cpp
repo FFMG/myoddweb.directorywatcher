@@ -5,7 +5,6 @@
 #include <cassert>
 #include <execution>
 
-
 #include "../Lock.h"
 #include "../Logger.h"
 #include "../LogLevel.h"
@@ -48,10 +47,10 @@ namespace myoddweb::directorywatcher::threads
       assert(_workerAndFutures.empty());
 #endif
     }
-    catch (const std::exception& e)
+    catch (std::exception& e)
     {
       //  there was an error while shutting down
-      Logger::Log(LogLevel::Error, L"Caught exception '%hs' in PublishEvents, check the callback!", e.what());
+      Logger::Log(Id(), LogLevel::Error, L"Caught exception '%hs' in PublishEvents, check the callback!", e.what());
     }
   }
 
@@ -69,31 +68,6 @@ namespace myoddweb::directorywatcher::threads
       {
         AddWorker(worker);
       })));
-  }
-
-  /// <summary>
-  /// Remove a worker from our list of workers.
-  /// </summary>
-  /// <param name="worker"></param>
-  void WorkerPool::Remove(Worker& worker)
-  {
-    // wait for everybody to be added
-    WaitForAllAddFuturesPending();
-
-    // no need to check if it exists.
-    MYODDWEB_LOCK(_workerAndFuturesLock);
-
-    const auto it = _workerAndFutures.find(&worker);
-    if( it == _workerAndFutures.end() )
-    {
-      return;
-    }
-
-    // delete the futures ... we will wait for the values in the destructor.
-    delete it->second;
-
-    // finally clear it all.
-    _workerAndFutures.erase(it);
   }
 
   /// <summary>
@@ -257,6 +231,7 @@ namespace myoddweb::directorywatcher::threads
       {
         continue;
       }
+
       if( !worker->WorkerStart() )
       {
         // it does not want to start so it has to be completed.
@@ -321,7 +296,8 @@ namespace myoddweb::directorywatcher::threads
         // we don't change the flag in case someone else wants to continue
         continue;
       }
-      else if (FutureEndState::StillRunning == end )
+
+      if (FutureEndState::StillRunning == end )
       {
         // this is still running, so we want to go on.
         mustContinue = true;
@@ -507,6 +483,7 @@ namespace myoddweb::directorywatcher::threads
     {
       return;
     }
+
     _workerAndFutures[&worker] = nullptr;
 
     // make sure that the thread is running
@@ -726,7 +703,7 @@ namespace myoddweb::directorywatcher::threads
   /// <param name="workers"></param>
   /// <param name="timeout"></param>
   /// <returns></returns>
-  WaitResult WorkerPool::WaitForAllFuturesToComplete(const std::vector<Worker*> workers, const long long timeout)
+  WaitResult WorkerPool::WaitForAllFuturesToComplete(const std::vector<Worker*>& workers, const long long timeout)
   {
     // wait for the operation to complete.
     const auto wait = Wait::SpinUntil([this, &workers]
@@ -801,6 +778,8 @@ namespace myoddweb::directorywatcher::threads
   {
     MYODDWEB_LOCK(_workerAndFuturesLock);
     std::vector<Worker*> workersToRemove;
+
+    // first look for everything we want to remove
     for (auto workerAndFuture : _workerAndFutures)
     {
       if( !workerAndFuture.first->Completed() )
@@ -810,6 +789,8 @@ namespace myoddweb::directorywatcher::threads
       delete workerAndFuture.second;
       workersToRemove.push_back(workerAndFuture.first);
     }
+
+    // then remove them
     for (auto worker : workersToRemove)
     {
       const auto it = _workerAndFutures.find(worker);

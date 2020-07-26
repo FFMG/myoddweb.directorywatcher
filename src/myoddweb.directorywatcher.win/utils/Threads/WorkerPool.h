@@ -30,12 +30,6 @@ namespace myoddweb:: directorywatcher:: threads
     void Add(Worker& worker);
 
     /// <summary>
-    /// Remove a worker from our list of workers.
-    /// </summary>
-    /// <param name="worker"></param>
-    void Remove(Worker& worker);
-
-    /// <summary>
     /// Wait for a worker to either complete or timeout
     /// </summary>
     /// <param name="worker">The worker we will be waiting for</param>
@@ -117,7 +111,7 @@ namespace myoddweb:: directorywatcher:: threads
       CompleteFalse
     };
 
-    class Futures
+    class Futures final
     {
     public:
       explicit Futures(std::future<bool>* update, std::future<void>* end) :
@@ -125,6 +119,11 @@ namespace myoddweb:: directorywatcher:: threads
         _end(end)
       {
       }
+
+      Futures(const Futures&) = delete;
+      Futures(Futures&&) = delete;
+      Futures& operator=(const Futures&) = delete;
+      Futures& operator=(Futures&&) = delete;
 
       ~Futures()
       {
@@ -255,7 +254,7 @@ namespace myoddweb:: directorywatcher:: threads
     /// <param name="workers">The workers</param>
     /// <param name="timeout">How long we want to wait</param>
     /// <returns></returns>
-    WaitResult WaitForAllFuturesToComplete( std::vector<Worker*> workers, long long timeout);
+    WaitResult WaitForAllFuturesToComplete( const std::vector<Worker*>& workers, long long timeout);
 
     /// <summary>
     /// Remove all the completed workers from the list and free the memories
