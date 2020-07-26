@@ -18,10 +18,10 @@ namespace myoddweb.directorywatcher.utils.Helper
       public StatisticsCallback StatisticsCallback;
 
       [MarshalAs(UnmanagedType.I8)]
-      public Int64 EventsCallbackIntervalMs;
+      public long EventsCallbackIntervalMs;
       
       [MarshalAs(UnmanagedType.I8)]
-      public Int64 StatisticsCallbackIntervalMs;
+      public long StatisticsCallbackIntervalMs;
 
       public LoggerCallback LoggerCallback;
     }
@@ -33,7 +33,7 @@ namespace myoddweb.directorywatcher.utils.Helper
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    public delegate bool Stop([In, MarshalAs(UnmanagedType.U8)] Int64 id);
+    public delegate bool Stop([In, MarshalAs(UnmanagedType.U8)] long id);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     [return: MarshalAs(UnmanagedType.Bool)]
