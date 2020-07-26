@@ -10,9 +10,8 @@
 
 namespace myoddweb:: directorywatcher
 {
-  Monitor::Monitor( const __int64 id, threads::WorkerPool& workerPool, const Request& request) :
-    Worker(),
-    _id(id),
+  Monitor::Monitor( const long long id, threads::WorkerPool& workerPool, const Request& request) :
+    Worker( id ),
     _workerPool( workerPool ),
     _request( request ),
                       // we will keep data for as long as we need it, either the event time if not zero, (as it updates the stats)
@@ -28,7 +27,7 @@ namespace myoddweb:: directorywatcher
     if( !Completed() )
     {
       // log the error
-      Logger::Log(LogLevel::Error, L"Trying to dispose of a monitor that was never completed!" );
+      Logger::Log(Id(), LogLevel::Error, L"Trying to dispose of a monitor that was never completed" );
     }
     delete _publisher;
     _publisher = nullptr;
@@ -40,14 +39,6 @@ namespace myoddweb:: directorywatcher
   const Collector& Monitor::EventsCollector() const
   {
     return _eventCollector;
-  }
-
-  /**
-   * \brief the id of this monitor
-   */
-  const long long& Monitor::Id() const
-  {
-    return _id;
   }
 
   /**

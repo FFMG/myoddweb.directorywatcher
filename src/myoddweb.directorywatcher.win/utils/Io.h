@@ -6,7 +6,7 @@ namespace myoddweb
 {
   namespace directorywatcher
   {
-    class Io
+    class Io final
     {
     public:
       Io(const Io&) = delete;

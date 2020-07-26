@@ -8,11 +8,22 @@
 #include "../Logger.h"
 #include "../LogLevel.h"
 #include "../Wait.h"
+#include "WorkerId.h"
 
 namespace myoddweb::directorywatcher::threads
 {
-  Worker::Worker() :
-    _state( State::unknown )
+  Worker::Worker() : Worker( WorkerId::NextId() )
+  {
+  }
+
+  /// <summary>
+  /// The base class can give us an id.
+  /// </summary>
+  /// <param name="id"></param>
+  /// <returns></returns>
+  Worker::Worker( const long long id ) :
+    _state(State::unknown),
+    _id(id)
   {
     // set he current time point
     _timePoint1 = std::chrono::system_clock::now();
@@ -21,27 +32,30 @@ namespace myoddweb::directorywatcher::threads
 
   Worker::~Worker()
   {
-    Worker::CompleteAllOperations();
-  }
-
-  /**
- * \brief make sure that all operations are safely completed.
- *        does not throw an exception
- */
-  void Worker::CompleteAllOperations() noexcept
-  {
     try
     {
-      if (!Is( State::complete )) 
+      // the derived class did not complete this operation
+      // you should call stop all before deleting
+      // we are in the destructor so we can no longer handle this here.
+      if (!Is(State::complete))
       {
-        StopAndWait(-1);
+        Logger::Log(Id(), LogLevel::Panic, L"One of the worker was not completed by the base class!" );
       }
     }
-    catch (const std::exception& e)
+    catch (std::exception& e)
     {
       // log the error
       Logger::Log(LogLevel::Error, L"Caught exception '%hs' trying to complete all operations!", e.what());
     }
+  }
+
+  /// <summary>
+  /// Get the Id of this worker.
+  /// </summary>
+  /// <returns></returns>
+  const long long& Worker::Id() const
+  {
+    return _id;
   }
 
   /**
@@ -137,18 +151,26 @@ namespace myoddweb::directorywatcher::threads
   /// </summary>
   void Worker::Execute()
   {
+    Logger::Log(Id(), LogLevel::Debug, L"Worker is Starting");
     // start the thread, if it returns false
     // then we will get out.
     if (!WorkerStart())
     {
+      Logger::Log(Id(), LogLevel::Debug, L"Worker did not want to Start");
       return;
     }
+
+    Logger::Log(Id(), LogLevel::Debug, L"Worker is Running");
 
     // run the code
     WorkerRun();
 
+    Logger::Log(Id(), LogLevel::Debug, L"Worker is Ending");
+
     // the thread has ended.
     WorkerEnd();
+
+    Logger::Log(Id(), LogLevel::Debug, L"Worker is has Ended");
   }
 
   /// <summary>
@@ -202,7 +224,7 @@ namespace myoddweb::directorywatcher::threads
       // then wait however long we need to.
       return WaitFor(timeout);
     }
-    catch (const std::exception& e)
+    catch (std::exception& e)
     {
       // log the error
       Logger::Log(LogLevel::Error, L"Caught exception '%hs' trying to stop and wait!", e.what());
@@ -374,7 +396,7 @@ namespace myoddweb::directorywatcher::threads
         std::rethrow_exception(ptr);
       }
     }
-    catch (const std::exception& e) 
+    catch (std::exception& e) 
     {
       // log the error
       Logger::Log(LogLevel::Error, L"Caught exception '%hs'", e.what() );

@@ -5,7 +5,6 @@
 #include <string>
 
 #include "../utils/Instrumentor.h"
-#include "Base.h"
 #include "win/Directories.h"
 #include "win/Files.h"
 
@@ -16,7 +15,7 @@ namespace myoddweb:: directorywatcher
    * ReadDirectoryChangesW fails with ERROR_INVALID_PARAMETER when the buffer length is greater than 64KB
    * \see https://docs.microsoft.com/en-us/windows/desktop/api/winbase/nf-winbase-readdirectorychangesw
    */
-  #define MAX_BUFFER_SIZE (unsigned long)65536
+  constexpr unsigned long max_buffer_size = 65536;
 
    /**
     * \brief Create the Monitor that uses ReadDirectoryChanges
@@ -26,7 +25,7 @@ namespace myoddweb:: directorywatcher
     * \param request details of the request.
     */
   WinMonitor::WinMonitor(const long long id, const long long parentId, threads::WorkerPool& workerPool, const Request& request) :
-    WinMonitor(id, parentId, workerPool, request, MAX_BUFFER_SIZE)
+    WinMonitor(id, parentId, workerPool, request, max_buffer_size)
   {
   }
 
