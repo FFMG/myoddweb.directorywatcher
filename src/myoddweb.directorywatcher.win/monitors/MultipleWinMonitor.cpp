@@ -145,7 +145,7 @@ namespace myoddweb::directorywatcher
    */
   Monitor* MultipleWinMonitor::FindChildInLock(const std::wstring& path) const
   {
-    for (auto child : _recursiveChildren )
+    for (const auto& child : _recursiveChildren )
     {
       if (child->IsPath(path))
       {
@@ -262,7 +262,7 @@ namespace myoddweb::directorywatcher
 
     // the current events.
     std::vector<Event*> levents;
-    for (auto monitor : _nonRecursiveParents )
+    for ( const auto& monitor : _nonRecursiveParents )
     {
       try
       {
@@ -283,7 +283,7 @@ namespace myoddweb::directorywatcher
         assert(!monitor->Recursive());
 #endif
         // we now need to look for added/deleted paths.
-        for (auto levent : levents)
+        for ( const auto& levent : levents)
         {
           // we don't care about file events.
           if (levent->IsFile)
@@ -334,9 +334,9 @@ namespace myoddweb::directorywatcher
   {
     // all the events.
     std::vector<Event*> events;
-    for (auto monitor : _recursiveChildren)
+    for ( const auto& monitor : _recursiveChildren)
     {
-      const auto levents = GetEvents(monitor);
+      const auto& levents = GetEvents(monitor);
       if (levents.empty())
       {
         continue;
@@ -388,7 +388,7 @@ namespace myoddweb::directorywatcher
   void MultipleWinMonitor::Stop(std::vector<Monitor*>& container) const
   {
     MYODDWEB_PROFILE_FUNCTION();
-    for (auto worker : container)
+    for ( const auto& worker : container)
     {
       WorkerPool().StopWorker( *worker );
     }
@@ -401,7 +401,7 @@ namespace myoddweb::directorywatcher
   void MultipleWinMonitor::Start(const std::vector<Monitor*>& container) const
   {
     MYODDWEB_PROFILE_FUNCTION();
-    for (auto worker : container)
+    for (const auto& worker : container)
     {
       WorkerPool().Add(*worker);
     }
@@ -431,7 +431,7 @@ namespace myoddweb::directorywatcher
     try
     {
       // delete all the monitors.
-      for (const auto monitor : container )
+      for (const auto& monitor : container )
       {
         // if this fires then you might have a problem here
         // because of the way the monitor destructor wait

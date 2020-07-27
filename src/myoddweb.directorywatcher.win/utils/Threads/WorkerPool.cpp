@@ -249,7 +249,7 @@ namespace myoddweb::directorywatcher::threads
     _fElapsedTimeMilliseconds += fElapsedTimeMilliseconds;
 
     MYODDWEB_LOCK(_workerAndFuturesLock);
-    for (const auto workerAndFuture : _workerAndFutures)
+    for (const auto& workerAndFuture : _workerAndFutures)
     {
       // the worker
       const auto worker = workerAndFuture.first;
@@ -353,7 +353,7 @@ namespace myoddweb::directorywatcher::threads
     WaitForAllAddFuturesPending();
 
     MYODDWEB_LOCK(_workerAndFuturesLock);
-    for (const auto workerAndFutures : _workerAndFutures)
+    for (const auto& workerAndFutures : _workerAndFutures)
     {
       const auto worker = workerAndFutures.first;
 
@@ -387,7 +387,7 @@ namespace myoddweb::directorywatcher::threads
     auto startedOrRunning = false;
 
     MYODDWEB_LOCK(_workerAndFuturesLock);
-    for (const auto workerAndFuture : _workerAndFutures)
+    for (const auto& workerAndFuture : _workerAndFutures)
     {
       const auto worker = workerAndFuture.first;
       if(worker->Completed())
@@ -445,7 +445,7 @@ namespace myoddweb::directorywatcher::threads
   void WorkerPool::StopAllWorkers()
   {
     MYODDWEB_LOCK(_workerAndFuturesLock);
-    for (const auto workerAndFutures : _workerAndFutures)
+    for (const auto& workerAndFutures : _workerAndFutures)
     {
       auto worker = workerAndFutures.first;
       // no need to check if stopped already or not
@@ -494,7 +494,7 @@ namespace myoddweb::directorywatcher::threads
   {
     MYODDWEB_LOCK(_workerAndFuturesLock);
     auto number = 0;
-    for (const auto workerAndFutures : _workerAndFutures)
+    for (const auto& workerAndFutures : _workerAndFutures)
     {
       const auto worker = workerAndFutures.first;
       if (!worker->Completed())
@@ -749,7 +749,7 @@ namespace myoddweb::directorywatcher::threads
       {
         auto stillRunning = false;
         MYODDWEB_LOCK(_workerAndFuturesLock);
-        for (const auto worker : workers)
+        for (const auto& worker : workers)
         {
           const auto workerAndFuture = _workerAndFutures.find(worker);
           if (workerAndFuture == _workerAndFutures.end())
@@ -789,7 +789,7 @@ namespace myoddweb::directorywatcher::threads
       {
         auto stillRunning = false;
         MYODDWEB_LOCK(_workerAndFuturesLock);
-        for (const auto workerAndFuture : _workerAndFutures)
+        for (const auto& workerAndFuture : _workerAndFutures)
         {
           if (FutureEndState::StillRunning == GetUpdateFutureEndStateInLock(*workerAndFuture.first))
           {
@@ -819,7 +819,7 @@ namespace myoddweb::directorywatcher::threads
     std::vector<Worker*> workersToRemove;
 
     // first look for everything we want to remove
-    for (auto workerAndFuture : _workerAndFutures)
+    for (const auto& workerAndFuture : _workerAndFutures)
     {
       if( !workerAndFuture.first->Completed() )
       {
@@ -830,7 +830,7 @@ namespace myoddweb::directorywatcher::threads
     }
 
     // then remove them
-    for (auto worker : workersToRemove)
+    for ( const auto& worker : workersToRemove)
     {
       const auto it = _workerAndFutures.find(worker);
       _workerAndFutures.erase(it);

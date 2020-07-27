@@ -69,7 +69,7 @@ namespace myoddweb::directorywatcher
       va_end(args);
 
       MYODDWEB_LOCK(_lock);
-      for (const auto logger : Instance()._loggers)
+      for (const auto& logger : Instance()._loggers)
       {
         try
         {
@@ -130,7 +130,7 @@ namespace myoddweb::directorywatcher
       else
       {
         // the value was 0 so we will send to all.
-        for (const auto logger : Instance()._loggers)
+        for (const auto& logger : Instance()._loggers)
         {
           try
           {
