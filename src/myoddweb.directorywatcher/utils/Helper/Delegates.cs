@@ -1,5 +1,4 @@
-﻿using System;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
 namespace myoddweb.directorywatcher.utils.Helper
 {
@@ -29,7 +28,7 @@ namespace myoddweb.directorywatcher.utils.Helper
     // Delegate with function signature for the GetVersion function
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     [return: MarshalAs(UnmanagedType.I8)]
-    public delegate Int64 Start(ref Request request);
+    public delegate long Start(ref Request request);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     [return: MarshalAs(UnmanagedType.Bool)]

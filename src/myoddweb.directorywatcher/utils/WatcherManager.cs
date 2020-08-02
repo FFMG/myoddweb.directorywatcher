@@ -370,25 +370,27 @@ namespace myoddweb.directorywatcher.utils
       }
     }
 
-    public long GetEvents(long id, out IList<IEvent> events)
+    public IList<IEvent> GetEvents(long id )
     {
       lock (_idAndEvents)
       {
         if (!_idAndEvents.ContainsKey(id))
         {
-          events = new List<IEvent>();
-          return 0;
+          return new List<IEvent>();
         }
 
-        events = _idAndEvents[id].Select(e => new Event(
+        //  make sure we clone the list
+        var events = _idAndEvents[id].Select(e => new Event(
           e.IsFile,
           e.Name,
           e.OldName,
           e.Action,
           e.Error,
-          e.DateTimeUtc)).ToArray();
+          e.DateTimeUtc)).ToArray().ToList<IEvent>();
+
+        // then reset our list
         _idAndEvents[id].Clear();
-        return events.Count;
+        return events;
       }
     }
 
