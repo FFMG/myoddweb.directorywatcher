@@ -43,7 +43,13 @@ TEST_P(RecursiveAndNonRecursive, TwoWatchersOnTheSameFolder) {
   Add(id2, helper);
 
   // wait for the thread to get started
-  Wait::Delay(TEST_TIMEOUT_WAIT);
+  if (!Wait::SpinUntil([&]
+    {
+      return ::MonitorsManager::Ready();
+    }, TEST_TIMEOUT_WAIT))
+  {
+    GTEST_FATAL_FAILURE_("Unable to start pool");
+  }
 
   const auto number = 10;
   for (auto i = 0; i < number; ++i)
@@ -104,7 +110,14 @@ TEST_P(RecursiveAndNonRecursive, TwoWatchersOnTwoSeparateFolders) {
   Add(id2, helper2);
 
   // wait for the thread to get started
-  Wait::Delay(TEST_TIMEOUT_WAIT);
+    // wait for the pool to start
+  if (!Wait::SpinUntil([&]
+    {
+      return ::MonitorsManager::Ready();
+    }, TEST_TIMEOUT_WAIT))
+  {
+    GTEST_FATAL_FAILURE_("Unable to start pool");
+  }
 
   // just add a file
   const auto number = 10;
@@ -154,7 +167,14 @@ TEST(MonitorsManagerEdgeCases, StartAndStopAlmostInstantly) {
     Add(id, &helper);
 
     // wait for the thread to get started
-    Wait::Delay(TEST_TIMEOUT_WAIT);
+    if (!Wait::SpinUntil([&]
+      {
+        return ::MonitorsManager::Ready();
+      }, TEST_TIMEOUT_WAIT))
+    {
+      GTEST_FATAL_FAILURE_("Unable to start pool");
+    }
+
 
     auto folders = std::vector<std::wstring>();
 
@@ -197,7 +217,13 @@ TEST(MonitorsManagerEdgeCases, StartAndStopAlmostInstantlyWithSubFolders) {
   Add(id, &helper);
 
   // wait for the thread to get started
-  Wait::Delay(TEST_TIMEOUT_WAIT);
+  if (!Wait::SpinUntil([&]
+    {
+      return ::MonitorsManager::Ready();
+    }, TEST_TIMEOUT_WAIT))
+  {
+    GTEST_FATAL_FAILURE_("Unable to start pool");
+  }
 
   auto folders = std::vector<std::wstring>();
 

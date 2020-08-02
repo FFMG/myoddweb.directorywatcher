@@ -75,6 +75,9 @@
     <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Logger.cpp">
       <Filter>win\utils</Filter>
     </ClCompile>
+    <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Threads\WorkerId.cpp">
+      <Filter>win\utils\Threads</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -167,6 +170,9 @@
     </ClInclude>
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\LogLevel.h">
       <Filter>win\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Threads\WorkerId.h">
+      <Filter>win\utils\Threads</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

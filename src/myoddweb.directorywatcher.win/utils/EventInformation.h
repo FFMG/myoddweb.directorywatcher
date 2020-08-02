@@ -2,7 +2,6 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #pragma once
-#include <string>
 #include "EventAction.h"
 #include "EventError.h"
 
@@ -13,7 +12,7 @@ namespace myoddweb
     /**
      * \brief Information about a file/folder event.
      */
-    class EventInformation
+    class EventInformation final
     {
     public:
       EventInformation() :

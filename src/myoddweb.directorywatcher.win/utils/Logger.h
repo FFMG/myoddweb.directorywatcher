@@ -54,7 +54,7 @@ namespace myoddweb:: directorywatcher
      * \param format the message format
      * \param ... the parametters
      */
-    static void Log(long long id, LogLevel level, const wchar_t* format, ...);
+    static void Log(long long id, LogLevel level, const wchar_t* format, ...) noexcept;
 
     /**
      * \brief log a message to all our listed messages
@@ -62,7 +62,7 @@ namespace myoddweb:: directorywatcher
      * \param format the message format
      * \param ... the parametters
      */
-    static void Log(LogLevel level, const wchar_t* format, ...);
+    static void Log(LogLevel level, const wchar_t* format, ...) noexcept;
 
   private:
     /**
@@ -72,7 +72,7 @@ namespace myoddweb:: directorywatcher
      * \param level the message log level
      * \param message the message we want to log.
      */
-    static void Log(const LoggerCallback& logger, long long id, LogLevel level, const wchar_t* message);
+    static void Log(const LoggerCallback& logger, long long id, LogLevel level, const wchar_t* message) noexcept;
 
     /**
      * \brief create a message, and take ownership of the string
@@ -80,12 +80,12 @@ namespace myoddweb:: directorywatcher
      * \param args the list of arguments.
      */
     [[nodiscard]]
-    static std::wstring MakeMessage(const wchar_t* format, va_list args);
+    static std::wstring MakeMessage(const wchar_t* format, va_list args) noexcept;
 
     /**
      * \brief check if we have any loggers in our list
      */
     [[nodiscard]]
-    static bool HasAnyLoggers();
+    static bool HasAnyLoggers() noexcept;
   };
 }

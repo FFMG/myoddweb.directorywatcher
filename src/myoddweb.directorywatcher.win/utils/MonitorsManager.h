@@ -11,11 +11,15 @@ namespace myoddweb:: directorywatcher
 {
   class MonitorsManager final
   {
-  private:
     MonitorsManager();
     ~MonitorsManager();
 
   public:
+    MonitorsManager(const MonitorsManager&) = delete;
+    MonitorsManager( MonitorsManager&& ) = delete;
+    const MonitorsManager&  operator=(const MonitorsManager&) = delete;
+    MonitorsManager& operator=( MonitorsManager&&) = delete;
+
     /**
      * \brief Start a monitor
      * \param request the request being added.
@@ -57,13 +61,6 @@ namespace myoddweb:: directorywatcher
      * \return false if there was a problem or if it does not exist.
      */
     bool StopAndDeleteWithLock(long long id);
-
-    /**
-     * \brief Get a random id
-     * We do not check for colisions, it is up to the caller.
-     * \return a random id number.
-     */
-    static long long GetId();
 
     // The file lock
     static MYODDWEB_MUTEX _lock;

@@ -2,7 +2,6 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #pragma once
-#include <string>
 
 namespace myoddweb
 {
@@ -11,7 +10,7 @@ namespace myoddweb
     /**
      * \brief unmanaged implementation of IEvent
      */
-    class Event
+    class Event final
     {
     public:
       Event() :

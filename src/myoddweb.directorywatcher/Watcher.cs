@@ -17,6 +17,21 @@ namespace myoddweb.directorywatcher
   {
     #region Member variables
     /// <summary>
+    /// The default number of ms we want to wait for.
+    /// </summary>
+    private const int DefaultDelayWait = 500;
+
+    /// <summary>
+    /// The number of milliseconds we want to wait between getting events
+    /// </summary>
+    private int _delayWaitEvents;
+
+    /// <summary>
+    /// The number of milliseconds we want to wait between getting stats
+    /// </summary>
+    private int _delayWaitSatistics;
+
+    /// <summary>
     /// The watch manager that allows us to control who loads what
     /// </summary>
     private readonly WatcherManager _watcherManager;
@@ -97,6 +112,9 @@ namespace myoddweb.directorywatcher
 
     public Watcher()
     {
+      // make sure that the event wait values are set
+      RecalculateDelays();
+
 #if DEBUG
       // _watcherManager = new WatcherManagerEmbeddedInterop();
       // _watcherManager = new WatcherManagerInterop();
@@ -126,11 +144,14 @@ namespace myoddweb.directorywatcher
     {
       lock (_logerTasks)
       {
-        var token = _watcherSource.Token;
-        var task = OnLoggerAsync != null
-          ? Task.Run(() => OnLoggerAsync?.Invoke(logger, token), token)
-          : Task.FromResult(false);
-        _logerTasks.Add(task);
+        if (OnLoggerAsync != null)
+        {
+          var token = _watcherSource.Token;
+          var task = OnLoggerAsync != null
+            ? Task.Run(() => OnLoggerAsync?.Invoke(logger, token), token)
+            : Task.FromResult(false);
+          _logerTasks.Add(task);
+        }
 
         _logerTasks.RemoveAll(t => t.IsCompleted);
       }
@@ -169,10 +190,16 @@ namespace myoddweb.directorywatcher
           return;
         }
 
+        // remove the logger event
+        if (_watcherManager != null )
+        {
+          _watcherManager.OnLogger -= OnLogger;
+        }
+
         // stop collecting events
         Stop();
 
-        // stop everything ekse
+        // stop everything else
         StopInternalEvents();
 
         // and dispose...
@@ -230,6 +257,7 @@ namespace myoddweb.directorywatcher
       if (id != -1)
       {
         _processedRequests[id] = request;
+        RecalculateDelays();
       }
 
       // try and run whatever pending requests we might still have.
@@ -256,6 +284,9 @@ namespace myoddweb.directorywatcher
       // so just add it to the queue
       _pendingRequests.Add(request);
 
+      // update our counters.
+      RecalculateDelays();
+
       // all good.
       return true;
     }
@@ -278,7 +309,56 @@ namespace myoddweb.directorywatcher
 
       // remove it.
       _processedRequests.Remove(id);
+
+      // update our counters.
+      RecalculateDelays();
       return true;
+    }
+
+    private void RecalculateDelays()
+    {
+      RecalculateEventsDelays();
+      RecalculateStatisticsDelays();
+    }
+
+    private void RecalculateStatisticsDelays()
+    {
+      if (_processedRequests.Count == 0)
+      {
+        //  we have nothing to watch ... just wait half a second
+        _delayWaitSatistics = DefaultDelayWait;
+        return;
+      }
+
+      var minWaitStatistics = _processedRequests.Values.Min(r => r.Rates.StatisticsMilliseconds);
+      if (minWaitStatistics > int.MaxValue || minWaitStatistics <= 0)
+      {
+        _delayWaitSatistics = DefaultDelayWait;
+      }
+      else
+      {
+        _delayWaitSatistics = (int)minWaitStatistics;
+      }
+    }
+
+    private void RecalculateEventsDelays()
+    {
+      if (_processedRequests.Count == 0)
+      {
+        //  we have nothing to watch ... just wait half a second
+        _delayWaitEvents = DefaultDelayWait;
+        return;
+      }
+
+      var minWaitEvents = _processedRequests.Values.Min(r => r.Rates.EventsMilliseconds);
+      if (minWaitEvents > int.MaxValue || minWaitEvents <= 0)
+      {
+        _delayWaitEvents = DefaultDelayWait;
+      }
+      else
+      {
+        _delayWaitEvents = (int)minWaitEvents;
+      }
     }
 
     /// <inheritdoc />
@@ -349,6 +429,7 @@ namespace myoddweb.directorywatcher
 
           // add this to our processed requests.
           _processedRequests[id] = request;
+          RecalculateDelays();
 
           // work was done
           requestProcessed = true;
@@ -365,6 +446,8 @@ namespace myoddweb.directorywatcher
         {
           _pendingRequests.Remove(processedRequest.Value);
         }
+
+        RecalculateDelays();
 
         // we started something.
         return true;
@@ -443,7 +526,8 @@ namespace myoddweb.directorywatcher
       // we cannot get any more events if we have disposed.
       CheckDisposed();
 
-      return _watcherManager.GetEvents(id, out events);
+      events = _watcherManager.GetEvents(id );
+      return events.Count;
     }
 
     /// <inheritdoc />
@@ -624,7 +708,7 @@ namespace myoddweb.directorywatcher
           finally
           {
             // wait ... a little.
-            await Task.Delay(10, _watcherSource.Token).ConfigureAwait(false);
+            await Task.Delay(_delayWaitEvents, _watcherSource.Token).ConfigureAwait(false);
           }
         }
       }
@@ -706,7 +790,7 @@ namespace myoddweb.directorywatcher
 
             try
             {
-              // on of the functions threw an error.
+              // one of the functions threw an error.
               if (OnErrorAsync != null)
               {
                 tasks.Add(Task.Run(() => OnErrorAsync(new utils.EventError(EventError.General, DateTime.UtcNow), _eventsSource.Token), _eventsSource?.Token ?? _watcherSource.Token ));
@@ -721,7 +805,7 @@ namespace myoddweb.directorywatcher
           finally
           {
             // wait ... a little.
-            await Task.Delay(10, _watcherSource.Token ).ConfigureAwait(false);
+            await Task.Delay(_delayWaitSatistics, _watcherSource.Token ).ConfigureAwait(false);
           }
         }
       }

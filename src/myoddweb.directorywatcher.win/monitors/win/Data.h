@@ -4,6 +4,7 @@
 #pragma once
 #include <Windows.h>
 #include "../Monitor.h"
+#include "../../utils/Threads/CallbackWorker.h"
 
 namespace myoddweb:: directorywatcher:: win
 {
@@ -18,7 +19,9 @@ namespace myoddweb:: directorywatcher:: win
       const wchar_t* path,
       unsigned long notifyFilter,
       bool recursive,
-      unsigned long bufferLength);
+      unsigned long bufferLength,
+      threads::WorkerPool& workerPool
+    );
     ~Data();
 
     /**
@@ -41,6 +44,10 @@ namespace myoddweb:: directorywatcher:: win
      */
     void Stop();
 
+    /// <summary>
+    /// Get the buffer data
+    /// </summary>
+    /// <returns></returns>
     std::vector<unsigned char*> Get();
 
     /**
@@ -49,9 +56,37 @@ namespace myoddweb:: directorywatcher:: win
      */
     void CheckStillValid();
   private:
+    /// <summary>
+    /// The worker we will be using to stop collecting data
+    /// </summary>
+    threads::CallbackWorker* _stopWorker;
 
+    /// <summary>
+    /// Make sure we only stop the worker once.
+    /// </summary>
+    MYODDWEB_MUTEX _stopWorkerLock;
+
+    /// <summary>
+    /// The lock we are using to clear/update the buffer
+    /// </summary>
     MYODDWEB_MUTEX _dataLock;
+
+    /// <summary>
+    /// The buffer of data
+    /// </summary>
     std::vector<unsigned char*> _data;
+
+    threads::WorkerPool& _workerPool;
+
+    /// <summary>
+    /// Stop monitoring data and wait for the work to complete.
+    /// </summary>
+    void StopAndWait();
+
+    /// <summary>
+    /// Stop monitoring folder while we have the stop lock.
+    /// </summary>
+    void StopInLock();
 
     /**
      * \brief Check if the handle is valid
@@ -163,9 +198,19 @@ namespace myoddweb:: directorywatcher:: win
     /// <summary>
     /// The overlapped structure used to listen for changes.
     /// </summary>
-    OVERLAPPED_DATA*	_overlapped;
+    OVERLAPPED_DATA* _overlapped = nullptr;
 
-    bool _stop = true;
+    /// <summary>
+    /// Flag used to tell if we want to stop everything or not
+    /// Also used to prevent restartint
+    /// </summary>
+    enum class CollectionState
+    {
+      Unknown,
+      Started,
+      Stopped
+    };
+    CollectionState _colectionState = CollectionState::Unknown;
     #pragma endregion
 
     #pragma region Clearup

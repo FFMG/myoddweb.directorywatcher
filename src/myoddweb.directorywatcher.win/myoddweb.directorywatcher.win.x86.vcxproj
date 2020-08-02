@@ -122,6 +122,7 @@
     <ClInclude Include="utils\Threads\Thread.h" />
     <ClInclude Include="utils\Threads\WaitResult.h" />
     <ClInclude Include="utils\Threads\Worker.h" />
+    <ClInclude Include="utils\Threads\WorkerId.h" />
     <ClInclude Include="utils\Threads\WorkerPool.h" />
     <ClInclude Include="utils\Wait.h" />
     <ClInclude Include="watcher.h" />
@@ -148,6 +149,7 @@
     <ClCompile Include="utils\Threads\CallbackWorker.cpp" />
     <ClCompile Include="utils\Threads\Thread.cpp" />
     <ClCompile Include="utils\Threads\Worker.cpp" />
+    <ClCompile Include="utils\Threads\WorkerId.cpp" />
     <ClCompile Include="utils\Threads\WorkerPool.cpp" />
     <ClCompile Include="utils\Wait.cpp" />
     <ClCompile Include="watcher.cpp" />

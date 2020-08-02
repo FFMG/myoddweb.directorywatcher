@@ -2,6 +2,7 @@
 
 #include "../myoddweb.directorywatcher.win/utils/MonitorsManager.h"
 #include "../myoddweb.directorywatcher.win/utils/EventAction.h"
+#include "../myoddweb.directorywatcher.win/utils/Logger.h"
 #include "../myoddweb.directorywatcher.win/utils/Wait.h"
 
 #include "MonitorsManagerTestHelper.h"
@@ -24,100 +25,123 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values(true, false)
   ));
 TEST(MonitorsManagerDelete, IfTimeoutIsZeroCallbackIsNeverCalled) {
+    // create the helper.
+    auto helper = new MonitorsManagerTestHelper();
 
-  // create the helper.
-  auto helper = new MonitorsManagerTestHelper();
+    // use the test request to create the Request
+    // we make a copy of our helper onto the 'real' request to make sure copy is not broken
+    const auto r = RequestHelper(
+      helper->Folder(),
+      false,
+      nullptr,
+      eventFunction,
+      nullptr,
+      0,
+      50);
 
-  auto count = 0;
+    // monitor that folder.
+    const auto request = ::Request(r);
+    const auto id = ::MonitorsManager::Start(request);
 
-  // use the test request to create the Request
-  // we make a copy of our helper onto the 'real' request to make sure copy is not broken
-  const auto r = RequestHelper(
-    helper->Folder(),
-    false,
-    nullptr,
-    eventFunction,
-    nullptr,
-    0,
-    50);
+    Wait::SpinUntil([] { return ::MonitorsManager::Ready(); }, TEST_TIMEOUT_WAIT);
 
-  // monitor that folder.
-  const auto request = ::Request(r);
-  const auto id = ::MonitorsManager::Start(request);
+    Add(id, helper);
 
-  Wait::SpinUntil([] { return ::MonitorsManager::Ready(); }, TEST_TIMEOUT_WAIT);
+    // add a single file to it.
+    const auto file = helper->AddFile();
 
-  Add(id, helper);
+    // delete it
+    ASSERT_TRUE(helper->RemoveFile(file));
 
-  // add a single file to it.
-  const auto file = helper->AddFile();
+    // wait a bit to give a chance for invalid files to be reported.
+    Wait::Delay(1000);
 
-  // delete it
-  ASSERT_TRUE( helper->RemoveFile(file) );
+    ASSERT_EQ(0, helper->Added(true));
+    ASSERT_EQ(0, helper->Removed(true));
 
-  // wait a bit to give a chance for invalid files to be reported.
-  Wait::Delay(1000);
+    ASSERT_NO_THROW(::MonitorsManager::Stop(id));
 
-  ASSERT_EQ(0, helper->Added(true));
-  ASSERT_EQ(0, helper->Removed(true));
-
-  ASSERT_NO_THROW(::MonitorsManager::Stop(id));
-
-  ASSERT_TRUE(Remove(id));
-  delete helper;
+    ASSERT_TRUE(Remove(id));
+    delete helper;
 }
 
 TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFileIsDeleted) {
-  
-  // create the helper.
-  auto helper = new MonitorsManagerTestHelper();
 
-  const auto number = std::get<0>(GetParam());
-  const auto recursive = std::get<1>(GetParam());
-
-  auto count = 0;
-
-  // use the test request to create the Request
-  // we make a copy of our helper onto the 'real' request to make sure copy is not broken
-  const auto r = RequestHelper(
-    helper->Folder(),
-    recursive,
-    nullptr,
-    eventFunction,
-    nullptr,
-    TEST_TIMEOUT,
-    0);
-
-  // monitor that folder.
-  const auto request = ::Request(r);
-  const auto id = ::MonitorsManager::Start(request);
-  Add(id, helper);
-
-  auto files = std::vector<std::wstring>();
-  for (auto i = 0; i < number; ++i)
+  for (auto loop = 0; loop < 10; ++loop)
   {
-    // add a single file to it.
-    files.push_back( helper->AddFile() );
+    try
+    {
+      // create the helper.
+      auto helper = new MonitorsManagerTestHelper();
+
+      const auto number = std::get<0>(GetParam());
+      const auto recursive = std::get<1>(GetParam());
+
+      static std::mutex lockCout;
+
+      // use the test request to create the Request
+      // we make a copy of our helper onto the 'real' request to make sure copy is not broken
+      const auto r = RequestHelper(
+        helper->Folder(),
+        recursive,
+        [](const long long id, int type, const wchar_t* message)
+        {
+          const std::lock_guard<std::mutex> l(lockCout);
+          std::wcerr << id << L": " << message << std::endl;
+        },
+        eventFunction,
+        nullptr,
+        TEST_TIMEOUT,
+        0);
+
+      // monitor that folder.
+      const auto request = ::Request(r);
+      const auto id = ::MonitorsManager::Start(request);
+
+      Add(id, helper);
+
+      // wait for the pool to start
+      if (!Wait::SpinUntil([&]
+        {
+          return ::MonitorsManager::Ready();
+        }, TEST_TIMEOUT_WAIT))
+      {
+        GTEST_FATAL_FAILURE_("Unable to start pool");
+      }
+
+      auto files = std::vector<std::wstring>();
+      for (auto i = 0; i < number; ++i)
+      {
+        // add a single file to it.
+        files.push_back(helper->AddFile());
+      }
+      // delete them all
+      for each (auto file in files)
+      {
+        ASSERT_TRUE(helper->RemoveFile(file));
+      }
+
+      // give a little more than the timeout
+      if( !Wait::SpinUntil(
+        [&] {
+          return number == helper->Removed(true);
+        }, TEST_TIMEOUT_WAIT) )
+      {
+        MonitorsManagerTestHelper::LoggerFunction(id, 0, L"wtf");
+      }
+
+      ASSERT_EQ(number, helper->Removed(true));
+
+      ASSERT_NO_THROW(::MonitorsManager::Stop(id));
+
+      ASSERT_TRUE(Remove(id));
+      delete helper;
+    }
+    catch ( ... )
+    {
+      GTEST_FATAL_FAILURE_("There was an exception running the test.");
+    }
   }
-
-  // delete them all
-  for each (auto file in files)
-  {
-    ASSERT_TRUE(helper->RemoveFile(file));
-  }
-
-  // give a little more than the timeout
-  Wait::SpinUntil(
-    [&] {
-      return number == helper->Removed(true);
-    }, TEST_TIMEOUT_WAIT);
-
-  ASSERT_EQ(number, helper->Removed(true));
-
-  ASSERT_NO_THROW(::MonitorsManager::Stop(id));
-
-  ASSERT_TRUE(Remove(id));
-  delete helper;
 }
 
 TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFolderIsDeleted) {
@@ -128,8 +152,6 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFolderIsDeleted) {
   const auto number = std::get<0>(GetParam());
   const auto recursive = std::get<1>(GetParam());
 
-  auto count = 0;
-
   // use the test request to create the Request
   // we make a copy of our helper onto the 'real' request to make sure copy is not broken
   const auto r = RequestHelper(
@@ -146,8 +168,14 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFolderIsDeleted) {
   const auto id = ::MonitorsManager::Start(request);
   Add(id, helper);
 
-  // wait for the thread to get started
-  Wait::Delay(TEST_TIMEOUT_WAIT);
+  // wait for the pool to start
+  if (!Wait::SpinUntil([&]
+    {
+      return ::MonitorsManager::Ready();
+    }, TEST_TIMEOUT_WAIT))
+  {
+    GTEST_FATAL_FAILURE_("Unable to start pool");
+  }
 
   auto folders = std::vector<std::wstring>();
   for (auto i = 0; i < number; ++i)

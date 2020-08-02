@@ -53,31 +53,38 @@ namespace myoddweb::directorywatcher
    * \param format the message format
    * \param ... the parametters
    */
-  void Logger::Log(const LogLevel level, const wchar_t* format, ...)
+  void Logger::Log(const LogLevel level, const wchar_t* format, ...) noexcept
   {
-    //  shortcut
-    if(HasAnyLoggers())
+    try
     {
-      return;
+      //  shortcut
+      if (!HasAnyLoggers())
+      {
+        return;
+      }
+
+      va_list args;
+      va_start(args, format);
+      const auto message = MakeMessage(format, args);
+      va_end(args);
+
+      MYODDWEB_LOCK(_lock);
+      for (const auto& logger : Instance()._loggers)
+      {
+        try
+        {
+          Log(logger.second, 0, level, message.c_str());
+        }
+        catch (...)
+        {
+          // we cannot log a log message that faied
+          MYODDWEB_OUT("There was an issue logging a message");
+        }
+      }
     }
-
-    va_list args;
-    va_start(args, format);
-    const auto message = MakeMessage(format, args);
-    va_end(args);
-
-    MYODDWEB_LOCK(_lock);
-    for (const auto logger : Instance()._loggers)
+    catch( ... )
     {
-      try
-      {
-        Log(logger.second, 0, level, message.c_str());
-      }
-      catch ( ... )
-      {
-        // we cannot log a log message that faied
-        MYODDWEB_OUT("There was an issue logging a message");
-      }
+      /// we have a contract never to throw.
     }
   }
 
@@ -88,51 +95,58 @@ namespace myoddweb::directorywatcher
    * \param format the message format
    * \param ... the parametters
    */
-  void Logger::Log(const long long id, const LogLevel level, const wchar_t* format, ...)
+  void Logger::Log(const long long id, const LogLevel level, const wchar_t* format, ...) noexcept
   {
-    //  shortcut
-    if (HasAnyLoggers())
+    try
     {
-      return;
-    }
-
-    va_list args;
-    va_start(args, format);
-    const auto message = MakeMessage(format, args);
-    va_end(args);
-
-    MYODDWEB_LOCK(_lock);
-    if( id != 0 )
-    {
-      const auto logger = Instance()._loggers.find(id);
-      if (logger != Instance()._loggers.end())
+      //  shortcut
+      if (!HasAnyLoggers())
       {
-        try
+        return;
+      }
+
+      va_list args;
+      va_start(args, format);
+      const auto message = MakeMessage(format, args);
+      va_end(args);
+
+      MYODDWEB_LOCK(_lock);
+      if (id != 0)
+      {
+        const auto logger = Instance()._loggers.find(id);
+        if (logger != Instance()._loggers.end())
         {
-          Log(logger->second, id, level, message.c_str());
+          try
+          {
+            Log(logger->second, id, level, message.c_str());
+          }
+          catch (...)
+          {
+            // we cannot log a log message that faied
+            MYODDWEB_OUT("There was an issue logging a message");
+          }
         }
-        catch (...)
+      }
+      else
+      {
+        // the value was 0 so we will send to all.
+        for (const auto& logger : Instance()._loggers)
         {
-          // we cannot log a log message that faied
-          MYODDWEB_OUT("There was an issue logging a message");
+          try
+          {
+            Log(logger.second, id, level, message.c_str());
+          }
+          catch (...)
+          {
+            // we cannot log a log message that faied
+            MYODDWEB_OUT("There was an issue logging a message");
+          }
         }
       }
     }
-    else
+    catch( ... )
     {
-      // the value was 0 so we will send to all.
-      for (const auto logger : Instance()._loggers)
-      {
-        try
-        {
-          Log(logger.second, id, level, message.c_str());
-        }
-        catch (...)
-        {
-          // we cannot log a log message that faied
-          MYODDWEB_OUT("There was an issue logging a message");
-        }
-      }
+      // we have a contract never to throw
     }
   }
 
@@ -143,28 +157,35 @@ namespace myoddweb::directorywatcher
    * \param level the message log level
    * \param message the message we want to log.
    */
-  void Logger::Log(const LoggerCallback& logger, const long long id, const LogLevel level, const wchar_t* message)
+  void Logger::Log(const LoggerCallback& logger, const long long id, const LogLevel level, const wchar_t* message) noexcept
   {
     if( nullptr == logger)
     {
       return;
     }
 
-    logger
-    (
-      id,
-      static_cast<int>(level),
-      message
-    );
-  }
+    try
+    {
+      logger
+      (
+        id,
+        static_cast<int>(level),
+        message
+      );
+    }
+    catch( ... )
+    {
+      // we have a contract not to throw
+    }
+ }
 
   /**
    * \brief check if we have any loggers in our list
    */
-  bool Logger::HasAnyLoggers()
+  bool Logger::HasAnyLoggers() noexcept
   {
     MYODDWEB_LOCK(_lock);
-    return Instance()._loggers.size() > 0;
+    return !Instance()._loggers.empty();
   }
 
 
@@ -173,30 +194,38 @@ namespace myoddweb::directorywatcher
    * \param format the message format
    * \param args the list of arguments.
    */
-  std::wstring Logger::MakeMessage(const wchar_t* format, va_list args)
+  std::wstring Logger::MakeMessage(const wchar_t* format, const va_list args)noexcept
   {
-    // sanity check
-    if( nullptr == format )
+    try
     {
-      return L"";
-    }
+      // sanity check
+      if (nullptr == format)
+      {
+        return L"";
+      }
 
-    // get the final size
-    const auto size = vswprintf(nullptr, 0, format, args);
-    if (size <= 0)
-    {
-      return L"";
-    }
+      // get the final size
+      const auto size = vswprintf(nullptr, 0, format, args);
+      if (size <= 0)
+      {
+        return L"";
+      }
 
-    // build the string
-    std::wstring output;
-    const auto buffSize = size + 1;
-    output.reserve(buffSize);
-    if (vswprintf_s(output.data(), buffSize, format, args) < 0)// create the string
-    {
-      output.clear();                                     // Empty the string if there is a problem
+      // build the string
+      std::wstring output;
+      const auto buffSize = size + 1;
+      output.reserve(buffSize);
+      if (vswprintf_s(output.data(), buffSize, format, args) < 0)// create the string
+      {
+        output.clear();                                     // Empty the string if there is a problem
+      }
+      return output;
     }
-    return output;
+    catch (...)
+    {
+      // we have a contract not to throw
+      return L"Exception thrown in `MakeMessage`!";
+    }
   }
 
 }

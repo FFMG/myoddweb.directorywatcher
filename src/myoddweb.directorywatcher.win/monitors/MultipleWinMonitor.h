@@ -13,7 +13,7 @@ namespace myoddweb
     {
     public:
       MultipleWinMonitor(long long id, threads::WorkerPool& workerPool, const Request& request);
-      virtual ~MultipleWinMonitor();
+      virtual ~MultipleWinMonitor() noexcept;
 
       MultipleWinMonitor& operator=(MultipleWinMonitor&& other) = delete;
       MultipleWinMonitor(MultipleWinMonitor&&) = delete;
@@ -66,17 +66,6 @@ namespace myoddweb
       std::vector<Monitor*> _recursiveChildren;
 
       /**
-       * \brief A running count of Ids
-       */
-      long _nextId{};
-
-      /**
-       * \brief get the next available id.
-       * \return the next usable id.
-       */
-      long GetNextId();
-
-      /**
        * \brief get the next available id.
        * \return the next usable id.
        */
@@ -92,7 +81,7 @@ namespace myoddweb
       /**
        * \brief Clear all the current data
        */
-      void Delete();
+      void Delete() noexcept;
 
       /**
        * \brief a folder has been deleted, process it.
@@ -144,13 +133,13 @@ namespace myoddweb
        * \return if we find it, the iterator of the child monitor.
        */
       [[nodiscard]]
-      std::vector<Monitor*>::const_iterator FindChildInLock(const std::wstring& path) const;
+      Monitor* FindChildInLock(const std::wstring& path) const;
 
       /**
        * \brief Clear the container data
        * \param container the container we want to clear.
        */
-      static void DeleteInLock(std::vector<Monitor*>& container);
+      void DeleteInLock(std::vector<Monitor*>& container) const noexcept;
 
       /**
        * \brief Stop all the monitors

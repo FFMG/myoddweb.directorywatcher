@@ -60,6 +60,9 @@
     <ClCompile Include="utils\Logger.cpp">
       <Filter>utilities</Filter>
     </ClCompile>
+    <ClCompile Include="utils\Threads\WorkerId.cpp">
+      <Filter>utilities\Threads</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -149,6 +152,9 @@
     </ClInclude>
     <ClInclude Include="utils\LogLevel.h">
       <Filter>utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\Threads\WorkerId.h">
+      <Filter>utilities\Threads</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

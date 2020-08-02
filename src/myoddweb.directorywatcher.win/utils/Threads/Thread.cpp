@@ -141,11 +141,11 @@ namespace myoddweb::directorywatcher::threads
     switch (MYODDWEB_WORKER_TYPE)
     {
     case 1:
-      _thread = new std::thread(&Thread::Start, this);
+      _thread = new std::thread(&Thread::Execute, this);
       break;
 
     case 2:
-      _future = new std::future<void>( std::async(std::launch::async, &Thread::Start, this));
+      _future = new std::future<void>( std::async(std::launch::async, &Thread::Execute, this));
       break;
 
     default:
@@ -156,15 +156,15 @@ namespace myoddweb::directorywatcher::threads
   /**
    * \brief start running the worker.
    */
-  void Thread::Start() const
+  void Thread::Execute() const
   {
     // we can now start
     try
     {
       // we can assume we are started
-      _parentWorker->Start();
+      _parentWorker->Execute();
     }
-    catch (const std::exception& e)
+    catch (std::exception& e)
     {
       // log the error
       Logger::Log(LogLevel::Error, L"Caught exception '%hs' trying to start a thread!", e.what());
@@ -240,9 +240,10 @@ namespace myoddweb::directorywatcher::threads
       {
         (*_thread).join();
       }
-      catch (...)
+      catch (std::exception& e )
       {
         //  an error could happen, it means we are done.
+        Logger::Log(LogLevel::Panic, L"I was unable to stop the running thread: %hs", e.what());
       }
     }
     delete _thread;

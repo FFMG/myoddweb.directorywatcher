@@ -30,7 +30,7 @@ TEST(Worker, StopAfterWeHaveStopped)
   EXPECT_FALSE(worker.Started());
   EXPECT_FALSE(worker.Completed());
   
-  worker.Start();
+  worker.Execute();
 
   // if we are here, we are done.
   EXPECT_TRUE(worker.Completed());

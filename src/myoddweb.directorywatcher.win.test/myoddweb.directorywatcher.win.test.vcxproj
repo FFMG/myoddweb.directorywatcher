@@ -55,6 +55,7 @@
     <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Threads\CallbackWorker.cpp" />
     <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Threads\Thread.cpp" />
     <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Threads\Worker.cpp" />
+    <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Threads\WorkerId.cpp" />
     <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Threads\WorkerPool.cpp" />
     <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Wait.cpp" />
     <ClCompile Include="MonitorsManagerEdge.cpp" />
@@ -100,6 +101,7 @@
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Threads\Thread.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Threads\WaitResult.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Threads\Worker.h" />
+    <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Threads\WorkerId.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Threads\WorkerPool.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Timer.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Wait.h" />

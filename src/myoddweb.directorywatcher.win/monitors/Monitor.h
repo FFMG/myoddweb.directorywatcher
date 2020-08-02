@@ -17,7 +17,7 @@ namespace myoddweb
     class Monitor : public threads::Worker
     {
     public:
-      Monitor( __int64 id, threads::WorkerPool& workerPool, const Request& request);
+      Monitor( long long id, threads::WorkerPool& workerPool, const Request& request);
       virtual ~Monitor();
 
       Monitor& operator=(Monitor&& other) = delete;
@@ -25,12 +25,6 @@ namespace myoddweb
       Monitor() = delete;
       Monitor(const Monitor&) = delete;
       Monitor& operator=(const Monitor&) = delete;
-
-      /**
-       * \brief the id of this monitor
-       */
-      [[nodiscard]]
-      const long long& Id() const;
 
       /**
        * \brief the patht that is being monitored.
@@ -125,11 +119,6 @@ namespace myoddweb
       #pragma endregion 
 
       #pragma region Member Variables
-      /**
-       * \brief the unique monitor id.
-       */
-      const long long _id;
-
       /**
        * \brief the worker pool
        */

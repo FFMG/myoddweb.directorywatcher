@@ -79,10 +79,8 @@ namespace myoddweb.directorywatcher.load
     {
       lock (_watchers)
       {
-        // start them all
         foreach (var w in _watchers)
         {
-          w.Watcher.OnLoggerAsync += OnLoggerAsync;
           w.Start();
         }
       }
@@ -117,11 +115,28 @@ namespace myoddweb.directorywatcher.load
     /// </summary>
     private void CreateWatchers()
     {
-      // we need to create a watcher and add it to our list.
-      var watcher = new Watcher();
-      foreach ( var drive in _drives )
+      lock (_watchers)
       {
-        _watchers.Add( new WatchedFolder(_output, drive, 0, watcher ));
+        if (!Options.Unique)
+        {
+          foreach (var drive in _drives)
+          {
+            // we need to create a watcher and add it to our list.
+            var watcher = new Watcher();
+            watcher.OnLoggerAsync += OnLoggerAsync;
+            _watchers.Add(new WatchedFolder(_output, drive, 0, watcher));
+          }
+        }
+        else
+        {
+          // we need to create a watcher and add it to our list.
+          var watcher = new Watcher();
+          watcher.OnLoggerAsync += OnLoggerAsync;
+          foreach (var drive in _drives)
+          {
+            _watchers.Add(new WatchedFolder(_output, drive, 0, watcher));
+          }
+        }
       }
     }
 

@@ -136,10 +136,8 @@ namespace myoddweb::directorywatcher
     if (0 != _monitor.GetEvents(events))
     {
       // then call the callback
-      for (auto it = events.begin(); it != events.end(); ++it)
+      for ( auto& event : events )
       {
-        const auto& event = (*it);
-
         // update the stats
         UpdateStatistics(*event);
 
@@ -168,7 +166,7 @@ namespace myoddweb::directorywatcher
       // we are done with the stats
       _currentStatistics = { 0 };
     }
-    catch (const std::exception& e)
+    catch (std::exception& e)
     {
       // the callback did something wrong!
       // log the error
@@ -201,9 +199,8 @@ namespace myoddweb::directorywatcher
     }
 
     // then call the callback
-    for (auto it = events.begin(); it != events.end(); ++it)
+    for ( const auto& event : events )
     {
-      const auto& event = (*it);
       try
       {
         // publish it
@@ -220,7 +217,7 @@ namespace myoddweb::directorywatcher
         // update the stats
         UpdateStatistics(*event);
       }
-      catch (const std::exception& e)
+      catch (std::exception& e)
       {
         // the callback did something wrong!
         // log the error

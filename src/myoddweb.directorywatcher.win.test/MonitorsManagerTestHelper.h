@@ -17,7 +17,7 @@ MonitorsManagerTestHelper* Get(long long id);
 bool Remove(long long id);
 bool Add(long long id, MonitorsManagerTestHelper* mng);
 
-class MonitorsManagerTestHelper
+class MonitorsManagerTestHelper final
 {
 private:
   std::wstring _folder;
@@ -40,7 +40,7 @@ public:
 
   void EventAction(EventAction action, bool isFile);
 
-  void LoggerFunction(long long id, int type, const wchar_t* message);
+  static void LoggerFunction(long long id, int type, const wchar_t* message);
 
   [[nodiscard]] auto Added(bool isFile) const -> int;
   [[nodiscard]] auto Removed(bool isFile) const -> int;
@@ -74,14 +74,6 @@ inline auto loggerFunction = []
   const int type,
   const wchar_t* message
   ) -> void
-{
-  const auto l = Get(id);
-  if (l != nullptr)
-  {
-    l->LoggerFunction(id, type, message);
-  }
-  else
-  {
-    std::wcerr << L"Globla:" << message << std::endl;
-  }
+{ 
+  MonitorsManagerTestHelper::LoggerFunction(id, type, message);
 };

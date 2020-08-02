@@ -18,9 +18,12 @@ namespace myoddweb:: directorywatcher:: win
     const wchar_t* path,
     const unsigned long notifyFilter,
     const bool recursive,
-    const unsigned long bufferLength
+    const unsigned long bufferLength,
+    threads::WorkerPool& workerPool
     )
     :
+    _stopWorker( nullptr ),
+    _workerPool( workerPool ),
     _invalidHandleWait(0),
     _notifyFilter(notifyFilter),
     _recursive(recursive),
@@ -29,8 +32,7 @@ namespace myoddweb:: directorywatcher:: win
     _buffer(nullptr),
     _bufferLength(bufferLength),
     _path( path ),
-    _id( id ),
-    _overlapped(nullptr)
+    _id( id )
   {
     // prepapre the buffer that will receive our data
     // create the buffer if needed.
@@ -39,7 +41,7 @@ namespace myoddweb:: directorywatcher:: win
 
   Data::~Data()
   {
-    Stop();
+    StopAndWait();
   }
 
   /**
@@ -48,7 +50,7 @@ namespace myoddweb:: directorywatcher:: win
   void Data::PrepareForRead()
   {
     MYODDWEB_PROFILE_FUNCTION();
-    if( _operationAborted || _stop )
+    if( _operationAborted || _colectionState != CollectionState::Started )
     {
       return;
     }
@@ -77,7 +79,13 @@ namespace myoddweb:: directorywatcher:: win
    */
   bool Data::Start()
   {
-    _stop = false;
+    // only start if we are unknown
+    // otherwise just get out
+    if(_colectionState != CollectionState::Unknown )
+    {
+      return false;
+    }
+    _colectionState = CollectionState::Started;
 
     // try and open the directory
     // if it is open already then nothing should happen here.
@@ -96,27 +104,90 @@ namespace myoddweb:: directorywatcher:: win
     return true;
   }
 
+  /// <summary>
+  /// Stop monitoring data and wait for the work to complete.
+  /// </summary>
+  void Data::StopAndWait()
+  {
+    MYODDWEB_LOCK(_stopWorkerLock);
+
+    //  call the stop
+    StopInLock();
+
+    if (_stopWorker != nullptr)
+    {
+      _workerPool.WaitFor(*_stopWorker, -1);
+
+      // and then wait for it to complete
+      const auto wr = _stopWorker->StopAndWait(-1);
+      if( wr != threads::WaitResult::complete )
+      {
+        Logger::Log(LogLevel::Error, L"Unable to complete Data worker" );
+      }
+
+      // we are done with this worker
+      _workerPool.StopAndWait(*_stopWorker, -1 );
+
+      // we are done with this worker
+      delete _stopWorker;
+    }
+
+    // we are done already.
+    _stopWorker = nullptr;
+  }
+
+
   /**
    * \brief Clear all the data and close all connections handles.
    */
   void Data::Stop()
   {
-    _stop = true;
+    MYODDWEB_LOCK(_stopWorkerLock);
+    StopInLock();
+  }
+
+  /// <summary>
+  /// Stop monitoring folder while we have the stop lock.
+  /// </summary>
+  void Data::StopInLock()
+  {
+    _colectionState = CollectionState::Stopped;
     try
     {
-      // close the handle 
-      ClearHandle();
+      // are we stopping already?
+      // no point in doing this again.
+      if( nullptr != _stopWorker )
+      {
+        return;
+      }
 
-      // the buffer.
-      ClearBuffer();
+      // make sure we do no start a new thread for no reason
+      if( !IsValidHandle() )
+      {
+        return;
+      }
 
-      // clear the overlapped structure.
-      ClearOverlapped();
+      // start a worker to stop everything.
+      // the stop flag is set so we should not be able to re-start anything
+      // we can move on and let other threads do their things.
+      _stopWorker = new threads::CallbackWorker( [this] {
+        // close the handle 
+        ClearHandle();
 
-      // clear the buffer of data that might be left
-      ClearData();
+        // the buffer.
+        ClearBuffer();
+
+        // clear the overlapped structure.
+        ClearOverlapped();
+
+        // clear the buffer of data that might be left
+        ClearData();
+      });
+
+      // add this to the pool
+      _workerPool.Add( *_stopWorker );
     }
-    catch (const std::exception& e)
+    catch ( std::exception& e)
     {
       // log the error
       Logger::Log(LogLevel::Error, L"Caught exception '%hs' in StopMonitoring!", e.what());
@@ -222,7 +293,7 @@ namespace myoddweb:: directorywatcher:: win
       delete[] _buffer;
       _buffer = nullptr;
     }
-    catch (const std::exception& e)
+    catch (std::exception& e)
     {
       // the callback did something wrong!
       // log the error
@@ -291,7 +362,7 @@ namespace myoddweb:: directorywatcher:: win
       // return it.
       return pBuffer;
     }
-    catch (const std::exception& e)
+    catch ( std::exception& e)
     {
       // the callback did something wrong!
       // log the error
@@ -351,10 +422,12 @@ namespace myoddweb:: directorywatcher:: win
    */
   bool Data::Listen()
   {
-    if(_stop)
+    // if we are not started then we do not want to start
+    if(_colectionState != CollectionState::Started )
     {
       return false;
     }
+
     MYODDWEB_PROFILE_FUNCTION();
     try
     {
@@ -379,7 +452,7 @@ namespace myoddweb:: directorywatcher:: win
       }
       return true;
     }
-    catch (const std::exception& e)
+    catch (std::exception& e)
     {
       // the callback did something wrong!
       // log the error
@@ -421,7 +494,7 @@ namespace myoddweb:: directorywatcher:: win
       // success
       data->ProcessRead(dwNumberOfBytesTransfered);
     }
-    catch (const std::exception& e)
+    catch (std::exception& e)
     {
       // the callback did something wrong!
       // log the error
@@ -448,12 +521,12 @@ namespace myoddweb:: directorywatcher:: win
 
     case ERROR_NETNAME_DELETED:
       Stop();
-      Logger::Log(LogLevel::Warning, L"Warning: The network connection to '%' has been deleted.", _path.c_str() );
+      Logger::Log(LogLevel::Warning, L"Warning: The network connection to '%hs' has been deleted.", _path.c_str() );
       return;
 
     case ERROR_ACCESS_DENIED:
       Stop();
-      Logger::Log(LogLevel::Warning, L"Warning: Acess to '%s' is denied", _path.c_str() );
+      Logger::Log(LogLevel::Warning, L"Warning: Acess to '%hs' is denied", _path.c_str() );
       return;
 
     default:
@@ -536,6 +609,9 @@ namespace myoddweb:: directorywatcher:: win
 
     // we will reopen, so reset the wait time.
     _invalidHandleWait = 0;
+
+    // reset the start flag so we can restart
+    _colectionState = CollectionState::Unknown;
 
     // try open again, if this does not work then it is fine
     // because we have reset the timer

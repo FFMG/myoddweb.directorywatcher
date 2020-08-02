@@ -21,7 +21,12 @@ namespace myoddweb ::directorywatcher :: win
   {
   }
 
-  Common::~Common() = default;
+  Common::~Common()
+  {
+    // clear the data.
+    delete _data;
+    _data = nullptr;
+  }
 
   bool Common::Start()
   {
@@ -41,7 +46,9 @@ namespace myoddweb ::directorywatcher :: win
       _parent.Path(),
       notifyFilter, 
       _parent.Recursive(), 
-      _bufferLength);
+      _bufferLength,
+      _parent.WorkerPool() 
+    );
 
     // then start monitoring
     return _data->Start();
@@ -77,10 +84,6 @@ namespace myoddweb ::directorywatcher :: win
       // if we are here... we can release the data
       _data->Stop();
     }
-
-    // clear the data.
-    delete _data;
-    _data = nullptr;
   }
 
   /**

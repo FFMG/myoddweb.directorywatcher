@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 #pragma once
 #include "../monitors/Callbacks.h"
+#include "../watcher.h"
 
 namespace myoddweb:: directorywatcher
 {
@@ -35,6 +36,13 @@ namespace myoddweb:: directorywatcher
      */
     Request(const Request& request);
 
+    /// <summary>
+    /// Copy from the structure
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    explicit Request(const sRequest& request);
+
     /**
      * \brief create from a parent request, (no callback)
      * \param path the path being watched.
@@ -43,7 +51,7 @@ namespace myoddweb:: directorywatcher
      * \param statisticsCallbackRateMs how long we want to keep stats data for.
      */
     Request(const wchar_t* path, bool recursive, long long eventsCallbackRateMs, long long statisticsCallbackRateMs);
-    ~Request();
+    virtual ~Request();
 
     /**
      * \brief the assignment operator
@@ -136,16 +144,6 @@ namespace myoddweb:: directorywatcher
     long long StatsCallbackRateMilliseconds() const;
 
   private:
-
-    /**
-     *   NB: THE ORDER OF THE VARIABLES IS IMPORTANT!
-     *       As set in the Delegates.cs file
-     *   public struct Request
-     *   {
-     *     ...
-     *   }
-     */
-
 
     /**
      * \brief the path of the folder we will be monitoring

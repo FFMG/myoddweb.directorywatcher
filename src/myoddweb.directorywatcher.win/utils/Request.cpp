@@ -32,12 +32,12 @@ namespace myoddweb:: directorywatcher
    */
   Request::Request(
     const wchar_t* path, 
-    bool recursive, 
+    const bool recursive, 
     const LoggerCallback& loggerCallback, 
     const EventCallback& eventsCallback, 
     const StatisticsCallback& statisticsCallback, 
-    long long eventsCallbackRateMs, 
-    long long statisticsCallbackRateMs) :
+    const long long eventsCallbackRateMs,
+    const long long statisticsCallbackRateMs) :
     Request()
   {
     Assign(path, recursive, loggerCallback, eventsCallback, statisticsCallback, eventsCallbackRateMs, statisticsCallbackRateMs);
@@ -67,6 +67,19 @@ namespace myoddweb:: directorywatcher
     Request()
   {
     Assign(path, recursive, nullptr, nullptr, nullptr, eventsCallbackRateMs, statisticsCallbackRateMs);
+  }
+
+  Request::Request(const sRequest& request) :
+    Request()
+  {
+    Assign(
+      request.Path, 
+      request.Recursive, 
+      request.LoggerCallback, 
+      request.EventsCallback, 
+      request.StatisticsCallback, 
+      request.EventsCallbackRateMs, 
+      request.StatisticsCallbackRateMs);
   }
     
   Request::Request(const Request& request) :

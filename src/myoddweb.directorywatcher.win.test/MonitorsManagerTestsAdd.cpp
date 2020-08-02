@@ -96,6 +96,15 @@ TEST(MonitorsManagerAdd, StartStopThenAddFileToFolder) {
     const auto id = ::MonitorsManager::Start(request);
     Add(id, helper);
 
+    // wait for the pool to start
+    if (!Wait::SpinUntil([&]
+      {
+        return ::MonitorsManager::Ready();
+      }, TEST_TIMEOUT_WAIT))
+    {
+      GTEST_FATAL_FAILURE_("Unable to start pool");
+    }
+
     // just add a file
     auto _ = helper->AddFile();
 
@@ -150,7 +159,14 @@ TEST(MonitorsManagerAdd, IfTimeoutIsZeroCallbackIsNeverCalled) {
   helper->AddFile();
 
   // wait a bit to give a chance for invalid files to be reported.
-  Wait::Delay(1000);
+  // wait for the pool to start
+  if (!Wait::SpinUntil([&]
+    {
+      return ::MonitorsManager::Ready();
+    }, TEST_TIMEOUT_WAIT))
+  {
+    GTEST_FATAL_FAILURE_("Unable to start pool");
+  }
 
   EXPECT_EQ(0, helper->Added(true));
 
@@ -165,7 +181,6 @@ TEST_P(ValidateNumberOfItemAdded, CallbackWhenFileIsAdded) {
   // create the helper.
   auto helper = new MonitorsManagerTestHelper();
 
-  auto count = 0;
   // monitor that folder.
   const auto number = std::get<0>(GetParam());
   const auto recursive = std::get<1>(GetParam());
@@ -185,9 +200,15 @@ TEST_P(ValidateNumberOfItemAdded, CallbackWhenFileIsAdded) {
   const auto id = ::MonitorsManager::Start(request);
   Add(id, helper);
 
-  // wait for the thread to get started
-  Wait::Delay(TEST_TIMEOUT_WAIT);
-    
+  // wait for the pool to start
+  if (!Wait::SpinUntil([&]
+    {
+      return ::MonitorsManager::Ready();
+    }, TEST_TIMEOUT_WAIT))
+  {
+    GTEST_FATAL_FAILURE_("Unable to start pool");
+  }
+
   for (auto i = 0; i < number; ++i)
   {
     // add a single file to it.

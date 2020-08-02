@@ -140,7 +140,7 @@ namespace myoddweb::directorywatcher
 
   };
 
-  class InstrumentationTimer
+  class InstrumentationTimer final
   {
   public:
     InstrumentationTimer(const char* name)

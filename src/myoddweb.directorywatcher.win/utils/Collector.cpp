@@ -120,7 +120,7 @@ namespace myoddweb:: directorywatcher
       // try and cleanup the events if need be.
       CleanupEvents();
     }
-    catch (const std::exception& e)
+    catch (std::exception& e)
     {
       // log the error
       Logger::Log(LogLevel::Error, L"Caught exception '%hs' when adding event to collector", e.what());
@@ -245,9 +245,9 @@ namespace myoddweb:: directorywatcher
     }
 
     // delete each events in the container.
-    for (auto it = events->begin(); it != events->end(); ++it)
+    for ( const auto& event : *events )
     {
-      delete (*it);
+      delete event;
     }
 
     // finaly delete the container itself
@@ -264,31 +264,30 @@ namespace myoddweb:: directorywatcher
   {
     MYODDWEB_PROFILE_FUNCTION();
 
-    for (auto it = source.rbegin(); it != source.rend(); ++it)
+    for ( const auto& event : source )
     {
-      auto& e = (*it);
-      if (e->Action != static_cast<int>(EventAction::Renamed))
+      if (event->Action != static_cast<int>(EventAction::Renamed))
       {
         continue;
       }
 
       // get the file sizes.
-      const auto oldNameLen = e->OldName == nullptr ? 0 : wcslen(e->OldName);
-      const auto nameLen = e->Name == nullptr ? 0 : wcslen(e->Name);
+      const auto oldNameLen = event->OldName == nullptr ? 0 : wcslen(event->OldName);
+      const auto nameLen = event->Name == nullptr ? 0 : wcslen(event->Name);
 
       // old name is empty, but not new name
       if (oldNameLen == 0 && nameLen > 0)
       {
         // so we have a new name, but no old name
-        e->Action = static_cast<int>(EventAction::Added);
+        event->Action = static_cast<int>(EventAction::Added);
       }
 
       // no new path
       if (nameLen == 0 && oldNameLen > 0)
       {
         // so we have an old name, but no new name
-        e->MoveOldNameToName();
-        e->Action = static_cast<int>(EventAction::Removed );
+        event->MoveOldNameToName();
+        event->Action = static_cast<int>(EventAction::Removed );
       }
 
       // both empty
@@ -296,8 +295,8 @@ namespace myoddweb:: directorywatcher
       {
         // not sure this is posible
         // so we will turn the event action into an error.
-        e->Action = static_cast<int>(EventAction::Unknown);
-        e->Error = static_cast<int>(EventError::NoFileData);
+        event->Action = static_cast<int>(EventAction::Unknown);
+        event->Error = static_cast<int>(EventError::NoFileData);
       }
     }
   }
