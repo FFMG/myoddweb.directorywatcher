@@ -2,17 +2,22 @@
 
 Notable changes
 
-## 0.1.9 - dd-mm-2020
+## 0.1.9 - 02-08-2020
 
 ### Added
+
+- More load tests
 
 ### Changed
 
 - Stop/Shutdown is a lot faster, (especially when monitoring large folders)
+- Watcher manager uses only the amount of CPU needed to get new events.
 
 ### Fixed
 
 - There would be [a crash when renaming a 'root' folder](https://github.com/FFMG/myoddweb.directorywatcher/issues/16)
+- The samples were not using log delegates properly
+- Logger was not working properly
 
 ### Removed
 
