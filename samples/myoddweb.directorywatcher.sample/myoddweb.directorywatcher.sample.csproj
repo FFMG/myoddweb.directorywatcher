@@ -36,11 +36,11 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MyOddWeb.DirectoryWatcher, Version=0.1.8.0, Culture=neutral, PublicKeyToken=b044eb2621106c1f, processorArchitecture=MSIL">
-      <HintPath>..\packages\MyOddWeb.DirectoryWatcher.0.1.8\lib\net462\MyOddWeb.DirectoryWatcher.dll</HintPath>
+    <Reference Include="MyOddWeb.DirectoryWatcher, Version=0.1.9.0, Culture=neutral, PublicKeyToken=b044eb2621106c1f, processorArchitecture=MSIL">
+      <HintPath>..\packages\MyOddWeb.DirectoryWatcher.0.1.9\lib\net462\MyOddWeb.DirectoryWatcher.dll</HintPath>
     </Reference>
-    <Reference Include="MyOddWeb.DirectoryWatcher.Interfaces, Version=0.1.8.0, Culture=neutral, PublicKeyToken=b044eb2621106c1f, processorArchitecture=MSIL">
-      <HintPath>..\packages\MyOddWeb.DirectoryWatcher.0.1.8\lib\net462\MyOddWeb.DirectoryWatcher.Interfaces.dll</HintPath>
+    <Reference Include="MyOddWeb.DirectoryWatcher.Interfaces, Version=0.1.9.0, Culture=neutral, PublicKeyToken=b044eb2621106c1f, processorArchitecture=MSIL">
+      <HintPath>..\packages\MyOddWeb.DirectoryWatcher.0.1.9\lib\net462\MyOddWeb.DirectoryWatcher.Interfaces.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
