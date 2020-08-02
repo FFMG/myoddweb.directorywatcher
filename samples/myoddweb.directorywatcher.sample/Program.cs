@@ -29,9 +29,9 @@ namespace myoddweb.directorywatcher.sample
 
         //watch.Add(new Request("z:\\", true, new Rates(10000, 0)));
 
-        // RunAndWait();
+        RunAndWait();
 
-        await RunAndRenameFolderInRoot().ConfigureAwait( false );
+        // await RunAndRenameFolderInRoot().ConfigureAwait( false );
       }
       catch (Exception ex)
       {
@@ -126,12 +126,12 @@ namespace myoddweb.directorywatcher.sample
     {
       using (var watch = new Watcher())
       {
-        var drvs = System.IO.DriveInfo.GetDrives();
+        var drvs = DriveInfo.GetDrives();
         foreach (var drv in drvs)
         {
-          if (drv.DriveType == System.IO.DriveType.Fixed)
+          if (drv.DriveType == DriveType.Fixed)
           {
-            watch.Add(new Request(drv.Name, true, new Rates(50, 0)));
+            watch.Add(new Request(drv.Name, true, new Rates(50)));
           }
         }
 
@@ -153,10 +153,10 @@ namespace myoddweb.directorywatcher.sample
     {
       using (var watch = new Watcher())
       {
-        var drvs = System.IO.DriveInfo.GetDrives();
+        var drvs = DriveInfo.GetDrives();
         foreach (var drv in drvs)
         {
-          if (drv.DriveType == System.IO.DriveType.Fixed)
+          if (drv.DriveType == DriveType.Fixed)
           {
             watch.Add(new Request(drv.Name, true));
           }

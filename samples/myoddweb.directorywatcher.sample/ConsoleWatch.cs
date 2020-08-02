@@ -20,7 +20,7 @@ namespace myoddweb.directorywatcher.sample
     /// </summary>
     private static readonly object Lock = new object();
 
-    public ConsoleWatch(IWatcher2 watch)
+    public ConsoleWatch(IWatcherEvents watch)
     {
       _consoleColor = Console.ForegroundColor;
 
