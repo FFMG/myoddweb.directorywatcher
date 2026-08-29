@@ -93,7 +93,7 @@ TEST_P(RecursiveAndNonRecursive, TwoWatchersOnTwoSeparateFolders) {
     0);
 
   const auto r2 = RequestHelper(
-    helper1->Folder(),
+    helper2->Folder(),
     recursive,
     nullptr,
     eventFunction,

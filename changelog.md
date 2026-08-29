@@ -17,6 +17,10 @@ Notable changes
 
 ### Fixed
 
+- Fixed race condition in `MonitorsManager::ready()` for recursive monitors (`MultipleWinMonitor`) where child monitors had not yet started before readiness was reported
+- Fixed asynchronous worker completion race condition in `WorkerPool::on_worker_end()` to ensure all worker termination tasks finish before the pool reports completion
+- Fixed unit test `TwoWatchersOnTwoSeparateFolders` where the second watcher was incorrectly pointing to the first watcher's folder
+
 ### Removed
 
 - `.travis.yml`, (Travis CI is no longer available for open source projects)

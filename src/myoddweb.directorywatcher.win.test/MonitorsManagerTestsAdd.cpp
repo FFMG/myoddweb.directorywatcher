@@ -254,8 +254,14 @@ TEST_P(ValidateNumberOfItemAdded, CallbackWhenFolderIsAdded) {
   const auto id = ::MonitorsManager::start(request);
   Add(id, helper);
 
-  // wait for the thread to get started
-  Wait::delay(TEST_TIMEOUT_WAIT);
+  // wait for the pool to start
+  if (!Wait::spin_until([&]
+    {
+      return ::MonitorsManager::ready();
+    }, TEST_TIMEOUT_WAIT))
+  {
+    GTEST_FATAL_FAILURE_("Unable to start pool");
+  }
 
   for (auto i = 0; i < number; ++i)
   {

@@ -401,21 +401,26 @@ namespace myoddweb::directorywatcher::threads
     // wait for all the start workers
     wait_for_all_add_futures_pending();
 
-    MYODDWEB_LOCK(_workerAndFuturesLock);
-    for (const auto& workerAndFutures : _workerAndFutures)
     {
-      const auto worker = workerAndFutures.first;
-
-      // if our worker is still running then we cannot end the worker
-      if( FutureEndState::StillRunning == get_update_future_end_state_in_lock(*worker))
+      MYODDWEB_LOCK(_workerAndFuturesLock);
+      for (const auto& workerAndFutures : _workerAndFutures)
       {
-        continue;
-      }
+        const auto worker = workerAndFutures.first;
 
-      // no need to check if stopped already or not
-      // the worker class checks if we can call it.
-      worker_end_in_lock( *worker );
+        // if our worker is still running then we cannot end the worker
+        if (FutureEndState::StillRunning == get_update_future_end_state_in_lock(*worker))
+        {
+          continue;
+        }
+
+        // no need to check if stopped already or not
+        // the worker class checks if we can call it.
+        worker_end_in_lock(*worker);
+      }
     }
+
+    // wait for all futures to complete before ending
+    wait_for_all_futures_to_complete(-1);
   }
   #pragma endregion
 

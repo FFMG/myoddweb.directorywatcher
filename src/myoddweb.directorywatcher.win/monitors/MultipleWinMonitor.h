@@ -26,6 +26,9 @@ namespace myoddweb
       [[nodiscard]]
       const long long& parent_id() const override;
 
+      [[nodiscard]]
+      bool ready() const override;
+
       void on_worker_stop() override;
 
     protected:
@@ -53,7 +56,7 @@ namespace myoddweb
       /**
        * \brief the locks so we can add data.
        */
-      MYODDWEB_MUTEX _lock;
+      mutable MYODDWEB_MUTEX _lock;
 
       /**
        * \brief the non recursive parents, we will monitor new folder for those.

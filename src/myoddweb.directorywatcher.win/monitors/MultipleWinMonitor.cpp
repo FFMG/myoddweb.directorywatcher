@@ -49,6 +49,35 @@ namespace myoddweb::directorywatcher
   }
 
   /**
+   * \brief Check if the monitor and all child monitors are ready.
+   * \return If all monitors are ready.
+   */
+  bool MultipleWinMonitor::ready() const
+  {
+    if (!Monitor::ready())
+    {
+      return false;
+    }
+
+    MYODDWEB_LOCK(_lock);
+    for (const auto& child : _recursiveChildren)
+    {
+      if (!child->ready())
+      {
+        return false;
+      }
+    }
+    for (const auto& parent : _nonRecursiveParents)
+    {
+      if (!parent->ready())
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
    * \brief fill the vector with all the values currently on record.
    * \param events the events we will be filling
    * \return the number of events we found.

@@ -53,6 +53,16 @@ namespace myoddweb
       bool is_path(const std::wstring& maybe) const;
 
       /**
+       * \brief check if the monitor is ready to receive events.
+       * \return if the monitor has started and is ready.
+       */
+      [[nodiscard]]
+      virtual bool ready() const
+      {
+        return started();
+      }
+
+      /**
        * \brief fill the vector with all the values currently on record.
        * \param events the events we will be filling
        * \return the number of events we found.

@@ -122,13 +122,11 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFileIsDeleted) {
       }
 
       // give a little more than the timeout
-      if( !Wait::spin_until(
-        [&] {
+      Wait::spin_until(
+        [&]
+        {
           return number == helper->Removed(true);
-        }, TEST_TIMEOUT_WAIT) )
-      {
-        MonitorsManagerTestHelper::LoggerFunction(id, 0, L"wtf");
-      }
+        }, TEST_TIMEOUT_WAIT);
 
       ASSERT_EQ(number, helper->Removed(true));
 

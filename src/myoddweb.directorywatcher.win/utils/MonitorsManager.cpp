@@ -110,7 +110,7 @@ namespace myoddweb:: directorywatcher
 
     for( const auto monitor : instance()->_monitors )
     {
-      if( !monitor.second->started() )
+      if( !monitor.second->ready() )
       {
         return false;
       }
