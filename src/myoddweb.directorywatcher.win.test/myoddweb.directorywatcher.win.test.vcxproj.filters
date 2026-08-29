@@ -78,6 +78,7 @@
     <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Threads\WorkerId.cpp">
       <Filter>win\utils\Threads</Filter>
     </ClCompile>
+    <ClCompile Include="LoggerTests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

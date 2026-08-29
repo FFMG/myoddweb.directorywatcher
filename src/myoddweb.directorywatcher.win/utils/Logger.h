@@ -6,12 +6,16 @@
 #include "../monitors/Base.h"
 #include "../monitors/Callbacks.h"
 
+class LoggerTestHelper;
+
 namespace myoddweb:: directorywatcher
 {
   enum class LogLevel;
 
   class Logger final
   {
+    friend class ::LoggerTestHelper;
+
     /**
      * \brief Our list of loggers
      */

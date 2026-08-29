@@ -213,9 +213,8 @@ namespace myoddweb::directorywatcher
 
       // build the string
       std::wstring output;
-      const auto buffSize = size + 1;
-      output.reserve(buffSize);
-      if (vswprintf_s(output.data(), buffSize, format, args) < 0)// create the string
+      output.resize(size);
+      if (vswprintf_s(output.data(), size + 1, format, args) < 0)// create the string
       {
         output.clear();                                     // Empty the string if there is a problem
       }
