@@ -90,8 +90,8 @@
     <ClCompile Include="..\myoddweb.directorywatcher.win\monitors\win\Directories.cpp" />
     <ClCompile Include="..\myoddweb.directorywatcher.win\monitors\win\Files.cpp" />
     <ClCompile Include="..\myoddweb.directorywatcher.win\utils\MonitorsManager.cpp" />
-    <ClCompile Include="..\packages\googletest-release-1.10.0\googletest\src\gtest-all.cc" />
-    <ClCompile Include="..\packages\googletest-release-1.10.0\googletest\src\gtest_main.cc" />
+    <ClCompile Include="..\packages\googletest-release-1.18.0\googletest\src\gtest-all.cc" />
+    <ClCompile Include="..\packages\googletest-release-1.18.0\googletest\src\gtest_main.cc" />
     <ClCompile Include="MonitorDataTests.cpp" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\Logger.h" />
     <ClInclude Include="..\myoddweb.directorywatcher.win\utils\LogLevel.h" />
@@ -157,7 +157,7 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>../packages/googletest-release-1.10.0/googletest/include/;../packages/googletest-release-1.10.0/googletest/</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../packages/googletest-release-1.18.0/googletest/include/;../packages/googletest-release-1.18.0/googletest/</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -175,7 +175,7 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>../packages/googletest-release-1.10.0/googletest/include/;../packages/googletest-release-1.10.0/googletest/</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../packages/googletest-release-1.18.0/googletest/include/;../packages/googletest-release-1.18.0/googletest/</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -191,7 +191,7 @@
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>../packages/googletest-release-1.10.0/googletest/include/;../packages/googletest-release-1.10.0/googletest/</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../packages/googletest-release-1.18.0/googletest/include/;../packages/googletest-release-1.18.0/googletest/</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -209,7 +209,7 @@
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>../packages/googletest-release-1.10.0/googletest/include/;../packages/googletest-release-1.10.0/googletest/</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../packages/googletest-release-1.18.0/googletest/include/;../packages/googletest-release-1.18.0/googletest/</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
