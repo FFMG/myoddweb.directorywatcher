@@ -8,17 +8,23 @@ A fast and reliable File/Directory watcher for c#/c++ to replace the current .NE
   - Renamed files/directories
   - Deleted files/directories
   - Created files/directories
+  - Modified (touched) files/directories
 - All exceptions are passed back to the caller.
 - Non-blocking delegates, if one function takes a long time ... we don't all have to suffer.
-- The interface does allow for porting to other platforms.
-- No buffer limitations, (well there is, but we play nicely).
+- The public interfaces are platform-agnostic, so other backends could be added later, (see [Requirements](#requirements) for what is actually implemented today).
+- No buffer limitations, (well there are, but we play nicely).
 - Try and remove duplicates, (where possible).
-- Deleted, (then re-created), are re-monitored.
+- Deleted (then re-created) folders are re-monitored.
 - Watcher statistics
 
 ## What it doesn't do
 
 - Bring me coffee.
+
+## Requirements
+
+- **Windows only, for now.** The native watcher uses the Win32 `ReadDirectoryChangesW` API. There is currently no macOS/Linux backend.
+- The managed library targets .NET Framework 4.6.2+, .NET Standard 2.0+ and .NET 8.0+.
 
 ## Installing
 
@@ -50,9 +56,9 @@ I don't really care for pattern matching.
 
 The current version of [File Watcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher?view=netframework-4.7.2) is great, but it does have a couple of issues.
 
-- There is a buffer limitation, (in the API itself), and a badly written application can 'block' or 'miss' certain notification.
-- Duplicates are often sent, (when a file is updated 3 times between calls, we only need to know about the once).
-- Certain Exceptions cause the entire app to close.
+- There is a buffer limitation, (in the API itself), and a badly written application can 'block' or 'miss' certain notifications.
+- Duplicates are often sent, (when a file is updated 3 times between calls, we only need to know about it once).
+- Certain exceptions cause the entire app to close.
 - UNC/Unix files are not supported, (in fact it causes `FileSystemWatcher` to take your system down).
 - Does not handle large volumes nicely.  
 
@@ -79,7 +85,7 @@ Add all the directories we want to 'observe'
       watch.Start();
 
       // add some more
-       watch.Add(new Request("z:\\", false));
+      watch.Add(new Request("z:\\", false));
 
       // optional stop in this case
       watch.Stop();
@@ -90,7 +96,7 @@ You can start watching at any point
 
 ```csharp
     // create Watcher
-    var watcher = new Watcher();
+    var watch = new Watcher();
 
     // Add a request.
     watch.Add(new Request("y:\\", true));
@@ -110,11 +116,20 @@ Get notifications in case a file is created.
       Console.ForegroundColor = ConsoleColor.Green;
       Console.WriteLine(
         $"[{f.DateTimeUtc.Hour}:{f.DateTimeUtc.Minute}:{f.DateTimeUtc.Second}]:{f.FileSystemInfo}");
-      Console.ForegroundColor = foreground;
+      Console.ResetColor();
     };
 ```
 
-we get given the file that was added as well as a cancellation token
+We get given the file that was added as well as a cancellation token
+
+You can also check, at any time, whether all of your requests have actually started monitoring.
+
+```csharp
+    if (watch.Ready())
+    {
+      // every request that was added has started monitoring.
+    }
+```
 
 And when we are done stop it ...
 
@@ -198,21 +213,42 @@ When a file event is raised we send a `IFileSystemEvent` event.
     bool Is(EventAction action );
 ```
 
+#### Renamed events
+
+`OnRenamedAsync` gives you an `IRenamedFileSystemEvent` instead, (it extends `IFileSystemEvent` above), with the file/directory's previous name as well as its new one.
+
+```csharp
+    /// <summary>
+    /// The file system info, before the rename.
+    /// </summary>
+    FileSystemInfo PreviousFileSystemInfo { get; }
+
+    /// <summary>
+    /// The full path of the file/directory before the rename.
+    /// </summary>
+    string PreviousFullName { get; }
+
+    /// <summary>
+    /// The name of the file/directory before the rename.
+    /// </summary>
+    string PreviousName { get; }
+```
+
 ### Statistics
 
 You can get statistics at various intervals for the events being watched.
 
-All you need to do is add `Rates` to your watchers
+All you need to do is add `Rates` to your watchers. `Rates` takes the events rate first and the statistics rate second, (both in milliseconds); either one left at `0`, the default, turns that particular feed off.
 
 ```csharp
     using( var watch = new Watcher() )
     {
-      // watch the folder with stats every 10000 ms
-      // a value of 0, (default), turns it off.
-      watch.Add(new Request("c:\\", true, new Rates(10000, 50 )));
+      // watch the folder, publishing statistics every 10000 ms
+      // while leaving the events rate at its default.
+      watch.Add(new Request("c:\\", true, new Rates(50, 10000 )));
 
       // do something amazing with the statistics
-      // the values is `IStatistics` with a cancellation token
+      // the value is an `IStatistics` with a cancellation token
       watch.OnStatisticsAsync += async (s, t) =>
       {
         // ..
@@ -228,26 +264,43 @@ All you need to do is add `Rates` to your watchers
     }
 ```
 
+`IStatistics` gives you:
+
+```csharp
+    /// <summary>
+    /// The id of the request these statistics are for.
+    /// </summary>
+    long Id { get; }
+
+    /// <summary>
+    /// The elapsed time, (in ms), since the last statistics message.
+    /// </summary>
+    double ElapsedTime { get; }
+
+    /// <summary>
+    /// The total number of events since the last statistics message.
+    /// </summary>
+    long NumberOfEvents { get; }
+```
+
 ### Logger
 
 You can watch for certain events
 
-  - `Unknown` = 0, Should never happen
+  - `Unknown` = 0, should never happen
   - `Information` = 1, nothing important, maybe something worth noting
   - `Warning` = 2, something happened, but we managed to recover from it
   - `Error` = 3, something broke, messages were probably lost.
   - `Panic` = 4, something really bad happened, the process probably died.
-  - `Debug` = 100, Should not happen in release more, only for information
+  - `Debug` = 100, debug-only messages, should not appear in release builds
 
 ```csharp
     using( var watch = new Watcher() )
     {
-      // watch the folder with stats every 10000 ms
-      // a value of 0, (default), turns it off.
       watch.Add(new Request("c:\\", true ));
 
       // do something amazing with the message
-      // the values is `ILoggerEvent` with a cancellation token
+      // the value is an `ILoggerEvent` with a cancellation token
       watch.OnLoggerAsync += async (e, t) =>
       {
         // ..
@@ -261,4 +314,23 @@ You can watch for certain events
       // optional stop in this case
       watch.Stop();
     }
+```
+
+`ILoggerEvent` gives you:
+
+```csharp
+    /// <summary>
+    /// The id of the request this message relates to.
+    /// </summary>
+    long Id { get; }
+
+    /// <summary>
+    /// The message log level, (see the list above).
+    /// </summary>
+    LogLevel LogLevel { get; }
+
+    /// <summary>
+    /// The actual message.
+    /// </summary>
+    string Message { get; }
 ```
