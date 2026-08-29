@@ -24,6 +24,11 @@ Notable changes
 - Fixed a potential use-after-free in `win::Data::clear_handle()`
 - Fixed a null-pointer dereference in `win::Data::file_io_completion_routine()`
 - Fixed `win::Data::process_error()` silently leaving a watched directory's read loop permanently stalled after any Win32 error
+- Fixed a data race between a monitor's own in-flight update and its `_stopWorker`'s handle/buffer cleanup task.
+- Fixed `win::Data::check_still_valid()` resurrecting a watch
+- Fixed `MonitorsManager::start()` dereferencing a null `Monitor*`
+- Fixed `win::Data::clone()` leaking its allocation when `_buffer` is null
+- Fixed `Logger::make_message()` calling `reserve()` instead of `resize()`
 
 ### Removed
 
