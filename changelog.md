@@ -21,6 +21,9 @@ Notable changes
 - Fixed race condition in `MonitorsManager::ready()` for recursive monitors (`MultipleWinMonitor`) where child monitors had not yet started before readiness was reported
 - Fixed asynchronous worker completion race condition in `WorkerPool::on_worker_end()` to ensure all worker termination tasks finish before the pool reports completion
 - Fixed unit test `TwoWatchersOnTwoSeparateFolders` where the second watcher was incorrectly pointing to the first watcher's folder
+- Fixed a potential use-after-free in `win::Data::clear_handle()`
+- Fixed a null-pointer dereference in `win::Data::file_io_completion_routine()`
+- Fixed `win::Data::process_error()` silently leaving a watched directory's read loop permanently stalled after any Win32 error
 
 ### Removed
 

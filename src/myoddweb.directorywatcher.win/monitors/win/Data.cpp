@@ -214,8 +214,13 @@ namespace myoddweb:: directorywatcher:: win
 
   /**
    * \brief Clear the handle
+   * \return true if we confirmed that no I/O operation is still pending against
+   *         our buffer/overlapped structure, (so it is now safe to free them).
+   *         false if we could not get that confirmation, (timeout or error),
+   *         in which case the caller must not free the buffer/overlapped as
+   *         the kernel might still complete the read into them later.
    */
-  void Data::clear_handle()
+  bool Data::clear_handle()
   {
     // is it valid?
     if (!is_valid_handle())
@@ -223,14 +228,15 @@ namespace myoddweb:: directorywatcher:: win
       // make sure that the handle is null
       // as it couls also be 0xffffff
       _hDirectory = nullptr;
-      return;
+      return true;
     }
 
     if( nullptr == _overlapped)
     {
-      return;
+      return true;
     }
 
+    auto confirmedAborted = false;
     try
     {
       // tell all the pending reads that we are ready
@@ -264,11 +270,20 @@ namespace myoddweb:: directorywatcher:: win
         {
           Logger::log(_id, LogLevel::Warning, L"Timeout waiting operation aborted message!" );
         }
+
+        // we can only be sure it is safe to free the buffer/overlapped
+        // if we actually received confirmation that the operation was aborted.
+        // if we timed out we do _not_ know if the kernel still holds a
+        // reference to them, so the caller must not free them.
+        confirmedAborted = _operationAborted;
       }
       else
       {
+        // CancelIoEx could not find the handle/OVERLAPPED, which means
+        // there was nothing pending for it to cancel in the first place.
         const auto dw = ::GetLastError();
         _operationAborted = true;
+        confirmedAborted = true;
       }
       ::CloseHandle(_hDirectory);
     }
@@ -279,10 +294,23 @@ namespace myoddweb:: directorywatcher:: win
       //   handle value. This can happen if you close a handle twice, or if you call CloseHandle on a handle returned by the FindFirstFile function instead of
       //   calling the FindClose function.
       Logger::log( _id, LogLevel::Information, L"Ignore: Error waiting operation aborted message." );
-      _operationAborted = true;
+
+      // we do _not_ know if the operation was really aborted, so we cannot
+      // safely say that it is safe to free the buffer/overlapped structure.
+      confirmedAborted = false;
     }
 
-    // the directory is closed.
+    // the directory is closed, (but the buffer/overlapped might still be in use).
+    return confirmedAborted;
+  }
+
+  /**
+   * \brief log that we intentionally leaked the buffer/overlapped because
+   *        we could not confirm that the pending read was cancelled.
+   */
+  void Data::log_leaked_buffer_on_unconfirmed_stop() const
+  {
+    Logger::log(_id, LogLevel::Warning, L"Leaking watch buffer for '%ls': could not confirm that the pending read was cancelled in time.", _path.c_str());
   }
 
   /**
@@ -487,7 +515,7 @@ namespace myoddweb:: directorywatcher:: win
       // should never happen ... but still.
       if (nullptr == data)
       {
-        data->process_error(dwErrorCode);
+        Logger::log(LogLevel::Error, L"file_io_completion_routine received a null Data pointer.");
         return;
       }
 
@@ -537,8 +565,12 @@ namespace myoddweb:: directorywatcher:: win
       return;
 
     default:
-      //  we cannot use the path anymore
+      // this is not one of the fatal errors, (network deleted / access denied),
+      // that we handle above, so we must assume it is transient and re-issue
+      // the read ourselves, otherwise this directory would silently stop
+      // reporting any further changes with no way to recover.
       Logger::log( LogLevel::Warning, L"Warning: There was an error processing an API message %lu.", errorCode );
+      listen();
       break;
     }
   }

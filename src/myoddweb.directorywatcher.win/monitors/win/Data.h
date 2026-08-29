@@ -6,10 +6,14 @@
 #include "../Monitor.h"
 #include "../../utils/Threads/CallbackWorker.h"
 
+class DataTestHelper;
+
 namespace myoddweb:: directorywatcher:: win
 {
   class Data final
   {
+    friend class ::DataTestHelper;
+
     typedef struct _OVERLAPPED_DATA : _OVERLAPPED {
       Data* pdata;
     } OVERLAPPED_DATA, * LPOVERLAPPED_DATA;
@@ -92,13 +96,19 @@ namespace myoddweb:: directorywatcher:: win
       void operator()() const
       {
         // close the handle
-        _data.clear_handle();
+        if (_data.clear_handle())
+        {
+          // the buffer.
+          _data.clear_buffer();
 
-        // the buffer.
-        _data.clear_buffer();
-
-        // clear the overlapped structure.
-        _data.clear_overlapped();
+          // clear the overlapped structure.
+          _data.clear_overlapped();
+        }
+        else
+        {
+          // we could not confirm that the pending read was cancelled
+          _data.log_leaked_buffer_on_unconfirmed_stop();
+        }
 
         // clear the buffer of data that might be left
         _data.clear_data();
@@ -251,8 +261,18 @@ namespace myoddweb:: directorywatcher:: win
 
     /**
      * \brief Clear the handle
+     * \return true if it is safe to free the buffer/overlapped structure,
+     *         false if we could not confirm that the pending read was
+     *         cancelled and they must not be freed.
      */
-    void clear_handle();
+    [[nodiscard]]
+    bool clear_handle();
+
+    /**
+     * \brief log that we intentionally leaked the buffer/overlapped because
+     *        we could not confirm that the pending read was cancelled.
+     */
+    void log_leaked_buffer_on_unconfirmed_stop() const;
 
     /**
      * \brief clear the buffer data.
