@@ -514,11 +514,11 @@ namespace myoddweb::directorywatcher::threads
   /// </summary>
   void WorkerPool::delete_worker_thread_if_complete()
   {
-    if (!is(State::complete))
+    MYODDWEB_LOCK(_threadLock);
+    if (!must_stop() && !is(State::complete))
     {
       return;
     }
-    MYODDWEB_LOCK(_threadLock);
     delete _thread;
     _thread = nullptr;
     _fElapsedTimeMilliseconds = 0;
@@ -530,6 +530,8 @@ namespace myoddweb::directorywatcher::threads
   /// </summary>
   void WorkerPool::start_worker_thread_if_needed()
   {
+    delete_worker_thread_if_complete();
+
     MYODDWEB_LOCK(_threadLock);
     if (_thread != nullptr)
     {
