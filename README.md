@@ -1,4 +1,4 @@
-# Myoddweb.Directorywatcher [![Release](https://img.shields.io/badge/release-v0.1.9-brightgreen.png?style=flat)](https://github.com/FFMG/myoddweb.directorywatcher/)
+# Myoddweb.Directorywatcher [![Release](https://img.shields.io/badge/release-v0.2.0-brightgreen.png?style=flat)](https://github.com/FFMG/myoddweb.directorywatcher/)
 
 A fast and reliable File/Directory watcher for c#/c++ to replace the current .NET `FileSystemWatcher` class.
 
@@ -37,14 +37,14 @@ A fast and reliable File/Directory watcher for c#/c++ to replace the current .NE
 
 `dotnet add package MyOddWeb.DirectoryWatcher`
 
-#### Packet
+#### Paket
 
 `paket add MyOddWeb.DirectoryWatcher`
 
 ### Use case
 
 My needs were to, reliably, monitor entire volumes for created/deleted/renamed files.
-I do really care for pattern matching.
+I don't really care for pattern matching.
 
 ## The issue(s) with FileSystemWatcher
 

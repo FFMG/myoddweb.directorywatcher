@@ -2,7 +2,7 @@
 
 ## General
 
-Very simple load application tat allows us to test various aspects of `myoddweb.directorywatcher`
+Very simple load application that allows us to test various aspects of `myoddweb.directorywatcher`
 
 `--help` :  display the help screen
 
@@ -19,7 +19,7 @@ Usage: myoddweb.directorywatcher.load.exe
                                            [--help, --h]
 
 help, h        :Display the help message
-iterations, i  :The number of test itarations we wish to run.
+iterations, i  :The number of test iterations we wish to run.
 This is the number of time we want to randomly stop/start watching a folder.
 folders, f     :The number of folders watched at once.
 change, c      :How often we want to change to another folder (in seconds).

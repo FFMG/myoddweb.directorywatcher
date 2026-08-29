@@ -2,6 +2,25 @@
 
 Notable changes
 
+## 0.2.0 - 29-08-2026
+
+### Added
+
+- GitHub Actions workflow to replace the retired Travis CI build
+
+### Changed
+
+- Solution/projects updated to build with Visual Studio 2022 (toolset v143)
+- The managed libraries now target .NET Framework 4.6.2, .NET Standard 2.0 and .NET 8.0, (dropped .NET Framework 4.5.2 and .NET Core 3.0, both long out of support)
+- C# projects updated to use the latest C# language version
+- Test project updated to NUnit 3.14.0, NUnit3TestAdapter 6 and Microsoft.NET.Test.Sdk 18
+
+### Fixed
+
+### Removed
+
+- `.travis.yml`, (Travis CI is no longer available for open source projects)
+
 ## 0.1.9 - 02-08-2020
 
 ### Added
@@ -25,7 +44,7 @@ Notable changes
 
 ### Added
 
-- Added worker pool to [limit the number thread](https://github.com/FFMG/myoddweb.directorywatcher/issues/8)
+- Added worker pool to [limit the number of threads](https://github.com/FFMG/myoddweb.directorywatcher/issues/8)
 - Added `Ready()` to interface so we can ask if/when the system is ready to monitor files/folders.
 - Added basic statistics, (see `IStatistics`), to the directory watcher added event `OnStatisticsAsync`
   - Number of events
@@ -58,7 +77,7 @@ Notable changes
 
 ### Added
 
-- Instrumentation, [Thanks to The Cherno / Hazel project)](https://github.com/TheCherno/Hazel/)
+- Instrumentation, [thanks to The Cherno / Hazel project](https://github.com/TheCherno/Hazel/)
   The flag `MYODDWEB_PROFILE` needs to be set to 1.
 - Version number for unmanaged `myoddweb.directorywatcher` helper.
 - A whole lot of unit tests.
@@ -88,7 +107,7 @@ Notable changes
 
 ### Fixed
 
-- Replaced /MD > /MT to insure smoother loading of embedded files.
+- Replaced /MD > /MT to ensure smoother loading of embedded files.
 
 ### Removed
 

@@ -17,7 +17,7 @@ namespace myoddweb.directorywatcher.load
       var arguments = new CommandlineParser(args, new CommandlineArgumentRules
       {
         new HelpCommandlineArgumentRule( new []{"help", "h"} ),
-        new OptionalCommandlineArgumentRule( new []{ "iterations", "i"}, "5", "The number of test itarations we wish to run.\n\rThis is the number of time we want to randomly stop/start watching a folder." ),
+        new OptionalCommandlineArgumentRule( new []{ "iterations", "i"}, "5", "The number of test iterations we wish to run.\n\rThis is the number of time we want to randomly stop/start watching a folder." ),
         new OptionalCommandlineArgumentRule( new []{ "folders"   , "f"}, "5", "The number of folders watched at once." ),
         new OptionalCommandlineArgumentRule( new []{ "change"    , "c"}, "10", "How often we want to change to another folder (in seconds)." ),
         new OptionalCommandlineArgumentRule( new []{ "unique"    , "u"}, "true", "If we want to use a unique watcher, shared, or use a watcher per directory." ),
