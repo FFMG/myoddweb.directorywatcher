@@ -80,7 +80,19 @@ namespace myoddweb:: directorywatcher
   long long MonitorsManager::start(const Request& request)
   {
     MYODDWEB_PROFILE_FUNCTION();
-    const auto monitor = instance()->create_and_start(request);
+    const auto managerInstance = instance();
+    if (nullptr == managerInstance)
+    {
+      // could not create/get the manager instance
+      return -1;
+    }
+
+    const auto monitor = managerInstance->create_and_start(request);
+    if (nullptr == monitor)
+    {
+      // we could not create/start the monitor.
+      return -1;
+    }
     return monitor->id();
   }
 

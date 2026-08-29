@@ -384,12 +384,13 @@ namespace myoddweb:: directorywatcher:: win
         return nullptr;
       }
 
-      // create the clone
-      const auto pBuffer = new unsigned char[ulSize];
       if (_buffer == nullptr)
       {
         return nullptr;
       }
+
+      // create the clone
+      const auto pBuffer = new unsigned char[ulSize];
 
       // copy it.
       memcpy(pBuffer, _buffer, ulSize);
@@ -459,6 +460,14 @@ namespace myoddweb:: directorywatcher:: win
   {
     // if we are not started then we do not want to start
     if(_colectionState != CollectionState::Started )
+    {
+      return false;
+    }
+
+    // if _stopWorker's cleanup is running right now, (a different thread),
+    // just skip this cycle rather than block
+    std::unique_lock<std::recursive_mutex> lock(_handleLock, std::try_to_lock);
+    if (!lock.owns_lock())
     {
       return false;
     }
@@ -628,6 +637,12 @@ namespace myoddweb:: directorywatcher:: win
    */
   void Data::check_still_valid()
   {
+    // if we were explicitly stopped there is nothing to check/reopen.
+    if (_colectionState == CollectionState::Stopped)
+    {
+      return;
+    }
+
     if (is_valid_handle())
     {
       // The handle is good, so we can reset the value
@@ -640,6 +655,20 @@ namespace myoddweb:: directorywatcher:: win
     if (_invalidHandleWait < MYODDWEB_INVALID_HANDLE_SLEEP)
     {
       // we need to wait a little longer before we re-open
+      return;
+    }
+
+    // if _stopWorker's cleanup is running right now, (a different thread),
+    // just skip this cycle rather than block.
+    std::unique_lock<std::recursive_mutex> lock(_handleLock, std::try_to_lock);
+    if (!lock.owns_lock())
+    {
+      return;
+    }
+
+    // check again now.
+    if (_colectionState == CollectionState::Stopped)
+    {
       return;
     }
 

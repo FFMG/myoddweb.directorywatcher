@@ -2,6 +2,7 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #pragma once
+#include <mutex>
 #include <Windows.h>
 #include "../Monitor.h"
 #include "../../utils/Threads/CallbackWorker.h"
@@ -76,6 +77,12 @@ namespace myoddweb:: directorywatcher:: win
     MYODDWEB_MUTEX _dataLock;
 
     /// <summary>
+    /// Guards _hDirectory/_overlapped/_buffer/_colectionState against the
+    /// owning monitor's own update
+    /// </summary>
+    std::recursive_mutex _handleLock;
+
+    /// <summary>
     /// The buffer of data
     /// </summary>
     std::vector<unsigned char*> _data;
@@ -95,6 +102,9 @@ namespace myoddweb:: directorywatcher:: win
 
       void operator()() const
       {
+        // hold _handleLock for cleanup
+        std::lock_guard<std::recursive_mutex> lock(_data._handleLock);
+
         // close the handle
         if (_data.clear_handle())
         {
