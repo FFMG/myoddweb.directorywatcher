@@ -4,6 +4,7 @@
 using System;
 using myoddweb.directorywatcher.interfaces;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace myoddweb.directorywatcher.test
 {
@@ -14,7 +15,7 @@ namespace myoddweb.directorywatcher.test
     public void IsCorrectInterface()
     {
       var request = new Request( "C:\\", false );
-      Assert.IsInstanceOf<IRequest>( request );
+      ClassicAssert.IsInstanceOf<IRequest>( request );
     }
 
     [TestCase("c:\\")]
@@ -25,7 +26,7 @@ namespace myoddweb.directorywatcher.test
     public void PathIsSaved( string path )
     {
       var request = new Request( path, false);
-      Assert.AreEqual(path, request.Path);
+      ClassicAssert.AreEqual(path, request.Path);
     }
 
     [TestCase(true)]
@@ -33,7 +34,7 @@ namespace myoddweb.directorywatcher.test
     public void RecursiveIsSaved(bool recursive)
     {
       var request = new Request("c:\\", recursive);
-      Assert.AreEqual(recursive, request.Recursive);
+      ClassicAssert.AreEqual(recursive, request.Recursive);
     }
 
     [Test]

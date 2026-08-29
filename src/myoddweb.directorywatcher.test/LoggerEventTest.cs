@@ -2,6 +2,7 @@
 using myoddweb.directorywatcher.interfaces;
 using myoddweb.directorywatcher.utils.Helper;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace myoddweb.directorywatcher.test
 {
@@ -14,14 +15,14 @@ namespace myoddweb.directorywatcher.test
     public void IdIsSaved(long id)
     {
       var loggerEvent = new LoggerEvent(id, LogLevel.Unknown, "Blah");
-      Assert.AreEqual( id, loggerEvent.Id );
+      ClassicAssert.AreEqual( id, loggerEvent.Id );
     }
 
     [Test]
     public void IdCanBeZero()
     {
       var loggerEvent = new LoggerEvent(0, LogLevel.Unknown, "Blah");
-      Assert.AreEqual(0, loggerEvent.Id);
+      ClassicAssert.AreEqual(0, loggerEvent.Id);
     }
 
     [TestCase( LogLevel.Debug )]
@@ -33,7 +34,7 @@ namespace myoddweb.directorywatcher.test
     public void LogLevelIsSaved( LogLevel ll )
     {
       var loggerEvent = new LoggerEvent(42, ll, "Blah");
-      Assert.AreEqual(ll, loggerEvent.LogLevel);
+      ClassicAssert.AreEqual(ll, loggerEvent.LogLevel);
     }
 
     [Test]

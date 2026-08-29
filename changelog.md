@@ -13,7 +13,7 @@ Notable changes
 - Solution/projects updated to build with Visual Studio 2022 (toolset v143)
 - The managed libraries now target .NET Framework 4.6.2, .NET Standard 2.0 and .NET 8.0, (dropped .NET Framework 4.5.2 and .NET Core 3.0, both long out of support)
 - C# projects updated to use the latest C# language version
-- Test project updated to NUnit 3.14.0, NUnit3TestAdapter 6 and Microsoft.NET.Test.Sdk 18
+- Test project updated to NUnit 4.6.1, NUnit3TestAdapter 6 and Microsoft.NET.Test.Sdk 18, (classic `Assert.*` calls moved to `NUnit.Framework.Legacy.ClassicAssert`, since NUnit 4 removed them from `Assert`)
 
 ### Fixed
 

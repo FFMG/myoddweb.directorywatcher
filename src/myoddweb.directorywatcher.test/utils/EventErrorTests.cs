@@ -4,6 +4,7 @@
 using System;
 using myoddweb.directorywatcher.utils;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace myoddweb.directorywatcher.test.utils
 {
@@ -15,8 +16,8 @@ namespace myoddweb.directorywatcher.test.utils
       var utc = DateTime.UtcNow;
       const interfaces.EventError code = interfaces.EventError.Aborted;
       var err = new EventError( code, utc );
-      Assert.AreEqual( err.Code, code );
-      Assert.AreEqual( err.DateTimeUtc, utc);
+      ClassicAssert.AreEqual( err.Code, code );
+      ClassicAssert.AreEqual( err.DateTimeUtc, utc);
     }
 
     [Test]
@@ -42,7 +43,7 @@ namespace myoddweb.directorywatcher.test.utils
     {
       var utc = DateTime.UtcNow;
       var err = new EventError((interfaces.EventError)(code), utc);
-      Assert.AreEqual(err.Message, message);
+      ClassicAssert.AreEqual(err.Message, message);
     }
 
     [TestCase((int)interfaces.EventError.General, "General error")]
@@ -51,8 +52,8 @@ namespace myoddweb.directorywatcher.test.utils
     {
       var utc = DateTime.UtcNow;
       var err = new EventError((interfaces.EventError)(code), utc);
-      Assert.AreEqual(err.Message, message);
-      Assert.AreEqual(err.Message, message); // get it again...
+      ClassicAssert.AreEqual(err.Message, message);
+      ClassicAssert.AreEqual(err.Message, message); // get it again...
     }
 
   }

@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -42,7 +43,7 @@ namespace myoddweb.directorywatcher.test
 
         //we then need to wait a bit for all the workers to have started.
         var timeout = (numberToAdd <= 2 ? 3 : numberToAdd) * 1000;
-        Assert.IsTrue(SpinWait.SpinUntil(() => watcher.Ready(), timeout));
+        ClassicAssert.IsTrue(SpinWait.SpinUntil(() => watcher.Ready(), timeout));
 
         TestContext.Out.WriteLine("All watchers ready!");
 
@@ -56,7 +57,7 @@ namespace myoddweb.directorywatcher.test
         // give a bit of time
         SpinWait.SpinUntil( () => numberAdded >= numberToAdd, timeout );
       }
-      Assert.AreEqual(numberToAdd, numberAdded);
+      ClassicAssert.AreEqual(numberToAdd, numberAdded);
     }
 
     [TestCase(true)]
@@ -73,13 +74,13 @@ namespace myoddweb.directorywatcher.test
       var numberAdded = 0;
       const int numberToAdd = 10;
       var timeout = (numberToAdd <= 2 ? 3 : numberToAdd) * 1000;
-      Assert.IsTrue(SpinWait.SpinUntil(() => watcher.Ready(), timeout));
+      ClassicAssert.IsTrue(SpinWait.SpinUntil(() => watcher.Ready(), timeout));
 
       // and then add the folder we are after
       watcher.Add(new Request(helper.Folder, recursive));
 
       // then wait
-      Assert.IsTrue(SpinWait.SpinUntil(() => watcher.Ready(), timeout));
+      ClassicAssert.IsTrue(SpinWait.SpinUntil(() => watcher.Ready(), timeout));
 
       watcher.OnAddedAsync += (fse, token) =>
       {
@@ -107,7 +108,7 @@ namespace myoddweb.directorywatcher.test
       using var watcher = new Watcher();
 
       // start the watcher, we return false as we have not folders.
-      Assert.IsFalse(watcher.Start());
+      ClassicAssert.IsFalse(watcher.Start());
 
       // stop it.
       watcher.Stop();
@@ -123,7 +124,7 @@ namespace myoddweb.directorywatcher.test
       watcher.Start();
 
       // nothing was added, but we are ready
-      Assert.IsTrue(watcher.Ready());
+      ClassicAssert.IsTrue(watcher.Ready());
 
       // stop it.
       watcher.Stop();
