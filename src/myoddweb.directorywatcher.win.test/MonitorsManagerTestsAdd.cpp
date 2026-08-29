@@ -38,18 +38,18 @@ TEST(MonitorsManagerAdd, SimpleStartAndStop) {
     50,
     0);
   const auto request = ::Request(r);
-  const auto id = ::MonitorsManager::Start( request );
+  const auto id = ::MonitorsManager::start( request );
 
   // do nothing ...
 
-  EXPECT_NO_THROW(::MonitorsManager::Stop(id));
+  EXPECT_NO_THROW(::MonitorsManager::stop(id));
 }
 
 TEST(MonitorsManagerAdd, StoppingWhenWeNeverStarted) {
 
   // do nothing ...
   // and stop something that was never started.
-  EXPECT_NO_THROW(::MonitorsManager::Stop(42));
+  EXPECT_NO_THROW(::MonitorsManager::stop(42));
 }
 
 TEST(MonitorsManagerAdd, StoppingWhatWasNeverStarted) {
@@ -66,15 +66,15 @@ TEST(MonitorsManagerAdd, StoppingWhatWasNeverStarted) {
     0);
 
   const auto request = ::Request(r);
-  const auto id = ::MonitorsManager::Start(request);
+  const auto id = ::MonitorsManager::start(request);
 
   // do nothing ...
 
   // stop the wrong one
-  EXPECT_NO_THROW(::MonitorsManager::Stop(id + 1));
+  EXPECT_NO_THROW(::MonitorsManager::stop(id + 1));
 
   // stop the correct one
-  EXPECT_NO_THROW(::MonitorsManager::Stop(id));
+  EXPECT_NO_THROW(::MonitorsManager::stop(id));
 }
 
 TEST(MonitorsManagerAdd, StartStopThenAddFileToFolder) {
@@ -93,13 +93,13 @@ TEST(MonitorsManagerAdd, StartStopThenAddFileToFolder) {
       0);
 
     const auto request = ::Request(r);
-    const auto id = ::MonitorsManager::Start(request);
+    const auto id = ::MonitorsManager::start(request);
     Add(id, helper);
 
     // wait for the pool to start
-    if (!Wait::SpinUntil([&]
+    if (!Wait::spin_until([&]
       {
-        return ::MonitorsManager::Ready();
+        return ::MonitorsManager::ready();
       }, TEST_TIMEOUT_WAIT))
     {
       GTEST_FATAL_FAILURE_("Unable to start pool");
@@ -108,7 +108,7 @@ TEST(MonitorsManagerAdd, StartStopThenAddFileToFolder) {
     // just add a file
     auto _ = helper->AddFile();
 
-    EXPECT_NO_THROW(::MonitorsManager::Stop(id));
+    EXPECT_NO_THROW(::MonitorsManager::stop(id));
 
     // this should not throw as we are not watching anything anymore
     _ = helper->AddFile();
@@ -127,11 +127,11 @@ TEST(MonitorsManagerAdd, InvalidPathDoesNOtThrow) {
     0,
     0);
   const auto request = ::Request(r);
-  const auto id = ::MonitorsManager::Start(request);
+  const auto id = ::MonitorsManager::start(request);
 
   // do nothing ...
 
-  EXPECT_NO_THROW(::MonitorsManager::Stop(id));
+  EXPECT_NO_THROW(::MonitorsManager::stop(id));
 }
 
 TEST(MonitorsManagerAdd, IfTimeoutIsZeroCallbackIsNeverCalled) {
@@ -152,7 +152,7 @@ TEST(MonitorsManagerAdd, IfTimeoutIsZeroCallbackIsNeverCalled) {
   auto count = 0;
   // monitor that folder.
   const auto request = ::Request(r);
-  const auto id = ::MonitorsManager::Start(request);
+  const auto id = ::MonitorsManager::start(request);
   Add(id, helper);
 
   // add a single file to it.
@@ -160,9 +160,9 @@ TEST(MonitorsManagerAdd, IfTimeoutIsZeroCallbackIsNeverCalled) {
 
   // wait a bit to give a chance for invalid files to be reported.
   // wait for the pool to start
-  if (!Wait::SpinUntil([&]
+  if (!Wait::spin_until([&]
     {
-      return ::MonitorsManager::Ready();
+      return ::MonitorsManager::ready();
     }, TEST_TIMEOUT_WAIT))
   {
     GTEST_FATAL_FAILURE_("Unable to start pool");
@@ -170,7 +170,7 @@ TEST(MonitorsManagerAdd, IfTimeoutIsZeroCallbackIsNeverCalled) {
 
   EXPECT_EQ(0, helper->Added(true));
 
-  EXPECT_NO_THROW(::MonitorsManager::Stop(id));
+  EXPECT_NO_THROW(::MonitorsManager::stop(id));
 
   EXPECT_TRUE( Remove(id) );
   delete helper;
@@ -197,13 +197,13 @@ TEST_P(ValidateNumberOfItemAdded, CallbackWhenFileIsAdded) {
     0);
 
   const auto request = ::Request(r);
-  const auto id = ::MonitorsManager::Start(request);
+  const auto id = ::MonitorsManager::start(request);
   Add(id, helper);
 
   // wait for the pool to start
-  if (!Wait::SpinUntil([&]
+  if (!Wait::spin_until([&]
     {
-      return ::MonitorsManager::Ready();
+      return ::MonitorsManager::ready();
     }, TEST_TIMEOUT_WAIT))
   {
     GTEST_FATAL_FAILURE_("Unable to start pool");
@@ -216,14 +216,14 @@ TEST_P(ValidateNumberOfItemAdded, CallbackWhenFileIsAdded) {
   }
 
   // give a little more than the timeout
-  Wait::SpinUntil(
+  Wait::spin_until(
     [&] {
       return number == helper->Added(true);
     }, TEST_TIMEOUT_WAIT);
 
   EXPECT_EQ(number, helper->Added(true));
 
-  EXPECT_NO_THROW(::MonitorsManager::Stop(id));
+  EXPECT_NO_THROW(::MonitorsManager::stop(id));
 
   EXPECT_TRUE(Remove(id));
   delete helper;
@@ -251,11 +251,11 @@ TEST_P(ValidateNumberOfItemAdded, CallbackWhenFolderIsAdded) {
     0);
 
   const auto request = ::Request(r);
-  const auto id = ::MonitorsManager::Start(request);
+  const auto id = ::MonitorsManager::start(request);
   Add(id, helper);
 
   // wait for the thread to get started
-  Wait::Delay(TEST_TIMEOUT_WAIT);
+  Wait::delay(TEST_TIMEOUT_WAIT);
 
   for (auto i = 0; i < number; ++i)
   {
@@ -264,14 +264,14 @@ TEST_P(ValidateNumberOfItemAdded, CallbackWhenFolderIsAdded) {
   }
 
   // give a little more than the timeout
-  Wait::SpinUntil(
+  Wait::spin_until(
     [&] {
       return number == helper->Added(false);
     }, TEST_TIMEOUT_WAIT);
 
   EXPECT_EQ(number, helper->Added(false));
 
-  EXPECT_NO_THROW(::MonitorsManager::Stop(id));
+  EXPECT_NO_THROW(::MonitorsManager::stop(id));
 
   EXPECT_TRUE(Remove(id));
   delete helper;

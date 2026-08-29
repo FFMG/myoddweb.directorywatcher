@@ -25,28 +25,28 @@ namespace myoddweb
        * \param rhs the right hand side of the path
        * \return the combined path
        */
-      static std::wstring Combine(const std::wstring& lhs, const std::wstring& rhs);
+      static std::wstring combine(const std::wstring& lhs, const std::wstring& rhs);
 
       /**
        * \brief check if a given string is a file or a directory.
        * \param path the file we are checking.
        * \return if the string given is a file or not.
        */
-      static bool IsFile( const std::wstring& path);
+      static bool is_file( const std::wstring& path);
 
       /**
        * \brief Check if a given directory is a dot or double dot
        * \param directory the lhs folder.
        * \return if it is a dot directory or not
        */
-      static bool IsDot(const std::wstring& directory);
+      static bool is_dot(const std::wstring& directory);
 
       /**
        * \brief Get all the sub folders of a given folder.
        * \param folder the starting folder.
        * \return all the sub-folders, (if any).
        */
-      static std::vector<std::wstring> GetAllSubFolders(const std::wstring& folder);
+      static std::vector<std::wstring> get_all_sub_folders(const std::wstring& folder);
 
       /**
        * \brief Compare if 2 folders are the same
@@ -54,7 +54,7 @@ namespace myoddweb
        * \param rhs the second folder
        * \return if both folders are similar.
        */
-      static bool AreSameFolders(const std::wstring& lhs, const std::wstring& rhs);
+      static bool are_same_folders(const std::wstring& lhs, const std::wstring& rhs);
     };
   }
 }

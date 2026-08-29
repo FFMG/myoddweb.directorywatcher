@@ -27,22 +27,22 @@ namespace myoddweb
       const WinMonitor& operator=(const WinMonitor&) = delete;
       WinMonitor&& operator=(WinMonitor&&) = delete;
 
-      void OnGetEvents(std::vector<Event*>& events) override;
+      void on_get_events(std::vector<event*>& events) override;
 
       [[nodiscard]]
-      const long long& ParentId() const override;
+      const long long& parent_id() const override;
 
     protected:
       /**
        * \brief the non blocking stop function
        */
-      void OnWorkerStop() override;
+      void on_worker_stop() override;
 
       /**
        * \brief called when the worker is ready to start
        *        return false if you do not wish to start the worker.
        */
-      bool OnWorkerStart() override;
+      bool on_worker_start() override;
 
       /**
        * \brief Give the worker a chance to do something in the loop
@@ -51,12 +51,12 @@ namespace myoddweb
        * \param fElapsedTimeMilliseconds the amount of time since the last time we made this call.
        * \return true if we want to continue or false if we want to end the thread
        */
-      bool OnWorkerUpdate(float fElapsedTimeMilliseconds) override;
+      bool on_worker_update(float fElapsedTimeMilliseconds) override;
 
       /**
        * \brief called when the worker has completed
        */
-      void OnWorkerEnd() override;
+      void on_worker_end() override;
 
     private:
       win::Common* _directories;

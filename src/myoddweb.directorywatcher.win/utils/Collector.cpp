@@ -27,17 +27,17 @@ namespace myoddweb:: directorywatcher
 
   Collector::~Collector()
   {
-    ClearEvents(_currentEvents);
+    clear_events(_currentEvents);
   }
 
   /**
    * \brief Get the time now in milliseconds since 1970
    * \return the current ms time
    */
-  long long Collector::GetMillisecondsNowUtc()
+  long long Collector::get_milliseconds_now_utc()
   {
     // https://en.cppreference.com/w/cpp/chrono/system_clock
-    // The epoch of system_clock is unspecified, but most implementations use Unix Time 
+    // The epoch of system_clock is unspecified, but most implementations use Unix Time
     // (i.e., time since 00:00:00 Coordinated Universal Time (UTC), Thursday, 1 January 1970, not counting leap seconds).
     const auto now = std::chrono::system_clock::now();
     const auto nowMs = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
@@ -54,12 +54,12 @@ namespace myoddweb:: directorywatcher
    * \param isFile if this is a file or a folder.
    * \param error if there was an error related
    */
-  void Collector::Add(const EventAction action, const std::wstring& path, const std::wstring& filename, bool isFile, EventError error)
+  void Collector::add(const EventAction action, const std::wstring& path, const std::wstring& filename, bool isFile, EventError error)
   {
     MYODDWEB_PROFILE_FUNCTION();
 
     // just add the action without an old filename.
-    Add(action, path, filename, L"", isFile, error );
+    add(action, path, filename, L"", isFile, error );
   }
 
   /**
@@ -70,12 +70,12 @@ namespace myoddweb:: directorywatcher
    * \param isFile if this is a file or a folder.
    * \param error if there is an error related to the rename
    */
-  void Collector::AddRename(const std::wstring& path, const std::wstring& newFilename, const std::wstring& oldFilename, bool isFile, EventError error)
+  void Collector::add_rename(const std::wstring& path, const std::wstring& newFilename, const std::wstring& oldFilename, bool isFile, EventError error)
   {
     MYODDWEB_PROFILE_FUNCTION();
 
     // just add the action without an old filename.
-    Add(EventAction::Renamed, path, newFilename, oldFilename, isFile, error );
+    add(EventAction::Renamed, path, newFilename, oldFilename, isFile, error );
   }
 
   /**
@@ -87,7 +87,7 @@ namespace myoddweb:: directorywatcher
    * \param isFile if this is a file or a folder.
    * \param error if there was an error related to the action
    */
-  void Collector::Add( const EventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName, const bool isFile, EventError error)
+  void Collector::add( const EventAction action, const std::wstring& path, const std::wstring& filename, const std::wstring& oldFileName, const bool isFile, EventError error)
   {
     MYODDWEB_PROFILE_FUNCTION();
 
@@ -100,14 +100,14 @@ namespace myoddweb:: directorywatcher
     try
     {
       // get the combined path.
-      const auto combinedPath = filename.empty() ? (isFile ? L"" : path) : Io::Combine(path, filename);
+      const auto combinedPath = filename.empty() ? (isFile ? L"" : path) : Io::combine(path, filename);
 
       // We first create the event outside the lock
       // that way, we only have the lock for the shortest
       // posible amount of time.
-      const auto ofn = oldFileName.empty() ? L"" : Io::Combine(path, oldFileName);
-      const auto eventInformation = new EventInformation(
-          GetMillisecondsNowUtc(),
+      const auto ofn = oldFileName.empty() ? L"" : Io::combine(path, oldFileName);
+      const auto eventInformation = new event_information(
+          get_milliseconds_now_utc(),
           action,
           error,
           combinedPath.c_str(),
@@ -115,15 +115,15 @@ namespace myoddweb:: directorywatcher
         isFile);
 
       // we can now add the event to our vector.
-      AddEventInformation(eventInformation);
+      add_event_information(eventInformation);
 
       // try and cleanup the events if need be.
-      CleanupEvents();
+      cleanup_events();
     }
     catch (std::exception& e)
     {
       // log the error
-      Logger::Log(LogLevel::Error, L"Caught exception '%hs' when adding event to collector", e.what());
+      Logger::log(LogLevel::Error, L"Caught exception '%hs' when adding event to collector", e.what());
     }
   }
 
@@ -131,7 +131,7 @@ namespace myoddweb:: directorywatcher
    * \brief copy the current content of the events into a local variable.
    * Then erase the current content so we can continue receiving data.
    */
-  Collector::EventsInformation* Collector::CloneEventsAndEraseCurrent()
+  Collector::EventsInformation* Collector::clone_events_and_erase_current()
   {
     MYODDWEB_PROFILE_FUNCTION();
 
@@ -165,7 +165,7 @@ namespace myoddweb:: directorywatcher
    * \param rhs the rhs element we are checking.
    * \return if we need to swap the two items.
    */
-  bool Collector::SortByTimeMillisecondsUtc(const Event* lhs, const Event* rhs)
+  bool Collector::sort_by_time_milliseconds_utc(const event* lhs, const event* rhs)
   {
     return lhs->TimeMillisecondsUtc < rhs->TimeMillisecondsUtc;
   }
@@ -175,7 +175,7 @@ namespace myoddweb:: directorywatcher
    * \param events the events we will be filling
    * \return the number of events we found.
    */
-  void Collector::GetEvents( std::vector<Event*>& events )
+  void Collector::get_events( std::vector<event*>& events )
   {
     MYODDWEB_PROFILE_FUNCTION();
 
@@ -183,7 +183,7 @@ namespace myoddweb:: directorywatcher
     // and erase the current contents.
     // the lock is released as soon as posible making sure that other threads
     // can keep adding to the list.
-    const auto clone = CloneEventsAndEraseCurrent();
+    const auto clone = clone_events_and_erase_current();
     if(clone == nullptr )
     {
       return;
@@ -203,14 +203,14 @@ namespace myoddweb:: directorywatcher
     {
       const auto& eventInformation = (*it);
 
-      const auto e = new Event(
+      const auto e = new event(
         eventInformation->Name,
         eventInformation->OldName,
-        ConvertEventAction(eventInformation->Action),
-        ConvertEventError(eventInformation->Error),
+        convert_event_action(eventInformation->Action),
+        convert_event_error(eventInformation->Error),
         eventInformation->TimeMillisecondsUtc,
         eventInformation->IsFile);
-      if (IsOlderDuplicate(events, *e))
+      if (is_older_duplicate(events, *e))
       {
         // it is an older duplicate
         // so we do not want to add it,
@@ -226,18 +226,18 @@ namespace myoddweb:: directorywatcher
     }
 
     // last step is to cleanup all the renames.
-    ValidateRenames(events);
+    validate_renames(events);
 
     // finally we can cleanup the clone
     // we took ownership of the data ... so we have to clean it all up.
-    ClearEvents(clone);
+    clear_events(clone);
   }
 
   /**
    * \brief clear all the events information and delete all the data.
    * \param events the data we want to clear.
    */
-  void Collector::ClearEvents(EventsInformation* events)
+  void Collector::clear_events(EventsInformation* events)
   {
     if( nullptr == events )
     {
@@ -260,7 +260,7 @@ namespace myoddweb:: directorywatcher
    * The ones that do not have a new/old name.
    * \param source the collection of events we will be looking in
    */
-  void Collector::ValidateRenames(std::vector<Event*>& source)
+  void Collector::validate_renames(std::vector<event*>& source)
   {
     MYODDWEB_PROFILE_FUNCTION();
 
@@ -286,7 +286,7 @@ namespace myoddweb:: directorywatcher
       if (nameLen == 0 && oldNameLen > 0)
       {
         // so we have an old name, but no new name
-        event->MoveOldNameToName();
+        event->move_old_name_to_name();
         event->Action = static_cast<int>(EventAction::Removed );
       }
 
@@ -307,7 +307,7 @@ namespace myoddweb:: directorywatcher
    * \param duplicate the event information we want to add.
    * \return if the event information is already in the 'source'
    */
-  bool Collector::IsOlderDuplicate(const std::vector<Event*>& source, const Event& duplicate)
+  bool Collector::is_older_duplicate(const std::vector<event*>& source, const event& duplicate)
   {
     MYODDWEB_PROFILE_FUNCTION();
 
@@ -342,7 +342,7 @@ namespace myoddweb:: directorywatcher
    * \brief convert an EventAction to an un-managed IAction
    * so it can be returned to the calling interface.
    */
-  int Collector::ConvertEventAction(const EventAction& action)
+  int Collector::convert_event_action(const EventAction& action)
   {
     return static_cast<int>(action);
   }
@@ -351,7 +351,7 @@ namespace myoddweb:: directorywatcher
    * \brief convert an EventError to an un-managed IError
    * so it can be returned to the calling interface.
    */
-  int Collector::ConvertEventError(const EventError& error)
+  int Collector::convert_event_error(const EventError& error)
   {
     return static_cast<int>(error);
   }
@@ -361,7 +361,7 @@ namespace myoddweb:: directorywatcher
    * At regular intervals we will be removing old data.
    * \param event the event we are adding to the vector.
    */
-  void Collector::AddEventInformation(const EventInformation* event)
+  void Collector::add_event_information(const event_information* event)
   {
     MYODDWEB_PROFILE_FUNCTION();
 
@@ -385,12 +385,12 @@ namespace myoddweb:: directorywatcher
    * \brief Check if we need to cleanup the list of events.
    * This is to prevent the list from getting far too large.
    */
-  void Collector::CleanupEvents()
+  void Collector::cleanup_events()
   {
     MYODDWEB_PROFILE_FUNCTION();
 
     // get the current time
-    const auto now = GetMillisecondsNowUtc();
+    const auto now = get_milliseconds_now_utc();
 
     // do we need to clean up? First check outside the lock.
     // we don't really need to check the lock here
@@ -426,7 +426,7 @@ namespace myoddweb:: directorywatcher
       // is this item newer than our oler time.
       if ((*it)->TimeMillisecondsUtc > old)
       {
-        // because everything is ordered from 
+        // because everything is ordered from
         // older to newer, there is no point in going any further.
         break;
       }

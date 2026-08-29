@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "../myoddweb.directorywatcher.win/utils/Threads/Worker.h"
 #include "../myoddweb.directorywatcher.win/utils/Threads/WorkerPool.h"
 
@@ -21,20 +21,20 @@ public:
   {
   }
 
-  void OnWorkerStop() override { ++_stop; }
-  virtual bool OnWorkerStart() override
+  void on_worker_stop() override { ++_stop; }
+  virtual bool on_worker_start() override
   {
     ++_startCalled;
     return true;
   }
-  void OnWorkerEnd() override
+  void on_worker_end() override
   {
     ++_endCalled;
   }
-  bool OnWorkerUpdate(float fElapsedTimeMilliseconds) override
+  bool on_worker_update(float fElapsedTimeMilliseconds) override
   {
     // we must have started
-    EXPECT_TRUE(Started());
+    EXPECT_TRUE(started());
     if (_stop > 0)
     {
       return false;
@@ -56,9 +56,9 @@ public:
   {
   }
 
-  bool OnWorkerStart() override
+  bool on_worker_start() override
   {
-    _pool.Add(_worker);
-    return TestWorker::OnWorkerStart();
+    _pool.add(_worker);
+    return TestWorker::on_worker_start();
   }
 };

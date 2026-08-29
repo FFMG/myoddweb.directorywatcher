@@ -12,7 +12,29 @@
 
 namespace myoddweb::directorywatcher::threads
 {
-  Worker::Worker() : Worker( WorkerId::NextId() )
+  namespace
+  {
+    /**
+     * \brief predicate used while waiting for this worker to complete.
+     */
+    struct worker_completed_predicate final
+    {
+      explicit worker_completed_predicate(const Worker& worker) :
+        _worker(worker)
+      {
+      }
+
+      bool operator()() const
+      {
+        return _worker.completed();
+      }
+
+    private:
+      const Worker& _worker;
+    };
+  }
+
+  Worker::Worker() : Worker( WorkerId::next_id() )
   {
   }
 
@@ -37,15 +59,15 @@ namespace myoddweb::directorywatcher::threads
       // the derived class did not complete this operation
       // you should call stop all before deleting
       // we are in the destructor so we can no longer handle this here.
-      if (!Is(State::complete))
+      if (!is(State::complete))
       {
-        Logger::Log(Id(), LogLevel::Panic, L"One of the worker was not completed by the base class!" );
+        Logger::log(id(), LogLevel::Panic, L"One of the worker was not completed by the base class!" );
       }
     }
     catch (std::exception& e)
     {
       // log the error
-      Logger::Log(LogLevel::Error, L"Caught exception '%hs' trying to complete all operations!", e.what());
+      Logger::log(LogLevel::Error, L"Caught exception '%hs' trying to complete all operations!", e.what());
     }
   }
 
@@ -53,7 +75,7 @@ namespace myoddweb::directorywatcher::threads
   /// Get the Id of this worker.
   /// </summary>
   /// <returns></returns>
-  const long long& Worker::Id() const
+  const long long& Worker::id() const
   {
     return _id;
   }
@@ -63,7 +85,7 @@ namespace myoddweb::directorywatcher::threads
    * \param state the state we want to check for.
    * \return if the state is the one we are checking
    */
-  bool Worker::Is(const State& state) const
+  bool Worker::is(const State& state) const
   {
     return _state == state;
   }
@@ -72,7 +94,7 @@ namespace myoddweb::directorywatcher::threads
   /// Update the state from one value to anothers.
   /// </summary>
   /// <param name="state">The new value</param>
-  void Worker::SetState(const State& state)
+  void Worker::set_state(const State& state)
   {
     _state = state;
   }
@@ -82,9 +104,9 @@ namespace myoddweb::directorywatcher::threads
    * \return if the thread is still running.
    */
   [[nodiscard]]
-  bool Worker::Completed() const
+  bool Worker::completed() const
   {
-    return Is(State::complete );
+    return is(State::complete );
   }
 
   /**
@@ -92,9 +114,9 @@ namespace myoddweb::directorywatcher::threads
    * \return if the worker is still running.
    */
   [[nodiscard]]
-  bool Worker::Started() const
+  bool Worker::started() const
   {
-    return !Is(State::unknown) && !Completed();
+    return !is(State::unknown) && !completed();
   }
 
   /**
@@ -102,75 +124,75 @@ namespace myoddweb::directorywatcher::threads
     * \return if the worker must stop.
     */
   [[nodiscard]]
-  bool Worker::MustStop() const
+  bool Worker::must_stop() const
   {
-    return Is(State::stopped) || Is(State::stopping ) || Is(State::complete);
+    return is(State::stopped) || is(State::stopping ) || is(State::complete);
   }
 
   /**
    * \brief non blocking call to instruct the thread to stop.
    */
-  void Worker::Stop()
+  void Worker::stop()
   {
     MYODDWEB_PROFILE_FUNCTION();
     MYODDWEB_LOCK(_lockState);
-    StopInLock();
+    stop_in_lock();
   }
 
-  void Worker::StopInLock()
+  void Worker::stop_in_lock()
   {
     MYODDWEB_PROFILE_FUNCTION();
     // if the state is unknown it means we never even started
     // there is nothing for us to do here.
-    if (Is(State::unknown))
+    if (is(State::unknown))
     {
       // we are done
-      SetState( State::complete );
+      set_state( State::complete );
       return;
     }
 
     // was it called already?
     // or are we trying to cal it after we are all done?
-    if( Is(State::stopped) || Is(State::complete ))
+    if( is(State::stopped) || is(State::complete ))
     {
       return;
     }
 
     // we are stopping
-    SetState( State::stopping );
+    set_state( State::stopping );
 
     // call the derived function
-    OnWorkerStop();
+    on_worker_stop();
 
     // we are done
-    SetState( State::stopped );
+    set_state( State::stopped );
   }
 
   /// <summary>
   /// The one and only function that run the complete thread.
   /// </summary>
-  void Worker::Execute()
+  void Worker::execute()
   {
-    Logger::Log(Id(), LogLevel::Debug, L"Worker is Starting");
+    Logger::log(id(), LogLevel::Debug, L"Worker is Starting");
     // start the thread, if it returns false
     // then we will get out.
-    if (!WorkerStart())
+    if (!worker_start())
     {
-      Logger::Log(Id(), LogLevel::Debug, L"Worker did not want to Start");
+      Logger::log(id(), LogLevel::Debug, L"Worker did not want to Start");
       return;
     }
 
-    Logger::Log(Id(), LogLevel::Debug, L"Worker is Running");
+    Logger::log(id(), LogLevel::Debug, L"Worker is Running");
 
     // run the code
-    WorkerRun();
+    worker_run();
 
-    Logger::Log(Id(), LogLevel::Debug, L"Worker is Ending");
+    Logger::log(id(), LogLevel::Debug, L"Worker is Ending");
 
     // the thread has ended.
-    WorkerEnd();
+    worker_end();
 
-    Logger::Log(Id(), LogLevel::Debug, L"Worker is has Ended");
+    Logger::log(id(), LogLevel::Debug, L"Worker is has Ended");
   }
 
   /// <summary>
@@ -178,13 +200,10 @@ namespace myoddweb::directorywatcher::threads
   /// </summary>
   /// <param name="timeout">How long to wait for.</param>
   /// <returns>Either complete or timeout</returns>
-  WaitResult Worker::WaitFor(const long long timeout)
+  WaitResult Worker::wait_for(const long long timeout)
   {
     // just spin for a while and get out if we complete.
-    if (Wait::SpinUntil([this]
-      {
-        return Completed();
-      }, timeout))
+    if (Wait::spin_until(worker_completed_predicate(*this), timeout))
     {
       return WaitResult::complete;
     }
@@ -196,7 +215,7 @@ namespace myoddweb::directorywatcher::threads
    * \param timeout how long we want to wait
    * \return if the worker completed or if we timeed out.
    */
-  WaitResult Worker::StopAndWait(const long long timeout)
+  WaitResult Worker::stop_and_wait(const long long timeout)
   {
     try
     {
@@ -217,18 +236,18 @@ namespace myoddweb::directorywatcher::threads
       default:
         throw std::exception("Unknown state!");
       }
- 
+
       // stop it, (maybe again)
-      Stop();
+      stop();
 
       // then wait however long we need to.
-      return WaitFor(timeout);
+      return wait_for(timeout);
     }
     catch (std::exception& e)
     {
       // log the error
-      Logger::Log(LogLevel::Error, L"Caught exception '%hs' trying to stop and wait!", e.what());
-    
+      Logger::log(LogLevel::Error, L"Caught exception '%hs' trying to stop and wait!", e.what());
+
       return WaitResult::timeout;
     }
   }
@@ -238,9 +257,9 @@ namespace myoddweb::directorywatcher::threads
    * \param fElapsedTimeMilliseconds the number of ms since the last call.
    * \return true if we want to continue, false otherwise.
    */
-  bool Worker::WorkerUpdateOnce(const float fElapsedTimeMilliseconds)
+  bool Worker::worker_update_once(const float fElapsedTimeMilliseconds)
   {
-    if (Is(State::stopped) || Is(State::complete))
+    if (is(State::stopped) || is(State::complete))
     {
       // we have either stopped or the state it complete
       // we have to break out of the loop.
@@ -250,21 +269,21 @@ namespace myoddweb::directorywatcher::threads
     // if we are busy stopping ... but not stoped, we do not want to break
     // out of the loop just yet as we are still busy
     // but we do not want to call update anymore.
-    if (Is(State::stopping))
+    if (is(State::stopping))
     {
       return true;
     }
 
     // call the update now.
     // if it returns false we will break out of the update look.
-    return OnWorkerUpdate(fElapsedTimeMilliseconds);
+    return on_worker_update(fElapsedTimeMilliseconds);
   }
 
   /**
    * \brief calculate the elapsed time since the last time this call was made
    * \return float the elapsed time in milliseconds.
    */
-  float Worker::CalculateElapsedTimeMilliseconds()
+  float Worker::calculate_elapsed_time_milliseconds()
   {
     // update and calculate the elapsed time.
     _timePoint2 = std::chrono::system_clock::now();
@@ -277,7 +296,7 @@ namespace myoddweb::directorywatcher::threads
    * \brief called when the thread is starting
    *        this should not block anything
    */
-  bool Worker::WorkerStart()
+  bool Worker::worker_start()
   {
     // grab the lock not because we are doing anything, but because _we_ might be in the middle of an update
     MYODDWEB_PROFILE_FUNCTION();
@@ -285,26 +304,26 @@ namespace myoddweb::directorywatcher::threads
     try
     {
       // we are starting
-      SetState(State::starting);
+      set_state(State::starting);
 
-      if (!OnWorkerStart())
+      if (!on_worker_start())
       {
         // we could not even start, so we are stopped.
-        SetState( State::complete );
+        set_state( State::complete );
         return false;
       }
 
       // the thread has started work.
       // we could argue that this flag should be set
-      // after `OnWorkerStart()` but this is technically all part of the same thread.
-      SetState( State::started );
+      // after `on_worker_start()` but this is technically all part of the same thread.
+      set_state( State::started );
 
       // we are done
       return true;
     }
     catch (...)
     {
-      SaveCurrentException();
+      save_current_exception();
       return false;
     }
   }
@@ -313,7 +332,7 @@ namespace myoddweb::directorywatcher::threads
    * \brief the main body of the thread runner
    *        this function will run until the worker wants to exist.
    */
-  void Worker::WorkerRun()
+  void Worker::worker_run()
   {
     try
     {
@@ -330,20 +349,20 @@ namespace myoddweb::directorywatcher::threads
           MYODDWEB_LOCK(_lockState);
 
           // update once only.
-          if( !WorkerUpdateOnce(CalculateElapsedTimeMilliseconds()) )
+          if( !worker_update_once(calculate_elapsed_time_milliseconds()) )
           {
             break;
           }
         }
         catch( ... )
         {
-          SaveCurrentException();
+          save_current_exception();
         }
       }
     }
     catch (...)
     {
-      SaveCurrentException();
+      save_current_exception();
     }
   }
 
@@ -351,7 +370,7 @@ namespace myoddweb::directorywatcher::threads
    * \brief called when the thread is ending
        *        this should not block anything
    */
-  void Worker::WorkerEnd()
+  void Worker::worker_end()
   {
     // grab the lock not because we are doing anything, but because _we_ might be in the middle of an update
     MYODDWEB_PROFILE_FUNCTION();
@@ -360,7 +379,7 @@ namespace myoddweb::directorywatcher::threads
     try
     {
       // if we are complete already then we are done
-      if (Is(State::complete))
+      if (is(State::complete))
       {
         return;
       }
@@ -368,38 +387,38 @@ namespace myoddweb::directorywatcher::threads
       // whatever happens we can call the 'stop' call now
       // if that call was made earlier, (to cause us to break out of the Update loop), it will be ignored
       // depending on the state, so it does not harm to call it again
-      StopInLock();
+      stop_in_lock();
 
       // the worker has now stopped, so we can call the blocking call
       // to give the worker a chance to finish/dispose everything that needs to be disposed.
-      OnWorkerEnd();
+      on_worker_end();
     }
     catch (...)
     {
-      SaveCurrentException();
+      save_current_exception();
     }
 
     // whatever happens, we have now completed
     // nothing else can happen after this.
-    SetState( State::complete );
+    set_state( State::complete );
   }
 
   /**
    * \brief save the current exception
    */
-  void Worker::SaveCurrentException() const
+  void Worker::save_current_exception() const
   {
     try {
       const auto ptr = std::current_exception();
-      if (ptr) 
+      if (ptr)
       {
         std::rethrow_exception(ptr);
       }
     }
-    catch (std::exception& e) 
+    catch (std::exception& e)
     {
       // log the error
-      Logger::Log(LogLevel::Error, L"Caught exception '%hs'", e.what() );
+      Logger::log(LogLevel::Error, L"Caught exception '%hs'", e.what() );
     }
   }
 }

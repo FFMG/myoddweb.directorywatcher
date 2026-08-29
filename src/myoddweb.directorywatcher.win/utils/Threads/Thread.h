@@ -44,12 +44,12 @@ namespace myoddweb:: directorywatcher:: threads
      * \brief create the tread/future we will be running the worker with.
      * \param worker the worker we want to run
      */
-    void CreateWorkerRunner(Worker* worker);
+    void create_worker_runner(Worker* worker);
 
     /**
      * \brief start running the worker.
      */
-    void Execute() const;
+    void execute() const;
 
     /**
      * \brief the common constructor, private as used to set default values.
@@ -80,27 +80,27 @@ namespace myoddweb:: directorywatcher:: threads
      * \return if completed or not
      */
     [[nodiscard]]
-    bool Completed() const;
+    bool completed() const;
 
     /**
      * \brief if the thread is started or not.
      * \return if started or not
      */
     [[nodiscard]]
-    bool Started() const;
+    bool started() const;
 
     /**
      * \brief wait for the thread to complete.
      *        this will never expire.
      */
-    void Wait();
+    void wait();
 
     /**
      * \brief wait a little bit for the thread to finish
      * \param timeout the number of ms we want to wait for the thread to complete.
      * \return either timeout of complete if the thread completed.
      */
-    WaitResult WaitFor(long long timeout);
+    WaitResult wait_for(long long timeout);
 
   private:
     /**
@@ -109,6 +109,6 @@ namespace myoddweb:: directorywatcher:: threads
      * \param timeout the number of ms we want to wait for the thread to complete.
      * \return either timeout of complete if the thread completed.
      */
-    static WaitResult WaitFor(Worker* worker, long long timeout);
+    static WaitResult wait_for(Worker* worker, long long timeout);
   };
 }

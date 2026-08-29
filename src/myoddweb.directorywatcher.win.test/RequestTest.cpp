@@ -20,7 +20,7 @@ TEST(Request, PathIsSaved) {
       0);
 
     const auto request = ::Request(r);
-    EXPECT_TRUE(wcscmp(path, request.Path()) == 0);
+    EXPECT_TRUE(wcscmp(path, request.path()) == 0);
   }
   {
     const auto path = L"MuchLonger:\\weird\\path";
@@ -36,7 +36,7 @@ TEST(Request, PathIsSaved) {
       0,
       0);
     const auto request = ::Request(r);
-    EXPECT_TRUE(wcscmp(path, request.Path()) == 0);
+    EXPECT_TRUE(wcscmp(path, request.path()) == 0);
   }
 }
 
@@ -53,7 +53,7 @@ TEST(Request, RecursiveIsSaved) {
       0,
       0);
     const auto request = ::Request(r);
-    EXPECT_TRUE( request.Recursive() );
+    EXPECT_TRUE( request.recursive() );
   }
   {
     // use the test request to create the Request
@@ -67,6 +67,6 @@ TEST(Request, RecursiveIsSaved) {
       0,
       0);
     const auto request = ::Request(r);
-    EXPECT_FALSE(request.Recursive());
+    EXPECT_FALSE(request.recursive());
   }
 }

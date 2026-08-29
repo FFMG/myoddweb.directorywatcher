@@ -11,17 +11,17 @@ WorkerId::WorkerId() :
 /// Get the next available id.
 /// </summary>
 /// <returns></returns>
-long long WorkerId::NextId()
+long long WorkerId::next_id()
 {
   static WorkerId workerId;
-  return workerId.GetNextId();
+  return workerId.get_next_id();
 }
 
 /// <summary>
 /// Get the next id.
 /// </summary>
 /// <returns></returns>
-long long WorkerId::GetNextId()
+long long WorkerId::get_next_id()
 {
   MYODDWEB_LOCK(_idLock);
   return _id++;

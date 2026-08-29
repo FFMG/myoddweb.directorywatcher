@@ -21,19 +21,19 @@ namespace myoddweb
       MultipleWinMonitor(const MultipleWinMonitor&) = delete;
       MultipleWinMonitor& operator=(const MultipleWinMonitor&) = delete;
 
-      void OnGetEvents(std::vector<Event*>& events) override;
+      void on_get_events(std::vector<event*>& events) override;
 
       [[nodiscard]]
-      const long long& ParentId() const override;
+      const long long& parent_id() const override;
 
-      void OnWorkerStop() override;
+      void on_worker_stop() override;
 
     protected:
       /**
        * \brief called when the worker is ready to start
        *        return false if you do not wish to start the worker.
        */
-      bool OnWorkerStart() override;
+      bool on_worker_start() override;
 
       /**
        * \brief Give the worker a chance to do something in the loop
@@ -42,12 +42,12 @@ namespace myoddweb
        * \param fElapsedTimeMilliseconds the amount of time since the last time we made this call.
        * \return true if we want to continue or false if we want to end the thread
        */
-      bool OnWorkerUpdate(float fElapsedTimeMilliseconds) override;
+      bool on_worker_update(float fElapsedTimeMilliseconds) override;
 
       /**
        * \brief called when the worker has completed
        */
-      void OnWorkerEnd() override;
+      void on_worker_end() override;
 
     private:
       /**
@@ -70,62 +70,62 @@ namespace myoddweb
        * \return the next usable id.
        */
       [[nodiscard]]
-      long TotalSize() const;
+      long total_size() const;
 
       /**
        * \brief Create all the sub-requests for a prarent request.
        * \param parent the parent request itselft.
        */
-      void CreateMonitors(const Request& parent );
+      void create_monitors(const Request& parent );
 
       /**
        * \brief Clear all the current data
        */
-      void Delete() noexcept;
+      void delete_all() noexcept;
 
       /**
        * \brief a folder has been deleted, process it.
        * \param path the event being processed
        */
-      void ProcessDeletedFolderInLock(const wchar_t* path );
+      void process_deleted_folder_in_lock(const wchar_t* path );
 
       /**
        * \brief a folder has been added, process it.
        * \param path the event being processed
        */
-      void ProcessAddedFolderInLock(const wchar_t* path);
+      void process_added_folder_in_lock(const wchar_t* path);
 
       /**
        * \brief a folder has been renamed, process it.
        * \param path the event being processed
        * \param oldPath the old name being renamed.
        */
-      void ProcessRenamedFolderInLock(const wchar_t* path, const wchar_t* oldPath);
+      void process_renamed_folder_in_lock(const wchar_t* path, const wchar_t* oldPath);
 
       /**
        * \brief remove all the folders that are no longer being monitored, (complete).
        */
-      void RemoveCompletedFoldersInLock();
+      void remove_completed_folders_in_lock();
 
       /**
        * \brief process the parent events
        * \return events the events we will be adding to
        */
-      std::vector<Event*> GetAndProcessParentEventsInLock();
+      std::vector<event*> get_and_process_parent_events_in_lock();
 
       /**
        * \brief process the children events
        * \rerturn events the events we will be adding to
        */
       [[nodiscard]]
-      std::vector<Event*> GetAndProcessChildEventsInLock() const;
+      std::vector<event*> get_and_process_child_events_in_lock() const;
 
       /**
        * \brief process the children events
        * \param monitor the monitor we are getting the events for.
        * \rerturn events the events we will be adding to
        */
-      std::vector<Event*> GetEvents( Monitor* monitor ) const;
+      std::vector<event*> get_events( Monitor* monitor ) const;
 
       /**
        * \brief look for a posible child with a matching path.
@@ -133,25 +133,25 @@ namespace myoddweb
        * \return if we find it, the iterator of the child monitor.
        */
       [[nodiscard]]
-      Monitor* FindChildInLock(const std::wstring& path) const;
+      Monitor* find_child_in_lock(const std::wstring& path) const;
 
       /**
        * \brief Clear the container data
        * \param container the container we want to clear.
        */
-      void DeleteInLock(std::vector<Monitor*>& container) const noexcept;
+      void delete_in_lock(std::vector<Monitor*>& container) const noexcept;
 
       /**
        * \brief Stop all the monitors
        * \param container the vector of monitors.
        */
-      void Stop( std::vector<Monitor*>& container) const;
+      void stop_all(std::vector<Monitor*>& container) const;
 
       /**
        * \brief Start all the monitors
        * \param container the vector of monitors.
        */
-      void Start(const std::vector<Monitor*>& container) const;
+      void start_all(const std::vector<Monitor*>& container) const;
     };
   }
 }

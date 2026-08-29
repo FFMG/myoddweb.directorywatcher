@@ -8,7 +8,7 @@ public:
   /// Get the next available id.
   /// </summary>
   /// <returns></returns>
-  static long long NextId();
+  static long long next_id();
 
 private:
   WorkerId();
@@ -27,6 +27,6 @@ private:
   /// Get the next id.
   /// </summary>
   /// <returns></returns>
-  long long GetNextId();
+  long long get_next_id();
 };
 

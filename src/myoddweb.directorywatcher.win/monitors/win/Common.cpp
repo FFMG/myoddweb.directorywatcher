@@ -28,33 +28,33 @@ namespace myoddweb ::directorywatcher :: win
     _data = nullptr;
   }
 
-  bool Common::Start()
+  bool Common::start()
   {
-    return CreateAndStartData();
+    return create_and_start_data();
   }
 
-  bool Common::CreateAndStartData()
+  bool Common::create_and_start_data()
   {
     // what we are looking for.
     // https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-findfirstchangenotificationa
     // https://docs.microsoft.com/en-gb/windows/desktop/api/WinBase/nf-winbase-readdirectorychangesw
-    const auto notifyFilter = GetNotifyFilter();
+    const auto notifyFilter = get_notify_filter();
 
     // create the data
     _data = new Data(
-      _parent.Id(),
-      _parent.Path(),
-      notifyFilter, 
-      _parent.Recursive(), 
+      _parent.id(),
+      _parent.path(),
+      notifyFilter,
+      _parent.recursive(),
       _bufferLength,
-      _parent.WorkerPool() 
+      _parent.worker_pool()
     );
 
     // then start monitoring
-    return _data->Start();
+    return _data->start();
   }
 
-  void Common::Update() const
+  void Common::update() const
   {
     // check if we have stoped
     if( nullptr == _data)
@@ -63,26 +63,26 @@ namespace myoddweb ::directorywatcher :: win
     }
 
     // get the data and then process it
-    const auto rawData = _data->Get();
+    const auto rawData = _data->get();
     for( const auto& raw : rawData )
     {
-      ProcessNotification(raw);
+      process_notification(raw);
       delete[] raw;
     }
 
     // ensure that the data is still valid
-    _data->CheckStillValid();
+    _data->check_still_valid();
   }
 
   /**
    * \brief complete all the data collection
    */
-  void Common::Stop()
+  void Common::stop()
   {
     if (nullptr != _data)
     {
       // if we are here... we can release the data
-      _data->Stop();
+      _data->stop();
     }
   }
 
@@ -91,7 +91,7 @@ namespace myoddweb ::directorywatcher :: win
    *        we own this buffer and we mus delete it at the end.
    * \param pBuffer
    */
-  void Common::ProcessNotification(const unsigned char* pBuffer) const
+  void Common::process_notification(const unsigned char* pBuffer) const
   {
     MYODDWEB_PROFILE_FUNCTION();
 
@@ -100,7 +100,7 @@ namespace myoddweb ::directorywatcher :: win
       // overflow
       if (nullptr == pBuffer)
       {
-        _parent.AddEventError(EventError::Overflow);
+        _parent.add_event_error(EventError::Overflow);
         return;
       }
 
@@ -117,15 +117,15 @@ namespace myoddweb ::directorywatcher :: win
         switch (pRecord->Action)
         {
         case FILE_ACTION_ADDED:
-          _parent.AddEvent(EventAction::Added, wFilename, IsFile(EventAction::Added, wFilename));
+          _parent.add_event(EventAction::Added, wFilename, is_file(EventAction::Added, wFilename));
           break;
 
         case FILE_ACTION_REMOVED:
-          _parent.AddEvent(EventAction::Removed, wFilename, IsFile(EventAction::Removed, wFilename));
+          _parent.add_event(EventAction::Removed, wFilename, is_file(EventAction::Removed, wFilename));
           break;
 
         case FILE_ACTION_MODIFIED:
-          _parent.AddEvent(EventAction::Touched, wFilename, IsFile(EventAction::Touched, wFilename));
+          _parent.add_event(EventAction::Touched, wFilename, is_file(EventAction::Touched, wFilename));
           break;
 
         case FILE_ACTION_RENAMED_OLD_NAME:
@@ -134,7 +134,7 @@ namespace myoddweb ::directorywatcher :: win
           {
             // if we already have a new filename then we can add the rename event
             // and then clear both filenames so we do not add again
-            _parent.AddRenameEvent(newFilename, oldFilename, IsFile(EventAction::Renamed, newFilename));
+            _parent.add_rename_event(newFilename, oldFilename, is_file(EventAction::Renamed, newFilename));
             newFilename = oldFilename = L"";
           }
           break;
@@ -145,13 +145,13 @@ namespace myoddweb ::directorywatcher :: win
           {
             // if we already have an old filename then we can add the rename event
             // and then clear both filenames so we do not add again
-            _parent.AddRenameEvent(newFilename, oldFilename, IsFile(EventAction::Renamed, newFilename));
+            _parent.add_rename_event(newFilename, oldFilename, is_file(EventAction::Renamed, newFilename));
             newFilename = oldFilename = L"";
           }
           break;
 
         default:
-          _parent.AddEvent(EventAction::Unknown, wFilename, IsFile(EventAction::Unknown, wFilename));
+          _parent.add_event(EventAction::Unknown, wFilename, is_file(EventAction::Unknown, wFilename));
           break;
         }
 
@@ -166,18 +166,18 @@ namespace myoddweb ::directorywatcher :: win
       // check for orphan renames...
       if (!oldFilename.empty())
       {
-        _parent.AddEvent(EventAction::Removed, oldFilename, IsFile(EventAction::Removed, oldFilename));
+        _parent.add_event(EventAction::Removed, oldFilename, is_file(EventAction::Removed, oldFilename));
       }
       if (!newFilename.empty())
       {
-        _parent.AddEvent(EventAction::Added, newFilename, IsFile(EventAction::Added, newFilename));
+        _parent.add_event(EventAction::Added, newFilename, is_file(EventAction::Added, newFilename));
       }
     }
     catch (...)
     {
       // regadless what happens
       // we have to free the memory.
-      _parent.AddEventError(EventError::Memory);
+      _parent.add_event_error(EventError::Memory);
     }
   }
 
@@ -187,12 +187,12 @@ namespace myoddweb ::directorywatcher :: win
    * \param path the file we are checking.
    * \return if the string given is a file or not.
    */
-  bool Common::IsFile(const EventAction action, const std::wstring& path) const
+  bool Common::is_file(const EventAction action, const std::wstring& path) const
   {
     try
     {
-      const auto fullPath = Io::Combine(_parent.Path(), path);
-      return Io::IsFile(fullPath);
+      const auto fullPath = Io::combine(_parent.path(), path);
+      return Io::is_file(fullPath);
     }
     catch (...)
     {

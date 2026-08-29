@@ -12,7 +12,7 @@
 
 #define MYODDWEB_YIELD()      \
 {                             \
-  Wait::YieldOnce();          \
+  Wait::yield_once();         \
 }
 
 #ifdef _DEBUG

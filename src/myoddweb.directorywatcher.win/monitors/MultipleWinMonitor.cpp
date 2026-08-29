@@ -24,28 +24,28 @@ namespace myoddweb::directorywatcher
     Monitor( id, workerPool, request)
   {
     // use a standar monitor for non recursive items.
-    if (!request.Recursive())
+    if (!request.recursive())
     {
       throw std::invalid_argument("The multiple monitor must be recursive.");
     }
 
     // try and create the list of monitors.
-    CreateMonitors( _request );
+    create_monitors( _request );
   }
 
   MultipleWinMonitor::~MultipleWinMonitor() noexcept
   {
     // this function does not throw.
-    Delete();
+    delete_all();
   }
 
   /**
    * \brief get the id of the parent, the owner of all the monitors.
    * \return the parent id.
    */
-  const long long& MultipleWinMonitor::ParentId() const
+  const long long& MultipleWinMonitor::parent_id() const
   {
-    return Id();
+    return id();
   }
 
   /**
@@ -53,10 +53,10 @@ namespace myoddweb::directorywatcher
    * \param events the events we will be filling
    * \return the number of events we found.
    */
-  void MultipleWinMonitor::OnGetEvents(std::vector<Event*>& events)
+  void MultipleWinMonitor::on_get_events(std::vector<event*>& events)
   {
     // now that we have the lock ... check if we have stopped.
-    if (!Is(State::started))
+    if (!is(State::started))
     {
       return;
     }
@@ -65,52 +65,52 @@ namespace myoddweb::directorywatcher
     MYODDWEB_LOCK(_lock);
 
     // get the children events
-    const auto childrentEvents = GetAndProcessChildEventsInLock();
+    const auto childrentEvents = get_and_process_child_events_in_lock();
 
     // then look for the parent events.
-    const auto parentEvents = GetAndProcessParentEventsInLock();
+    const auto parentEvents = get_and_process_parent_events_in_lock();
 
     //  add the parents and the children
     events.insert(events.end(), childrentEvents.begin(), childrentEvents.end());
     events.insert(events.end(), parentEvents.begin(), parentEvents.end());
 
     // then sort everything by inserted time
-    std::sort(events.begin(), events.end(), Collector::SortByTimeMillisecondsUtc);
+    std::sort(events.begin(), events.end(), Collector::sort_by_time_milliseconds_utc);
   }
 
 #pragma region Woker functions
-  void MultipleWinMonitor::OnWorkerStop()
+  void MultipleWinMonitor::on_worker_stop()
   {
-    Monitor::OnWorkerStop();
+    Monitor::on_worker_stop();
 
     // stop the parents
-    Stop(_nonRecursiveParents);
+    stop_all(_nonRecursiveParents);
 
     // and the children
-    Stop(_recursiveChildren);
+    stop_all(_recursiveChildren);
   }
 
   /**
    * \brief called when the worker is ready to start
    *        return false if you do not wish to start the worker.
    */
-  bool MultipleWinMonitor::OnWorkerStart()
+  bool MultipleWinMonitor::on_worker_start()
   {
     try
     {
-      Logger::Log( Id(), LogLevel::Information, L"Started Multiple monitor with '%d' recursive and non recursive monitors", _nonRecursiveParents.size() + _recursiveChildren.size());
+      Logger::log( id(), LogLevel::Information, L"Started Multiple monitor with '%d' recursive and non recursive monitors", _nonRecursiveParents.size() + _recursiveChildren.size());
 
       // start the parents
-      Start(_nonRecursiveParents);
+      start_all(_nonRecursiveParents);
 
       // and the children
-      Start(_recursiveChildren);
+      start_all(_recursiveChildren);
 
-      return Monitor::OnWorkerStart();
+      return Monitor::on_worker_start();
     }
     catch ( std::exception& e)
     {
-      Logger::Log(ParentId(), LogLevel::Error, L"Caught exception '%hs' trying to start the callback!", e.what());
+      Logger::log(parent_id(), LogLevel::Error, L"Caught exception '%hs' trying to start the callback!", e.what());
       return false;
     }
   }
@@ -122,18 +122,18 @@ namespace myoddweb::directorywatcher
    * \param fElapsedTimeMilliseconds the amount of time since the last time we made this call.
    * \return true if we want to continue or false if we want to end the thread
    */
-  bool MultipleWinMonitor::OnWorkerUpdate(float fElapsedTimeMilliseconds)
+  bool MultipleWinMonitor::on_worker_update(float fElapsedTimeMilliseconds)
   {
-    return Monitor::OnWorkerUpdate( fElapsedTimeMilliseconds );
+    return Monitor::on_worker_update( fElapsedTimeMilliseconds );
   }
 
   /**
    * \brief called when the worker has completed
    */
-  void MultipleWinMonitor::OnWorkerEnd()
+  void MultipleWinMonitor::on_worker_end()
   {
     MYODDWEB_PROFILE_FUNCTION();
-    Monitor::OnWorkerEnd();
+    Monitor::on_worker_end();
   }
 #pragma endregion
 
@@ -143,11 +143,11 @@ namespace myoddweb::directorywatcher
    * \param path the path we are looking for.
    * \return if we find it, the iterator of the child monitor.
    */
-  Monitor* MultipleWinMonitor::FindChildInLock(const std::wstring& path) const
+  Monitor* MultipleWinMonitor::find_child_in_lock(const std::wstring& path) const
   {
     for (const auto& child : _recursiveChildren )
     {
-      if (child->IsPath(path))
+      if (child->is_path(path))
       {
         return child;
       }
@@ -158,14 +158,14 @@ namespace myoddweb::directorywatcher
   /**
    * \brief remove all the folders that are no longer being monitored, (complete).
    */
-  void MultipleWinMonitor::RemoveCompletedFoldersInLock()
+  void MultipleWinMonitor::remove_completed_folders_in_lock()
   {
     for (auto it = _recursiveChildren.begin(); it != _recursiveChildren.end(); ++it)
     {
       // the monitor
       const auto monitor = (*it);
 
-      if (!monitor->Completed())
+      if (!monitor->completed())
       {
         continue;
       }
@@ -173,7 +173,7 @@ namespace myoddweb::directorywatcher
       // we are done with this monitor.
       // while we know it is complete, (from the previous check)
       // we are still going to tell the worker pool to do all the required cleanup
-      WorkerPool().StopAndWait(*monitor, -1 );
+      worker_pool().stop_and_wait(*monitor, -1 );
       delete monitor;
       _recursiveChildren.erase(it);
 
@@ -186,7 +186,7 @@ namespace myoddweb::directorywatcher
    * \brief a folder has been added, process it.
    * \param path the event being processed
    */
-  void MultipleWinMonitor::ProcessAddedFolderInLock(const wchar_t* path)
+  void MultipleWinMonitor::process_added_folder_in_lock(const wchar_t* path)
   {
     if (path == nullptr)
     {
@@ -194,24 +194,24 @@ namespace myoddweb::directorywatcher
     }
 
     // cleanup folders
-    RemoveCompletedFoldersInLock();
+    remove_completed_folders_in_lock();
 
     // a folder was added to this path
     // so we have to add this path as a child.
-    const auto id = WorkerId::NextId();
-    const auto request = Request(path, true, _request.EventsCallbackRateMilliseconds(), _request.StatsCallbackRateMilliseconds() );
-    const auto child = new WinMonitor(id, ParentId(), WorkerPool(), request );
-    _recursiveChildren.emplace_back(child); 
+    const auto id = WorkerId::next_id();
+    const auto request = Request(path, true, _request.events_callback_rate_milliseconds(), _request.stats_callback_rate_milliseconds() );
+    const auto child = new WinMonitor(id, parent_id(), worker_pool(), request );
+    _recursiveChildren.emplace_back(child);
 
     // add the child.
-    WorkerPool().Add( *child );
+    worker_pool().add( *child );
   }
 
   /**
    * \brief a folder has been deleted, process it.
    * \param path the event being processed
    */
-  void MultipleWinMonitor::ProcessDeletedFolderInLock(const wchar_t* path)
+  void MultipleWinMonitor::process_deleted_folder_in_lock(const wchar_t* path)
   {
     if (nullptr == path)
     {
@@ -219,19 +219,19 @@ namespace myoddweb::directorywatcher
     }
 
     // cleanup folders
-    RemoveCompletedFoldersInLock();
+    remove_completed_folders_in_lock();
 
     // the 'path' folder was removed.
     // so we have to remove it as well as all the child folders.
     // 'cause if it was removed ... then so were the others.
-    const auto monitor = FindChildInLock(path);
+    const auto monitor = find_child_in_lock(path);
     if (monitor == nullptr )
     {
       return;
     }
 
     // stop it...
-    monitor->Stop();
+    monitor->stop();
 
     // we do not remove it here.
     // we wait for it to stop in its own thread.
@@ -242,45 +242,45 @@ namespace myoddweb::directorywatcher
    * \param path the event being processed
    * \param oldPath the old name being renamed.
    */
-  void MultipleWinMonitor::ProcessRenamedFolderInLock(const wchar_t* path, const wchar_t* oldPath)
+  void MultipleWinMonitor::process_renamed_folder_in_lock(const wchar_t* path, const wchar_t* oldPath)
   {
     // add the new one
-    ProcessAddedFolderInLock(path);
+    process_added_folder_in_lock(path);
 
     // delete the old one
-    ProcessDeletedFolderInLock(oldPath);
+    process_deleted_folder_in_lock(oldPath);
   }
 
   /**
    * \brief process the parent events
    * \return events the events we will be adding to
    */
-  std::vector<Event*> MultipleWinMonitor::GetAndProcessParentEventsInLock()
+  std::vector<event*> MultipleWinMonitor::get_and_process_parent_events_in_lock()
   {
     // get the events
-    std::vector<Event*> events;
+    std::vector<event*> events;
 
     // the current events.
-    std::vector<Event*> levents;
+    std::vector<event*> levents;
     for ( const auto& monitor : _nonRecursiveParents )
     {
       try
       {
         // if we are stopped or stopping, there is nothing for us to do.
-        if (Is(State::stopped) || Is(State::stopping))
+        if (is(State::stopped) || is(State::stopping))
         {
           return events;
         }
 
         // get this directory events
-        if (0 == monitor->GetEvents(levents))
+        if (0 == monitor->get_events(levents))
         {
           continue;
         }
 
         // by definiton we know that the parents are non-recursive
 #ifdef _DEBUG
-        assert(!monitor->Recursive());
+        assert(!monitor->recursive());
 #endif
         // we now need to look for added/deleted paths.
         for ( const auto& levent : levents)
@@ -295,15 +295,15 @@ namespace myoddweb::directorywatcher
           switch (static_cast<EventAction>(levent->Action))
           {
           case EventAction::Added:
-            ProcessAddedFolderInLock(levent->Name);
+            process_added_folder_in_lock(levent->Name);
             break;
 
           case EventAction::Renamed:
-            ProcessRenamedFolderInLock(levent->Name, levent->OldName);
+            process_renamed_folder_in_lock(levent->Name, levent->OldName);
             break;
 
           case EventAction::Removed:
-            ProcessDeletedFolderInLock(levent->Name);
+            process_deleted_folder_in_lock(levent->Name);
             break;
 
           default:
@@ -320,7 +320,7 @@ namespace myoddweb::directorywatcher
       }
       catch (...)
       {
-        SaveCurrentException();
+        save_current_exception();
       }
     }
     return events;
@@ -330,13 +330,13 @@ namespace myoddweb::directorywatcher
    * \brief process the cildren events
    * \return events the events we will be adding to
    */
-  std::vector<Event*> MultipleWinMonitor::GetAndProcessChildEventsInLock() const
+  std::vector<event*> MultipleWinMonitor::get_and_process_child_events_in_lock() const
   {
     // all the events.
-    std::vector<Event*> events;
+    std::vector<event*> events;
     for ( const auto& monitor : _recursiveChildren)
     {
-      const auto& levents = GetEvents(monitor);
+      const auto& levents = get_events(monitor);
       if (levents.empty())
       {
         continue;
@@ -351,28 +351,28 @@ namespace myoddweb::directorywatcher
    * \param monitor the monitor we are getting the events for.
    * \rerturn events the events we will be adding to
    */
-  std::vector<Event*> MultipleWinMonitor::GetEvents(Monitor* monitor) const
+  std::vector<event*> MultipleWinMonitor::get_events(Monitor* monitor) const
   {
     try
     {
       // if we are stopped or stopping, there is nothing for us to do.
-      if (Is(State::stopped) || Is(State::stopping))
+      if (is(State::stopped) || is(State::stopping))
       {
         return {};
       }
 
       // the current events.
-      std::vector<Event*> events;
+      std::vector<event*> events;
 
       // get this directory events
-      monitor->GetEvents(events);
+      monitor->get_events(events);
 
       // add them to our list of events.
       return events;
     }
     catch (...)
     {
-      SaveCurrentException();
+      save_current_exception();
     }
     return {};
   }
@@ -385,12 +385,12 @@ namespace myoddweb::directorywatcher
     * \brief Stop all the monitors
     * \param container the vector of monitors.
     */
-  void MultipleWinMonitor::Stop(std::vector<Monitor*>& container) const
+  void MultipleWinMonitor::stop_all(std::vector<Monitor*>& container) const
   {
     MYODDWEB_PROFILE_FUNCTION();
     for ( const auto& worker : container)
     {
-      WorkerPool().StopWorker( *worker );
+      worker_pool().stop_worker( *worker );
     }
   }
 
@@ -398,35 +398,35 @@ namespace myoddweb::directorywatcher
    * \brief Start all the monitors
    * \param container the vector of monitors.
    */
-  void MultipleWinMonitor::Start(const std::vector<Monitor*>& container) const
+  void MultipleWinMonitor::start_all(const std::vector<Monitor*>& container) const
   {
     MYODDWEB_PROFILE_FUNCTION();
     for (const auto& worker : container)
     {
-      WorkerPool().Add(*worker);
+      worker_pool().add(*worker);
     }
   }
 
   /**
    * \brief Clear all the current data
    */
-  void MultipleWinMonitor::Delete() noexcept
+  void MultipleWinMonitor::delete_all() noexcept
   {
     // guard for multiple entry.
     MYODDWEB_LOCK(_lock);
 
     // delete the children
-    DeleteInLock(_recursiveChildren);
+    delete_in_lock(_recursiveChildren);
 
     // and the parents
-    DeleteInLock(_nonRecursiveParents);
+    delete_in_lock(_nonRecursiveParents);
   }
 
   /**
      * \brief Clear the container data
      * \param container the container we want to clear.
      */
-  void MultipleWinMonitor::DeleteInLock(std::vector<Monitor*>& container) const noexcept
+  void MultipleWinMonitor::delete_in_lock(std::vector<Monitor*>& container) const noexcept
   {
     try
     {
@@ -436,15 +436,15 @@ namespace myoddweb::directorywatcher
         // if this fires then you might have a problem here
         // because of the way the monitor destructor wait
         // we might deadlock depending when this function was called.
-        if(threads::WaitResult::complete != monitor->StopAndWait(MYODDWEB_WAITFOR_WORKER_COMPLETION) )
+        if(threads::WaitResult::complete != monitor->stop_and_wait(MYODDWEB_WAITFOR_WORKER_COMPLETION) )
         {
-          Logger::Log(monitor->Id(), LogLevel::Warning, L"Trying to dispose of monitor that is not yet complete! We might deadlock.");
+          Logger::log(monitor->id(), LogLevel::Warning, L"Trying to dispose of monitor that is not yet complete! We might deadlock.");
         }
 
         // we are done with this monitor we must now really wait for this worker.
         // to complete so we can remove it from our worker pool
         // this should have completed in the previous call.
-        WorkerPool().StopAndWait(*monitor, -1 );
+        worker_pool().stop_and_wait(*monitor, -1 );
         delete monitor;
       }
 
@@ -454,7 +454,7 @@ namespace myoddweb::directorywatcher
     catch (std::exception& e)
     {
       // log the error
-      Logger::Log(LogLevel::Error, L"Caught exception '%hs' in DeleteInLock", e.what());
+      Logger::log(LogLevel::Error, L"Caught exception '%hs' in delete_in_lock", e.what());
 
       // we might as well clear everything now.
       container.clear();
@@ -465,7 +465,7 @@ namespace myoddweb::directorywatcher
    * \brief The total number of items being monitored.
    * \return the total size.
    */
-  long MultipleWinMonitor::TotalSize() const
+  long MultipleWinMonitor::total_size() const
   {
     // the id does not really matter, but it will be
     // unique to our list of monitors.
@@ -476,44 +476,44 @@ namespace myoddweb::directorywatcher
    * \brief Create all the sub-requests for a prarent request.
    * \param parent the parent request itselft.
    */
-  void MultipleWinMonitor::CreateMonitors(const Request& parent )
+  void MultipleWinMonitor::create_monitors(const Request& parent )
   {
     // if we are stopping, then we cannot go further.
-    if (Is(State::stopping))
+    if (is(State::stopping))
     {
       return;
     }
 
     // get the next id.
-    const auto id = WorkerId::NextId();
+    const auto id = WorkerId::next_id();
 
 #ifdef _DEBUG
     // this whole class expects recursive requests
     // so we should not be able to have anything
     // other than recursive.
-    assert(parent.Recursive());
+    assert(parent.recursive());
 #endif
 
     // look for all the sub-paths
-    const auto subPaths = Io::GetAllSubFolders(parent.Path());
-    if (subPaths.empty() || TotalSize() > MYODDWEB_MAX_NUMBER_OF_SUBPATH)
+    const auto subPaths = Io::get_all_sub_folders(parent.path());
+    if (subPaths.empty() || total_size() > MYODDWEB_MAX_NUMBER_OF_SUBPATH)
     {
       // we will breach the depth
-      _recursiveChildren.push_back(new WinMonitor(id, ParentId(), WorkerPool(), parent ));
+      _recursiveChildren.push_back(new WinMonitor(id, parent_id(), worker_pool(), parent ));
       return;
     }
-    
+
     // adding all the sub-paths will not breach the limit.
     // so we can add the parent, but non-recuresive.
-    const auto request = Request(parent.Path(), false, parent.EventsCallbackRateMilliseconds(), parent.StatsCallbackRateMilliseconds());
-    _nonRecursiveParents.emplace_back(new WinMonitor(id, ParentId(), WorkerPool(), request ));
+    const auto request = Request(parent.path(), false, parent.events_callback_rate_milliseconds(), parent.stats_callback_rate_milliseconds());
+    _nonRecursiveParents.emplace_back(new WinMonitor(id, parent_id(), worker_pool(), request ));
 
     // now try and add all the subpath
     for (const auto& path : subPaths)
     {
       // add one more to the list.
-      const auto subRequest = Request(path.c_str(), true, parent.EventsCallbackRateMilliseconds(), parent.StatsCallbackRateMilliseconds());
-      CreateMonitors( subRequest );
+      const auto subRequest = Request(path.c_str(), true, parent.events_callback_rate_milliseconds(), parent.stats_callback_rate_milliseconds());
+      create_monitors( subRequest );
     }
   }
 #pragma endregion

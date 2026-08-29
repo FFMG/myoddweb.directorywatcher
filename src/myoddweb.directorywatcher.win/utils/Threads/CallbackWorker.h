@@ -27,7 +27,7 @@ namespace myoddweb:: directorywatcher:: threads
      * \brief called when the worker is ready to start
      *        return false if you do not wish to start the worker.
      */
-    bool OnWorkerStart() override { return true; }
+    bool on_worker_start() override { return true; }
 
     /**
      * \brief Give the worker a chance to do something in the loop
@@ -36,18 +36,18 @@ namespace myoddweb:: directorywatcher:: threads
      * \param fElapsedTimeMilliseconds the amount of time since the last time we made this call.
      * \return true if we want to continue or false if we want to end the thread
      */
-    bool OnWorkerUpdate(float fElapsedTimeMilliseconds) override;
+    bool on_worker_update(float fElapsedTimeMilliseconds) override;
 
     /**
      * \brief called when the worker has completed
      *        this is to allow our workers a chance to dispose of data
      */
-    void OnWorkerEnd() override;
+    void on_worker_end() override;
 
     /**
      * \brief called when stop is called.
      *        this is to allow our derived workers to stop
      */
-    void OnWorkerStop() override;
+    void on_worker_stop() override;
   };
 }

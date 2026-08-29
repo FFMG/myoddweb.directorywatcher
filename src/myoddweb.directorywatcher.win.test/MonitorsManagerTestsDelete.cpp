@@ -41,9 +41,9 @@ TEST(MonitorsManagerDelete, IfTimeoutIsZeroCallbackIsNeverCalled) {
 
     // monitor that folder.
     const auto request = ::Request(r);
-    const auto id = ::MonitorsManager::Start(request);
+    const auto id = ::MonitorsManager::start(request);
 
-    Wait::SpinUntil([] { return ::MonitorsManager::Ready(); }, TEST_TIMEOUT_WAIT);
+    Wait::spin_until([] { return ::MonitorsManager::ready(); }, TEST_TIMEOUT_WAIT);
 
     Add(id, helper);
 
@@ -54,12 +54,12 @@ TEST(MonitorsManagerDelete, IfTimeoutIsZeroCallbackIsNeverCalled) {
     ASSERT_TRUE(helper->RemoveFile(file));
 
     // wait a bit to give a chance for invalid files to be reported.
-    Wait::Delay(1000);
+    Wait::delay(1000);
 
     ASSERT_EQ(0, helper->Added(true));
     ASSERT_EQ(0, helper->Removed(true));
 
-    ASSERT_NO_THROW(::MonitorsManager::Stop(id));
+    ASSERT_NO_THROW(::MonitorsManager::stop(id));
 
     ASSERT_TRUE(Remove(id));
     delete helper;
@@ -96,14 +96,14 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFileIsDeleted) {
 
       // monitor that folder.
       const auto request = ::Request(r);
-      const auto id = ::MonitorsManager::Start(request);
+      const auto id = ::MonitorsManager::start(request);
 
       Add(id, helper);
 
       // wait for the pool to start
-      if (!Wait::SpinUntil([&]
+      if (!Wait::spin_until([&]
         {
-          return ::MonitorsManager::Ready();
+          return ::MonitorsManager::ready();
         }, TEST_TIMEOUT_WAIT))
       {
         GTEST_FATAL_FAILURE_("Unable to start pool");
@@ -122,7 +122,7 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFileIsDeleted) {
       }
 
       // give a little more than the timeout
-      if( !Wait::SpinUntil(
+      if( !Wait::spin_until(
         [&] {
           return number == helper->Removed(true);
         }, TEST_TIMEOUT_WAIT) )
@@ -132,7 +132,7 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFileIsDeleted) {
 
       ASSERT_EQ(number, helper->Removed(true));
 
-      ASSERT_NO_THROW(::MonitorsManager::Stop(id));
+      ASSERT_NO_THROW(::MonitorsManager::stop(id));
 
       ASSERT_TRUE(Remove(id));
       delete helper;
@@ -165,13 +165,13 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFolderIsDeleted) {
 
   // monitor that folder.
   const auto request = ::Request(r);
-  const auto id = ::MonitorsManager::Start(request);
+  const auto id = ::MonitorsManager::start(request);
   Add(id, helper);
 
   // wait for the pool to start
-  if (!Wait::SpinUntil([&]
+  if (!Wait::spin_until([&]
     {
-      return ::MonitorsManager::Ready();
+      return ::MonitorsManager::ready();
     }, TEST_TIMEOUT_WAIT))
   {
     GTEST_FATAL_FAILURE_("Unable to start pool");
@@ -191,14 +191,14 @@ TEST_P(ValidateNumberOfItemDeleted, CallbackWhenFolderIsDeleted) {
   }
 
   // give a little more than the timeout
-  Wait::SpinUntil(
+  Wait::spin_until(
     [&] {
       return number == helper->Removed(false);
     }, TEST_TIMEOUT_WAIT);
 
   ASSERT_EQ(number, helper->Removed(false));
 
-  ASSERT_NO_THROW(::MonitorsManager::Stop(id));
+  ASSERT_NO_THROW(::MonitorsManager::stop(id));
 
   ASSERT_TRUE(Remove(id));
   delete helper;

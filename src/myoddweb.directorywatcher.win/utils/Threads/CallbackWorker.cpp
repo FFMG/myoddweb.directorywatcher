@@ -14,7 +14,7 @@ namespace myoddweb::directorywatcher::threads
   {
   }
 
-  bool CallbackWorker::OnWorkerUpdate(float fElapsedTimeMilliseconds)
+  bool CallbackWorker::on_worker_update(float fElapsedTimeMilliseconds)
   {
     MYODDWEB_PROFILE_FUNCTION();
 
@@ -30,7 +30,7 @@ namespace myoddweb::directorywatcher::threads
    *        this is to allow our workers a chance to dispose of data
    *
    */
-  void CallbackWorker::OnWorkerEnd()
+  void CallbackWorker::on_worker_end()
   {
     MYODDWEB_PROFILE_FUNCTION();
   }
@@ -40,7 +40,7 @@ namespace myoddweb::directorywatcher::threads
    *        this is to allow our workers a chance to dispose of data
    *
    */
-  void CallbackWorker::OnWorkerStop()
+  void CallbackWorker::on_worker_stop()
   {
     MYODDWEB_PROFILE_FUNCTION();
   }

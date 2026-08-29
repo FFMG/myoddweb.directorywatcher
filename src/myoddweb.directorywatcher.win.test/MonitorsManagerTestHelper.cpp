@@ -76,7 +76,7 @@ MonitorsManagerTestHelper::MonitorsManagerTestHelper() :
   _tmpFolder = std::filesystem::temp_directory_path();
   
   auto subDirectory = L"test." + name + RandomString(4);
-  _folder = ::Io::Combine(_tmpFolder, subDirectory );
+  _folder = ::Io::combine(_tmpFolder, subDirectory );
 
   std::filesystem::create_directory(Folder());
 }
@@ -183,7 +183,7 @@ std::wstring MonitorsManagerTestHelper::AddFile()
 {
   for (;;)
   {
-    auto filename = ::Io::Combine(Folder(), RandomString(8));
+    auto filename = ::Io::combine(Folder(), RandomString(8));
     filename += L".txt";
 
     // does it exist already?
@@ -211,7 +211,7 @@ std::wstring MonitorsManagerTestHelper::AddFolder()
 {
   for (;;)
   {
-    auto folder = ::Io::Combine(Folder(), RandomString(6));
+    auto folder = ::Io::combine(Folder(), RandomString(6));
 
     if (std::filesystem::exists(folder))
     {

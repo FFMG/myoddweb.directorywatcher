@@ -64,7 +64,7 @@ namespace myoddweb:: directorywatcher
    * \brief get the id of the parent, the owner of all the monitors.
    * \return the parent id.
    */
-  const long long& WinMonitor::ParentId() const
+  const long long& WinMonitor::parent_id() const
   {
     return _parentId;
   }
@@ -73,24 +73,24 @@ namespace myoddweb:: directorywatcher
    * \brief process the collected events add/remove them.
    * \param events the collected events.
    */
-  void WinMonitor::OnGetEvents(std::vector<Event*>& events)
+  void WinMonitor::on_get_events(std::vector<event*>& events)
   {
     //  nothing to do
   }
 
-  void WinMonitor::OnWorkerStop()
+  void WinMonitor::on_worker_stop()
   {
     // we can now stop us.
-    Monitor::OnWorkerStop();
+    Monitor::on_worker_stop();
 
     // stop the files and directory
     if (_directories != nullptr)
     {
-      _directories->Stop();
+      _directories->stop();
     }
     if (_files != nullptr)
     {
-      _files->Stop();
+      _files->stop();
     }
   }
 
@@ -98,7 +98,7 @@ namespace myoddweb:: directorywatcher
    * \brief called when the worker is ready to start
    *        return false if you do not wish to start the worker.
    */
-  bool WinMonitor::OnWorkerStart()
+  bool WinMonitor::on_worker_start()
   {
     MYODDWEB_PROFILE_FUNCTION();
     try
@@ -107,7 +107,7 @@ namespace myoddweb:: directorywatcher
       _directories = new win::Directories(*this, _bufferLength);
 
       // add the files as well as the directories to the worker pool.
-      if( !_directories->Start() )
+      if( !_directories->start() )
       {
         delete _directories;
         _directories = nullptr;
@@ -117,9 +117,9 @@ namespace myoddweb:: directorywatcher
       // and then the files monitor.
       _files = new win::Files(*this, _bufferLength);
 
-      if( !_files->Start() )
+      if( !_files->start() )
       {
-        _directories->Stop();
+        _directories->stop();
         delete _directories;
         _directories = nullptr;
 
@@ -128,13 +128,13 @@ namespace myoddweb:: directorywatcher
 
         return false;
       }
-    
+
       // all done
-      return Monitor::OnWorkerStart();
+      return Monitor::on_worker_start();
     }
     catch( ... )
     {
-      SaveCurrentException();
+      save_current_exception();
       return false;
     }
   }
@@ -146,35 +146,35 @@ namespace myoddweb:: directorywatcher
    * \param fElapsedTimeMilliseconds the amount of time since the last time we made this call.
    * \return true if we want to continue or false if we want to end the thread
    */
-  bool WinMonitor::OnWorkerUpdate( const float fElapsedTimeMilliseconds )
+  bool WinMonitor::on_worker_update( const float fElapsedTimeMilliseconds )
   {
     MYODDWEB_PROFILE_FUNCTION();
     try
     {
-      if (!MustStop())
+      if (!must_stop())
       {
-        _directories->Update();
-        _files->Update();
+        _directories->update();
+        _files->update();
       }
     }
     catch( ... )
     {
-      SaveCurrentException();
+      save_current_exception();
     }
-    return Monitor::OnWorkerUpdate(fElapsedTimeMilliseconds);
+    return Monitor::on_worker_update(fElapsedTimeMilliseconds);
   }
 
   /**
    * \brief called when the worker has completed
    */
-  void WinMonitor::OnWorkerEnd()
+  void WinMonitor::on_worker_end()
   {
     MYODDWEB_PROFILE_FUNCTION();
-    Monitor::OnWorkerEnd();
+    Monitor::on_worker_end();
 
     delete _directories;
     _directories = nullptr;
-          
+
     delete _files;
     _files = nullptr;
   }

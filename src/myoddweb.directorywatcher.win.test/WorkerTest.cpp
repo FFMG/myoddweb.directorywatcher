@@ -7,19 +7,19 @@ TEST(Worker, DefaultValues)
 {
   {
     const auto worker = TestWorker(1);
-    EXPECT_FALSE(worker.Started() );
+    EXPECT_FALSE(worker.started() );
   }
   {
     const auto worker = TestWorker(1);
-    EXPECT_FALSE(worker.Completed());
+    EXPECT_FALSE(worker.completed());
   }
 }
 
 TEST(Worker, StopWhatNeverStarted) {
   {
     auto worker = TestWorker(1);
-    worker.Stop();
-    EXPECT_TRUE(worker.Completed());
+    worker.stop();
+    EXPECT_TRUE(worker.completed());
   }
 }
 
@@ -27,15 +27,15 @@ TEST(Worker, StopAfterWeHaveStopped)
 {
   auto worker = TestWorker(1);
 
-  EXPECT_FALSE(worker.Started());
-  EXPECT_FALSE(worker.Completed());
+  EXPECT_FALSE(worker.started());
+  EXPECT_FALSE(worker.completed());
   
-  worker.Execute();
+  worker.execute();
 
   // if we are here, we are done.
-  EXPECT_TRUE(worker.Completed());
+  EXPECT_TRUE(worker.completed());
   
   // and again
-  worker.Stop();
-  EXPECT_TRUE(worker.Completed());
+  worker.stop();
+  EXPECT_TRUE(worker.completed());
 }

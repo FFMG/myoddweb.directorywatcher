@@ -37,15 +37,15 @@ TEST_P(RecursiveAndNonRecursive, TwoWatchersOnTheSameFolder) {
 
   const auto request1 = ::Request(r);
   const auto request2 = ::Request(r);
-  const auto id1 = ::MonitorsManager::Start(request1);
-  const auto id2 = ::MonitorsManager::Start(request2);
+  const auto id1 = ::MonitorsManager::start(request1);
+  const auto id2 = ::MonitorsManager::start(request2);
   Add(id1, helper);
   Add(id2, helper);
 
   // wait for the thread to get started
-  if (!Wait::SpinUntil([&]
+  if (!Wait::spin_until([&]
     {
-      return ::MonitorsManager::Ready();
+      return ::MonitorsManager::ready();
     }, TEST_TIMEOUT_WAIT))
   {
     GTEST_FATAL_FAILURE_("Unable to start pool");
@@ -55,12 +55,12 @@ TEST_P(RecursiveAndNonRecursive, TwoWatchersOnTheSameFolder) {
   for (auto i = 0; i < number; ++i)
   {
     auto _ = helper->AddFile();
-    Wait::Delay(1);
+    Wait::delay(1);
   }
 
   // wait a little
   // give a little more than the timeout
-  Wait::SpinUntil(
+  Wait::spin_until(
     [&] {
       return 2*number == helper->Added(true);
     }, 2 * number * TEST_TIMEOUT);
@@ -68,8 +68,8 @@ TEST_P(RecursiveAndNonRecursive, TwoWatchersOnTheSameFolder) {
   // we should have our file.
   EXPECT_EQ(2*number, helper->Added(true));
 
-  EXPECT_NO_THROW(::MonitorsManager::Stop(id1));
-  EXPECT_NO_THROW(::MonitorsManager::Stop(id2));
+  EXPECT_NO_THROW(::MonitorsManager::stop(id1));
+  EXPECT_NO_THROW(::MonitorsManager::stop(id2));
 
   delete helper;
 }
@@ -103,17 +103,17 @@ TEST_P(RecursiveAndNonRecursive, TwoWatchersOnTwoSeparateFolders) {
 
   const auto request1 = ::Request(r1);
   const auto request2 = ::Request(r2);
-  const auto id1 = ::MonitorsManager::Start(request1);
-  const auto id2 = ::MonitorsManager::Start(request2);
+  const auto id1 = ::MonitorsManager::start(request1);
+  const auto id2 = ::MonitorsManager::start(request2);
 
   Add(id1, helper1);
   Add(id2, helper2);
 
   // wait for the thread to get started
     // wait for the pool to start
-  if (!Wait::SpinUntil([&]
+  if (!Wait::spin_until([&]
     {
-      return ::MonitorsManager::Ready();
+      return ::MonitorsManager::ready();
     }, TEST_TIMEOUT_WAIT))
   {
     GTEST_FATAL_FAILURE_("Unable to start pool");
@@ -129,7 +129,7 @@ TEST_P(RecursiveAndNonRecursive, TwoWatchersOnTwoSeparateFolders) {
 
   // wait a little
   // give a little more than the timeout
-  Wait::SpinUntil(
+  Wait::spin_until(
     [&] {
       return number == helper1->Added(true) && number == helper2->Added(true);
     }, 2*number*TEST_TIMEOUT);
@@ -138,8 +138,8 @@ TEST_P(RecursiveAndNonRecursive, TwoWatchersOnTwoSeparateFolders) {
   EXPECT_EQ(number, helper1->Added(true));
   EXPECT_EQ(number, helper2->Added(true));
 
-  EXPECT_NO_THROW(::MonitorsManager::Stop(id1));
-  EXPECT_NO_THROW(::MonitorsManager::Stop(id2));
+  EXPECT_NO_THROW(::MonitorsManager::stop(id1));
+  EXPECT_NO_THROW(::MonitorsManager::stop(id2));
 
   delete helper1;
   delete helper2;
@@ -163,13 +163,13 @@ TEST(MonitorsManagerEdgeCases, StartAndStopAlmostInstantly) {
 
     // monitor that folder.
     const auto request = ::Request(r);
-    const auto id = ::MonitorsManager::Start(request);
+    const auto id = ::MonitorsManager::start(request);
     Add(id, &helper);
 
     // wait for the thread to get started
-    if (!Wait::SpinUntil([&]
+    if (!Wait::spin_until([&]
       {
-        return ::MonitorsManager::Ready();
+        return ::MonitorsManager::ready();
       }, TEST_TIMEOUT_WAIT))
     {
       GTEST_FATAL_FAILURE_("Unable to start pool");
@@ -185,7 +185,7 @@ TEST(MonitorsManagerEdgeCases, StartAndStopAlmostInstantly) {
     // no waiting for anything
 
     // stop
-    ASSERT_NO_THROW(::MonitorsManager::Stop(id));
+    ASSERT_NO_THROW(::MonitorsManager::stop(id));
 
     // all done
     ASSERT_TRUE(Remove(id));
@@ -213,13 +213,13 @@ TEST(MonitorsManagerEdgeCases, StartAndStopAlmostInstantlyWithSubFolders) {
 
   // monitor that folder.
   const auto request = ::Request(r);
-  const auto id = ::MonitorsManager::Start(request);
+  const auto id = ::MonitorsManager::start(request);
   Add(id, &helper);
 
   // wait for the thread to get started
-  if (!Wait::SpinUntil([&]
+  if (!Wait::spin_until([&]
     {
-      return ::MonitorsManager::Ready();
+      return ::MonitorsManager::ready();
     }, TEST_TIMEOUT_WAIT))
   {
     GTEST_FATAL_FAILURE_("Unable to start pool");
@@ -234,7 +234,7 @@ TEST(MonitorsManagerEdgeCases, StartAndStopAlmostInstantlyWithSubFolders) {
   // no waiting for anything
 
   // stop
-  ASSERT_NO_THROW(::MonitorsManager::Stop(id));
+  ASSERT_NO_THROW(::MonitorsManager::stop(id));
 
   // all done
   ASSERT_TRUE(Remove(id));
