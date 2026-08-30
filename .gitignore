@@ -9,6 +9,12 @@
 *.userosscache
 *.sln.docstates
 
+# AI
+.agents/
+.claude/
+.gemini/
+plans/
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
