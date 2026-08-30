@@ -222,11 +222,11 @@ namespace myoddweb::directorywatcher::threads
       switch (_state)
       {
       case State::unknown:
-      case State::starting:
       case State::complete:
         // we have not really started
         return WaitResult::complete;
 
+      case State::starting:
       case State::started:
       case State::stopping:
       case State::stopped:
