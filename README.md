@@ -1,6 +1,19 @@
-# Myoddweb.Directorywatcher [![Release](https://img.shields.io/badge/release-v0.2.0-brightgreen.png?style=flat)](https://github.com/FFMG/myoddweb.directorywatcher/)
+# Myoddweb.DirectoryWatcher
 
-A fast and reliable File/Directory watcher for c#/c++ to replace the current .NET `FileSystemWatcher` class.
+[![NuGet](https://img.shields.io/nuget/v/MyOddWeb.DirectoryWatcher.svg)](https://www.nuget.org/packages/MyOddWeb.DirectoryWatcher/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+A high-performance, asynchronous file and directory watcher for .NET and C++. 
+
+Built to overcome the architectural limitations of the standard .NET `FileSystemWatcher`, it leverages native C++ event handling to ensure speed, accuracy, and rock-solid reliability across large volumes.
+
+### Why Myoddweb.DirectoryWatcher?
+
+* **Non-Blocking & Asynchronous:** Event delegates are non-blocking—slow consumers will never stall file system monitoring.
+* **No Buffer Overflow Crashes:** Handles massive bursts of file activity without dropping events or crashing.
+* **Duplicate Event Suppression:** Intelligently deduplicates rapid intermediate events into clean notifications.
+* **Volume-Wide Monitoring:** Reliably track created, deleted, touched, and renamed files/directories across multiple paths and entire drives.
+* **Built-in Metrics & Logging:** Track throughput and event rates in real-time with comprehensive status statistics.
 
 ## What it does
 
