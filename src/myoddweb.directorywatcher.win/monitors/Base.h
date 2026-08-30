@@ -12,7 +12,7 @@
 
 #define MYODDWEB_YIELD()      \
 {                             \
-  Wait::YieldOnce();          \
+  Wait::yield_once();         \
 }
 
 #ifdef _DEBUG
@@ -81,6 +81,12 @@ namespace myoddweb:: directorywatcher
    *        This value should not be too small otherwise have dangling threads.
    */
   constexpr auto MYODDWEB_WAITFOR_WORKER_COMPLETION = 5000;
+
+  /**
+   * \brief how long we are prepared to wait for a queued WorkerPool::add()
+   *        task to finish registering its worker, (see wait_for_all_add_futures_pending()).
+   */
+  constexpr auto MYODDWEB_WAITFOR_ADD_FUTURES_PENDING = 5000;
 
   /**
    * \brief the type of worker we are using

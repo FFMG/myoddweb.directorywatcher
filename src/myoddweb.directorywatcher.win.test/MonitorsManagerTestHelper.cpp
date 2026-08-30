@@ -76,7 +76,7 @@ MonitorsManagerTestHelper::MonitorsManagerTestHelper() :
   _tmpFolder = std::filesystem::temp_directory_path();
   
   auto subDirectory = L"test." + name + RandomString(4);
-  _folder = ::Io::Combine(_tmpFolder, subDirectory );
+  _folder = ::Io::combine(_tmpFolder, subDirectory );
 
   std::filesystem::create_directory(Folder());
 }
@@ -95,7 +95,9 @@ MonitorsManagerTestHelper::~MonitorsManagerTestHelper()
   {
     try
     {
-      std::filesystem::remove(folder);
+      // remove_all, (not remove): AddPopulatedFolder() leaves folders that
+      // still contain files, which plain remove() cannot delete.
+      std::filesystem::remove_all(folder);
     }
     catch (...)
     {
@@ -183,7 +185,7 @@ std::wstring MonitorsManagerTestHelper::AddFile()
 {
   for (;;)
   {
-    auto filename = ::Io::Combine(Folder(), RandomString(8));
+    auto filename = ::Io::combine(Folder(), RandomString(8));
     filename += L".txt";
 
     // does it exist already?
@@ -211,7 +213,7 @@ std::wstring MonitorsManagerTestHelper::AddFolder()
 {
   for (;;)
   {
-    auto folder = ::Io::Combine(Folder(), RandomString(6));
+    auto folder = ::Io::combine(Folder(), RandomString(6));
 
     if (std::filesystem::exists(folder))
     {
@@ -228,6 +230,111 @@ std::wstring MonitorsManagerTestHelper::AddFolder()
     _folders.push_back(folder);
     return folder;
   }
+}
+
+std::wstring MonitorsManagerTestHelper::AddPopulatedFolder(const int numberOfFiles)
+{
+  // build the folder *outside* the watched tree, (but on the same volume,
+  // so the rename below is an atomic move), and populate it fully before
+  // it ever appears inside the watched folder -- the closest analog to a
+  // shell "copy an entire folder in one paste", reproducing the race in
+  // https://github.com/FFMG/myoddweb.directorywatcher/issues/20
+  std::wstring staging;
+  for (;;)
+  {
+    staging = ::Io::combine(_tmpFolder, L"staging_" + RandomString(6));
+    if (std::filesystem::exists(staging))
+    {
+      continue;
+    }
+    std::filesystem::create_directory(staging);
+    if (!std::filesystem::exists(staging))
+    {
+      continue;
+    }
+    break;
+  }
+
+  for (auto i = 0; i < numberOfFiles; ++i)
+  {
+    auto filename = ::Io::combine(staging, RandomString(8));
+    filename += L".txt";
+    std::ofstream outfile(filename.c_str());
+    outfile << L"my text here!" << std::endl;
+    outfile.close();
+  }
+
+  std::wstring destination;
+  for (;;)
+  {
+    destination = ::Io::combine(Folder(), RandomString(6));
+    if (std::filesystem::exists(destination))
+    {
+      continue;
+    }
+    break;
+  }
+
+  // a real recursive COPY, (not a rename/move): a rename is a metadata-only
+  // operation, so NTFS never generates per-file notifications for content
+  // that already existed inside a moved directory -- only for the moved
+  // directory itself. A shell "paste" performs individual file creates for
+  // each item, which is what actually reproduces the race in issue #20.
+  std::filesystem::copy(staging, destination, std::filesystem::copy_options::recursive);
+  std::filesystem::remove_all(staging);
+
+  _folders.push_back(destination);
+  return destination;
+}
+
+std::wstring MonitorsManagerTestHelper::AddPopulatedFolderWithSubFolders(const int numberOfSubFolders, const int numberOfFilesPerFolder)
+{
+  std::wstring staging;
+  for (;;)
+  {
+    staging = ::Io::combine(_tmpFolder, L"staging_" + RandomString(6));
+    if (std::filesystem::exists(staging))
+    {
+      continue;
+    }
+    std::filesystem::create_directory(staging);
+    if (!std::filesystem::exists(staging))
+    {
+      continue;
+    }
+    break;
+  }
+
+  for (auto s = 0; s < numberOfSubFolders; ++s)
+  {
+    const auto sub = ::Io::combine(staging, L"sub_" + std::to_wstring(s));
+    std::filesystem::create_directory(sub);
+    for (auto i = 0; i < numberOfFilesPerFolder; ++i)
+    {
+      auto filename = ::Io::combine(sub, RandomString(8));
+      filename += L".txt";
+      std::ofstream outfile(filename.c_str());
+      outfile << L"my text here!" << std::endl;
+      outfile.close();
+    }
+  }
+
+  std::wstring destination;
+  for (;;)
+  {
+    destination = ::Io::combine(Folder(), RandomString(6));
+    if (std::filesystem::exists(destination))
+    {
+      continue;
+    }
+    break;
+  }
+
+  std::filesystem::copy(staging, destination, std::filesystem::copy_options::recursive);
+  std::filesystem::remove_all(staging);
+
+  _folders.push_back(destination);
+  return destination;
 }
 
 std::wstring MonitorsManagerTestHelper::RandomString(const size_t length)

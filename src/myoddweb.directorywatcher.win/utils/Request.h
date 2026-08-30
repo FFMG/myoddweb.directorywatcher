@@ -41,7 +41,7 @@ namespace myoddweb:: directorywatcher
     /// </summary>
     /// <param name="request"></param>
     /// <returns></returns>
-    explicit Request(const sRequest& request);
+    explicit Request(const raw_request& request);
 
     /**
      * \brief create from a parent request, (no callback)
@@ -63,17 +63,72 @@ namespace myoddweb:: directorywatcher
     Request(Request&&) = delete;
     const Request&& operator=(Request&& ) = delete;
 
+    /**
+     * \brief return if we are using events or not
+     */
+    [[nodiscard]]
+    bool is_using_events() const;
+
+    /**
+     * \brief return if we are using statistics or not
+     */
+    [[nodiscard]]
+    bool is_using_statistics() const;
+
+    /**
+     * \brief access the path
+     */
+    [[nodiscard]]
+    const wchar_t* path() const;
+
+    /**
+     * \breif check if the request is recursive or not
+     */
+    [[nodiscard]]
+    bool recursive() const;
+
+    /**
+     * \brief the events callback
+     * \return the event callback
+     */
+    [[nodiscard]]
+    const EventCallback& callback_events() const;
+
+    /**
+     * \brief the stats of the monitor
+     */
+    [[nodiscard]]
+    const StatisticsCallback& callback_statistics() const;
+
+    /**
+     * \brief the logger callback function
+     */
+    [[nodiscard]]
+    const LoggerCallback& callback_logger() const;
+
+    /**
+     * \brief how often we want to check for callbacks
+     */
+    [[nodiscard]]
+    long long events_callback_rate_milliseconds() const;
+
+    /**
+     * \brief how often we want to check for stats
+     */
+    [[nodiscard]]
+    long long stats_callback_rate_milliseconds() const;
+
   private :
     /**
      * \brief clean up all the values and free memory
      */
-    void Dispose();
+    void dispose();
 
     /**
      * \brief assin a request
      * \param request the request value we want to copy
      */
-    void Assign(const Request& request);
+    void assign(const Request& request);
 
     /**
      * \brief Assign the values directly
@@ -85,65 +140,7 @@ namespace myoddweb:: directorywatcher
      * \param eventsCallbackRateMs how fast we want messages published
      * \param statisticsCallbackRateMs how fast we want statistics to be published.
      */
-    void Assign(const wchar_t* path, bool recursive, const LoggerCallback& loggerCallback, const EventCallback& eventsCallback, const StatisticsCallback& statisticsCallback, long long eventsCallbackRateMs, long long statisticsCallbackRateMs);
-
-  public:
-    /**
-     * \brief return if we are using events or not
-     */
-    [[nodiscard]]
-    bool IsUsingEvents() const;
-
-    /**
-     * \brief return if we are using statistics or not
-     */
-    [[nodiscard]]
-    bool IsUsingStatistics() const;
-
-    /**
-     * \brief access the path
-     */
-    [[nodiscard]]
-    const wchar_t* Path() const;
-
-    /**
-     * \breif check if the request is recursive or not
-     */
-    [[nodiscard]]
-    bool Recursive() const;
-
-    /**
-     * \brief the events callback
-     * \return the event callback
-     */
-    [[nodiscard]]
-    const EventCallback& CallbackEvents() const;
-
-    /**
-     * \brief the stats of the monitor 
-     */
-    [[nodiscard]]
-    const StatisticsCallback& CallbackStatistics() const;
-
-    /**
-     * \brief the logger callback function
-     */
-    [[nodiscard]]
-    const LoggerCallback& CallbackLogger() const;
-
-    /**
-     * \brief how often we want to check for callbacks
-     */
-    [[nodiscard]]
-    long long EventsCallbackRateMilliseconds() const;
-
-    /**
-     * \brief how often we want to check for stats
-     */
-    [[nodiscard]]
-    long long StatsCallbackRateMilliseconds() const;
-
-  private:
+    void assign(const wchar_t* path, bool recursive, const LoggerCallback& loggerCallback, const EventCallback& eventsCallback, const StatisticsCallback& statisticsCallback, long long eventsCallbackRateMs, long long statisticsCallbackRateMs);
 
     /**
      * \brief the path of the folder we will be monitoring
@@ -177,7 +174,7 @@ namespace myoddweb:: directorywatcher
 
     /**
      * \brief the logger callback
-     */ 
+     */
     LoggerCallback _loggerCallback;
   };
 }

@@ -18,13 +18,13 @@ namespace myoddweb:: directorywatcher:: win
    * Get the notification filter.
    * \return the notification filter
    */
-  unsigned long Files::GetNotifyFilter() const
+  unsigned long Files::get_notify_filter() const
   {
     // what we are looking for.
     // https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-findfirstchangenotificationa
     // https://docs.microsoft.com/en-gb/windows/desktop/api/WinBase/nf-winbase-readdirectorychangesw
     return
-      // Any file name change in the watched directory or subtree causes a change 
+      // Any file name change in the watched directory or subtree causes a change
       // notification wait operation to return.
       // Changes include renaming, creating, or deleting a file name.
       FILE_NOTIFY_CHANGE_FILE_NAME |
@@ -33,27 +33,27 @@ namespace myoddweb:: directorywatcher:: win
       // a change notification wait operation to return.
       FILE_NOTIFY_CHANGE_ATTRIBUTES |
 
-      // Any file-size change in the watched directory or subtree causes a change 
-      // notification wait operation to return. 
-      // The operating system detects a change in file size only when the file is written to the disk. 
+      // Any file-size change in the watched directory or subtree causes a change
+      // notification wait operation to return.
+      // The operating system detects a change in file size only when the file is written to the disk.
       // For operating systems that use extensive caching, detection occurs only when the cache is sufficiently flushed.
       FILE_NOTIFY_CHANGE_SIZE |
 
-      // Any change to the last write-time of files in the watched directory or subtree causes a change 
+      // Any change to the last write-time of files in the watched directory or subtree causes a change
       // notification wait operation to return. The operating system detects a change
-      // to the last write-time only when the file is written to the disk. 
+      // to the last write-time only when the file is written to the disk.
       // For operating systems that use extensive caching, detection occurs only when the cache is sufficiently flushed.
       FILE_NOTIFY_CHANGE_LAST_WRITE |
 
-      // Any change to the last access time of files in the watched directory or subtree causes a 
+      // Any change to the last access time of files in the watched directory or subtree causes a
       // change notification wait operation to return.
       FILE_NOTIFY_CHANGE_LAST_ACCESS |
 
-      // Any change to the creation time of files in the watched directory or subtree 
+      // Any change to the creation time of files in the watched directory or subtree
       // causes a change notification wait operation to return.
       FILE_NOTIFY_CHANGE_CREATION |
 
-      // Any security-descriptor change in the watched directory or subtree causes 
+      // Any security-descriptor change in the watched directory or subtree causes
       // a change notification wait operation to return.
       FILE_NOTIFY_CHANGE_SECURITY;
   }
@@ -64,7 +64,7 @@ namespace myoddweb:: directorywatcher:: win
    * \param path the file we are checking.
    * \return if the string given is a file or not.
    */
-  bool Files::IsFile(const EventAction action, const std::wstring& path) const
+  bool Files::is_file(const EventAction action, const std::wstring& path) const
   {
     try
     {
@@ -87,7 +87,7 @@ namespace myoddweb:: directorywatcher:: win
         return true;
 
       default:
-        return Common::IsFile(action, path);
+        return Common::is_file(action, path);
       }
     }
     catch (...)

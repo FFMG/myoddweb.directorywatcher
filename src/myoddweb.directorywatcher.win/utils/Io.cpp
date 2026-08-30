@@ -9,12 +9,45 @@ namespace myoddweb
 {
   namespace directorywatcher
   {
+    namespace
+    {
+      std::wstring tidy_folder_name(const std::wstring& lhs)
+      {
+#ifdef WIN32
+        const auto sep = L'\\';
+        const std::wstring ssep = L"\\\\";
+        const auto badsep = L'/';
+#else
+        const auto sep = L'/';
+        const std::wstring ssep = L"//";
+        const auto badsep = L'\\';
+#endif
+        auto llhs = lhs;
+        auto found = llhs.find_first_of(badsep);
+        while (found != std::string::npos)
+        {
+          llhs[found] = sep;
+          found = llhs.find_first_of(badsep);
+        }
+
+        const auto r = std::wstring() + sep;
+        found = llhs.find( ssep, 0 );
+        while (found != std::string::npos)
+        {
+          llhs.replace( found, 2, r );
+          found = llhs.find(ssep, 0);
+        }
+
+        return llhs;
+      }
+    }
+
     /**
      * \brief check if a given string is a file or a directory.
      * \param path the file we are checking.
      * \return if the string given is a file or not.
      */
-    bool Io::IsFile(const std::wstring& path)
+    bool Io::is_file(const std::wstring& path)
     {
       try
       {
@@ -53,7 +86,7 @@ namespace myoddweb
      * \param rhs the right hand side of the path
      * \return the combined path
      */
-    std::wstring Io::Combine(const std::wstring& lhs, const std::wstring& rhs)
+    std::wstring Io::combine(const std::wstring& lhs, const std::wstring& rhs)
     {
       // sanity check, if the lhs.length is 0, then we just return the rhs.
       const auto sl = lhs.length();
@@ -85,7 +118,7 @@ namespace myoddweb
           return lhs + sep;
         }
         // just go back one step
-        return Combine(lhs.substr(0, sl - 1), rhs);
+        return combine(lhs.substr(0, sl - 1), rhs);
       }
 
       // we know that they are not both empty
@@ -99,7 +132,7 @@ namespace myoddweb
           return sep + rhs;
         }
         // just move forward one step
-        return Combine(lhs, rhs.substr(1, sr - 1));
+        return combine(lhs, rhs.substr(1, sr - 1));
       }
 
       // if we are here, they both not zero
@@ -116,17 +149,17 @@ namespace myoddweb
       // lhs does not have a back slash but the rhs does
       if (l != sep1 && l != sep2 && (r == sep1 || r == sep2))
       {
-        return Combine(lhs, rhs.substr(1, sr - 1));
+        return combine(lhs, rhs.substr(1, sr - 1));
       }
 
       // rhs does not have a back slash but the lhs does
       if ((l == sep1 || l == sep2) && r != sep1 && r != sep2)
       {
-        return Combine(lhs.substr(0, sl - 1), rhs);
+        return combine(lhs.substr(0, sl - 1), rhs);
       }
 
       // if we are here, they both seem to have a backslash
-      return Combine(lhs.substr(0, sl - 1), rhs.substr(1, sr - 1));
+      return combine(lhs.substr(0, sl - 1), rhs.substr(1, sr - 1));
     }
 
     /**
@@ -134,7 +167,7 @@ namespace myoddweb
      * \param directory the lhs folder.
      * \return if it is a dot directory or not
      */
-    bool Io::IsDot(const std::wstring& directory)
+    bool Io::is_dot(const std::wstring& directory)
     {
       return directory == L"." || directory == L"..";
     }
@@ -144,10 +177,10 @@ namespace myoddweb
      * \param folder the starting folder.
      * \return all the sub-folders, (if any).
      */
-    std::vector<std::wstring> Io::GetAllSubFolders(const std::wstring& folder)
+    std::vector<std::wstring> Io::get_all_sub_folders(const std::wstring& folder)
     {
       std::vector<std::wstring> subFolders;
-      auto searchPath = Io::Combine(folder, L"/*.*");
+      auto searchPath = Io::combine(folder, L"/*.*");
       WIN32_FIND_DATA fd = {};
       const auto hFind = ::FindFirstFile(searchPath.c_str(), &fd);
       if (hFind != INVALID_HANDLE_VALUE)
@@ -158,9 +191,9 @@ namespace myoddweb
           // , delete '!' read other 2 default folder . and ..
           if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
           {
-            if (!Io::IsDot(fd.cFileName))
+            if (!Io::is_dot(fd.cFileName))
             {
-              subFolders.emplace_back(Io::Combine(folder, fd.cFileName));
+              subFolders.emplace_back(Io::combine(folder, fd.cFileName));
             }
           }
         } while (::FindNextFile(hFind, &fd));
@@ -169,36 +202,67 @@ namespace myoddweb
       return subFolders;
     }
 
-    std::wstring TidyFolderName(const std::wstring& lhs)
+    namespace
     {
-#ifdef WIN32
-      const auto sep = L'\\';
-      const std::wstring ssep = L"\\\\";
-      const auto badsep = L'/';
-#else
-      const auto sep = L'/';
-      const std::wstring ssep = L"//";
-      const auto badsep = L'\\';
-#endif
-      auto llhs = lhs;
-      auto found = llhs.find_first_of(badsep);
-      while (found != std::string::npos)
+      /**
+       * \brief worker for get_all_files_and_folders: enumerates 'root/relative'
+       *        and appends {relative-child, isFile} pairs, recursing into
+       *        sub-folders when 'recursive' is true.
+       */
+      void get_all_files_and_folders_worker(
+        const std::wstring& root,
+        const std::wstring& relative,
+        const bool recursive,
+        std::vector<std::pair<std::wstring, bool>>& items)
       {
-        llhs[found] = sep;
-        found = llhs.find_first_of(badsep);
-      }
+        const auto folder = relative.empty() ? root : Io::combine(root, relative);
+        const auto searchPath = Io::combine(folder, L"*.*");
+        WIN32_FIND_DATA fd = {};
+        const auto hFind = ::FindFirstFile(searchPath.c_str(), &fd);
+        if (hFind == INVALID_HANDLE_VALUE)
+        {
+          return;
+        }
+        do
+        {
+          if (Io::is_dot(fd.cFileName))
+          {
+            continue;
+          }
 
-      const auto r = std::wstring() + sep;
-      found = llhs.find( ssep, 0 );
-      while (found != std::string::npos)
-      {
-        llhs.replace( found, 2, r );
-        found = llhs.find(ssep, 0);
+          const auto relativeChild = relative.empty() ? std::wstring(fd.cFileName) : Io::combine(relative, fd.cFileName);
+          if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
+          {
+            items.emplace_back(relativeChild, false);
+            if (recursive)
+            {
+              get_all_files_and_folders_worker(root, relativeChild, recursive, items);
+            }
+          }
+          else
+          {
+            items.emplace_back(relativeChild, true);
+          }
+        } while (::FindNextFile(hFind, &fd));
+        ::FindClose(hFind);
       }
-
-      return llhs;
     }
 
+    /**
+     * \brief Recursively enumerate everything currently inside a folder, so
+     *        pre-existing content can be reported as synthetic "Added"
+     *        events when a watch starts, (see issue #20).
+     * \param folder the folder to enumerate, (absolute path). The folder
+     *        itself is not included, only its contents.
+     * \param recursive if true, sub-folders are traversed too.
+     * \return pairs of {path relative to 'folder', isFile}.
+     */
+    std::vector<std::pair<std::wstring, bool>> Io::get_all_files_and_folders(const std::wstring& folder, const bool recursive)
+    {
+      std::vector<std::pair<std::wstring, bool>> items;
+      get_all_files_and_folders_worker(folder, L"", recursive, items);
+      return items;
+    }
 
     /**
      * \brief Compare if 2 folders are the same
@@ -206,15 +270,15 @@ namespace myoddweb
      * \param rhs the second folder
      * \return if both folders are similar.
      */
-    bool Io::AreSameFolders(const std::wstring& lhs, const std::wstring& rhs)
+    bool Io::are_same_folders(const std::wstring& lhs, const std::wstring& rhs)
     {
 #ifdef WIN32
       const auto sep = L'\\';
 #else
       const auto sep = L'/';
 #endif
-      auto llhs = TidyFolderName(lhs);
-      auto rrhs = TidyFolderName(rhs);
+      auto llhs = tidy_folder_name(lhs);
+      auto rrhs = tidy_folder_name(rhs);
 
       auto sl = llhs.length();
       while( sl > 0 && (llhs[sl-1] == sep ))

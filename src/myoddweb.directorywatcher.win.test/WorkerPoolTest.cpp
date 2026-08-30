@@ -12,11 +12,11 @@ using myoddweb::directorywatcher::Wait;
 TEST(WorkPool, DefaultValues) {
   {
     const auto pool = ::WorkerPool( 10 );
-    EXPECT_FALSE( pool.Started());
+    EXPECT_FALSE( pool.started());
   }
   {
     const auto pool = ::WorkerPool(10);
-    EXPECT_FALSE(pool.Completed());
+    EXPECT_FALSE(pool.completed());
   }
 }
 
@@ -25,24 +25,24 @@ TEST(WorkPool, StartIsCalledExactlyOnceWithQuickWorkers) {
     auto worker1 = TestWorker(1);
     auto worker2 = TestWorker(1);
     auto pool = ::WorkerPool(10);
-    pool.Add(worker1);
+    pool.add(worker1);
 
     // give worker 1 a chance to complete
-    auto wr = worker1.WaitFor(100);
+    auto wr = worker1.wait_for(100);
     EXPECT_EQ(myoddweb::directorywatcher::threads::WaitResult::complete, wr);
 
     // add another one
-    pool.Add(worker2);
+    pool.add(worker2);
 
     // then wait a bit for everything
-    pool.WaitFor(100);
+    pool.wait_for(100);
 
     // surely start is called.
     EXPECT_EQ(1, worker1._startCalled);
     EXPECT_EQ(1, worker2._startCalled);
 
     // clean up
-    wr = pool.StopAndWait(100 );
+    wr = pool.stop_and_wait(100 );
     EXPECT_EQ(myoddweb::directorywatcher::threads::WaitResult::complete, wr);
   }
 }
@@ -51,31 +51,31 @@ TEST(WorkPool, StartIsCalledExactlyOnceEvenForCompleteWorker) {
   {
     // create a worker and run it.
     auto worker1 = TestWorker(1);
-    worker1.Execute();
-    EXPECT_TRUE(worker1.Completed());
+    worker1.execute();
+    EXPECT_TRUE(worker1.completed());
 
     auto worker2 = TestWorker(1);
     auto pool = ::WorkerPool(10);
 
     // add it to the pool
-    pool.Add(worker1);
+    pool.add(worker1);
 
     // give worker 1 a chance to complete
-    auto wr = worker1.WaitFor(100);
+    auto wr = worker1.wait_for(100);
     EXPECT_EQ(myoddweb::directorywatcher::threads::WaitResult::complete, wr);
 
     // add another one
-    pool.Add(worker2);
+    pool.add(worker2);
 
     // then wait a bit for everything
-    pool.WaitFor(100);
+    pool.wait_for(100);
 
     // start should only be called once regaldess.
     EXPECT_EQ(1, worker1._startCalled);
     EXPECT_EQ(1, worker2._startCalled);
 
     // clean up
-    wr = pool.StopAndWait(100);
+    wr = pool.stop_and_wait(100);
     EXPECT_EQ(myoddweb::directorywatcher::threads::WaitResult::complete, wr);
   }
 }
@@ -85,20 +85,20 @@ TEST(WorkPool, EndIsCalledExactlyOnce) {
     auto worker1 = TestWorker(1);
     auto worker2 = TestWorker(1);
     auto pool = ::WorkerPool(10);
-    pool.Add(worker1);
-    pool.Add(worker2);
+    pool.add(worker1);
+    pool.add(worker2);
 
   // wait for the pool to start
-  if (!Wait::SpinUntil([&]
+  if (!Wait::spin_until([&]
     {
-      return pool.Started();
+      return pool.started();
     }, TEST_TIMEOUT_WAIT))
   {
     GTEST_FATAL_FAILURE_("Unable to start pool");
   }
 
     // even if we wait a tiny bit, we still start
-    pool.WaitFor(100);
+    pool.wait_for(100);
 
     // surely start is called.
     EXPECT_EQ(1, worker1._endCalled);
@@ -120,13 +120,13 @@ TEST(WorkPool, NumberOfTimesUpdatesIsCalled) {
       auto worker2 = TestWorker(numTimesWorker2);
 
       auto pool = ::WorkerPool(pollTime);
-      pool.Add(worker1);
-      pool.Add(worker2);
+      pool.add(worker1);
+      pool.add(worker2);
 
       // wait for the pool to start
-      if (!Wait::SpinUntil([&pool]
+      if (!Wait::spin_until([&pool]
         {
-          return pool.Started();
+          return pool.started();
         }, TEST_TIMEOUT_WAIT))
       {
         GTEST_FATAL_FAILURE_("Unable to start pool");
@@ -134,7 +134,7 @@ TEST(WorkPool, NumberOfTimesUpdatesIsCalled) {
 
       // we are not going to stop it
       // we just waiting for it to complete.
-      const auto status = pool.WaitFor( (numTimesWorker1 + numTimesWorker2) * TEST_TIMEOUT_WAIT );
+      const auto status = pool.wait_for( (numTimesWorker1 + numTimesWorker2) * TEST_TIMEOUT_WAIT );
 
       EXPECT_EQ(myoddweb::directorywatcher::threads::WaitResult::complete, status);
       EXPECT_EQ(worker1._maxUpdate, worker1._updateCalled);
@@ -153,12 +153,12 @@ TEST(WorkPool, WaitingForAWorkerThatIsNotOurs)
   auto worker2 = TestWorker(1);
 
   auto pool = ::WorkerPool(10);
-  pool.Add(worker1);
+  pool.add(worker1);
 
   // wait for the pool to start
-  if (!Wait::SpinUntil([&]
+  if (!Wait::spin_until([&]
     {
-      return pool.Started();
+      return pool.started();
     }, TEST_TIMEOUT))
   {
     GTEST_FATAL_FAILURE_("Unable to start pool");
@@ -166,7 +166,7 @@ TEST(WorkPool, WaitingForAWorkerThatIsNotOurs)
 
   // we are not going to stop it
   // we just waiting for it to complete.
-  const auto status = pool.WaitFor(worker2, 10000);
+  const auto status = pool.wait_for(worker2, 10000);
 
   EXPECT_EQ(myoddweb::directorywatcher::threads::WaitResult::complete, status);
   EXPECT_EQ(1, worker1._startCalled);
@@ -181,7 +181,7 @@ TEST(WorkPool, WaitUntiWhenNoWorker ) {
 
     // we are not going to stop it
     // we just waiting for it to complete.
-    const auto status = pool.WaitFor(10000);
+    const auto status = pool.wait_for(10000);
 
     // still complete.
     EXPECT_EQ(myoddweb::directorywatcher::threads::WaitResult::complete, status);
@@ -193,11 +193,11 @@ TEST(WorkPool, WaitForASingleItem) {
     auto worker1 = TestWorker(3);
 
     auto pool = ::WorkerPool(10);
-    pool.Add(worker1);
+    pool.add(worker1);
 
     // we are not going to stop it
     // we just waiting for it to complete.
-    const auto status = pool.WaitFor( worker1, 10000);
+    const auto status = pool.wait_for( worker1, 10000);
 
     EXPECT_EQ(myoddweb::directorywatcher::threads::WaitResult::complete, status);
     EXPECT_EQ(worker1._maxUpdate, worker1._updateCalled);
@@ -213,24 +213,24 @@ TEST(WorkPool, StopAndWait) {
       auto worker2 = TestWorker(6000);
 
       auto pool = ::WorkerPool(10);
-      pool.Add(worker1);
-      pool.Add(worker2);
+      pool.add(worker1);
+      pool.add(worker2);
 
       // wait for the pool to start
-      if (!Wait::SpinUntil([&]
+      if (!Wait::spin_until([&]
         {
-          return pool.Started();
+          return pool.started();
         }, TEST_TIMEOUT_WAIT))
       {
         GTEST_FATAL_FAILURE_("Unable to start pool");
       }
 
       // run a little
-      pool.WaitFor(100);
+      pool.wait_for(100);
 
       // we are not going to stop it
       // we just waiting for it to complete.
-      const auto status = pool.StopAndWait(1000);
+      const auto status = pool.stop_and_wait(1000);
 
       EXPECT_EQ(myoddweb::directorywatcher::threads::WaitResult::complete, status);
       EXPECT_TRUE(worker1._updateCalled <= worker1._maxUpdate);
@@ -257,27 +257,27 @@ TEST(WorkPool, CheckHasStartedWithShortRunningWorker)
 
     // create a pool
     auto pool = ::WorkerPool(10);
-    pool.Add(worker);
+    pool.add(worker);
 
     // the act of adding a worker could start it.
-    // so we cannot test "pool.Started()"
+    // so we cannot test "pool.started()"
 
     // make sure that start by itself.
-    if (!Wait::SpinUntil([&]
+    if (!Wait::spin_until([&]
       {
-        return pool.Started() || pool.Completed();
+        return pool.started() || pool.completed();
       }, TEST_TIMEOUT_WAIT))
     {
       GTEST_FATAL_FAILURE_("Unable to start pool");
     }
 
     // then wait for it to end.
-    if (myoddweb::directorywatcher::threads::WaitResult::complete != pool.StopAndWait(2*TEST_TIMEOUT_WAIT))
+    if (myoddweb::directorywatcher::threads::WaitResult::complete != pool.stop_and_wait(2*TEST_TIMEOUT_WAIT))
     {
       GTEST_FATAL_FAILURE_("Unable to complete pool");
     }
 
-    EXPECT_FALSE(pool.Started());
+    EXPECT_FALSE(pool.started());
   }
 }
 
@@ -290,30 +290,30 @@ TEST(WorkPool, CheckHasStartedWithLongRunningWorker)
 
     // create a pool
     auto pool = ::WorkerPool(10);
-    pool.Add(worker);
+    pool.add(worker);
 
     // the act of adding a worker could start it.
-    // so we cannot test "pool.Started()"
+    // so we cannot test "pool.started()"
 
     // make sure that start by itself.
-    if (!Wait::SpinUntil([&]
+    if (!Wait::spin_until([&]
       {
-        return pool.Started() || pool.Completed();
+        return pool.started() || pool.completed();
       }, TEST_TIMEOUT_WAIT))
     {
       GTEST_FATAL_FAILURE_("Unable to start pool");
     }
 
     // wait a bit
-    pool.WaitFor(TEST_TIMEOUT_WAIT);
+    pool.wait_for(TEST_TIMEOUT_WAIT);
 
     // then wait for it to end.
-    if (myoddweb::directorywatcher::threads::WaitResult::complete != pool.StopAndWait( TEST_TIMEOUT_WAIT))
+    if (myoddweb::directorywatcher::threads::WaitResult::complete != pool.stop_and_wait( TEST_TIMEOUT_WAIT))
     {
       GTEST_FATAL_FAILURE_("Unable to complete pool");
     }
 
-    EXPECT_FALSE(pool.Started());
+    EXPECT_FALSE(pool.started());
   }
 }
 
@@ -329,12 +329,12 @@ TEST(WorkPool, SingleCallbackWorkerEndsAsExpected)
     });
 
   // then wait for our simple worker to complete.
-  pool.Add(cbWorker);
+  pool.add(cbWorker);
 
   // wait a little
-  if (!Wait::SpinUntil([&]
+  if (!Wait::spin_until([&]
     {
-      return pool.Started();
+      return pool.started();
     }, TEST_TIMEOUT))
   {
     GTEST_FATAL_FAILURE_("Unable to start pool");
@@ -342,21 +342,21 @@ TEST(WorkPool, SingleCallbackWorkerEndsAsExpected)
 
   // then wait a couple of milliseconds
   // it should be really quick.
-  const auto wr = pool.WaitFor(cbWorker, TEST_TIMEOUT_WAIT);
+  const auto wr = pool.wait_for(cbWorker, TEST_TIMEOUT_WAIT);
 
   EXPECT_EQ(myoddweb::directorywatcher::threads::WaitResult::complete, wr);
   EXPECT_TRUE(wasCalled);
 
   // but we must be complete as well
-  EXPECT_TRUE(cbWorker.Completed());
+  EXPECT_TRUE(cbWorker.completed());
 
   // just complete the test.
-  if (myoddweb::directorywatcher::threads::WaitResult::complete != pool.StopAndWait(TEST_TIMEOUT))
+  if (myoddweb::directorywatcher::threads::WaitResult::complete != pool.stop_and_wait(TEST_TIMEOUT))
   {
     GTEST_FATAL_FAILURE_("Unable to complete pool");
   }
 
-  EXPECT_FALSE(pool.Started());
+  EXPECT_FALSE(pool.started());
 }
 
 TEST(WorkPool, SingleCallbackWorkerWithOtherWorkerEndsAsExpected)
@@ -365,12 +365,12 @@ TEST(WorkPool, SingleCallbackWorkerWithOtherWorkerEndsAsExpected)
   auto worker = TestWorker(5000);
 
   auto pool = ::WorkerPool(10);
-  pool.Add(worker);
+  pool.add(worker);
 
   // wait a little
-  if (!Wait::SpinUntil([&]
+  if (!Wait::spin_until([&]
     {
-      return pool.Started();
+      return pool.started();
     }, TEST_TIMEOUT))
   {
     GTEST_FATAL_FAILURE_("Unable to start pool");
@@ -384,25 +384,25 @@ TEST(WorkPool, SingleCallbackWorkerWithOtherWorkerEndsAsExpected)
     });
 
   // then wait for our simple worker to complete.
-  pool.Add(cbWorker);
+  pool.add(cbWorker);
 
   // then wait a couple of milliseconds
   // it should be really quick.
-  const auto wr = pool.WaitFor(cbWorker, TEST_TIMEOUT_WAIT);
+  const auto wr = pool.wait_for(cbWorker, TEST_TIMEOUT_WAIT);
 
   EXPECT_EQ(myoddweb::directorywatcher::threads::WaitResult::complete, wr);
   EXPECT_TRUE(wasCalled);
 
   // but we must be complete as well
-  EXPECT_TRUE(cbWorker.Completed());
+  EXPECT_TRUE(cbWorker.completed());
 
   // just complete the test.
-  if (myoddweb::directorywatcher::threads::WaitResult::complete != pool.StopAndWait(TEST_TIMEOUT))
+  if (myoddweb::directorywatcher::threads::WaitResult::complete != pool.stop_and_wait(TEST_TIMEOUT))
   {
     GTEST_FATAL_FAILURE_("Unable to complete pool");
   }
 
-  EXPECT_FALSE(pool.Started());
+  EXPECT_FALSE(pool.started());
 }
 
 TEST(WorkPool, BlockingMultipleCallbackWorkerEndsAsExpected)
@@ -412,12 +412,12 @@ TEST(WorkPool, BlockingMultipleCallbackWorkerEndsAsExpected)
 
   // add it to our work pool
   auto pool = ::WorkerPool(10);
-  pool.Add(worker);
+  pool.add(worker);
 
   // wait for it to start
-  if (!Wait::SpinUntil([&]
+  if (!Wait::spin_until([&]
     {
-      return pool.Started();
+      return pool.started();
     }, TEST_TIMEOUT_WAIT))
   {
     GTEST_FATAL_FAILURE_("Unable to start pool");
@@ -438,7 +438,7 @@ TEST(WorkPool, BlockingMultipleCallbackWorkerEndsAsExpected)
     {
       for (;;)
       {
-        if (cbWorkerLong->MustStop())
+        if (cbWorkerLong->must_stop())
         {
           return;
         }
@@ -447,27 +447,27 @@ TEST(WorkPool, BlockingMultipleCallbackWorkerEndsAsExpected)
     });
 
   // then wait for our simple worker to complete.
-  pool.Add(cbWorker);
-  pool.Add(*cbWorkerLong);
+  pool.add(cbWorker);
+  pool.add(*cbWorkerLong);
 
   // then wait for the quick worker to complete it should finish quick
   // if it blocks it means there is an error on our other, blocking function
   // that is preventing _this_ function from even running.
-  const auto wr = pool.WaitFor(cbWorker, TEST_TIMEOUT_WAIT );
+  const auto wr = pool.wait_for(cbWorker, TEST_TIMEOUT_WAIT );
 
   EXPECT_EQ(myoddweb::directorywatcher::threads::WaitResult::complete, wr);
   EXPECT_TRUE( wasCalled);
 
   // but we must be complete as well
-  EXPECT_TRUE(cbWorker.Completed() );
+  EXPECT_TRUE(cbWorker.completed() );
 
   // not call stop so the other one should also complete
-  if (myoddweb::directorywatcher::threads::WaitResult::complete != pool.StopAndWait(TEST_TIMEOUT))
+  if (myoddweb::directorywatcher::threads::WaitResult::complete != pool.stop_and_wait(TEST_TIMEOUT))
   {
     GTEST_FATAL_FAILURE_("Unable to complete pool");
   }
 
-  EXPECT_FALSE(pool.Started());
+  EXPECT_FALSE(pool.started());
   delete cbWorkerLong;
 }
 
@@ -476,12 +476,12 @@ TEST(WorkPool, StoppingWorkpoolWhenAFunctionNeverEnds)
   // a worker that will work for 50*10 ms = ~500ms
   auto worker = TestWorker(50);
   auto pool = ::WorkerPool(10);
-  pool.Add(worker);
+  pool.add(worker);
 
   // wait for the pool to start
-  if (!Wait::SpinUntil([&]
+  if (!Wait::spin_until([&]
     {
-      return pool.Started();
+      return pool.started();
     }, TEST_TIMEOUT))
   {
     GTEST_FATAL_FAILURE_("Unable to start pool");
@@ -505,26 +505,26 @@ TEST(WorkPool, StoppingWorkpoolWhenAFunctionNeverEnds)
     });
 
   // then wait for our simple worker to complete.
-  pool.Add(cbWorkerLong);
+  pool.add(cbWorkerLong);
 
   // for it ... it will never end
-  const auto wr = pool.WaitFor(cbWorkerLong, TEST_TIMEOUT);
+  const auto wr = pool.wait_for(cbWorkerLong, TEST_TIMEOUT);
   EXPECT_EQ(myoddweb::directorywatcher::threads::WaitResult::timeout, wr);
 
   // try and complete the test, it will not happen as we have that one long running function
-  if (myoddweb::directorywatcher::threads::WaitResult::complete == pool.StopAndWait(TEST_TIMEOUT))
+  if (myoddweb::directorywatcher::threads::WaitResult::complete == pool.stop_and_wait(TEST_TIMEOUT))
   {
     GTEST_FATAL_FAILURE_("The pool should have timed out ... ");
   }
 
   // the pool cannot be complete as we have that one long running function.
-  EXPECT_FALSE(pool.Completed());
+  EXPECT_FALSE(pool.completed());
 
   // kill the function now.
   stop = true;
-  pool.WaitFor(cbWorkerLong, TEST_TIMEOUT_WAIT );
+  pool.wait_for(cbWorkerLong, TEST_TIMEOUT_WAIT );
 
-  if (myoddweb::directorywatcher::threads::WaitResult::complete != pool.StopAndWait(TEST_TIMEOUT))
+  if (myoddweb::directorywatcher::threads::WaitResult::complete != pool.stop_and_wait(TEST_TIMEOUT))
   {
     GTEST_FATAL_FAILURE_("The pool should have completed now ... ");
   }
@@ -543,17 +543,17 @@ TEST(WorkPool, AddAWorkerWithinAWorkerOnUpdate) {
         wasCalled = true;
 
         // durring the update, add the other worker
-        pool.Add(worker1);
+        pool.add(worker1);
       });
 
     // then get things started
     // and add the callback worker.
-    pool.Add(cbWorker );
+    pool.add(cbWorker );
 
     // wait for the pool to start
-    if (!Wait::SpinUntil([&]
+    if (!Wait::spin_until([&]
       {
-        return pool.Started();
+        return pool.started();
       }, TEST_TIMEOUT_WAIT))
     {
       GTEST_FATAL_FAILURE_("Unable to start pool");
@@ -561,7 +561,7 @@ TEST(WorkPool, AddAWorkerWithinAWorkerOnUpdate) {
 
     // then wait for a couple of callback
     // every 10ms * 5 callback = ~50ms so 500 should be more than enough,
-    const auto wr = pool.WaitFor(500);
+    const auto wr = pool.wait_for(500);
 
     // surely start is called.
     EXPECT_TRUE(wasCalled);
@@ -583,12 +583,12 @@ TEST(WorkPool, AddAWorkerWithinAWorkerOnStartDurringPoolStart) {
     // then get things started
     // and add the callback worker.
     // because it is added now it will be called at the sametime as the pool "OnStart"
-    pool.Add(cbWorker1);
+    pool.add(cbWorker1);
 
     // wait for the pool to start
-    if (!Wait::SpinUntil([&]
+    if (!Wait::spin_until([&]
       {
-        return pool.Started();
+        return pool.started();
       }, TEST_TIMEOUT_WAIT))
     {
       GTEST_FATAL_FAILURE_("Unable to start pool");
@@ -596,7 +596,7 @@ TEST(WorkPool, AddAWorkerWithinAWorkerOnStartDurringPoolStart) {
 
     // then wait for a couple of callback
     // every 10ms * 100 callback = ~1000ms
-    const auto wr = pool.WaitFor(10000);
+    const auto wr = pool.wait_for(10000);
 
     // surely start is called.
     EXPECT_EQ(1, worker1._endCalled);
@@ -620,12 +620,12 @@ TEST(WorkPool, AddAWorkerWithinAWorkerOnStartDurringPoolUpdate) {
     auto cbWorker = TestWorkerOnStart(pool, worker2, 100);
 
     // add the long running worker and make sure that everything started
-    pool.Add(worker1);
+    pool.add(worker1);
 
     // wait for the pool to start
-    if (!Wait::SpinUntil([&]
+    if (!Wait::spin_until([&]
       {
-        return pool.Started();
+        return pool.started();
       }, TEST_TIMEOUT_WAIT))
     {
       GTEST_FATAL_FAILURE_("Unable to start pool");
@@ -633,11 +633,11 @@ TEST(WorkPool, AddAWorkerWithinAWorkerOnStartDurringPoolUpdate) {
 
     // now that we started, add the worker that adds a worker
     // because it is added now it will be called at the sametime as the pool "OnUpdate"
-    pool.Add(cbWorker);
+    pool.add(cbWorker);
 
     // then wait for a couple of callback
     // every 10ms * 10000 callback = ~100000ms
-    const auto wr = pool.WaitFor(10000 + TEST_TIMEOUT_WAIT);
+    const auto wr = pool.wait_for(10000 + TEST_TIMEOUT_WAIT);
 
     // surely start is called.
     EXPECT_EQ(1, worker1._endCalled);

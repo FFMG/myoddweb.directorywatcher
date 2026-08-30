@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices.ComTypes;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace myoddweb.directorywatcher.test
 {
@@ -13,7 +14,7 @@ namespace myoddweb.directorywatcher.test
     public void EventRateIsSaved( long rate )
     {
       var rates = new Rates(rate , 200);
-      Assert.AreEqual( rate, rates.EventsMilliseconds );
+      ClassicAssert.AreEqual( rate, rates.EventsMilliseconds );
     }
 
     [TestCase(1000)]
@@ -22,14 +23,14 @@ namespace myoddweb.directorywatcher.test
     public void StatisticsRateIsSaved(long rate)
     {
       var rates = new Rates(1000, rate);
-      Assert.AreEqual(rate, rates.StatisticsMilliseconds);
+      ClassicAssert.AreEqual(rate, rates.StatisticsMilliseconds);
     }
 
     [Test]
     public void StatisticsDefaultIsZero()
     {
       var rates = new Rates(1000);
-      Assert.AreEqual(0, rates.StatisticsMilliseconds);
+      ClassicAssert.AreEqual(0, rates.StatisticsMilliseconds);
     }
 
     [Test]

@@ -32,10 +32,10 @@
     <ClCompile Include="..\myoddweb.directorywatcher.win\monitors\win\Files.cpp">
       <Filter>win\monitors\win</Filter>
     </ClCompile>
-    <ClCompile Include="..\packages\googletest-release-1.10.0\googletest\src\gtest_main.cc">
+    <ClCompile Include="..\packages\googletest-release-1.18.0\googletest\src\gtest_main.cc">
       <Filter>win\google\src</Filter>
     </ClCompile>
-    <ClCompile Include="..\packages\googletest-release-1.10.0\googletest\src\gtest-all.cc">
+    <ClCompile Include="..\packages\googletest-release-1.18.0\googletest\src\gtest-all.cc">
       <Filter>win\google\src</Filter>
     </ClCompile>
     <ClCompile Include="..\myoddweb.directorywatcher.win\utils\MonitorsManager.cpp">
@@ -78,6 +78,7 @@
     <ClCompile Include="..\myoddweb.directorywatcher.win\utils\Threads\WorkerId.cpp">
       <Filter>win\utils\Threads</Filter>
     </ClCompile>
+    <ClCompile Include="LoggerTests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

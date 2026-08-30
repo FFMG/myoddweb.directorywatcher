@@ -2,14 +2,19 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #pragma once
+#include <mutex>
 #include <Windows.h>
 #include "../Monitor.h"
 #include "../../utils/Threads/CallbackWorker.h"
+
+class DataTestHelper;
 
 namespace myoddweb:: directorywatcher:: win
 {
   class Data final
   {
+    friend class ::DataTestHelper;
+
     typedef struct _OVERLAPPED_DATA : _OVERLAPPED {
       Data* pdata;
     } OVERLAPPED_DATA, * LPOVERLAPPED_DATA;
@@ -37,24 +42,24 @@ namespace myoddweb:: directorywatcher:: win
      * \brief start monitoring the given folder.
      * \return if we managed to start the monitoring or not.
      */
-    bool Start();
+    bool start();
 
     /**
      * \brief Clear all the data
      */
-    void Stop();
+    void stop();
 
     /// <summary>
     /// Get the buffer data
     /// </summary>
     /// <returns></returns>
-    std::vector<unsigned char*> Get();
+    std::vector<unsigned char*> get();
 
     /**
      * \brief check that he current handle is still valie
      *        if not then we will close the connection.
      */
-    void CheckStillValid();
+    void check_still_valid();
   private:
     /// <summary>
     /// The worker we will be using to stop collecting data
@@ -72,6 +77,12 @@ namespace myoddweb:: directorywatcher:: win
     MYODDWEB_MUTEX _dataLock;
 
     /// <summary>
+    /// Guards _hDirectory/_overlapped/_buffer/_colectionState against the
+    /// owning monitor's own update
+    /// </summary>
+    std::recursive_mutex _handleLock;
+
+    /// <summary>
     /// The buffer of data
     /// </summary>
     std::vector<unsigned char*> _data;
@@ -79,49 +90,88 @@ namespace myoddweb:: directorywatcher:: win
     threads::WorkerPool& _workerPool;
 
     /// <summary>
+    /// Task used to finish clearing up the handle/buffer/data once stop is requested.
+    /// </summary>
+    struct stop_worker_task final
+    {
+    public:
+      explicit stop_worker_task(Data& data) :
+        _data(data)
+      {
+      }
+
+      void operator()() const
+      {
+        // hold _handleLock for cleanup
+        std::lock_guard<std::recursive_mutex> lock(_data._handleLock);
+
+        // close the handle
+        if (_data.clear_handle())
+        {
+          // the buffer.
+          _data.clear_buffer();
+
+          // clear the overlapped structure.
+          _data.clear_overlapped();
+        }
+        else
+        {
+          // we could not confirm that the pending read was cancelled
+          _data.log_leaked_buffer_on_unconfirmed_stop();
+        }
+
+        // clear the buffer of data that might be left
+        _data.clear_data();
+      }
+
+    private:
+      Data& _data;
+    };
+
+    /// <summary>
     /// Stop monitoring data and wait for the work to complete.
     /// </summary>
-    void StopAndWait();
+    void stop_and_wait();
 
     /// <summary>
     /// Stop monitoring folder while we have the stop lock.
     /// </summary>
-    void StopInLock();
+    void stop_in_lock();
 
     /**
      * \brief Check if the handle is valid
      */
     [[nodiscard]]
-    bool IsValidHandle() const;
+    bool is_valid_handle() const;
 
     /**
      * \brief set the directory handle
      * \return if success or not.
      */
-    bool OpenDirectoryHandle();
+    bool open_directory_handle();
 
     /**
      * \brief start monitoring a given folder.
      * \return success or not
      */
-    bool Listen();
+    bool listen();
 
     /**
      * \brief prepare the various buffer for changes.
      */
-    void PrepareForRead();
+    void prepare_for_read();
 
     /**
      * \brief process a read received.
      * \param dwNumberOfBytesTransfered the number of bytes received.
      */
-    void ProcessRead(unsigned long dwNumberOfBytesTransfered );
+    void process_read(unsigned long dwNumberOfBytesTransfered );
 
     /**
      * \brief process an error code.
      * \param errorCode the error received.
      */
-    void ProcessError(unsigned long errorCode);
+    void process_error(unsigned long errorCode);
 
     /**
      * \brief clone up to 'ulSize' bytes into a buffer.
@@ -130,7 +180,7 @@ namespace myoddweb:: directorywatcher:: win
      * \return the cloned data.
      */
     [[nodiscard]]
-    unsigned char* Clone(unsigned long ulSize) const;
+    unsigned char* clone(unsigned long ulSize) const;
 
     /// <summary>
     /// The function that will be called when a file event is detected.
@@ -139,9 +189,9 @@ namespace myoddweb:: directorywatcher:: win
     /// <param name="dwNumberOfBytesTransfered"></param>
     /// <param name="lpOverlapped"></param>
     /// <returns></returns>
-    static void __stdcall FileIoCompletionRoutine(
-      unsigned long dwErrorCode,							  // completion code
-      unsigned long dwNumberOfBytesTransfered,	// number of bytes transferred
+    static void __stdcall file_io_completion_routine(
+      unsigned long dwErrorCode,         // completion code
+      unsigned long dwNumberOfBytesTransfered, // number of bytes transferred
       _OVERLAPPED* lpOverlapped                 // I/O information buffer
     );
 
@@ -217,22 +267,32 @@ namespace myoddweb:: directorywatcher:: win
     /// <summary>
     /// Clear all the data that is left in the vector
     /// </summary>
-    void ClearData();
+    void clear_data();
 
     /**
      * \brief Clear the handle
+     * \return true if it is safe to free the buffer/overlapped structure,
+     *         false if we could not confirm that the pending read was
+     *         cancelled and they must not be freed.
      */
-    void ClearHandle();
+    [[nodiscard]]
+    bool clear_handle();
+
+    /**
+     * \brief log that we intentionally leaked the buffer/overlapped because
+     *        we could not confirm that the pending read was cancelled.
+     */
+    void log_leaked_buffer_on_unconfirmed_stop() const;
 
     /**
      * \brief clear the buffer data.
      */
-    void ClearBuffer();
+    void clear_buffer();
 
     /**
      * \brief clear the overlapped structure.
      */
-    void ClearOverlapped();
-    #pragma endregion 
+    void clear_overlapped();
+    #pragma endregion
   };
 }

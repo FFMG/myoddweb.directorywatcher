@@ -25,49 +25,54 @@ namespace myoddweb:: directorywatcher
      * \param request the request being added.
      * \return the id of the monitor we started
      */
-    static long long Start(const Request& request);
+    static long long start(const Request& request);
 
     /**
      * \brief Try and remove a monitror by id
      * \param id the id of the monitor we want to stop
      * \return if we managed to remove it or not.
      */
-    static bool Stop(long long id);
+    static bool stop(long long id);
 
     /**
      * \brief If the monitor manager is ready or not.
      * \return if it is ready or not.
      */
-    static bool Ready();
-    
-  protected:
+    static bool ready();
+
+  private:
+    /// <summary>
+    /// The singleton instance.
+    /// </summary>
+    /// <returns>The one and only monitor manager.</returns>
+    static MonitorsManager* instance();
+
     /**
      * \brief Create a monitor and start monitoring, (given the request).
      * \param request contains the information we need to start the monitoring
      * \return the class item we created.
      */
-    Monitor* CreateAndStart(const Request& request);
+    Monitor* create_and_start(const Request& request);
 
     /**
      * \brief Create a monitor and add it to our list.
      * \param request the request we are creating the monitor with
      * \return the created monitor.
      */
-    Monitor* CreateAndddToList(const Request& request);
+    Monitor* create_and_add_to_list(const Request& request);
 
     /**
      * \brief stop a monitor and then get rid of it if needed, we will assume we have the lock.
      * \paramn id the id we want to delete.
      * \return false if there was a problem or if it does not exist.
      */
-    bool StopAndDeleteWithLock(long long id);
+    bool stop_and_delete_with_lock(long long id);
 
     // The file lock
     static MYODDWEB_MUTEX _lock;
 
     // the singleton
     static MonitorsManager* _instance;
-    static MonitorsManager* Instance();
 
     /**
      * \brief the pool of workers that will manage all our work.

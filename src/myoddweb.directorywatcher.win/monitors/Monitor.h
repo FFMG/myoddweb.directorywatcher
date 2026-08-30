@@ -1,4 +1,4 @@
-﻿// Licensed to Florent Guelfucci under one or more agreements.
+// Licensed to Florent Guelfucci under one or more agreements.
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #pragma once
@@ -30,19 +30,19 @@ namespace myoddweb
        * \brief the patht that is being monitored.
        */
       [[nodiscard]]
-      const wchar_t* Path() const;
+      const wchar_t* path() const;
 
       /**
        * \brief If we are recursively checking this folder or not.
        */
       [[nodiscard]]
-      bool Recursive() const;
+      bool recursive() const;
 
       /**
        * \brief the events collector.
        */
       [[nodiscard]]
-      const Collector& EventsCollector() const;
+      const Collector& events_collector() const;
 
       /**
        * \brief check if a given path is the same as the given one.
@@ -50,14 +50,24 @@ namespace myoddweb
        * \return if the given path is the same as our path.
        */
       [[nodiscard]]
-      bool IsPath(const std::wstring& maybe) const;
+      bool is_path(const std::wstring& maybe) const;
+
+      /**
+       * \brief check if the monitor is ready to receive events.
+       * \return if the monitor has started and is ready.
+       */
+      [[nodiscard]]
+      virtual bool ready() const
+      {
+        return started();
+      }
 
       /**
        * \brief fill the vector with all the values currently on record.
        * \param events the events we will be filling
        * \return the number of events we found.
        */
-      long long GetEvents(std::vector<Event*>& events);
+      long long get_events(std::vector<event*>& events);
 
       /**
        * \brief Add an event to our current log.
@@ -65,7 +75,7 @@ namespace myoddweb
        * \param fileName the name of the file/directory
        * \param isFile if it is a file or not
        */
-      void AddEvent(EventAction action, const std::wstring& fileName, bool isFile );
+      void add_event(EventAction action, const std::wstring& fileName, bool isFile );
 
       /**
        * \brief Add an event to our current log.
@@ -73,19 +83,19 @@ namespace myoddweb
        * \param oldFilename the previous name
        * \param isFile if this is a file or not.
        */
-      void AddRenameEvent(const std::wstring& newFileName, const std::wstring& oldFilename, bool isFile);
+      void add_rename_event(const std::wstring& newFileName, const std::wstring& oldFilename, bool isFile);
 
       /**
        * \brief add an event error to the queue
        * \param error the error event being added
        */
-      void AddEventError(EventError error);
+      void add_event_error(EventError error);
 
       /**
        * \brief get the worker pool
        */
       [[nodiscard]]
-      threads::WorkerPool& WorkerPool() const
+      threads::WorkerPool& worker_pool() const
       {
         return _workerPool;
       }
@@ -96,12 +106,12 @@ namespace myoddweb
        * \brief called when the worker is ready to start
        *        return false if you do not wish to start the worker.
        */
-      bool OnWorkerStart() override;
+      bool on_worker_start() override;
 
       /**
        * \brief stop the worker
        */
-      void OnWorkerStop() override;
+      void on_worker_stop() override;
 
       /**
        * \brief Give the worker a chance to do something in the loop
@@ -110,13 +120,13 @@ namespace myoddweb
        * \param fElapsedTimeMilliseconds the amount of time since the last time we made this call.
        * \return true if we want to continue or false if we want to end the thread
        */
-      bool OnWorkerUpdate(float fElapsedTimeMilliseconds) override;
+      bool on_worker_update(float fElapsedTimeMilliseconds) override;
 
       /**
        * \brief called when the worker has completed
        */
-      void OnWorkerEnd() override;
-      #pragma endregion 
+      void on_worker_end() override;
+      #pragma endregion
 
       #pragma region Member Variables
       /**
@@ -138,20 +148,20 @@ namespace myoddweb
        * \brief how often we want to check for new events.
        */
       EventsPublisher* _publisher;
-      #pragma endregion 
+      #pragma endregion
 
       /**
        * \brief Start the callback timer so we can publish events.
        */
-      void StartEventsPublisher();
+      void start_events_publisher();
 
-      virtual void OnGetEvents(std::vector<Event*>& events) = 0;
+      virtual void on_get_events(std::vector<event*>& events) = 0;
 
       /***
        * \brief the parent id if we have one, otherwise the current id.
        */
       [[nodiscard]]
-      virtual const long long& ParentId() const = 0;
+      virtual const long long& parent_id() const = 0;
     };
   }
 }

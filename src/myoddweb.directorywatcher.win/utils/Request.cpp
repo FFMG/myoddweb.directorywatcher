@@ -31,16 +31,16 @@ namespace myoddweb:: directorywatcher
    * \param statisticsCallbackRateMs how fast we want statistics to be published.
    */
   Request::Request(
-    const wchar_t* path, 
-    const bool recursive, 
-    const LoggerCallback& loggerCallback, 
-    const EventCallback& eventsCallback, 
-    const StatisticsCallback& statisticsCallback, 
+    const wchar_t* path,
+    const bool recursive,
+    const LoggerCallback& loggerCallback,
+    const EventCallback& eventsCallback,
+    const StatisticsCallback& statisticsCallback,
     const long long eventsCallbackRateMs,
     const long long statisticsCallbackRateMs) :
     Request()
   {
-    Assign(path, recursive, loggerCallback, eventsCallback, statisticsCallback, eventsCallbackRateMs, statisticsCallbackRateMs);
+    assign(path, recursive, loggerCallback, eventsCallback, statisticsCallback, eventsCallbackRateMs, statisticsCallbackRateMs);
   }
 
   /**
@@ -51,7 +51,7 @@ namespace myoddweb:: directorywatcher
   {
     if( this != &src )
     {
-      Assign(src);
+      assign(src);
     }
     return *this;
   }
@@ -66,26 +66,26 @@ namespace myoddweb:: directorywatcher
   Request::Request(const wchar_t* path, bool recursive, const long long eventsCallbackRateMs, const long long statisticsCallbackRateMs) :
     Request()
   {
-    Assign(path, recursive, nullptr, nullptr, nullptr, eventsCallbackRateMs, statisticsCallbackRateMs);
+    assign(path, recursive, nullptr, nullptr, nullptr, eventsCallbackRateMs, statisticsCallbackRateMs);
   }
 
-  Request::Request(const sRequest& request) :
+  Request::Request(const raw_request& request) :
     Request()
   {
-    Assign(
-      request.Path, 
-      request.Recursive, 
-      request.LoggerCallback, 
-      request.EventsCallback, 
-      request.StatisticsCallback, 
-      request.EventsCallbackRateMs, 
-      request.StatisticsCallbackRateMs);
+    assign(
+      request.path,
+      request.recursive,
+      request.loggerCallback,
+      request.eventsCallback,
+      request.statisticsCallback,
+      request.eventsCallbackRateMs,
+      request.statisticsCallbackRateMs);
   }
-    
+
   Request::Request(const Request& request) :
     Request()
   {
-    Assign(request);
+    assign(request);
   }
 
   /**
@@ -93,13 +93,13 @@ namespace myoddweb:: directorywatcher
    */
   Request::~Request()
   {
-    Dispose();
+    dispose();
   }
 
   /**
    * \brief clean up all the values and free memory
    */
-  void Request::Dispose()
+  void Request::dispose()
   {
     _loggerCallback = nullptr;
     _eventsCallback = nullptr;
@@ -115,20 +115,20 @@ namespace myoddweb:: directorywatcher
   /**
    * \brief assin a request
    */
-  void Request::Assign(const Request& request )
+  void Request::assign(const Request& request )
   {
     if (this == &request)
     {
       return;
     }
-    Assign( request._path, request._recursive, request._loggerCallback, request._eventsCallback, request._statisticsCallback, request._eventsCallbackRateMs, request._statisticsCallbackRateMs );
+    assign( request._path, request._recursive, request._loggerCallback, request._eventsCallback, request._statisticsCallback, request._eventsCallbackRateMs, request._statisticsCallbackRateMs );
   }
 
   /**
    * \brief assign request values
    */
-  void Request::Assign(
-    const wchar_t* path, 
+  void Request::assign(
+    const wchar_t* path,
     const bool recursive,
     const LoggerCallback& loggerCallback,
     const EventCallback& eventsCallback,
@@ -137,7 +137,7 @@ namespace myoddweb:: directorywatcher
     const long long statisticsCallbackRateMs)
   {
     // clean up
-    Dispose();
+    dispose();
 
     _loggerCallback = loggerCallback;
     _eventsCallback = eventsCallback;
@@ -152,14 +152,14 @@ namespace myoddweb:: directorywatcher
       _path = new wchar_t[ l+1];
       wmemset(_path, L'\0', l+1);
       wcscpy_s(_path, l+1, path );
-    }        
+    }
   }
 
   /**
    * \brief access the path
    */
   [[nodiscard]]
-  const wchar_t* Request::Path() const
+  const wchar_t* Request::path() const
   {
     return _path;
   }
@@ -168,7 +168,7 @@ namespace myoddweb:: directorywatcher
    * \breif check if the request is recursive or not
    */
   [[nodiscard]]
-  bool Request::Recursive() const
+  bool Request::recursive() const
   {
     return _recursive;
   }
@@ -178,7 +178,7 @@ namespace myoddweb:: directorywatcher
    * \return the event callback
    */
   [[nodiscard]]
-  const EventCallback& Request::CallbackEvents() const
+  const EventCallback& Request::callback_events() const
   {
     return _eventsCallback;
   }
@@ -187,7 +187,7 @@ namespace myoddweb:: directorywatcher
    * \brief the stats of the monitor
    */
   [[nodiscard]]
-  const StatisticsCallback& Request::CallbackStatistics() const
+  const StatisticsCallback& Request::callback_statistics() const
   {
     return _statisticsCallback;
   }
@@ -196,7 +196,7 @@ namespace myoddweb:: directorywatcher
    * \brief the logger callback
    */
   [[nodiscard]]
-  const LoggerCallback& Request::CallbackLogger() const
+  const LoggerCallback& Request::callback_logger() const
   {
     return _loggerCallback;
   }
@@ -205,7 +205,7 @@ namespace myoddweb:: directorywatcher
    * \brief how often we want to check for callbacks
    */
   [[nodiscard]]
-  long long Request::EventsCallbackRateMilliseconds() const
+  long long Request::events_callback_rate_milliseconds() const
   {
     return _eventsCallbackRateMs;
   }
@@ -214,7 +214,7 @@ namespace myoddweb:: directorywatcher
    * \brief how often we want to check for stats
    */
   [[nodiscard]]
-  long long Request::StatsCallbackRateMilliseconds() const
+  long long Request::stats_callback_rate_milliseconds() const
   {
     return _statisticsCallbackRateMs;
   }
@@ -222,16 +222,16 @@ namespace myoddweb:: directorywatcher
   /**
    * \brief return if we are using events or not
    */
-  bool Request::IsUsingEvents() const
+  bool Request::is_using_events() const
   {
     // null is allowed
-    if (nullptr == CallbackEvents())
+    if (nullptr == callback_events())
     {
       return false;
     }
 
     // zero are allowed.
-    if (0 == EventsCallbackRateMilliseconds())
+    if (0 == events_callback_rate_milliseconds())
     {
       return false;
     }
@@ -241,16 +241,16 @@ namespace myoddweb:: directorywatcher
   /**
    * \brief return if we are using statistics or not
    */
-  bool Request::IsUsingStatistics() const
+  bool Request::is_using_statistics() const
   {
     // null is allowed
-    if (nullptr == CallbackStatistics())
+    if (nullptr == callback_statistics())
     {
       return false;
     }
 
     // zero are allowed.
-    if (0 == StatsCallbackRateMilliseconds())
+    if (0 == stats_callback_rate_milliseconds())
     {
       return false;
     }

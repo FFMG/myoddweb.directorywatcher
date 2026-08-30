@@ -11,7 +11,7 @@
 #if defined( _WIN32) || defined(_WIN64 )
   constexpr auto MYODDWEB_MAX_WAIT_INT = static_cast<unsigned int>(-1);
 #else
-  #include <limits> 
+  #include <limits>
   constexpr auto MYODDWEB_MAX_WAIT_INT = std::numeric_limits<int>::max()
 #endif
 
@@ -30,11 +30,11 @@ namespace myoddweb:: directorywatcher
     * \brief the number of ms we want to wait for.
     * \param milliseconds the number of milliseconds we want to wait for.
     */
-  void Wait::Delay(const long long milliseconds)
+  void Wait::delay(const long long milliseconds)
   {
     // call the internal spin without any callback
     // so we _will_ timeout, no need for the return value.
-    SpinUntilInternal(milliseconds);
+    spin_until_internal(milliseconds);
   }
 
   /**
@@ -44,9 +44,9 @@ namespace myoddweb:: directorywatcher
    *        if the timeout is reached, we will simply get out.
    * \return true if the condition fired, false if we timeout
    */
-  bool Wait::SpinUntil( std::function<bool()> condition, const long long milliseconds)
+  bool Wait::spin_until( std::function<bool()> condition, const long long milliseconds)
   {
-    return SpinUntilInternal( condition, milliseconds);
+    return spin_until_internal( condition, milliseconds);
   }
 
   /**
@@ -57,12 +57,12 @@ namespace myoddweb:: directorywatcher
     *        if the timeout is reached, we will simply get out.
     * \return true if the condition fired, false if we timeout
     */
-  bool Wait::SpinUntilInternal( std::function<bool()>& condition, const long long milliseconds)
+  bool Wait::spin_until_internal( std::function<bool()>& condition, const long long milliseconds)
   {
     Wait waiter;
 
     // call the awaiter.
-    return waiter.Awaiter( std::move(condition), milliseconds );
+    return waiter.awaiter( std::move(condition), milliseconds );
   }
 
   /**
@@ -72,12 +72,12 @@ namespace myoddweb:: directorywatcher
    *        if the timeout is reached, we will simply get out.
    * \return if the code ran successfully or if there was an issue/error
    */
-  bool Wait::SpinUntilInternal(const long long milliseconds)
+  bool Wait::spin_until_internal(const long long milliseconds)
   {
     Wait waiter;
 
     // start the thread with the arguments we have
-    return waiter.Awaiter( nullptr, milliseconds );
+    return waiter.awaiter( nullptr, milliseconds );
   }
 
   /**
@@ -88,7 +88,7 @@ namespace myoddweb:: directorywatcher
     * \return true if the future completed or false if we timed out.
     */
   template <typename T>
-  bool Wait::SpinUntilFutureComplete(std::future<T>& future, const long long milliseconds)
+  bool Wait::spin_until_future_complete(std::future<T>& future, const long long milliseconds)
   {
     // when we consider this timed-out
     const auto until = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds);
@@ -122,7 +122,7 @@ namespace myoddweb:: directorywatcher
       else
       {
         std::this_thread::yield();
-      }       
+      }
 
       // are we done?
       if (std::chrono::high_resolution_clock::now() >= until)
@@ -144,7 +144,7 @@ namespace myoddweb:: directorywatcher
    * \param thread the thread we will be waiting for.
    * \return true if the future completed or false if we timed out.
    */
-  bool Wait::SpinUntilThreadComplete(threads::Thread& thread, const long long milliseconds)
+  bool Wait::spin_until_thread_complete(threads::Thread& thread, const long long milliseconds)
   {
     // when we consider this timed-out
     const auto until = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds);
@@ -161,7 +161,7 @@ namespace myoddweb:: directorywatcher
       // it could hang forever as well
       // but we tried to make sure that it never does.
       // but it is posible that the condition() will hang.
-      const auto status = thread.WaitFor( waitFor );
+      const auto status = thread.wait_for( waitFor );
       if (status == threads::WaitResult::complete )
       {
         // the thread is finished
@@ -200,9 +200,9 @@ namespace myoddweb:: directorywatcher
    * \param milliseconds the maximum amount of time we want to wait
    *        if the condition is not set then we will always return false and wait for that number of ms.
    */
-  bool Wait::Awaiter
+  bool Wait::awaiter
   (
-    std::function<bool()>&& condition, 
+    std::function<bool()>&& condition,
     const long long milliseconds
   )
   {
@@ -214,7 +214,7 @@ namespace myoddweb:: directorywatcher
       const auto until = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(milliseconds == -1 ? 1 : milliseconds);
       for (unsigned int count = 0; count < MYODDWEB_MAX_WAIT_INT; ++count)
       {
-        YieldOnce();
+        yield_once();
 
         if (condition != nullptr)
         {
@@ -229,7 +229,7 @@ namespace myoddweb:: directorywatcher
           catch (std::exception& e)
           {
             // log the error
-            Logger::Log(LogLevel::Panic, L"Caught exception '%hs' Awaiting on condition!", e.what());
+            Logger::log(LogLevel::Panic, L"Caught exception '%hs' Awaiting on condition!", e.what());
 
             // this is bad ... the condition failed
             // we might as well get out as it will probably fail over and over again
@@ -248,7 +248,7 @@ namespace myoddweb:: directorywatcher
     catch (std::exception& e)
     {
       // log the error
-      Logger::Log(LogLevel::Panic, L"Caught exception '%hs' Awaiting on condition!", e.what());
+      Logger::log(LogLevel::Panic, L"Caught exception '%hs' Awaiting on condition!", e.what());
       result = false;
     }
 
@@ -260,7 +260,7 @@ namespace myoddweb:: directorywatcher
     return result;
   }
 
-  void Wait::YieldOnce()
+  void Wait::yield_once()
   {
     // one ms wait.
     static const auto oneMillisecond = std::chrono::milliseconds(1);

@@ -1,5 +1,6 @@
 using myoddweb.directorywatcher.interfaces;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
@@ -60,7 +61,7 @@ namespace myoddweb.directorywatcher.test
 
       //we then need to wait a bit for all the workers to have started.
       var timeout = number * 1000;
-      Assert.IsTrue(SpinWait.SpinUntil(() => watcher.Ready(), timeout));
+      ClassicAssert.IsTrue(SpinWait.SpinUntil(() => watcher.Ready(), timeout));
 
       TestContext.Out.WriteLine("All watchers ready!");
 
@@ -75,7 +76,7 @@ namespace myoddweb.directorywatcher.test
       watcher.Stop();
 
       // stop
-      Assert.AreEqual(number, added);
+      ClassicAssert.AreEqual(number, added);
       return Task.CompletedTask;
     }
 
@@ -115,7 +116,7 @@ namespace myoddweb.directorywatcher.test
 
       //we then need to wait a bit for all the workers to have started.
       var timeout = number * 1000;
-      Assert.IsTrue( SpinWait.SpinUntil(() => watcher1.Ready() && watcher2.Ready(), timeout ));
+      ClassicAssert.IsTrue( SpinWait.SpinUntil(() => watcher1.Ready() && watcher2.Ready(), timeout ));
 
       TestContext.Out.WriteLine("All watchers ready!");
 
@@ -131,8 +132,8 @@ namespace myoddweb.directorywatcher.test
       watcher2.Stop();
 
       // stop
-      Assert.AreEqual(number, added1);
-      Assert.AreEqual(number, added2);
+      ClassicAssert.AreEqual(number, added1);
+      ClassicAssert.AreEqual(number, added2);
     }
 
     [TestCase(5, true)]
@@ -162,10 +163,10 @@ namespace myoddweb.directorywatcher.test
       }
 
       // wait a bit
-      Assert.IsTrue( SpinWait.SpinUntil(() => number == added, number * 1000) );
+      ClassicAssert.IsTrue( SpinWait.SpinUntil(() => number == added, number * 1000) );
 
       // check that they all added.
-      Assert.AreEqual(number, added);
+      ClassicAssert.AreEqual(number, added);
 
       // stop watching
       watcher.OnAddedAsync -= Fn;
@@ -176,7 +177,7 @@ namespace myoddweb.directorywatcher.test
         helper.AddFile();
       }
 
-      Assert.AreEqual(number, added);
+      ClassicAssert.AreEqual(number, added);
 
       watcher.Stop();
     }

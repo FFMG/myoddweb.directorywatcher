@@ -36,7 +36,7 @@ namespace myoddweb:: directorywatcher
    * if this fails we have much bigger problems.
    * \return the one and only monitor manager.
    */
-  MonitorsManager* MonitorsManager::Instance()
+  MonitorsManager* MonitorsManager::instance()
   {
     if (nullptr != _instance)
     {
@@ -66,7 +66,7 @@ namespace myoddweb:: directorywatcher
     catch (std::exception& e)
     {
       // log the error
-      Logger::Log( LogLevel::Panic, L"Caught exception '%hs' trying to create the manager!", e.what());
+      Logger::log( LogLevel::Panic, L"Caught exception '%hs' trying to create the manager!", e.what());
 
       return nullptr;
     }
@@ -77,18 +77,30 @@ namespace myoddweb:: directorywatcher
    * \param request the request being added.
    * \return the id of the monitor we started
    */
-  long long MonitorsManager::Start(const Request& request)
+  long long MonitorsManager::start(const Request& request)
   {
     MYODDWEB_PROFILE_FUNCTION();
-    const auto monitor = Instance()->CreateAndStart(request);
-    return monitor->Id();
+    const auto managerInstance = instance();
+    if (nullptr == managerInstance)
+    {
+      // could not create/get the manager instance
+      return -1;
+    }
+
+    const auto monitor = managerInstance->create_and_start(request);
+    if (nullptr == monitor)
+    {
+      // we could not create/start the monitor.
+      return -1;
+    }
+    return monitor->id();
   }
 
   /**
    * \brief If the monitor manager is ready or not.
    * \return if it is ready or not.
    */
-  bool MonitorsManager::Ready()
+  bool MonitorsManager::ready()
   {
     MYODDWEB_PROFILE_FUNCTION();
     MYODDWEB_LOCK(_lock);
@@ -100,7 +112,7 @@ namespace myoddweb:: directorywatcher
     }
 
     // if we have no worker pool ... we have nothing.
-    if( _instance->_workersPool == nullptr || !_instance->_workersPool->Started() )
+    if( _instance->_workersPool == nullptr || !_instance->_workersPool->started() )
     {
       return false;
     }
@@ -108,9 +120,9 @@ namespace myoddweb:: directorywatcher
     // yield once
     MYODDWEB_YIELD();
 
-    for( const auto monitor : Instance()->_monitors )
+    for( const auto monitor : instance()->_monitors )
     {
-      if( !monitor.second->Started() )
+      if( !monitor.second->ready() )
       {
         return false;
       }
@@ -125,7 +137,7 @@ namespace myoddweb:: directorywatcher
    * \param id the id of the monitor we want to stop
    * \return if we managed to remove it or not.
    */
-  bool MonitorsManager::Stop(const long long id)
+  bool MonitorsManager::stop(const long long id)
   {
     MYODDWEB_PROFILE_FUNCTION();
     try
@@ -139,10 +151,10 @@ namespace myoddweb:: directorywatcher
       }
 
       // try and remove it.
-      const auto result = Instance()->StopAndDeleteWithLock(id);
+      const auto result = instance()->stop_and_delete_with_lock(id);
 
       // delete our instance if we are the last one
-      if (Instance()->_monitors.empty())
+      if (instance()->_monitors.empty())
       {
         delete _instance;
         _instance = nullptr;
@@ -153,7 +165,7 @@ namespace myoddweb:: directorywatcher
     catch (std::exception& e)
     {
       // log the error
-      Logger::Log(id, LogLevel::Panic, L"Caught exception '%hs' trying to stop a monitor!", e.what());
+      Logger::log(id, LogLevel::Panic, L"Caught exception '%hs' trying to stop a monitor!", e.what());
 
       return false;
     }
@@ -164,7 +176,7 @@ namespace myoddweb:: directorywatcher
    * \param request the request we are creating
    * \return the value.
    */
-  Monitor* MonitorsManager::CreateAndddToList(const Request& request)
+  Monitor* MonitorsManager::create_and_add_to_list(const Request& request)
   {
     MYODDWEB_PROFILE_FUNCTION();
     MYODDWEB_LOCK(_lock);
@@ -173,7 +185,7 @@ namespace myoddweb:: directorywatcher
       for (;;)
       {
         // try and look for an used id.
-        const auto id = WorkerId::NextId();
+        const auto id = WorkerId::next_id();
         if (_monitors.find(id) != _monitors.end())
         {
           // get another id.
@@ -181,11 +193,11 @@ namespace myoddweb:: directorywatcher
         }
 
         // add the logger
-        Logger::Add(id, request.CallbackLogger());
+        Logger::add(id, request.callback_logger());
 
         // create the new monitor
         Monitor* monitor;
-        if (request.Recursive())
+        if (request.recursive())
         {
           monitor = new MultipleWinMonitor(id, *_workersPool, request);
         }
@@ -195,7 +207,7 @@ namespace myoddweb:: directorywatcher
         }
 
         // add it to the ilist
-        _monitors[monitor->Id()] = monitor;
+        _monitors[monitor->id()] = monitor;
 
         // and we are done with it.
         return monitor;
@@ -204,7 +216,7 @@ namespace myoddweb:: directorywatcher
     catch (std::exception& e)
     {
       // log the error
-      Logger::Log(LogLevel::Panic, L"Caught exception '%hs' trying to create a monitor for '%s'!", e.what(), request.Path() );
+      Logger::log(LogLevel::Panic, L"Caught exception '%hs' trying to create a monitor for '%s'!", e.what(), request.path() );
 
       // something broke while trying to create this monitor.
       return nullptr;
@@ -216,7 +228,7 @@ namespace myoddweb:: directorywatcher
    * \param request the request we are creating
    * \return the value.
    */
-  Monitor* MonitorsManager::CreateAndStart(const Request& request)
+  Monitor* MonitorsManager::create_and_start(const Request& request)
   {
     MYODDWEB_PROFILE_FUNCTION();
 
@@ -224,17 +236,17 @@ namespace myoddweb:: directorywatcher
     try
     {
       // create a monitor and then add it to our list.
-      monitor = CreateAndddToList(request);
+      monitor = create_and_add_to_list(request);
 
       // we could not create the monitor for some reason
       if( nullptr == monitor)
       {
-        Logger::Log(LogLevel::Panic, L"I was unable to create and start a monitor for '%s'!", request.Path());
+        Logger::log(LogLevel::Panic, L"I was unable to create and start a monitor for '%s'!", request.path());
         return nullptr;
       }
 
       // just add our monitor...
-      _workersPool->Add( *monitor );
+      _workersPool->add( *monitor );
 
       // and return the monitor we created.
       return monitor;
@@ -242,14 +254,14 @@ namespace myoddweb:: directorywatcher
     catch (std::exception& e)
     {
       // log the error
-      Logger::Log(LogLevel::Panic, L"Caught exception '%hs' trying to create and start the monitor, '%s'!", e.what(), request.Path() );
+      Logger::log(LogLevel::Panic, L"Caught exception '%hs' trying to create and start the monitor, '%s'!", e.what(), request.path() );
 
       // exception while trying to start
       // remove the one we just added.
       if (monitor != nullptr)
       {
         MYODDWEB_LOCK(_lock);
-        StopAndDeleteWithLock(monitor->Id());
+        stop_and_delete_with_lock(monitor->id());
       }
 
       // and return null.
@@ -262,7 +274,7 @@ namespace myoddweb:: directorywatcher
    * \paramn id the id we want to delete.
    * \return false if there was a problem or if it does not exist.
    */
-  bool MonitorsManager::StopAndDeleteWithLock(const long long id)
+  bool MonitorsManager::stop_and_delete_with_lock(const long long id)
   {
     MYODDWEB_PROFILE_FUNCTION();
     try
@@ -275,9 +287,9 @@ namespace myoddweb:: directorywatcher
       }
 
       // stop everything
-      if(threads::WaitResult::complete != _workersPool->StopAndWait( *monitor->second, MYODDWEB_WAITFOR_WORKER_COMPLETION ))
+      if(threads::WaitResult::complete != _workersPool->stop_and_wait( *monitor->second, MYODDWEB_WAITFOR_WORKER_COMPLETION ))
       {
-        Logger::Log(LogLevel::Warning, L"Timeout while waiting for worker to complete.");
+        Logger::log(LogLevel::Warning, L"Timeout while waiting for worker to complete.");
       }
 
       try
@@ -285,19 +297,19 @@ namespace myoddweb:: directorywatcher
         // we are about delte this worker so we must make sure that it is complete.
         // this should have happened in the previous call.
         // but if we log a message then it means that we probably have a blocking call somewhere.
-        _workersPool->StopAndWait(*monitor->second, -1 );
+        _workersPool->stop_and_wait(*monitor->second, -1 );
         delete monitor->second;
       }
       catch (std::exception& e)
       {
         // log the error
-        Logger::Log(LogLevel::Panic, L"Caught exception '%hs' trying to free monitor memory!", e.what());
+        Logger::log(LogLevel::Panic, L"Caught exception '%hs' trying to free monitor memory!", e.what());
       }
       // remove it
       _monitors.erase(monitor);
 
       // remove the logger
-      Logger::Remove(id);
+      Logger::remove(id);
 
       // we are done
       return true;
@@ -305,7 +317,7 @@ namespace myoddweb:: directorywatcher
     catch (std::exception& e)
     {
       // log the error
-      Logger::Log(id, LogLevel::Panic, L"Caught exception '%hs' trying to stop and delete a monitor!", e.what());
+      Logger::log(id, LogLevel::Panic, L"Caught exception '%hs' trying to stop and delete a monitor!", e.what());
       return false;
     }
   }

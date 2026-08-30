@@ -26,7 +26,7 @@ namespace myoddweb
       /**
        * \brief the number of ms we want to wait for.
        */
-      static void Delay( long long milliseconds );
+      static void delay( long long milliseconds );
 
       /**
       * \brief the number of ms we want to wait for.
@@ -35,23 +35,23 @@ namespace myoddweb
       *        if the timeout is reached, we will simply get out.
       * \return true if the condition fired, false if we timeout
       */
-      static bool SpinUntil(std::function<bool()> condition, long long milliseconds);
+      static bool spin_until(std::function<bool()> condition, long long milliseconds);
 
       template <typename T>
-      static bool SpinUntil( std::future<T>& future, const long long milliseconds)
+      static bool spin_until( std::future<T>& future, const long long milliseconds)
       {
-        return SpinUntilFutureComplete(future, milliseconds);
+        return spin_until_future_complete(future, milliseconds);
       }
 
-      static bool SpinUntil(threads::Thread& thread, const long long milliseconds)
+      static bool spin_until(threads::Thread& thread, const long long milliseconds)
       {
-        return SpinUntilThreadComplete(thread, milliseconds);
+        return spin_until_thread_complete(thread, milliseconds);
       }
 
       /**
-       * \brief yield 
+       * \brief yield
        */
-      static void YieldOnce();
+      static void yield_once();
 
     private:
       static std::atomic<int> _yieldCounter;
@@ -74,7 +74,7 @@ namespace myoddweb
        *        if the timeout is reached, we will simply get out.
        * \return true if the condition fired, false if we timeout
        */
-      static bool SpinUntilInternal(std::function<bool()>& condition, long long milliseconds);
+      static bool spin_until_internal(std::function<bool()>& condition, long long milliseconds);
 
       /**
        * \brief the number of ms we want to spin for
@@ -83,7 +83,7 @@ namespace myoddweb
        *        if the timeout is reached, we will simply get out.
        * \return if the code ran successfully or if there was an issue/error
        */
-      static bool SpinUntilInternal( long long milliseconds);
+      static bool spin_until_internal( long long milliseconds);
 
       /**
        * \brief wait for the future to complete, if it does not complete in time we will get out.
@@ -93,7 +93,7 @@ namespace myoddweb
        * \return true if the future completed or false if we timed out.
        */
       template <typename T>
-      static bool SpinUntilFutureComplete(std::future<T>& future, long long milliseconds );
+      static bool spin_until_future_complete(std::future<T>& future, long long milliseconds );
 
       /**
        * \brief wait for a Thread to complete, if it does not complete we will get out.
@@ -102,19 +102,19 @@ namespace myoddweb
        * \param thread the thread we will be waiting for.
        * \return true if the future completed or false if we timed out.
        */
-      static bool SpinUntilThreadComplete(threads::Thread& thread, long long milliseconds);
+      static bool spin_until_thread_complete(threads::Thread& thread, long long milliseconds);
 
       /**
        * \brief the main function that does all the waiting.
        *        the promise will contain the result of the waiting
-       *          - false = we timedout 
+       *          - false = we timedout
        *          - true = the condition returned true and we stopped waiting.
        * \param condition the condition we wan to run to return out of the function
        *        if empty/null then we will never check the condition
        * \param milliseconds the maximum amount of time we want to wait
        *        if the condition is not set then we will always return false and wait for that number of ms.
        */
-      bool Awaiter( std::function<bool()>&& condition, const long long milliseconds );
+      bool awaiter( std::function<bool()>&& condition, const long long milliseconds );
     };
   }
 }

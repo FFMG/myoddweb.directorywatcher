@@ -1,4 +1,4 @@
-﻿// Licensed to Florent Guelfucci under one or more agreements.
+// Licensed to Florent Guelfucci under one or more agreements.
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #include <Windows.h>
@@ -17,17 +17,17 @@ namespace myoddweb:: directorywatcher
                       // we will keep data for as long as we need it, either the event time if not zero, (as it updates the stats)
                       // otherwise we will set the time to the stats time
                       // if both of them are zero then nothing will be collected
-    _eventCollector(request.EventsCallbackRateMilliseconds() == 0 ? request.StatsCallbackRateMilliseconds() : request.EventsCallbackRateMilliseconds()),
+    _eventCollector(request.events_callback_rate_milliseconds() == 0 ? request.stats_callback_rate_milliseconds() : request.events_callback_rate_milliseconds()),
     _publisher(nullptr)
   {
   }
 
   Monitor::~Monitor()
   {
-    if( !Completed() )
+    if( !completed() )
     {
       // log the error
-      Logger::Log(Id(), LogLevel::Error, L"Trying to dispose of a monitor that was never completed" );
+      Logger::log(id(), LogLevel::Error, L"Trying to dispose of a monitor that was never completed" );
     }
     delete _publisher;
     _publisher = nullptr;
@@ -36,7 +36,7 @@ namespace myoddweb:: directorywatcher
   /**
    * \return get the data collector
    */
-  const Collector& Monitor::EventsCollector() const
+  const Collector& Monitor::events_collector() const
   {
     return _eventCollector;
   }
@@ -44,17 +44,17 @@ namespace myoddweb:: directorywatcher
   /**
    * \brief the patht that is being monitored.
    */
-  const wchar_t* Monitor::Path() const
+  const wchar_t* Monitor::path() const
   {
-    return _request.Path();
+    return _request.path();
   }
 
   /**
    * \brief If we are recursively checking this folder or not.
    */
-  bool Monitor::Recursive() const
+  bool Monitor::recursive() const
   {
-    return _request.Recursive();
+    return _request.recursive();
   }
 
   /**
@@ -63,10 +63,10 @@ namespace myoddweb:: directorywatcher
    * \param fileName the name of the file/directory
    * \param isFile if it is a file or not
    */
-  void Monitor::AddEvent(const EventAction action, const std::wstring& fileName, const bool isFile)
+  void Monitor::add_event(const EventAction action, const std::wstring& fileName, const bool isFile)
   {
     MYODDWEB_PROFILE_FUNCTION();
-    _eventCollector.Add(action, Path(), fileName, isFile, EventError::None);
+    _eventCollector.add(action, path(), fileName, isFile, EventError::None);
   }
 
   /**
@@ -75,20 +75,20 @@ namespace myoddweb:: directorywatcher
    * \param oldFilename the previous name
    * \param isFile if this is a file or not.
    */
-  void Monitor::AddRenameEvent(const std::wstring& newFileName, const std::wstring& oldFilename, const bool isFile)
+  void Monitor::add_rename_event(const std::wstring& newFileName, const std::wstring& oldFilename, const bool isFile)
   {
     MYODDWEB_PROFILE_FUNCTION();
-    _eventCollector.AddRename(Path(), newFileName, oldFilename, isFile, EventError::None );
+    _eventCollector.add_rename(path(), newFileName, oldFilename, isFile, EventError::None );
   }
 
   /**
    * \brief add an event error to the queue
    * \param error the error event being added
    */
-  void Monitor::AddEventError(const EventError error)
+  void Monitor::add_event_error(const EventError error)
   {
     MYODDWEB_PROFILE_FUNCTION();
-    _eventCollector.Add(EventAction::Unknown, Path(), L"", false, error );
+    _eventCollector.add(EventAction::Unknown, path(), L"", false, error );
   }
 
   /**
@@ -96,22 +96,22 @@ namespace myoddweb:: directorywatcher
    * \param events the events we will be filling
    * \return the number of events we found.
    */
-  long long Monitor::GetEvents(std::vector<Event*>& events)
+  long long Monitor::get_events(std::vector<event*>& events)
   {
     MYODDWEB_PROFILE_FUNCTION();
 
-    if (!Is(State::started))
+    if (!is(State::started))
     {
       return 0;
     }
 
     // get the events we collected.
-    _eventCollector.GetEvents(events);
+    _eventCollector.get_events(events);
 
     // allow the base class to add/remove events.
-    OnGetEvents(events);
+    on_get_events(events);
 
-    // then return how-ever many we found.  
+    // then return how-ever many we found.
     return static_cast<long long>(events.size());
   }
 
@@ -119,10 +119,10 @@ namespace myoddweb:: directorywatcher
    * \brief Start the monitoring, if needed.
    * \return success or not.
    */
-  bool Monitor::OnWorkerStart()
+  bool Monitor::on_worker_start()
   {
     // are we already started?
-    if( Is(State::started))
+    if( is(State::started))
     {
       return true;
     }
@@ -130,16 +130,16 @@ namespace myoddweb:: directorywatcher
     try
     {
       // start the callback after we started everything
-      StartEventsPublisher();
+      start_events_publisher();
 
       // done.
       return true;
     }
     catch (...)
     {
-      AddEventError(EventError::CannotStart);
+      add_event_error(EventError::CannotStart);
 
-      SaveCurrentException();
+      save_current_exception();
 
       return false;
     }
@@ -152,19 +152,19 @@ namespace myoddweb:: directorywatcher
    * \param fElapsedTimeMilliseconds the amount of time since the last time we made this call.
    * \return true if we want to continue or false if we want to end the thread
    */
-  bool Monitor::OnWorkerUpdate( const float fElapsedTimeMilliseconds)
+  bool Monitor::on_worker_update( const float fElapsedTimeMilliseconds)
   {
     if( _publisher != nullptr )
     {
-      _publisher->Update(fElapsedTimeMilliseconds);
+      _publisher->update(fElapsedTimeMilliseconds);
     }
-    return !MustStop();
+    return !must_stop();
   }
 
   /**
    * \brief stop the worker
    */
-  void Monitor::OnWorkerStop()
+  void Monitor::on_worker_stop()
   {
     // nothing to do here
   }
@@ -172,7 +172,7 @@ namespace myoddweb:: directorywatcher
   /**
    * \brief Stop the monitoring if needed.
    */
-  void Monitor::OnWorkerEnd()
+  void Monitor::on_worker_end()
   {
     MYODDWEB_PROFILE_FUNCTION();
     try
@@ -183,16 +183,16 @@ namespace myoddweb:: directorywatcher
     }
     catch (...)
     {
-      AddEventError(EventError::CannotStop);
+      add_event_error(EventError::CannotStop);
 
-      SaveCurrentException();
+      save_current_exception();
     }
   }
 
   /**
     * \brief Start the callback timer so we can publish events.
     */
-  void Monitor::StartEventsPublisher()
+  void Monitor::start_events_publisher()
   {
     MYODDWEB_PROFILE_FUNCTION();
 
@@ -201,7 +201,7 @@ namespace myoddweb:: directorywatcher
     _publisher = nullptr;
 
     // create the new publisher.
-    _publisher = new EventsPublisher( *this, ParentId(), _request );
+    _publisher = new EventsPublisher( *this, parent_id(), _request );
   }
 
   /**
@@ -209,8 +209,8 @@ namespace myoddweb:: directorywatcher
    * \param maybe the path we are checking against.
    * \return if the given path is the same as our path.
    */
-  bool Monitor::IsPath(const std::wstring& maybe) const
+  bool Monitor::is_path(const std::wstring& maybe) const
   {
-    return Io::AreSameFolders(maybe, _request.Path());
+    return Io::are_same_folders(maybe, _request.path());
   }
 }

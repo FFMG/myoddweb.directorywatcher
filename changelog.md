@@ -2,6 +2,40 @@
 
 Notable changes
 
+## 0.2.0 - 29-08-2026
+
+### Added
+
+- GitHub Actions workflow to replace the retired Travis CI build
+
+### Changed
+
+- Solution/projects updated to build with Visual Studio 2022 (toolset v143)
+- The managed libraries now target .NET Framework 4.6.2, .NET Standard 2.0 and .NET 8.0, (dropped .NET Framework 4.5.2 and .NET Core 3.0, both long out of support)
+- C# projects updated to use the latest C# language version
+- Test project updated to NUnit 4.6.1, NUnit3TestAdapter 6 and Microsoft.NET.Test.Sdk 18, (classic `Assert.*` calls moved to `NUnit.Framework.Legacy.ClassicAssert`, since NUnit 4 removed them from `Assert`)
+- Moved to Google Test 1.18.0
+
+### Fixed
+
+- Fixed race condition in `MonitorsManager::ready()` for recursive monitors (`MultipleWinMonitor`) where child monitors had not yet started before readiness was reported
+- Fixed asynchronous worker completion race condition in `WorkerPool::on_worker_end()` to ensure all worker termination tasks finish before the pool reports completion
+- Fixed unit test `TwoWatchersOnTwoSeparateFolders` where the second watcher was incorrectly pointing to the first watcher's folder
+- Fixed a potential use-after-free in `win::Data::clear_handle()`
+- Fixed a null-pointer dereference in `win::Data::file_io_completion_routine()`
+- Fixed `win::Data::process_error()` silently leaving a watched directory's read loop permanently stalled after any Win32 error
+- Fixed a data race between a monitor's own in-flight update and its `_stopWorker`'s handle/buffer cleanup task.
+- Fixed `win::Data::check_still_valid()` resurrecting a watch
+- Fixed `MonitorsManager::start()` dereferencing a null `Monitor*`
+- Fixed `win::Data::clone()` leaking its allocation when `_buffer` is null
+- Fixed `Logger::make_message()` calling `reserve()` instead of `resize()`
+- Fixed [#20](https://github.com/FFMG/myoddweb.directorywatcher/issues/20): files could be silently missed when a whole populated folder was copy-pasted.
+- Fixed an intermittent `WorkerPool` deadlock that could hang indefinitely
+
+### Removed
+
+- `.travis.yml`, (Travis CI is no longer available for open source projects)
+
 ## 0.1.9 - 02-08-2020
 
 ### Added
@@ -25,7 +59,7 @@ Notable changes
 
 ### Added
 
-- Added worker pool to [limit the number thread](https://github.com/FFMG/myoddweb.directorywatcher/issues/8)
+- Added worker pool to [limit the number of threads](https://github.com/FFMG/myoddweb.directorywatcher/issues/8)
 - Added `Ready()` to interface so we can ask if/when the system is ready to monitor files/folders.
 - Added basic statistics, (see `IStatistics`), to the directory watcher added event `OnStatisticsAsync`
   - Number of events
@@ -58,7 +92,7 @@ Notable changes
 
 ### Added
 
-- Instrumentation, [Thanks to The Cherno / Hazel project)](https://github.com/TheCherno/Hazel/)
+- Instrumentation, [thanks to The Cherno / Hazel project](https://github.com/TheCherno/Hazel/)
   The flag `MYODDWEB_PROFILE` needs to be set to 1.
 - Version number for unmanaged `myoddweb.directorywatcher` helper.
 - A whole lot of unit tests.
@@ -88,7 +122,7 @@ Notable changes
 
 ### Fixed
 
-- Replaced /MD > /MT to insure smoother loading of embedded files.
+- Replaced /MD > /MT to ensure smoother loading of embedded files.
 
 ### Removed
 

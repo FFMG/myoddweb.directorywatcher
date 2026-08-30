@@ -27,7 +27,7 @@ namespace myoddweb:: directorywatcher:: threads
     /// Add a worker to the pool of workers.
     /// </summary>
     /// <param name="worker">The worker we want to add.</param>
-    void Add(Worker& worker);
+    void add(Worker& worker);
 
     /// <summary>
     /// Wait for a worker to either complete or timeout
@@ -35,20 +35,20 @@ namespace myoddweb:: directorywatcher:: threads
     /// <param name="worker">The worker we will be waiting for</param>
     /// <param name="timeout">How long to wait for.</param>
     /// <returns>Either complete or timeout</returns>
-    WaitResult WaitFor(Worker& worker, long long timeout);
+    WaitResult wait_for(Worker& worker, long long timeout);
 
     /// <summary>
     /// Wait for all the workers to either finish or the timeout.
     /// </summary>
     /// <param name="timeout">How long to wait for.</param>
     /// <returns>Either complete or timeout</returns>
-    WaitResult WaitFor(long long timeout) override;
+    WaitResult wait_for(long long timeout) override;
 
     /// <summary>
     /// Signal a single worker to stop.
     /// </summary>
     /// <param name="worker"></param>
-    void StopWorker(Worker& worker);
+    void stop_worker(Worker& worker);
 
     /// <summary>
     /// Stop one or more workers and wait for them to complete.
@@ -57,7 +57,7 @@ namespace myoddweb:: directorywatcher:: threads
     /// <param name="workers">The workers we are waiting for.</param>
     /// <param name="timeout">How long we want to wait for.</param>
     /// <returns>Either complete if everything completed or timeout</returns>
-    WaitResult StopAndWait(const std::vector<Worker*>& workers, long long timeout);
+    WaitResult stop_and_wait(const std::vector<Worker*>& workers, long long timeout);
 
     /// <summary>
     /// Wait for a single engine worker to complete and wait for it to complete.
@@ -65,14 +65,14 @@ namespace myoddweb:: directorywatcher:: threads
     /// <param name="worker">The worker we are waiting for.</param>
     /// <param name="timeout">How long we want to wait for.</param>
     /// <returns>Either complete if everything completed or timeout</returns>
-    WaitResult StopAndWait(Worker& worker, long long timeout);
+    WaitResult stop_and_wait(Worker& worker, long long timeout);
 
     /// <summary>
     /// Stop alll the workers and wait for them all to complete.
     /// </summary>
     /// <param name="timeout">The number of ms we want to wait for</param>
     /// <returns>Either timeout or complete if all the workers completed</returns>
-    WaitResult StopAndWait(long long timeout) override;
+    WaitResult stop_and_wait(long long timeout) override;
     #pragma endregion
 
   protected:
@@ -80,25 +80,25 @@ namespace myoddweb:: directorywatcher:: threads
     /// <summary>
     /// Called when we want to stop
     /// </summary>
-    void OnWorkerStop() override;
+    void on_worker_stop() override;
 
     /// <summary>
     /// Called when whend the pool is starting
     /// </summary>
     /// <returns></returns>
-    bool OnWorkerStart() override;
+    bool on_worker_start() override;
 
     /// <summary>
     /// Called at regular intervals
     /// </summary>
     /// <param name="fElapsedTimeMilliseconds"></param>
     /// <returns>False if we want to end the pool or true if we want to continue</returns>
-    bool OnWorkerUpdate(float fElapsedTimeMilliseconds) override;
+    bool on_worker_update(float fElapsedTimeMilliseconds) override;
 
     /// <summary>
     /// When the worker pool has ended.
     /// </summary>
-    void OnWorkerEnd() override;
+    void on_worker_end() override;
     #pragma endregion
 
   private:
@@ -127,27 +127,99 @@ namespace myoddweb:: directorywatcher:: threads
 
       ~Futures()
       {
-        FreeUpdate();
-        FreeEnd();
+        free_update();
+        free_end();
       }
 
-      void SetUpdate(std::future<bool>* update )
+      void set_update(std::future<bool>* update )
       {
-        FreeUpdate();
+        free_update();
         _update = update;
       }
 
-      void SetEnd(std::future<void>* end)
+      void set_end(std::future<void>* end)
       {
-        FreeEnd();
+        free_end();
         _end = end;
       }
 
-      std::future<bool>* _update;
-      std::future<void>* _end;
+      [[nodiscard]]
+      bool has_update() const
+      {
+        return _update != nullptr;
+      }
+
+      [[nodiscard]]
+      bool has_end() const
+      {
+        return _end != nullptr;
+      }
+
+      [[nodiscard]]
+      bool is_update_valid() const
+      {
+        return _update != nullptr && _update->valid();
+      }
+
+      [[nodiscard]]
+      bool is_end_valid() const
+      {
+        return _end != nullptr && _end->valid();
+      }
+
+      [[nodiscard]]
+      bool is_update_ready(const std::chrono::milliseconds& wait) const
+      {
+        return _update->wait_for(wait) == std::future_status::ready;
+      }
+
+      [[nodiscard]]
+      bool is_end_ready(const std::chrono::milliseconds& wait) const
+      {
+        return _end->wait_for(wait) == std::future_status::ready;
+      }
+
+      /// <summary>
+      /// Discard the update future, (it is no longer valid), without consuming a result.
+      /// </summary>
+      void discard_update()
+      {
+        delete _update;
+        _update = nullptr;
+      }
+
+      /// <summary>
+      /// Discard the end future, (it is no longer valid), without consuming a result.
+      /// </summary>
+      void discard_end()
+      {
+        delete _end;
+        _end = nullptr;
+      }
+
+      /// <summary>
+      /// Consume and return the result of a completed update future, then delete it.
+      /// </summary>
+      bool take_update_result()
+      {
+        const auto result = _update->get();
+        delete _update;
+        _update = nullptr;
+        return result;
+      }
+
+      /// <summary>
+      /// Consume the result of a completed end future, then delete it.
+      /// </summary>
+      void take_end_result()
+      {
+        _end->get();
+        delete _end;
+        _end = nullptr;
+      }
 
     private:
-      void FreeUpdate()
+      void free_update()
       {
         if (_update != nullptr && _update->valid())
         {
@@ -156,7 +228,7 @@ namespace myoddweb:: directorywatcher:: threads
         delete _update;
         _update = nullptr;
       }
-      void FreeEnd()
+      void free_end()
       {
         if (_end != nullptr && _end->valid())
         {
@@ -165,42 +237,212 @@ namespace myoddweb:: directorywatcher:: threads
         delete _end;
         _end = nullptr;
       }
+
+      std::future<bool>* _update;
+      std::future<void>* _end;
+    };
+
+    /// <summary>
+    /// Call the protected/friend-only Worker::worker_end() on the given worker.
+    /// Exists so our private predicate/task functors, (which are not themselves
+    /// friends of Worker), can reach it through us.
+    /// </summary>
+    /// <param name="worker">The worker we want to end.</param>
+    void worker_end_now(Worker& worker) const;
+
+    /// <summary>
+    /// Call the protected/friend-only Worker::worker_update_once() on the given worker.
+    /// Exists so our private predicate/task functors, (which are not themselves
+    /// friends of Worker), can reach it through us.
+    /// </summary>
+    /// <param name="worker">The worker we want to update.</param>
+    /// <param name="fElapsedTimeMilliseconds">The elapsed time to pass on.</param>
+    /// <returns>True if we want to continue or false if we want to stop.</returns>
+    bool worker_update_once_now(Worker& worker, float fElapsedTimeMilliseconds) const;
+
+    /// <summary>
+    /// Task used to add a worker to the pool asynchronously.
+    /// </summary>
+    struct add_worker_task final
+    {
+    public:
+      add_worker_task(WorkerPool& pool, Worker& worker) :
+        _pool(pool),
+        _worker(worker)
+      {
+      }
+
+      void operator()() const
+      {
+        _pool.add_worker(_worker);
+      }
+
+    private:
+      WorkerPool& _pool;
+      Worker& _worker;
+    };
+
+    /// <summary>
+    /// Task used to stop a single worker, (if it still exists), from within a std::for_each.
+    /// </summary>
+    struct stop_worker_task final
+    {
+    public:
+      stop_worker_task(WorkerPool& pool, const long long timeout) :
+        _pool(pool),
+        _timeout(timeout)
+      {
+      }
+
+      void operator()(Worker* worker) const
+      {
+        if (_pool.exists(*worker))
+        {
+          worker->stop_and_wait(_timeout);
+        }
+      }
+
+    private:
+      WorkerPool& _pool;
+      long long _timeout;
+    };
+
+    /// <summary>
+    /// Task used to call worker_end() on a worker asynchronously.
+    /// </summary>
+    struct worker_end_task final
+    {
+    public:
+      worker_end_task(const WorkerPool& pool, Worker& worker) :
+        _pool(pool),
+        _worker(worker)
+      {
+      }
+
+      void operator()() const
+      {
+        _pool.worker_end_now(_worker);
+      }
+
+    private:
+      const WorkerPool& _pool;
+      Worker& _worker;
+    };
+
+    /// <summary>
+    /// Task used to call worker_update_once() on a worker asynchronously.
+    /// </summary>
+    struct worker_update_once_task final
+    {
+    public:
+      worker_update_once_task(const WorkerPool& pool, Worker& worker, const float fElapsedTimeMilliseconds) :
+        _pool(pool),
+        _worker(worker),
+        _fElapsedTimeMilliseconds(fElapsedTimeMilliseconds)
+      {
+      }
+
+      bool operator()() const
+      {
+        return _pool.worker_update_once_now(_worker, _fElapsedTimeMilliseconds);
+      }
+
+    private:
+      const WorkerPool& _pool;
+      Worker& _worker;
+      float _fElapsedTimeMilliseconds;
+    };
+
+    /// <summary>
+    /// Predicate checking if all the futures for a given list of workers are complete.
+    /// </summary>
+    struct all_futures_in_list_complete_predicate final
+    {
+    public:
+      all_futures_in_list_complete_predicate(WorkerPool& pool, const std::vector<Worker*>& workers) :
+        _pool(pool),
+        _workers(workers)
+      {
+      }
+
+      bool operator()() const;
+
+    private:
+      WorkerPool& _pool;
+      const std::vector<Worker*>& _workers;
+    };
+
+    /// <summary>
+    /// Predicate checking if all the futures we know about are complete.
+    /// </summary>
+    struct all_futures_complete_predicate final
+    {
+    public:
+      explicit all_futures_complete_predicate(WorkerPool& pool) :
+        _pool(pool)
+      {
+      }
+
+      bool operator()() const;
+
+    private:
+      WorkerPool& _pool;
+    };
+
+    /// <summary>
+    /// Predicate checking if we no longer have any pending "add" futures.
+    /// </summary>
+    struct no_add_futures_pending_predicate final
+    {
+    public:
+      explicit no_add_futures_pending_predicate(WorkerPool& pool) :
+        _pool(pool)
+      {
+      }
+
+      bool operator()() const
+      {
+        return !_pool.has_add_futures_pending();
+      }
+
+    private:
+      WorkerPool& _pool;
     };
 
     /// <summary>
     /// Safely add a container to the list.
     /// </summary>
     /// <param name="worker">The container to add.</param>
-    void AddWorker(Worker& worker);
+    void add_worker(Worker& worker);
 
     /// <summary>
     /// Get the current number of running workers
     /// </summary>
     /// <returns>Num number of workers</returns>
-    int NumberOfIncompleteWorkers() const;
+    int number_of_incomplete_workers() const;
 
     /// <summary>
     /// Safely start the worker thread if needed.
     /// </summary>
-    void StartWorkerThreadIfNeeded();
+    void start_worker_thread_if_needed();
 
     /// <summary>
     /// Delete the worker thread if the work is complete
     /// So that it can be re-used if needed.
     /// </summary>
-    void DeleteWorkerThreadIfComplete();
+    void delete_worker_thread_if_complete();
 
     /// <summary>
     /// Send a motification to stop all the workers.
     /// </summary>
-    void StopAllWorkers();
+    void stop_all_workers();
 
     /// <summary>
     /// Check if the worker is one of our workers
     /// </summary>
     /// <param name="worker"></param>
     /// <returns></returns>
-    bool Exists(Worker& worker) const;
+    bool exists(Worker& worker) const;
 
     /// <summary>
     /// Get the future for a worker while we have the lock
@@ -208,7 +450,7 @@ namespace myoddweb:: directorywatcher:: threads
     /// </summary>
     /// <param name="worker">The worker we are looking for</param>
     /// <returns>The future</returns>
-    Futures* GetFuturesWorkerInLock(Worker& worker) const;
+    Futures* get_futures_worker_in_lock(Worker& worker) const;
 
     /// <summary>
     /// Update a single worker in a lock, either check the result or create a result
@@ -216,13 +458,13 @@ namespace myoddweb:: directorywatcher:: threads
     /// <param name="worker"></param>
     /// <param name="fElapsedTimeMilliseconds"></param>
     /// <returns>True if we want to continue or false if we want to stop.</returns>
-    bool UpdateOnceInLock(Worker& worker, float fElapsedTimeMilliseconds);
+    bool update_once_in_lock(Worker& worker, float fElapsedTimeMilliseconds);
 
     /// <summary>
     /// Call the worker end for this worker and create a future for it.
     /// </summary>
     /// <param name="worker"></param>
-    void WorkerEndInLock(Worker& worker);
+    void worker_end_in_lock(Worker& worker);
 
     /// <summary>
     /// Get the state of the future, (complete, running, ...)
@@ -230,7 +472,7 @@ namespace myoddweb:: directorywatcher:: threads
     /// </summary>
     /// <param name="worker"></param>
     /// <returns></returns>
-    FutureEndState GetUpdateFutureEndStateInLock(Worker& worker) const;
+    FutureEndState get_update_future_end_state_in_lock(Worker& worker) const;
 
     /// <summary>
     /// Get the state of the future, (complete, running, ...)
@@ -238,7 +480,7 @@ namespace myoddweb:: directorywatcher:: threads
     /// </summary>
     /// <param name="worker"></param>
     /// <returns></returns>
-    FutureEndState GetEndFutureEndStateInLock(Worker& worker) const;
+    FutureEndState get_end_future_end_state_in_lock(Worker& worker) const;
 
     /// <summary>
     /// Wait for all the workers that still have a future to complete
@@ -246,7 +488,7 @@ namespace myoddweb:: directorywatcher:: threads
     /// </summary>
     /// <param name="timeout">How long we are prepared to wait for.</param>
     /// <returns></returns>
-    WaitResult WaitForAllFuturesToComplete(long long timeout);
+    WaitResult wait_for_all_futures_to_complete(long long timeout);
 
     /// <summary>
     /// Wait for all the futures in a list of workers to complete.
@@ -254,23 +496,23 @@ namespace myoddweb:: directorywatcher:: threads
     /// <param name="workers">The workers</param>
     /// <param name="timeout">How long we want to wait</param>
     /// <returns></returns>
-    WaitResult WaitForAllFuturesToComplete( const std::vector<Worker*>& workers, long long timeout);
+    WaitResult wait_for_all_futures_to_complete( const std::vector<Worker*>& workers, long long timeout);
 
     /// <summary>
     /// Remove all the completed workers from the list and free the memories
     /// </summary>
-    void RemoveAllCompletedWorkers();
+    void remove_all_completed_workers();
 
     /// <summary>
     /// Check if we still have some pending "Add" futures.
     /// </summary>
     /// <returns></returns>
-    bool HasAddFuturesPending();
+    bool has_add_futures_pending();
 
     /// <summary>
     /// Wait for all the add futures to complete.
     /// </summary>
-    void WaitForAllAddFuturesPending();
+    void wait_for_all_add_futures_pending();
 
     /// <summary>
     /// Start all the workers that have yet to start
@@ -278,8 +520,8 @@ namespace myoddweb:: directorywatcher:: threads
     /// Or if we have no worker pending.
     /// </summary>
     /// <returns></returns>
-    bool StartAllPendingWorkers();
-    #pragma endregion 
+    bool start_all_pending_workers();
+    #pragma endregion
 
     #pragma region Member Variables
     /// <summary>

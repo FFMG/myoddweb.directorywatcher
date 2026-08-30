@@ -5,6 +5,9 @@
 #include <string>
 
 #include "../utils/Instrumentor.h"
+#include "../utils/Io.h"
+#include "../utils/Logger.h"
+#include "../utils/LogLevel.h"
 #include "win/Directories.h"
 #include "win/Files.h"
 
@@ -24,8 +27,8 @@ namespace myoddweb:: directorywatcher
     * \param workerPool the worker pool
     * \param request details of the request.
     */
-  WinMonitor::WinMonitor(const long long id, const long long parentId, threads::WorkerPool& workerPool, const Request& request) :
-    WinMonitor(id, parentId, workerPool, request, max_buffer_size)
+  WinMonitor::WinMonitor(const long long id, const long long parentId, threads::WorkerPool& workerPool, const Request& request, const bool catchUpOnExistingEntries) :
+    WinMonitor(id, parentId, workerPool, request, max_buffer_size, catchUpOnExistingEntries)
   {
   }
 
@@ -48,13 +51,16 @@ namespace myoddweb:: directorywatcher
    * \param workerPool the worker pool
    * \param request details of the request.
    * \param bufferLength the size of the buffer
+   * \param catchUpOnExistingEntries if true, report this folder's existing
+   *        contents as "Added" once the watch is armed, (see issue #20).
    */
-  WinMonitor::WinMonitor(const long long id, const long long parentId, threads::WorkerPool& workerPool, const Request& request, const unsigned long bufferLength) :
+  WinMonitor::WinMonitor(const long long id, const long long parentId, threads::WorkerPool& workerPool, const Request& request, const unsigned long bufferLength, const bool catchUpOnExistingEntries) :
     Monitor( id, workerPool, request),
     _directories(nullptr),
     _files(nullptr),
     _bufferLength(bufferLength),
-    _parentId( parentId )
+    _parentId( parentId ),
+    _catchUpOnExistingEntries( catchUpOnExistingEntries )
   {
   }
 
@@ -64,7 +70,7 @@ namespace myoddweb:: directorywatcher
    * \brief get the id of the parent, the owner of all the monitors.
    * \return the parent id.
    */
-  const long long& WinMonitor::ParentId() const
+  const long long& WinMonitor::parent_id() const
   {
     return _parentId;
   }
@@ -73,24 +79,24 @@ namespace myoddweb:: directorywatcher
    * \brief process the collected events add/remove them.
    * \param events the collected events.
    */
-  void WinMonitor::OnGetEvents(std::vector<Event*>& events)
+  void WinMonitor::on_get_events(std::vector<event*>& events)
   {
     //  nothing to do
   }
 
-  void WinMonitor::OnWorkerStop()
+  void WinMonitor::on_worker_stop()
   {
     // we can now stop us.
-    Monitor::OnWorkerStop();
+    Monitor::on_worker_stop();
 
     // stop the files and directory
     if (_directories != nullptr)
     {
-      _directories->Stop();
+      _directories->stop();
     }
     if (_files != nullptr)
     {
-      _files->Stop();
+      _files->stop();
     }
   }
 
@@ -98,7 +104,7 @@ namespace myoddweb:: directorywatcher
    * \brief called when the worker is ready to start
    *        return false if you do not wish to start the worker.
    */
-  bool WinMonitor::OnWorkerStart()
+  bool WinMonitor::on_worker_start()
   {
     MYODDWEB_PROFILE_FUNCTION();
     try
@@ -107,7 +113,7 @@ namespace myoddweb:: directorywatcher
       _directories = new win::Directories(*this, _bufferLength);
 
       // add the files as well as the directories to the worker pool.
-      if( !_directories->Start() )
+      if( !_directories->start() )
       {
         delete _directories;
         _directories = nullptr;
@@ -117,9 +123,9 @@ namespace myoddweb:: directorywatcher
       // and then the files monitor.
       _files = new win::Files(*this, _bufferLength);
 
-      if( !_files->Start() )
+      if( !_files->start() )
       {
-        _directories->Stop();
+        _directories->stop();
         delete _directories;
         _directories = nullptr;
 
@@ -128,14 +134,45 @@ namespace myoddweb:: directorywatcher
 
         return false;
       }
-    
+
+      // the watch is armed now: report anything that was already on disk
+      // the instant we started, (or created in the gap before we started),
+      // so a bulk copy-paste into a newly-added folder is not silently
+      // lost. \see https://github.com/FFMG/myoddweb.directorywatcher/issues/20
+      if (_catchUpOnExistingEntries)
+      {
+        catch_up_on_existing_entries();
+      }
+
       // all done
-      return Monitor::OnWorkerStart();
+      return Monitor::on_worker_start();
     }
     catch( ... )
     {
-      SaveCurrentException();
+      save_current_exception();
       return false;
+    }
+  }
+
+  /**
+   * \brief report anything already inside this folder as synthetic "Added"
+   *        events. \see https://github.com/FFMG/myoddweb.directorywatcher/issues/20
+   */
+  void WinMonitor::catch_up_on_existing_entries()
+  {
+    MYODDWEB_PROFILE_FUNCTION();
+    try
+    {
+      for (const auto& entry : Io::get_all_files_and_folders(path(), recursive()))
+      {
+        add_event(EventAction::Added, entry.first, entry.second);
+      }
+    }
+    catch (...)
+    {
+      // never let a scan failure prevent the monitor from running -- we
+      // still have live ReadDirectoryChangesW notifications going forward.
+      Logger::log(id(), LogLevel::Warning, L"Unable to complete catch-up scan for: %s", path());
     }
   }
 
@@ -146,35 +183,35 @@ namespace myoddweb:: directorywatcher
    * \param fElapsedTimeMilliseconds the amount of time since the last time we made this call.
    * \return true if we want to continue or false if we want to end the thread
    */
-  bool WinMonitor::OnWorkerUpdate( const float fElapsedTimeMilliseconds )
+  bool WinMonitor::on_worker_update( const float fElapsedTimeMilliseconds )
   {
     MYODDWEB_PROFILE_FUNCTION();
     try
     {
-      if (!MustStop())
+      if (!must_stop())
       {
-        _directories->Update();
-        _files->Update();
+        _directories->update();
+        _files->update();
       }
     }
     catch( ... )
     {
-      SaveCurrentException();
+      save_current_exception();
     }
-    return Monitor::OnWorkerUpdate(fElapsedTimeMilliseconds);
+    return Monitor::on_worker_update(fElapsedTimeMilliseconds);
   }
 
   /**
    * \brief called when the worker has completed
    */
-  void WinMonitor::OnWorkerEnd()
+  void WinMonitor::on_worker_end()
   {
     MYODDWEB_PROFILE_FUNCTION();
-    Monitor::OnWorkerEnd();
+    Monitor::on_worker_end();
 
     delete _directories;
     _directories = nullptr;
-          
+
     delete _files;
     _files = nullptr;
   }

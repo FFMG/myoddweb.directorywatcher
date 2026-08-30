@@ -9,7 +9,7 @@ namespace myoddweb::directorywatcher
 
   Logger::Logger() = default;
 
-  Logger& Logger::Instance()
+  Logger& Logger::instance()
   {
     return _instance;
   }
@@ -19,31 +19,31 @@ namespace myoddweb::directorywatcher
    * \param id the id we are logging for.
    * \param logger the logger we are adding.
    */
-  void Logger::Add( const long long id, const LoggerCallback& logger)
+  void Logger::add( const long long id, const LoggerCallback& logger)
   {
     if( nullptr == logger )
     {
       return;
     }
     MYODDWEB_LOCK(_lock);
-    Instance()._loggers[id] = logger;
+    instance()._loggers[id] = logger;
   }
 
   /**
    * \brief remove a logger from the list.
    * \param id the id we are logging for.
    */
-  void Logger::Remove(const long long id)
+  void Logger::remove(const long long id)
   {
     MYODDWEB_LOCK(_lock);
     for(;;)
     {
-      const auto logger = Instance()._loggers.find(id);
-      if( logger == Instance()._loggers.end())
+      const auto logger = instance()._loggers.find(id);
+      if( logger == instance()._loggers.end())
       {
         break;
       }
-      Instance()._loggers.erase(logger);
+      instance()._loggers.erase(logger);
     }
   }
 
@@ -53,27 +53,27 @@ namespace myoddweb::directorywatcher
    * \param format the message format
    * \param ... the parametters
    */
-  void Logger::Log(const LogLevel level, const wchar_t* format, ...) noexcept
+  void Logger::log(const LogLevel level, const wchar_t* format, ...) noexcept
   {
     try
     {
       //  shortcut
-      if (!HasAnyLoggers())
+      if (!has_any_loggers())
       {
         return;
       }
 
       va_list args;
       va_start(args, format);
-      const auto message = MakeMessage(format, args);
+      const auto message = make_message(format, args);
       va_end(args);
 
       MYODDWEB_LOCK(_lock);
-      for (const auto& logger : Instance()._loggers)
+      for (const auto& logger : instance()._loggers)
       {
         try
         {
-          Log(logger.second, 0, level, message.c_str());
+          log(logger.second, 0, level, message.c_str());
         }
         catch (...)
         {
@@ -95,30 +95,30 @@ namespace myoddweb::directorywatcher
    * \param format the message format
    * \param ... the parametters
    */
-  void Logger::Log(const long long id, const LogLevel level, const wchar_t* format, ...) noexcept
+  void Logger::log(const long long id, const LogLevel level, const wchar_t* format, ...) noexcept
   {
     try
     {
       //  shortcut
-      if (!HasAnyLoggers())
+      if (!has_any_loggers())
       {
         return;
       }
 
       va_list args;
       va_start(args, format);
-      const auto message = MakeMessage(format, args);
+      const auto message = make_message(format, args);
       va_end(args);
 
       MYODDWEB_LOCK(_lock);
       if (id != 0)
       {
-        const auto logger = Instance()._loggers.find(id);
-        if (logger != Instance()._loggers.end())
+        const auto logger = instance()._loggers.find(id);
+        if (logger != instance()._loggers.end())
         {
           try
           {
-            Log(logger->second, id, level, message.c_str());
+            log(logger->second, id, level, message.c_str());
           }
           catch (...)
           {
@@ -130,11 +130,11 @@ namespace myoddweb::directorywatcher
       else
       {
         // the value was 0 so we will send to all.
-        for (const auto& logger : Instance()._loggers)
+        for (const auto& logger : instance()._loggers)
         {
           try
           {
-            Log(logger.second, id, level, message.c_str());
+            log(logger.second, id, level, message.c_str());
           }
           catch (...)
           {
@@ -157,7 +157,7 @@ namespace myoddweb::directorywatcher
    * \param level the message log level
    * \param message the message we want to log.
    */
-  void Logger::Log(const LoggerCallback& logger, const long long id, const LogLevel level, const wchar_t* message) noexcept
+  void Logger::log(const LoggerCallback& logger, const long long id, const LogLevel level, const wchar_t* message) noexcept
   {
     if( nullptr == logger)
     {
@@ -182,10 +182,10 @@ namespace myoddweb::directorywatcher
   /**
    * \brief check if we have any loggers in our list
    */
-  bool Logger::HasAnyLoggers() noexcept
+  bool Logger::has_any_loggers() noexcept
   {
     MYODDWEB_LOCK(_lock);
-    return !Instance()._loggers.empty();
+    return !instance()._loggers.empty();
   }
 
 
@@ -194,7 +194,7 @@ namespace myoddweb::directorywatcher
    * \param format the message format
    * \param args the list of arguments.
    */
-  std::wstring Logger::MakeMessage(const wchar_t* format, const va_list args)noexcept
+  std::wstring Logger::make_message(const wchar_t* format, const va_list args)noexcept
   {
     try
     {
@@ -213,9 +213,8 @@ namespace myoddweb::directorywatcher
 
       // build the string
       std::wstring output;
-      const auto buffSize = size + 1;
-      output.reserve(buffSize);
-      if (vswprintf_s(output.data(), buffSize, format, args) < 0)// create the string
+      output.resize(size);
+      if (vswprintf_s(output.data(), size + 1, format, args) < 0)// create the string
       {
         output.clear();                                     // Empty the string if there is a problem
       }

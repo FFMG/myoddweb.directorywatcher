@@ -25,7 +25,7 @@ namespace myoddweb::directorywatcher
 {
   using FloatingPointMicroseconds = std::chrono::duration<double, std::micro>;
 
-  struct ProfileResult
+  struct profile_result
   {
     std::string Name;
 
@@ -34,7 +34,7 @@ namespace myoddweb::directorywatcher
     std::thread::id ThreadID;
   };
 
-  struct InstrumentationSession
+  struct instrumentation_session
   {
     std::string Name;
   };
@@ -43,7 +43,7 @@ namespace myoddweb::directorywatcher
   {
   private:
     std::mutex m_Mutex;
-    InstrumentationSession* m_CurrentSession;
+    instrumentation_session* m_CurrentSession;
     std::ofstream m_OutputStream;
   public:
     Instrumentor()
@@ -51,7 +51,7 @@ namespace myoddweb::directorywatcher
     {
     }
 
-    void BeginSession(const std::string& name, const std::string& filepath = "results.json")
+    void begin_session(const std::string& name, const std::string& filepath = "results.json")
     {
       std::lock_guard lock(m_Mutex);
       if (m_CurrentSession)
@@ -60,15 +60,15 @@ namespace myoddweb::directorywatcher
         // Subsequent profiling output meant for the original session will end up in the
         // newly opened session instead.  That's better than having badly formatted
         // profiling output.
-        //MYODDWEB_OUT("Instrumentor::BeginSession('{0}') when session '{1}' already open.", name, m_CurrentSession->Name);
-        InternalEndSession();
+        //MYODDWEB_OUT("Instrumentor::begin_session('{0}') when session '{1}' already open.", name, m_CurrentSession->Name);
+        internal_end_session();
       }
       m_OutputStream.open(filepath);
 
       if (m_OutputStream.is_open())
       {
-        m_CurrentSession = new InstrumentationSession({ name });
-        WriteHeader();
+        m_CurrentSession = new instrumentation_session({ name });
+        write_header();
       }
       else
       {
@@ -76,13 +76,13 @@ namespace myoddweb::directorywatcher
       }
     }
 
-    void EndSession()
+    void end_session()
     {
       std::lock_guard lock(m_Mutex);
-      InternalEndSession();
+      internal_end_session();
     }
 
-    void WriteProfile(const ProfileResult& result)
+    void write_profile(const profile_result& result)
     {
       std::stringstream json;
 
@@ -105,7 +105,7 @@ namespace myoddweb::directorywatcher
       }
     }
 
-    static Instrumentor& Get()
+    static Instrumentor& get()
     {
       static Instrumentor instance;
       return instance;
@@ -113,25 +113,25 @@ namespace myoddweb::directorywatcher
 
   private:
 
-    void WriteHeader()
+    void write_header()
     {
       m_OutputStream << "{\"otherData\": {},\"traceEvents\":[{}";
       m_OutputStream.flush();
     }
 
-    void WriteFooter()
+    void write_footer()
     {
       m_OutputStream << "]}";
       m_OutputStream.flush();
     }
 
     // Note: you must already own lock on m_Mutex before
-    // calling InternalEndSession()
-    void InternalEndSession()
+    // calling internal_end_session()
+    void internal_end_session()
     {
       if (m_CurrentSession)
       {
-        WriteFooter();
+        write_footer();
         m_OutputStream.close();
         delete m_CurrentSession;
         m_CurrentSession = nullptr;
@@ -152,16 +152,16 @@ namespace myoddweb::directorywatcher
     ~InstrumentationTimer()
     {
       if (!m_Stopped)
-        Stop();
+        stop();
     }
 
-    void Stop()
+    void stop()
     {
       auto endTimepoint = std::chrono::steady_clock::now();
       auto highResStart = FloatingPointMicroseconds{ m_StartTimepoint.time_since_epoch() };
       auto elapsedTime = std::chrono::time_point_cast<std::chrono::microseconds>(endTimepoint).time_since_epoch() - std::chrono::time_point_cast<std::chrono::microseconds>(m_StartTimepoint).time_since_epoch();
 
-      Instrumentor::Get().WriteProfile({ m_Name, highResStart, elapsedTime, std::this_thread::get_id() });
+      Instrumentor::get().write_profile({ m_Name, highResStart, elapsedTime, std::this_thread::get_id() });
 
       m_Stopped = true;
     }
@@ -174,15 +174,15 @@ namespace myoddweb::directorywatcher
   namespace InstrumentorUtils {
 
     template <size_t N>
-    struct ChangeResult
+    struct change_result
     {
       char Data[N];
     };
 
     template <size_t N, size_t K>
-    constexpr auto CleanupOutputString(const char(&expr)[N], const char(&remove)[K])
+    constexpr auto cleanup_output_string(const char(&expr)[N], const char(&remove)[K])
     {
-      ChangeResult<N> result = {};
+      change_result<N> result = {};
 
       size_t srcIndex = 0;
       size_t dstIndex = 0;
@@ -216,8 +216,8 @@ namespace myoddweb::directorywatcher
   #if !defined(_DEBUG)
     #error "You cannot use profiling in release mode!"
   #endif
-  #define MYODDWEB_PROFILE_BEGIN_SESSION(name, filepath) ::myoddweb::directorywatcher::Instrumentor::Get().BeginSession(name, filepath)
-  #define MYODDWEB_PROFILE_END_SESSION() ::myoddweb::directorywatcher::Instrumentor::Get().EndSession()
+  #define MYODDWEB_PROFILE_BEGIN_SESSION(name, filepath) ::myoddweb::directorywatcher::Instrumentor::get().begin_session(name, filepath)
+  #define MYODDWEB_PROFILE_END_SESSION() ::myoddweb::directorywatcher::Instrumentor::get().end_session()
   #define MYODDWEB_PROFILE_SCOPE(name) ::myoddweb::directorywatcher::InstrumentationTimer timer##__LINE__(name);
   #define MYODDWEB_PROFILE_FUNCTION() MYODDWEB_PROFILE_SCOPE(__FUNCSIG__)
 #else

@@ -13,6 +13,36 @@
 
 namespace myoddweb:: directorywatcher:: win
 {
+  namespace
+  {
+    /**
+     * \brief predicate used while waiting for the operation-aborted message.
+     */
+    struct operation_aborted_predicate final
+    {
+      explicit operation_aborted_predicate(std::atomic<bool>& operationAborted) :
+        _operationAborted(operationAborted)
+      {
+      }
+
+      bool operator()() const
+      {
+        if( _operationAborted != true )
+        {
+          // wait a little to ensure that the aborted message is given.
+          // we will return as soon as the message is recived.
+          // if we do not wait for the abort message, we might get other
+          // messages out of sequence.
+          MYODDWEB_YIELD();
+        }
+        return _operationAborted == true;
+      }
+
+    private:
+      std::atomic<bool>& _operationAborted;
+    };
+  }
+
   Data::Data(
     const long long id,
     const wchar_t* path,
@@ -41,29 +71,29 @@ namespace myoddweb:: directorywatcher:: win
 
   Data::~Data()
   {
-    StopAndWait();
+    stop_and_wait();
   }
 
   /**
    * \brief prepare the various buffer for changes.
    */
-  void Data::PrepareForRead()
+  void Data::prepare_for_read()
   {
     MYODDWEB_PROFILE_FUNCTION();
     if( _operationAborted || _colectionState != CollectionState::Started )
     {
       return;
     }
-    
+
     // restart the buffer.
     memset(_buffer, 0, sizeof(unsigned char)*_bufferLength);
 
-    // reset our overlappped object
-    ClearOverlapped();
-
-    // create a new one with our own data
-    _overlapped = new OVERLAPPED_DATA();
-    memset(_overlapped, 0, sizeof(OVERLAPPED_DATA));
+    // reuse or allocate our overlapped object
+    if (_overlapped == nullptr)
+    {
+      _overlapped = new OVERLAPPED_DATA();
+    }
+    memset(static_cast<_OVERLAPPED*>(_overlapped), 0, sizeof(OVERLAPPED_DATA));
 
     // save the handle as well as this class so we can access it later.
     _overlapped->hEvent = _hDirectory;
@@ -77,7 +107,7 @@ namespace myoddweb:: directorywatcher:: win
    * \brief start monitoring the given folder.
    * \return if we managed to start the monitoring or not.
    */
-  bool Data::Start()
+  bool Data::start()
   {
     // only start if we are unknown
     // otherwise just get out
@@ -89,10 +119,10 @@ namespace myoddweb:: directorywatcher:: win
 
     // try and open the directory
     // if it is open already then nothing should happen here.
-    if (!OpenDirectoryHandle())
+    if (!open_directory_handle())
     {
       // we could not access this
-      Logger::Log(_id, LogLevel::Warning, L"Unable to read directory: %s", _path.c_str());
+      Logger::log(_id, LogLevel::Warning, L"Unable to read directory: %s", _path.c_str());
       return false;
     }
 
@@ -100,33 +130,33 @@ namespace myoddweb:: directorywatcher:: win
     _invalidHandleWait = 0;
 
     // start reading.
-    Listen();
+    listen();
     return true;
   }
 
   /// <summary>
   /// Stop monitoring data and wait for the work to complete.
   /// </summary>
-  void Data::StopAndWait()
+  void Data::stop_and_wait()
   {
     MYODDWEB_LOCK(_stopWorkerLock);
 
     //  call the stop
-    StopInLock();
+    stop_in_lock();
 
     if (_stopWorker != nullptr)
     {
-      _workerPool.WaitFor(*_stopWorker, -1);
+      _workerPool.wait_for(*_stopWorker, -1);
 
       // and then wait for it to complete
-      const auto wr = _stopWorker->StopAndWait(-1);
+      const auto wr = _stopWorker->stop_and_wait(-1);
       if( wr != threads::WaitResult::complete )
       {
-        Logger::Log(LogLevel::Error, L"Unable to complete Data worker" );
+        Logger::log(LogLevel::Error, L"Unable to complete Data worker" );
       }
 
       // we are done with this worker
-      _workerPool.StopAndWait(*_stopWorker, -1 );
+      _workerPool.stop_and_wait(*_stopWorker, -1 );
 
       // we are done with this worker
       delete _stopWorker;
@@ -140,16 +170,16 @@ namespace myoddweb:: directorywatcher:: win
   /**
    * \brief Clear all the data and close all connections handles.
    */
-  void Data::Stop()
+  void Data::stop()
   {
     MYODDWEB_LOCK(_stopWorkerLock);
-    StopInLock();
+    stop_in_lock();
   }
 
   /// <summary>
   /// Stop monitoring folder while we have the stop lock.
   /// </summary>
-  void Data::StopInLock()
+  void Data::stop_in_lock()
   {
     _colectionState = CollectionState::Stopped;
     try
@@ -162,7 +192,7 @@ namespace myoddweb:: directorywatcher:: win
       }
 
       // make sure we do no start a new thread for no reason
-      if( !IsValidHandle() )
+      if( !is_valid_handle() )
       {
         return;
       }
@@ -170,49 +200,43 @@ namespace myoddweb:: directorywatcher:: win
       // start a worker to stop everything.
       // the stop flag is set so we should not be able to re-start anything
       // we can move on and let other threads do their things.
-      _stopWorker = new threads::CallbackWorker( [this] {
-        // close the handle 
-        ClearHandle();
-
-        // the buffer.
-        ClearBuffer();
-
-        // clear the overlapped structure.
-        ClearOverlapped();
-
-        // clear the buffer of data that might be left
-        ClearData();
-      });
+      _stopWorker = new threads::CallbackWorker( stop_worker_task(*this) );
 
       // add this to the pool
-      _workerPool.Add( *_stopWorker );
+      _workerPool.add( *_stopWorker );
     }
     catch ( std::exception& e)
     {
       // log the error
-      Logger::Log(LogLevel::Error, L"Caught exception '%hs' in StopMonitoring!", e.what());
+      Logger::log(LogLevel::Error, L"Caught exception '%hs' in StopMonitoring!", e.what());
     }
   }
 
   /**
    * \brief Clear the handle
+   * \return true if we confirmed that no I/O operation is still pending against
+   *         our buffer/overlapped structure, (so it is now safe to free them).
+   *         false if we could not get that confirmation, (timeout or error),
+   *         in which case the caller must not free the buffer/overlapped as
+   *         the kernel might still complete the read into them later.
    */
-  void Data::ClearHandle()
+  bool Data::clear_handle()
   {
     // is it valid?
-    if (!IsValidHandle())
+    if (!is_valid_handle())
     {
       // make sure that the handle is null
       // as it couls also be 0xffffff
       _hDirectory = nullptr;
-      return;
+      return true;
     }
 
     if( nullptr == _overlapped)
     {
-      return;
+      return true;
     }
 
+    auto confirmedAborted = false;
     try
     {
       // tell all the pending reads that we are ready
@@ -242,26 +266,24 @@ namespace myoddweb:: directorywatcher:: win
         }
 
         // then wait a little for the operation to be cancelled.
-        if (!_operationAborted && !Wait::SpinUntil([&]
-          {
-            if( _operationAborted != true )
-            {
-              // wait a little to ensure that the aborted message is given.
-              // we will return as soon as the message is recived.
-              // if we do not wait for the abort message, we might get other
-              // messages out of sequence.
-              MYODDWEB_YIELD();
-            }
-            return _operationAborted == true;
-          }, MYODDWEB_WAITFOR_OPERATION_ABORTED_COMPLETION))
+        if (!_operationAborted && !Wait::spin_until(operation_aborted_predicate(_operationAborted), MYODDWEB_WAITFOR_OPERATION_ABORTED_COMPLETION))
         {
-          Logger::Log(_id, LogLevel::Warning, L"Timeout waiting operation aborted message!" );
+          Logger::log(_id, LogLevel::Warning, L"Timeout waiting operation aborted message!" );
         }
+
+        // we can only be sure it is safe to free the buffer/overlapped
+        // if we actually received confirmation that the operation was aborted.
+        // if we timed out we do _not_ know if the kernel still holds a
+        // reference to them, so the caller must not free them.
+        confirmedAborted = _operationAborted;
       }
       else
       {
+        // CancelIoEx could not find the handle/OVERLAPPED, which means
+        // there was nothing pending for it to cancel in the first place.
         const auto dw = ::GetLastError();
         _operationAborted = true;
+        confirmedAborted = true;
       }
       ::CloseHandle(_hDirectory);
     }
@@ -269,19 +291,32 @@ namespace myoddweb:: directorywatcher:: win
     {
       // We can ignore this... as per the doc:
       //   If the application is running under a debugger, the function will throw an exception if it receives either a handle value that is not valid or a pseudo-
-      //   handle value. This can happen if you close a handle twice, or if you call CloseHandle on a handle returned by the FindFirstFile function instead of 
+      //   handle value. This can happen if you close a handle twice, or if you call CloseHandle on a handle returned by the FindFirstFile function instead of
       //   calling the FindClose function.
-      Logger::Log( _id, LogLevel::Information, L"Ignore: Error waiting operation aborted message." );
-      _operationAborted = true;
+      Logger::log( _id, LogLevel::Information, L"Ignore: Error waiting operation aborted message." );
+
+      // we do _not_ know if the operation was really aborted, so we cannot
+      // safely say that it is safe to free the buffer/overlapped structure.
+      confirmedAborted = false;
     }
 
-    // the directory is closed.
+    // the directory is closed, (but the buffer/overlapped might still be in use).
+    return confirmedAborted;
+  }
+
+  /**
+   * \brief log that we intentionally leaked the buffer/overlapped because
+   *        we could not confirm that the pending read was cancelled.
+   */
+  void Data::log_leaked_buffer_on_unconfirmed_stop() const
+  {
+    Logger::log(_id, LogLevel::Warning, L"Leaking watch buffer for '%ls': could not confirm that the pending read was cancelled in time.", _path.c_str());
   }
 
   /**
    * \brief clear the buffer data.
    */
-  void Data::ClearBuffer()
+  void Data::clear_buffer()
   {
     try
     {
@@ -297,7 +332,7 @@ namespace myoddweb:: directorywatcher:: win
     {
       // the callback did something wrong!
       // log the error
-      Logger::Log(LogLevel::Error, L"Caught exception '%hs' in PublishStatistics, check the callback!", e.what());
+      Logger::log(LogLevel::Error, L"Caught exception '%hs' in PublishStatistics, check the callback!", e.what());
       _buffer = nullptr;
     }
   }
@@ -305,7 +340,7 @@ namespace myoddweb:: directorywatcher:: win
   /// <summary>
   /// Clear all the data that is left in the vector
   /// </summary>
-  void Data::ClearData()
+  void Data::clear_data()
   {
     MYODDWEB_LOCK(_dataLock);
     for( const auto &raw : _data )
@@ -318,7 +353,7 @@ namespace myoddweb:: directorywatcher:: win
   /**
    * \brief clear the overlapped structure.
    */
-  void Data::ClearOverlapped()
+  void Data::clear_overlapped()
   {
     delete _overlapped;
     _overlapped = nullptr;
@@ -328,7 +363,7 @@ namespace myoddweb:: directorywatcher:: win
    * \brief Check if the file is open properly
    * \return if the file has been open already.
    */
-  bool Data::IsValidHandle() const
+  bool Data::is_valid_handle() const
   {
     return _hDirectory != nullptr && _hDirectory != INVALID_HANDLE_VALUE;
   }
@@ -339,7 +374,7 @@ namespace myoddweb:: directorywatcher:: win
    * \param ulSize the max numberof bytes we want to copy
    * \return the cloned data.
    */
-  unsigned char* Data::Clone(const unsigned long ulSize) const
+  unsigned char* Data::clone(const unsigned long ulSize) const
   {
     try
     {
@@ -349,12 +384,13 @@ namespace myoddweb:: directorywatcher:: win
         return nullptr;
       }
 
-      // create the clone
-      const auto pBuffer = new unsigned char[ulSize];
       if (_buffer == nullptr)
       {
         return nullptr;
       }
+
+      // create the clone
+      const auto pBuffer = new unsigned char[ulSize];
 
       // copy it.
       memcpy(pBuffer, _buffer, ulSize);
@@ -366,7 +402,7 @@ namespace myoddweb:: directorywatcher:: win
     {
       // the callback did something wrong!
       // log the error
-      Logger::Log(LogLevel::Error, L"Caught exception '%hs' in PublishStatistics, check the callback!", e.what());
+      Logger::log(LogLevel::Error, L"Caught exception '%hs' in PublishStatistics, check the callback!", e.what());
       return nullptr;
     }
   }
@@ -375,10 +411,10 @@ namespace myoddweb:: directorywatcher:: win
    * \brief set the directory handle
    * \return if success or not.
    */
-  bool Data::OpenDirectoryHandle( )
+  bool Data::open_directory_handle( )
   {
     // check if this was done already
-    if (IsValidHandle())
+    if (is_valid_handle())
     {
       return true;
     }
@@ -390,7 +426,7 @@ namespace myoddweb:: directorywatcher:: win
     try
     {
       const auto handle = CreateFileW(
-        _path.c_str(),  		        // the path we are watching
+        _path.c_str(),            // the path we are watching
         FILE_LIST_DIRECTORY,        // required for ReadDirectoryChangesW( ... )
         shareMode,
         nullptr,                    // security descriptor
@@ -420,10 +456,18 @@ namespace myoddweb:: directorywatcher:: win
   /**
    * \brief start waiting for notification
    */
-  bool Data::Listen()
+  bool Data::listen()
   {
     // if we are not started then we do not want to start
     if(_colectionState != CollectionState::Started )
+    {
+      return false;
+    }
+
+    // if _stopWorker's cleanup is running right now, (a different thread),
+    // just skip this cycle rather than block
+    std::unique_lock<std::recursive_mutex> lock(_handleLock, std::try_to_lock);
+    if (!lock.owns_lock())
     {
       return false;
     }
@@ -432,7 +476,7 @@ namespace myoddweb:: directorywatcher:: win
     try
     {
       // prepare all the values
-      PrepareForRead();
+      prepare_for_read();
 
       // do the actual read.
       if (::ReadDirectoryChangesW(
@@ -443,11 +487,11 @@ namespace myoddweb:: directorywatcher:: win
         _notifyFilter,
         nullptr,                // bytes returned, (not used here as we are async)
         _overlapped,            // buffer with our information
-        &FileIoCompletionRoutine
+        &file_io_completion_routine
       ) != 1)
       {
         // we could not create the monitoring
-        Stop();
+        stop();
         return false;
       }
       return true;
@@ -456,7 +500,7 @@ namespace myoddweb:: directorywatcher:: win
     {
       // the callback did something wrong!
       // log the error
-      Logger::Log(LogLevel::Error, L"Caught exception '%hs' in PublishStatistics, check the callback!", e.what());
+      Logger::log(LogLevel::Error, L"Caught exception '%hs' in PublishStatistics, check the callback!", e.what());
       return false;
     }
   }
@@ -464,7 +508,7 @@ namespace myoddweb:: directorywatcher:: win
   /***
    * \brief The async callback function for ReadDirectoryChangesW
    */
-  void Data::FileIoCompletionRoutine(
+  void Data::file_io_completion_routine(
     const unsigned long dwErrorCode,
     const unsigned long dwNumberOfBytesTransfered,
     _OVERLAPPED* lpOverlapped
@@ -480,25 +524,25 @@ namespace myoddweb:: directorywatcher:: win
       // should never happen ... but still.
       if (nullptr == data)
       {
-        data->ProcessError(dwErrorCode);
+        Logger::log(LogLevel::Error, L"file_io_completion_routine received a null Data pointer.");
         return;
       }
 
       if (ERROR_SUCCESS != dwErrorCode)
       {
         // some other error
-        data->ProcessError(dwErrorCode);
+        data->process_error(dwErrorCode);
         return;
       }
 
       // success
-      data->ProcessRead(dwNumberOfBytesTransfered);
+      data->process_read(dwNumberOfBytesTransfered);
     }
     catch (std::exception& e)
     {
       // the callback did something wrong!
       // log the error
-      Logger::Log(LogLevel::Error, L"Caught exception '%hs' in PublishStatistics, check the callback!", e.what());
+      Logger::log(LogLevel::Error, L"Caught exception '%hs' in PublishStatistics, check the callback!", e.what());
     }
   }
 
@@ -506,7 +550,7 @@ namespace myoddweb:: directorywatcher:: win
      * \brief process an error code.
      * \param errorCode the error received.
      */
-  void Data::ProcessError( const unsigned long errorCode)
+  void Data::process_error( const unsigned long errorCode)
   {
     switch (errorCode)
     {
@@ -520,18 +564,22 @@ namespace myoddweb:: directorywatcher:: win
       break;
 
     case ERROR_NETNAME_DELETED:
-      Stop();
-      Logger::Log(LogLevel::Warning, L"Warning: The network connection to '%hs' has been deleted.", _path.c_str() );
+      stop();
+      Logger::log(LogLevel::Warning, L"Warning: The network connection to '%ls' has been deleted.", _path.c_str() );
       return;
 
     case ERROR_ACCESS_DENIED:
-      Stop();
-      Logger::Log(LogLevel::Warning, L"Warning: Acess to '%hs' is denied", _path.c_str() );
+      stop();
+      Logger::log(LogLevel::Warning, L"Warning: Access to '%ls' is denied", _path.c_str() );
       return;
 
     default:
-      //  we cannot use the path anymore
-      Logger::Log( LogLevel::Warning, L"Warning: There was an error processing an API message %lu.", errorCode );
+      // this is not one of the fatal errors, (network deleted / access denied),
+      // that we handle above, so we must assume it is transient and re-issue
+      // the read ourselves, otherwise this directory would silently stop
+      // reporting any further changes with no way to recover.
+      Logger::log( LogLevel::Warning, L"Warning: There was an error processing an API message %lu.", errorCode );
+      listen();
       break;
     }
   }
@@ -540,14 +588,14 @@ namespace myoddweb:: directorywatcher:: win
    * \brief process a read received.
    * \param dwNumberOfBytesTransfered the number of bytes received.
    */
-  void Data::ProcessRead( const unsigned long dwNumberOfBytesTransfered )
+  void Data::process_read( const unsigned long dwNumberOfBytesTransfered )
   {
     if (dwNumberOfBytesTransfered == 0)
     {
       // Get the new read issued as fast as possible. The documentation
       // says that the original OVERLAPPED structure will not be used
       // again once the completion routine is called.
-      Listen();
+      listen();
 
       // we are done
       return;
@@ -558,38 +606,44 @@ namespace myoddweb:: directorywatcher:: win
     _ASSERTE(dwNumberOfBytesTransfered >= offsetof(FILE_NOTIFY_INFORMATION, FileName) + sizeof(WCHAR));
 
     // clone the data now
-    const auto clone = Clone(dwNumberOfBytesTransfered);
+    const auto cloned = clone(dwNumberOfBytesTransfered);
 
     // Get the new read issued as fast as possible. The documentation
     // says that the original OVERLAPPED structure will not be used
     // again once the completion routine is called.
-    Listen();
+    listen();
 
     // call the derived function to handle this.
     MYODDWEB_LOCK(_dataLock);
-    _data.emplace_back( clone );
+    _data.emplace_back( cloned );
   }
 
-  std::vector<unsigned char*> Data::Get()
+  std::vector<unsigned char*> Data::get()
   {
     MYODDWEB_LOCK(_dataLock);
-    const auto clone = _data;
+    const auto cloned = _data;
 
     // clear that list
     // we do not want to use `shrink_to_fit` as the reserved value
     // will probably be reused.
     _data.clear();
 
-    return clone;
+    return cloned;
   }
 
   /**
    * \brief check that he current handle is still valie
    *        if not then we will close the connection.
    */
-  void Data::CheckStillValid()
+  void Data::check_still_valid()
   {
-    if (IsValidHandle())
+    // if we were explicitly stopped there is nothing to check/reopen.
+    if (_colectionState == CollectionState::Stopped)
+    {
+      return;
+    }
+
+    if (is_valid_handle())
     {
       // The handle is good, so we can reset the value
       _invalidHandleWait = 0;
@@ -604,6 +658,20 @@ namespace myoddweb:: directorywatcher:: win
       return;
     }
 
+    // if _stopWorker's cleanup is running right now, (a different thread),
+    // just skip this cycle rather than block.
+    std::unique_lock<std::recursive_mutex> lock(_handleLock, std::try_to_lock);
+    if (!lock.owns_lock())
+    {
+      return;
+    }
+
+    // check again now.
+    if (_colectionState == CollectionState::Stopped)
+    {
+      return;
+    }
+
     // we already know that the handle is not valid
     _hDirectory = nullptr;
 
@@ -615,6 +683,6 @@ namespace myoddweb:: directorywatcher:: win
 
     // try open again, if this does not work then it is fine
     // because we have reset the timer
-    Start();
+    start();
   }
 }

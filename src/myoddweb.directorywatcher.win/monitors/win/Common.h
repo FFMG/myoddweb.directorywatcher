@@ -32,25 +32,25 @@ namespace myoddweb
 
         virtual ~Common();
 
-        bool Start();
-        void Update() const;
-        void Stop();
+        bool start();
+        void update() const;
+        void stop();
       protected:
         /**
          * \brief Get the notification filter.
          * \return the notification filter
          */
         [[nodiscard]]
-        virtual unsigned long GetNotifyFilter() const = 0;
+        virtual unsigned long get_notify_filter() const = 0;
 
       private:
         /**
          * \brief start monitoring the given folder.
          * \return if we managed to start the monitoring or not.
          */
-        bool CreateAndStartData();
+        bool create_and_start_data();
 
-        void ProcessNotification(const unsigned char* pBuffer) const;
+        void process_notification(const unsigned char* pBuffer) const;
 
         /**
          * \brief all the data used by the monitor.
@@ -75,7 +75,7 @@ namespace myoddweb
          * \return if the string given is a file or not.
          */
         [[nodiscard]]
-        virtual bool IsFile(EventAction action, const std::wstring& path) const;
+        virtual bool is_file(EventAction action, const std::wstring& path) const;
       };
     }
   }

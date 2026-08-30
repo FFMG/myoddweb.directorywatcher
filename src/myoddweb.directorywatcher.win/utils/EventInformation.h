@@ -1,4 +1,4 @@
-﻿// Licensed to Florent Guelfucci under one or more agreements.
+// Licensed to Florent Guelfucci under one or more agreements.
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #pragma once
@@ -12,10 +12,9 @@ namespace myoddweb
     /**
      * \brief Information about a file/folder event.
      */
-    class EventInformation final
+    struct event_information final
     {
-    public:
-      EventInformation() :
+      event_information() :
         TimeMillisecondsUtc(0),
         Action(EventAction::Unknown),
         Error(EventError::None ),
@@ -25,7 +24,7 @@ namespace myoddweb
       {
       }
 
-      EventInformation(
+      event_information(
         const long long timeMillisecondsUtc,
         const EventAction action,
         const EventError error,
@@ -33,18 +32,18 @@ namespace myoddweb
         const wchar_t* oldName,
         const bool isFile
       )
-      : EventInformation()
+      : event_information()
       {
-        Assign(name, oldName, action, error, timeMillisecondsUtc, isFile);
+        assign(name, oldName, action, error, timeMillisecondsUtc, isFile);
       }
 
-      ~EventInformation()
+      ~event_information()
       {
-        Clear();
+        clear();
       }
 
-      EventInformation(const EventInformation&) = delete;
-      const EventInformation& operator=(const EventInformation&) = delete;
+      event_information(const event_information&) = delete;
+      const event_information& operator=(const event_information&) = delete;
 
       /**
        * \brief the time in Ms when this event was recorded.
@@ -77,10 +76,10 @@ namespace myoddweb
       bool IsFile;
 
     private:
-      void Assign(const wchar_t* name, const wchar_t* oldName, const EventAction action, const EventError error, const long long timeMillisecondsUtc, const bool isFile)
+      void assign(const wchar_t* name, const wchar_t* oldName, const EventAction action, const EventError error, const long long timeMillisecondsUtc, const bool isFile)
       {
         // clear the old values.
-        Clear();
+        clear();
 
         // and set the values.
         Action = action;
@@ -105,16 +104,16 @@ namespace myoddweb
         }
       }
 
-      void Clear()
+      void clear()
       {
-        ClearName();
-        ClearOldName();
+        clear_name();
+        clear_old_name();
       }
 
       /**
        * \brief free the name memory
        */
-      void ClearName()
+      void clear_name()
       {
         if (Name == nullptr)
         {
@@ -127,7 +126,7 @@ namespace myoddweb
       /**
        * \brief free the old name memory
        */
-      void ClearOldName()
+      void clear_old_name()
       {
         if (OldName == nullptr)
         {

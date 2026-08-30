@@ -6,12 +6,16 @@
 #include "../monitors/Base.h"
 #include "../monitors/Callbacks.h"
 
+class LoggerTestHelper;
+
 namespace myoddweb:: directorywatcher
 {
   enum class LogLevel;
 
   class Logger final
   {
+    friend class ::LoggerTestHelper;
+
     /**
      * \brief Our list of loggers
      */
@@ -24,7 +28,7 @@ namespace myoddweb:: directorywatcher
 
     // the singleton
     static Logger _instance;
-    static Logger& Instance();
+    static Logger& instance();
 
     explicit Logger();
 
@@ -39,13 +43,13 @@ namespace myoddweb:: directorywatcher
      * \param id the id we are logging for.
      * \param logger the logger we are adding.
      */
-    static void Add( long long id, const LoggerCallback& logger);
+    static void add( long long id, const LoggerCallback& logger);
 
     /**
      * \brief remove a logger from the list.
      * \param id the id we are logging for.
      */
-    static void Remove(long long id );
+    static void remove(long long id );
 
     /**
      * \brief log a message to all our listed messages
@@ -54,7 +58,7 @@ namespace myoddweb:: directorywatcher
      * \param format the message format
      * \param ... the parametters
      */
-    static void Log(long long id, LogLevel level, const wchar_t* format, ...) noexcept;
+    static void log(long long id, LogLevel level, const wchar_t* format, ...) noexcept;
 
     /**
      * \brief log a message to all our listed messages
@@ -62,7 +66,7 @@ namespace myoddweb:: directorywatcher
      * \param format the message format
      * \param ... the parametters
      */
-    static void Log(LogLevel level, const wchar_t* format, ...) noexcept;
+    static void log(LogLevel level, const wchar_t* format, ...) noexcept;
 
   private:
     /**
@@ -72,7 +76,7 @@ namespace myoddweb:: directorywatcher
      * \param level the message log level
      * \param message the message we want to log.
      */
-    static void Log(const LoggerCallback& logger, long long id, LogLevel level, const wchar_t* message) noexcept;
+    static void log(const LoggerCallback& logger, long long id, LogLevel level, const wchar_t* message) noexcept;
 
     /**
      * \brief create a message, and take ownership of the string
@@ -80,12 +84,12 @@ namespace myoddweb:: directorywatcher
      * \param args the list of arguments.
      */
     [[nodiscard]]
-    static std::wstring MakeMessage(const wchar_t* format, va_list args) noexcept;
+    static std::wstring make_message(const wchar_t* format, va_list args) noexcept;
 
     /**
      * \brief check if we have any loggers in our list
      */
     [[nodiscard]]
-    static bool HasAnyLoggers() noexcept;
+    static bool has_any_loggers() noexcept;
   };
 }

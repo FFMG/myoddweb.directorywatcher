@@ -15,55 +15,59 @@ namespace myoddweb:: directorywatcher
    *   }
    */
   extern "C" {
-    struct sRequest
+    struct raw_request
     {
       /**
            * \brief the path of the folder we will be monitoring
            */
-      wchar_t* Path;
+      wchar_t* path;
 
       /**
        * \brief if we are recursively monitoring or not.
        */
-      bool Recursive;
+      bool recursive;
 
       /**
        * \brief the callback even we want to call from time to time.
        */
-      EventCallback EventsCallback;
+      EventCallback eventsCallback;
 
       /**
        * \brief the callback even we want to call from time to time.
        */
-      StatisticsCallback StatisticsCallback;
+      StatisticsCallback statisticsCallback;
 
       /**
        * How often we wish to callback events
        */
-      long long EventsCallbackRateMs;
+      long long eventsCallbackRateMs;
 
       /**
        * How often we wish to callback stats
        */
-      long long StatisticsCallbackRateMs;
+      long long statisticsCallbackRateMs;
 
       /**
        * \brief the logger callback
        */
-      LoggerCallback LoggerCallback;
+      LoggerCallback loggerCallback;
     };
   }
 
   /**
+   * \brief this extern "C" boundary, (Start/Stop/Ready/SetConfig), is the DLL's ABI:
+   *        the managed side looks these symbols up by their exact, literal name, so
+   *        they intentionally keep their original PascalCase names rather than the
+   *        snake_case used for the rest of this codebase.
    */
-  extern "C" { __declspec(dllexport) bool SetConfig(const sRequest& request); }
+  extern "C" { __declspec(dllexport) bool SetConfig(const raw_request& request); }
 
   /**
    * \brief Start watching a folder
    * \param request The request containing info about the item we are watching.
    * \return The id of the created request or -ve otherwise
    */
-  extern "C" { __declspec(dllexport) long long Start(const sRequest& request); }
+  extern "C" { __declspec(dllexport) long long Start(const raw_request& request); }
 
   /**
    * \brief stop watching

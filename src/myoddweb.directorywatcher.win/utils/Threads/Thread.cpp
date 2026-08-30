@@ -12,6 +12,29 @@
 
 namespace myoddweb::directorywatcher::threads
 {
+  namespace
+  {
+    /**
+     * \brief predicate used while waiting for a worker to complete.
+     */
+    struct worker_completed_predicate final
+    {
+      explicit worker_completed_predicate(Worker* worker) :
+        _worker(worker)
+      {
+      }
+
+      bool operator()() const
+      {
+        MYODDWEB_YIELD();
+        return _worker->completed();
+      }
+
+    private:
+      Worker* _worker;
+    };
+  }
+
   Thread::Thread() :
     _localWorker(nullptr),
     _parentWorker(nullptr),
@@ -28,7 +51,7 @@ namespace myoddweb::directorywatcher::threads
   Thread::Thread(const TCallback& function) : Thread()
   {
     _localWorker = new CallbackWorker(function);
-    CreateWorkerRunner(_localWorker);
+    create_worker_runner(_localWorker);
   }
 
   /**
@@ -37,7 +60,7 @@ namespace myoddweb::directorywatcher::threads
    */
   Thread::Thread(Worker& worker) : Thread()
   {
-    CreateWorkerRunner(&worker);
+    create_worker_runner(&worker);
   }
 
   /**
@@ -46,7 +69,7 @@ namespace myoddweb::directorywatcher::threads
   Thread::~Thread()
   {
     // wait for the thread to complete.
-    Wait();
+    wait();
 
     // we do not clear the parent here
     // as we did not create it.
@@ -60,7 +83,7 @@ namespace myoddweb::directorywatcher::threads
    * \brief if the thread is completed or not.
    * \return if completed or not
    */
-  bool Thread::Completed() const
+  bool Thread::completed() const
   {
     // if the values are null then we are done
     if( nullptr == _parentWorker )
@@ -89,7 +112,7 @@ namespace myoddweb::directorywatcher::threads
     }
 
     // otherwise return if the parent is compelted or not.
-    return _parentWorker->Completed();
+    return _parentWorker->completed();
   }
 
 
@@ -97,7 +120,7 @@ namespace myoddweb::directorywatcher::threads
    * \brief if the thread is started or not.
    * \return if completed or not
    */
-  bool Thread::Started() const
+  bool Thread::started() const
   {
     // if the values are null then we are done
     if (nullptr == _parentWorker)
@@ -126,14 +149,14 @@ namespace myoddweb::directorywatcher::threads
     }
 
     // otherwise return if the parent is started or not.
-    return _parentWorker->Started();
+    return _parentWorker->started();
   }
 
   /**
    * \brief create the runner either with future/thread
    * \param worker the runner that we want to start working with.
    */
-  void Thread::CreateWorkerRunner(Worker* worker)
+  void Thread::create_worker_runner(Worker* worker)
   {
     // save the parent worker.
     _parentWorker = worker;
@@ -141,11 +164,11 @@ namespace myoddweb::directorywatcher::threads
     switch (MYODDWEB_WORKER_TYPE)
     {
     case 1:
-      _thread = new std::thread(&Thread::Execute, this);
+      _thread = new std::thread(&Thread::execute, this);
       break;
 
     case 2:
-      _future = new std::future<void>( std::async(std::launch::async, &Thread::Execute, this));
+      _future = new std::future<void>( std::async(std::launch::async, &Thread::execute, this));
       break;
 
     default:
@@ -156,18 +179,18 @@ namespace myoddweb::directorywatcher::threads
   /**
    * \brief start running the worker.
    */
-  void Thread::Execute() const
+  void Thread::execute() const
   {
     // we can now start
     try
     {
       // we can assume we are started
-      _parentWorker->Execute();
+      _parentWorker->execute();
     }
     catch (std::exception& e)
     {
       // log the error
-      Logger::Log(LogLevel::Error, L"Caught exception '%hs' trying to start a thread!", e.what());
+      Logger::log(LogLevel::Error, L"Caught exception '%hs' trying to start a thread!", e.what());
     }
   }
 
@@ -176,15 +199,15 @@ namespace myoddweb::directorywatcher::threads
    * \param timeout the number of ms we want to wait for the thread to complete.
    * \return either timeout of complete if the thread completed.
    */
-  WaitResult Thread::WaitFor(const long long timeout)
+  WaitResult Thread::wait_for(const long long timeout)
   {
     // wait for the worker to complete.
-    const auto result = WaitFor(_parentWorker, timeout);
+    const auto result = wait_for(_parentWorker, timeout);
 
     // if we are complete then we can complete the thread.
     if( result == WaitResult::complete)
     {
-      Wait();
+      wait();
     }
     return result;
   }
@@ -195,19 +218,14 @@ namespace myoddweb::directorywatcher::threads
    * \param timeout the number of ms we want to wait for the thread to complete.
    * \return either timeout of complete if the thread completed.
    */
-  WaitResult Thread::WaitFor(Worker* worker, const long long timeout)
+  WaitResult Thread::wait_for(Worker* worker, const long long timeout)
   {
-    if (worker == nullptr || worker->Completed())
+    if (worker == nullptr || worker->completed())
     {
       return WaitResult::complete;
     }
 
-    if (!Wait::SpinUntil([&]
-      {
-        MYODDWEB_YIELD();
-        return worker->Completed();
-      },
-      timeout))
+    if (!Wait::spin_until(worker_completed_predicate(worker), timeout))
     {
       return WaitResult::timeout;
     }
@@ -217,7 +235,7 @@ namespace myoddweb::directorywatcher::threads
   /**
    * \brief wait for the thread to complete.
    */
-  void Thread::Wait()
+  void Thread::wait()
   {
     if (_future != nullptr)
     {
@@ -243,7 +261,7 @@ namespace myoddweb::directorywatcher::threads
       catch (std::exception& e )
       {
         //  an error could happen, it means we are done.
-        Logger::Log(LogLevel::Panic, L"I was unable to stop the running thread: %hs", e.what());
+        Logger::log(LogLevel::Panic, L"I was unable to stop the running thread: %hs", e.what());
       }
     }
     delete _thread;

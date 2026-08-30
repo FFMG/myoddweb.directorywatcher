@@ -18,14 +18,14 @@ namespace myoddweb:: directorywatcher:: win
    * Get the notification filter.
    * \return the notification filter
    */
-  unsigned long Directories::GetNotifyFilter() const
+  unsigned long Directories::get_notify_filter() const
   {
     // what we are looking for.
     // https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-findfirstchangenotificationa
     // https://docs.microsoft.com/en-gb/windows/desktop/api/WinBase/nf-winbase-readdirectorychangesw
     return
-      // Any directory-name change in the watched directory or subtree causes a change 
-      // notification wait operation to return. 
+      // Any directory-name change in the watched directory or subtree causes a change
+      // notification wait operation to return.
       // Changes include creating or deleting a directory
       FILE_NOTIFY_CHANGE_DIR_NAME
       ;
@@ -37,7 +37,7 @@ namespace myoddweb:: directorywatcher:: win
    * \param path the file we are checking.
    * \return if the string given is a file or not.
    */
-  bool Directories::IsFile(const EventAction action, const std::wstring& path) const
+  bool Directories::is_file(const EventAction action, const std::wstring& path) const
   {
     // we are the directory monitor
     // so it can never be a file.
