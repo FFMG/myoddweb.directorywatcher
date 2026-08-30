@@ -32,7 +32,11 @@ namespace myoddweb::directorywatcher::threads
     try
     {
       // we need to make sure all is good
-      stop_and_wait(-1);
+      const auto completed = WaitResult::complete == stop_and_wait(MYODDWEB_WAITFOR_WORKER_COMPLETION);
+      if (!completed)
+      {
+        Logger::log(id(), LogLevel::Error, L"Timeout waiting for worker pool to stop in destructor!");
+      }
 
       // clen what needs to be
       remove_all_completed_workers();
@@ -41,10 +45,10 @@ namespace myoddweb::directorywatcher::threads
       delete_worker_thread_if_complete();
 
 #ifdef _DEBUG
-      // make sure that the memory is clear.
-      assert(_thread == nullptr);
-      assert(_addFutures.empty());
-      assert(_workerAndFutures.empty());
+      // only guaranteed clear if we did not time out above.
+      assert(!completed || _thread == nullptr);
+      assert(!completed || _addFutures.empty());
+      assert(!completed || _workerAndFutures.empty());
 #endif
     }
     catch (std::exception& e)
@@ -420,7 +424,10 @@ namespace myoddweb::directorywatcher::threads
     }
 
     // wait for all futures to complete before ending
-    wait_for_all_futures_to_complete(-1);
+    if (WaitResult::timeout == wait_for_all_futures_to_complete(MYODDWEB_WAITFOR_WORKER_COMPLETION))
+    {
+      Logger::log(id(), LogLevel::Error, L"Timeout waiting for worker futures to complete in on_worker_end()!");
+    }
   }
   #pragma endregion
 
@@ -883,11 +890,21 @@ namespace myoddweb::directorywatcher::threads
   /// </summary>
   void WorkerPool::wait_for_all_add_futures_pending()
   {
-    Wait::spin_until(no_add_futures_pending_predicate(*this), -1);
+    // this used to wait forever, (-1): since this same call runs on every
+    // single tick of the pool's own update loop, (on_worker_update()), a
+    // single add-task that is ever slow to complete for any reason would
+    // hang the entire pool indefinitely, regardless of whatever timeout
+    // the actual caller asked for. Bound it instead: a stuck add task now
+    // fails fast rather than hanging the whole pool forever.
+    const auto completed = Wait::spin_until(no_add_futures_pending_predicate(*this), MYODDWEB_WAITFOR_ADD_FUTURES_PENDING);
+    if (!completed)
+    {
+      Logger::log(id(), LogLevel::Error, L"Timeout waiting for pending add-worker task(s) to complete!");
+    }
 
 #ifdef _DEBUG
-    // make sure that the memory is clear.
-    assert(_addFutures.empty());
+    // only guaranteed empty if we did not time out above.
+    assert(!completed || _addFutures.empty());
 #endif
   }
   #pragma endregion
