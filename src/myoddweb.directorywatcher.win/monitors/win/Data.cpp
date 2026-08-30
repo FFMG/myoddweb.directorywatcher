@@ -88,12 +88,12 @@ namespace myoddweb:: directorywatcher:: win
     // restart the buffer.
     memset(_buffer, 0, sizeof(unsigned char)*_bufferLength);
 
-    // reset our overlappped object
-    clear_overlapped();
-
-    // create a new one with our own data
-    _overlapped = new OVERLAPPED_DATA();
-    memset(_overlapped, 0, sizeof(OVERLAPPED_DATA));
+    // reuse or allocate our overlapped object
+    if (_overlapped == nullptr)
+    {
+      _overlapped = new OVERLAPPED_DATA();
+    }
+    memset(static_cast<_OVERLAPPED*>(_overlapped), 0, sizeof(OVERLAPPED_DATA));
 
     // save the handle as well as this class so we can access it later.
     _overlapped->hEvent = _hDirectory;
@@ -565,12 +565,12 @@ namespace myoddweb:: directorywatcher:: win
 
     case ERROR_NETNAME_DELETED:
       stop();
-      Logger::log(LogLevel::Warning, L"Warning: The network connection to '%hs' has been deleted.", _path.c_str() );
+      Logger::log(LogLevel::Warning, L"Warning: The network connection to '%ls' has been deleted.", _path.c_str() );
       return;
 
     case ERROR_ACCESS_DENIED:
       stop();
-      Logger::log(LogLevel::Warning, L"Warning: Acess to '%hs' is denied", _path.c_str() );
+      Logger::log(LogLevel::Warning, L"Warning: Access to '%ls' is denied", _path.c_str() );
       return;
 
     default:
