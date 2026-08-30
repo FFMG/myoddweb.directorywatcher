@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace myoddweb
@@ -47,6 +48,17 @@ namespace myoddweb
        * \return all the sub-folders, (if any).
        */
       static std::vector<std::wstring> get_all_sub_folders(const std::wstring& folder);
+
+      /**
+       * \brief Recursively enumerate everything currently inside a folder, so
+       *        pre-existing content can be reported as synthetic "Added"
+       *        events when a watch starts, (see issue #20).
+       * \param folder the folder to enumerate, (absolute path). The folder
+       *        itself is not included, only its contents.
+       * \param recursive if true, sub-folders are traversed too.
+       * \return pairs of {path relative to 'folder', isFile}.
+       */
+      static std::vector<std::pair<std::wstring, bool>> get_all_files_and_folders(const std::wstring& folder, bool recursive);
 
       /**
        * \brief Compare if 2 folders are the same

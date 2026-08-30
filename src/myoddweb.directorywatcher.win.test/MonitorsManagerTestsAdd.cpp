@@ -282,3 +282,116 @@ TEST_P(ValidateNumberOfItemAdded, CallbackWhenFolderIsAdded) {
   EXPECT_TRUE(Remove(id));
   delete helper;
 }
+
+TEST(MonitorsManagerAdd, CallbackWhenPopulatedFolderIsMovedIntoWatchedTree) {
+
+  // create the helper.
+  auto helper = new MonitorsManagerTestHelper();
+  constexpr auto numberOfFiles = 23;
+
+  // MultipleWinMonitor::create_monitors() only fans out into non-recursive
+  // per-directory watchers, (the path that dynamically spawns a new child
+  // watcher -- and so exercises our fix -- when a folder later appears),
+  // when the watched root already has at least one sub-folder at start
+  // time. An empty root instead gets a single native recursive watch
+  // covering everything from the outset, which sidesteps the race
+  // entirely. So: create one (unrelated, empty) sub-folder before we ever
+  // start watching.
+  helper->AddFolder();
+
+  // must be recursive: the fix only triggers via the recursive monitor's
+  // dynamic-folder-added path.
+  const auto r = RequestHelper(
+    helper->Folder(),
+    true,
+    nullptr,
+    eventFunction,
+    nullptr,
+    50,
+    0);
+
+  const auto request = ::Request(r);
+  const auto id = ::MonitorsManager::start(request);
+  Add(id, helper);
+
+  // wait for the pool to start
+  if (!Wait::spin_until([&]
+    {
+      return ::MonitorsManager::ready();
+    }, TEST_TIMEOUT_WAIT))
+  {
+    GTEST_FATAL_FAILURE_("Unable to start pool");
+  }
+
+  // move a fully-populated folder into the watched tree as one atomic
+  // operation -- reproduces the copy-paste race from issue #20: before the
+  // fix, several of these files would never be reported as "added" because
+  // the new folder's own watch was armed too late to catch them.
+  helper->AddPopulatedFolder(numberOfFiles);
+
+  // give a little more than the timeout
+  Wait::spin_until(
+    [&] {
+      return numberOfFiles == helper->Added(true);
+    }, TEST_TIMEOUT_WAIT);
+
+  EXPECT_EQ(numberOfFiles, helper->Added(true));
+  EXPECT_GE(helper->Added(false), 1); // the new folder itself
+
+  EXPECT_NO_THROW(::MonitorsManager::stop(id));
+
+  EXPECT_TRUE(Remove(id));
+  delete helper;
+}
+
+TEST(MonitorsManagerAdd, CallbackWhenNestedPopulatedFolderIsMovedIntoWatchedTree) {
+
+  // create the helper.
+  auto helper = new MonitorsManagerTestHelper();
+  constexpr auto numberOfSubFolders = 3;
+  constexpr auto numberOfFilesPerFolder = 5;
+  constexpr auto totalFiles = numberOfSubFolders * numberOfFilesPerFolder;
+
+  // create one empty sub-folder before watching to ensure MultipleWinMonitor fan-out
+  helper->AddFolder();
+
+  const auto r = RequestHelper(
+    helper->Folder(),
+    true,
+    nullptr,
+    eventFunction,
+    nullptr,
+    50,
+    0);
+
+  const auto request = ::Request(r);
+  const auto id = ::MonitorsManager::start(request);
+  Add(id, helper);
+
+  // wait for the pool to start
+  if (!Wait::spin_until([&]
+    {
+      return ::MonitorsManager::ready();
+    }, TEST_TIMEOUT_WAIT))
+  {
+    GTEST_FATAL_FAILURE_("Unable to start pool");
+  }
+
+  // move a folder containing nested sub-folders with files into the watched tree
+  helper->AddPopulatedFolderWithSubFolders(numberOfSubFolders, numberOfFilesPerFolder);
+
+  // wait for all files to be reported
+  Wait::spin_until(
+    [&]
+    {
+      return totalFiles == helper->Added(true);
+    }, TEST_TIMEOUT_WAIT);
+
+  EXPECT_EQ(totalFiles, helper->Added(true));
+  EXPECT_GE(helper->Added(false), numberOfSubFolders + 1); // the top folder + sub folders
+
+  EXPECT_NO_THROW(::MonitorsManager::stop(id));
+
+  EXPECT_TRUE(Remove(id));
+  delete helper;
+}

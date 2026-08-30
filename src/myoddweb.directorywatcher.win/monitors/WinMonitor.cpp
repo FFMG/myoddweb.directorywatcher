@@ -5,6 +5,9 @@
 #include <string>
 
 #include "../utils/Instrumentor.h"
+#include "../utils/Io.h"
+#include "../utils/Logger.h"
+#include "../utils/LogLevel.h"
 #include "win/Directories.h"
 #include "win/Files.h"
 
@@ -24,8 +27,8 @@ namespace myoddweb:: directorywatcher
     * \param workerPool the worker pool
     * \param request details of the request.
     */
-  WinMonitor::WinMonitor(const long long id, const long long parentId, threads::WorkerPool& workerPool, const Request& request) :
-    WinMonitor(id, parentId, workerPool, request, max_buffer_size)
+  WinMonitor::WinMonitor(const long long id, const long long parentId, threads::WorkerPool& workerPool, const Request& request, const bool catchUpOnExistingEntries) :
+    WinMonitor(id, parentId, workerPool, request, max_buffer_size, catchUpOnExistingEntries)
   {
   }
 
@@ -48,13 +51,16 @@ namespace myoddweb:: directorywatcher
    * \param workerPool the worker pool
    * \param request details of the request.
    * \param bufferLength the size of the buffer
+   * \param catchUpOnExistingEntries if true, report this folder's existing
+   *        contents as "Added" once the watch is armed, (see issue #20).
    */
-  WinMonitor::WinMonitor(const long long id, const long long parentId, threads::WorkerPool& workerPool, const Request& request, const unsigned long bufferLength) :
+  WinMonitor::WinMonitor(const long long id, const long long parentId, threads::WorkerPool& workerPool, const Request& request, const unsigned long bufferLength, const bool catchUpOnExistingEntries) :
     Monitor( id, workerPool, request),
     _directories(nullptr),
     _files(nullptr),
     _bufferLength(bufferLength),
-    _parentId( parentId )
+    _parentId( parentId ),
+    _catchUpOnExistingEntries( catchUpOnExistingEntries )
   {
   }
 
@@ -129,6 +135,15 @@ namespace myoddweb:: directorywatcher
         return false;
       }
 
+      // the watch is armed now: report anything that was already on disk
+      // the instant we started, (or created in the gap before we started),
+      // so a bulk copy-paste into a newly-added folder is not silently
+      // lost. \see https://github.com/FFMG/myoddweb.directorywatcher/issues/20
+      if (_catchUpOnExistingEntries)
+      {
+        catch_up_on_existing_entries();
+      }
+
       // all done
       return Monitor::on_worker_start();
     }
@@ -136,6 +151,28 @@ namespace myoddweb:: directorywatcher
     {
       save_current_exception();
       return false;
+    }
+  }
+
+  /**
+   * \brief report anything already inside this folder as synthetic "Added"
+   *        events. \see https://github.com/FFMG/myoddweb.directorywatcher/issues/20
+   */
+  void WinMonitor::catch_up_on_existing_entries()
+  {
+    MYODDWEB_PROFILE_FUNCTION();
+    try
+    {
+      for (const auto& entry : Io::get_all_files_and_folders(path(), recursive()))
+      {
+        add_event(EventAction::Added, entry.first, entry.second);
+      }
+    }
+    catch (...)
+    {
+      // never let a scan failure prevent the monitor from running -- we
+      // still have live ReadDirectoryChangesW notifications going forward.
+      Logger::log(id(), LogLevel::Warning, L"Unable to complete catch-up scan for: %s", path());
     }
   }
 

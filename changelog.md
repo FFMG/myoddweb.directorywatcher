@@ -29,6 +29,7 @@ Notable changes
 - Fixed `MonitorsManager::start()` dereferencing a null `Monitor*`
 - Fixed `win::Data::clone()` leaking its allocation when `_buffer` is null
 - Fixed `Logger::make_message()` calling `reserve()` instead of `resize()`
+- Fixed [#20](https://github.com/FFMG/myoddweb.directorywatcher/issues/20): files could be silently missed when a whole populated folder was copy-pasted into a recursively-watched tree, because the newly-detected sub-folder's own watch could take long enough to arm that fast file copies into it completed before it started listening; `WinMonitor` can now scan such a folder's contents once its watch is armed and report anything already there
 
 ### Removed
 

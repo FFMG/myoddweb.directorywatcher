@@ -229,7 +229,12 @@ namespace myoddweb::directorywatcher
     // so we have to add this path as a child.
     const auto id = WorkerId::next_id();
     const auto request = Request(path, true, _request.events_callback_rate_milliseconds(), _request.stats_callback_rate_milliseconds() );
-    const auto child = new WinMonitor(id, parent_id(), worker_pool(), request );
+
+    // this folder appeared while we were already running, so its watch will
+    // only be armed with a delay; scan its contents once armed so nothing
+    // created during that delay is lost.
+    // \see https://github.com/FFMG/myoddweb.directorywatcher/issues/20
+    const auto child = new WinMonitor(id, parent_id(), worker_pool(), request, true );
     _recursiveChildren.emplace_back(child);
 
     // add the child.

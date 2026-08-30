@@ -49,6 +49,8 @@ public:
   [[nodiscard]] auto RemoveFolder(const std::wstring& folder) const -> bool;
   std::wstring AddFile();
   std::wstring AddFolder();
+  std::wstring AddPopulatedFolder(int numberOfFiles);
+  std::wstring AddPopulatedFolderWithSubFolders(int numberOfSubFolders, int numberOfFilesPerFolder);
 
 protected:
   static std::wstring RandomString(const size_t length);

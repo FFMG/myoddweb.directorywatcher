@@ -202,6 +202,68 @@ namespace myoddweb
       return subFolders;
     }
 
+    namespace
+    {
+      /**
+       * \brief worker for get_all_files_and_folders: enumerates 'root/relative'
+       *        and appends {relative-child, isFile} pairs, recursing into
+       *        sub-folders when 'recursive' is true.
+       */
+      void get_all_files_and_folders_worker(
+        const std::wstring& root,
+        const std::wstring& relative,
+        const bool recursive,
+        std::vector<std::pair<std::wstring, bool>>& items)
+      {
+        const auto folder = relative.empty() ? root : Io::combine(root, relative);
+        const auto searchPath = Io::combine(folder, L"*.*");
+        WIN32_FIND_DATA fd = {};
+        const auto hFind = ::FindFirstFile(searchPath.c_str(), &fd);
+        if (hFind == INVALID_HANDLE_VALUE)
+        {
+          return;
+        }
+        do
+        {
+          if (Io::is_dot(fd.cFileName))
+          {
+            continue;
+          }
+
+          const auto relativeChild = relative.empty() ? std::wstring(fd.cFileName) : Io::combine(relative, fd.cFileName);
+          if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
+          {
+            items.emplace_back(relativeChild, false);
+            if (recursive)
+            {
+              get_all_files_and_folders_worker(root, relativeChild, recursive, items);
+            }
+          }
+          else
+          {
+            items.emplace_back(relativeChild, true);
+          }
+        } while (::FindNextFile(hFind, &fd));
+        ::FindClose(hFind);
+      }
+    }
+
+    /**
+     * \brief Recursively enumerate everything currently inside a folder, so
+     *        pre-existing content can be reported as synthetic "Added"
+     *        events when a watch starts, (see issue #20).
+     * \param folder the folder to enumerate, (absolute path). The folder
+     *        itself is not included, only its contents.
+     * \param recursive if true, sub-folders are traversed too.
+     * \return pairs of {path relative to 'folder', isFile}.
+     */
+    std::vector<std::pair<std::wstring, bool>> Io::get_all_files_and_folders(const std::wstring& folder, const bool recursive)
+    {
+      std::vector<std::pair<std::wstring, bool>> items;
+      get_all_files_and_folders_worker(folder, L"", recursive, items);
+      return items;
+    }
+
     /**
      * \brief Compare if 2 folders are the same
      * \param lhs the first folder
