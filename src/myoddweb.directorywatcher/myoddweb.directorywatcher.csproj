@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <Description>A fast and reliable, (non blocking!), .NET File/Directory watcher, complete rewrite of FileSystemWatcher to ensure speed/accuracy/reliability/suppress duplicate events</Description>
@@ -8,6 +8,9 @@
 
     <AssemblyName>MyOddWeb.DirectoryWatcher</AssemblyName>
     <PackageId>MyOddWeb.DirectoryWatcher</PackageId>
+    <Authors>Florent Guelfucci,myoddweb.com</Authors>
+    <Copyright>Copyright (c) 2017-2026 Florent Guelfucci</Copyright>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>../myoddweb.directorywatcher.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
